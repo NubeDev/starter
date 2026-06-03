@@ -1,0 +1,26 @@
+{
+  "name": "@nube/ce-wiresheet",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Control-engine wiresheet editor (REST + binary-WS, React Flow). Source-only workspace package shared by the standalone dev harness and the com.nubeio.ce extension.",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.3.0",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.4.0"
+  }
+}

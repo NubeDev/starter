@@ -37,14 +37,12 @@ export default function Main(): React.ReactElement {
 function MainRouter(): React.ReactElement {
   const route = useExtensionRoute();
 
-  // /wiresheet/<device_id>
+  // /wiresheet/<device_id> — full-bleed editor, no Page chrome. The panel
+  // renders a fixed full-viewport surface so the lifted ce-ui editor and its
+  // viewport-anchored floating panels line up (matches the standalone app).
   if (route && route.startsWith("wiresheet")) {
     const deviceId = route.split("/")[1] ?? "";
-    return (
-      <Page eyebrow="Control Engine" title="Wiresheet">
-        <WiresheetPanel deviceId={deviceId} />
-      </Page>
-    );
+    return <WiresheetPanel deviceId={deviceId} />;
   }
 
   // default + /devices → device catalog

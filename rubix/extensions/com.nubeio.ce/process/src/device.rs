@@ -6,12 +6,12 @@
 //! `ctx.warehouse_write()`; the host stamps `tenant_id` and validates
 //! columns against the manifest before the row lands.
 //!
-//! SCAFFOLD: the row-building / write calls are sketched and marked
-//! `TODO`. Wire them to `ctx.warehouse_write().insert/update/delete`
-//! once the column shape is final.
+//! The tool params arrive flat and already schema-validated (see
+//! `kinds/device_*_in.json`, all `additionalProperties:false`), so the
+//! params object maps straight onto warehouse columns.
 
-use starter_ext_sdk::serde_json::{json, Value};
-use starter_ext_sdk::Error;
+use starter_ext_sdk::serde_json::{json, Map, Value};
+use starter_ext_sdk::{Error, Row};
 
 use crate::extension::ControlEngineCtx;
 
@@ -32,42 +32,54 @@ pub fn take_str(params: &Value, key: &str, tool: &str) -> starter_ext_sdk::Resul
         })
 }
 
-/// `device_create` — insert one engine connection row.
-pub fn handle_create(_ctx: &ControlEngineCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
-    let device_id = take_str(params, "device_id", "device_create")?;
-    let _ip = take_str(params, "ip", "device_create")?;
+/// Build a warehouse row from the flat, schema-validated tool params.
+///
+/// Empty-string values are dropped so the column's DB default applies
+/// and a blank `password` on edit never overwrites the stored secret
+/// (the form sends `password: ""` to mean "unchanged"). `tenant_id` is
+/// never set here — the host stamps it from the caller.
+fn row_from_params(params: &Value) -> Map<String, Value> {
+    let mut row = Map::new();
+    if let Some(obj) = params.as_object() {
+        for (key, value) in obj {
+            if matches!(value, Value::String(s) if s.is_empty()) {
+                continue;
+            }
+            row.insert(key.clone(), value.clone());
+        }
+    }
+    row
+}
 
-    // TODO: build the row from `params` (name, description, engine_kind,
-    // ip, port, username, password, status) and insert it:
-    //
-    //   let row = Row::from_map(...);
-    //   let affected = ctx.warehouse_write().insert(TABLE, vec![row])?;
-    //
-    // Remember NOT to set `tenant_id` — the host stamps it.
-    let _ = device_id;
-    Ok(json!({ "operation": "create", "affected": 0 }))
+/// `device_create` — insert one engine connection row.
+pub fn handle_create(ctx: &ControlEngineCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
+    // `device_id` + `ip` are schema-required; assert here for a clear
+    // error if a caller bypasses the schema.
+    take_str(params, "device_id", "device_create")?;
+    take_str(params, "ip", "device_create")?;
+
+    let row = row_from_params(params);
+    let affected = ctx.warehouse_write().insert(TABLE, vec![Row::from_map(row)])?;
+    Ok(json!({ "operation": "create", "affected": affected }))
 }
 
 /// `device_update` — set columns on one engine row (keyed by
 /// `device_id`).
-pub fn handle_update(_ctx: &ControlEngineCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
-    let device_id = take_str(params, "device_id", "device_update")?;
+pub fn handle_update(ctx: &ControlEngineCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
+    take_str(params, "device_id", "device_update")?;
 
-    // TODO: build a partial row from the remaining `params` keys and:
-    //
-    //   let affected = ctx.warehouse_write().update(TABLE, "device_id", vec![row])?;
-    let _ = device_id;
-    Ok(json!({ "operation": "update", "affected": 0 }))
+    let row = row_from_params(params);
+    let affected = ctx
+        .warehouse_write()
+        .update(TABLE, "device_id", vec![Row::from_map(row)])?;
+    Ok(json!({ "operation": "update", "affected": affected }))
 }
 
 /// `device_delete` — remove one engine row by `device_id`.
-pub fn handle_delete(_ctx: &ControlEngineCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
+pub fn handle_delete(ctx: &ControlEngineCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
     let device_id = take_str(params, "device_id", "device_delete")?;
-
-    // TODO: delete the row:
-    //
-    //   let affected = ctx.warehouse_write()
-    //       .delete(TABLE, "device_id", vec![json!(device_id)])?;
-    let _ = device_id;
-    Ok(json!({ "operation": "delete", "affected": 0 }))
+    let affected = ctx
+        .warehouse_write()
+        .delete(TABLE, "device_id", vec![json!(device_id)])?;
+    Ok(json!({ "operation": "delete", "affected": affected }))
 }

@@ -1,12 +1,12 @@
 (function () {
 	'use strict';
 
-	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.nubeio.ce\"] :before, [data-ext-id=\"com.nubeio.ce\"]:before, [data-ext-id=\"com.nubeio.ce\"] :after, [data-ext-id=\"com.nubeio.ce\"]:after, [data-ext-id=\"com.nubeio.ce\"] ::backdrop, [data-ext-id=\"com.nubeio.ce\"]::backdrop {\n      --tw-border-style: solid;\n      --tw-font-weight: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n    }\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .relative, [data-ext-id=\"com.nubeio.ce\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .block, [data-ext-id=\"com.nubeio.ce\"].block {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .flex, [data-ext-id=\"com.nubeio.ce\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .grid, [data-ext-id=\"com.nubeio.ce\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .inline-flex, [data-ext-id=\"com.nubeio.ce\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .size-4, [data-ext-id=\"com.nubeio.ce\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .h-8, [data-ext-id=\"com.nubeio.ce\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .w-full, [data-ext-id=\"com.nubeio.ce\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .max-w-xl, [data-ext-id=\"com.nubeio.ce\"].max-w-xl {\n  max-width: var(--container-xl, 36rem);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .min-w-0, [data-ext-id=\"com.nubeio.ce\"].min-w-0 {\n  min-width: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .shrink-0, [data-ext-id=\"com.nubeio.ce\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .grid-cols-\\[1fr_120px\\], [data-ext-id=\"com.nubeio.ce\"].grid-cols-\\[1fr_120px\\] {\n  grid-template-columns: 1fr 120px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .flex-col, [data-ext-id=\"com.nubeio.ce\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .items-center, [data-ext-id=\"com.nubeio.ce\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .items-end, [data-ext-id=\"com.nubeio.ce\"].items-end {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .justify-between, [data-ext-id=\"com.nubeio.ce\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .justify-end, [data-ext-id=\"com.nubeio.ce\"].justify-end {\n  justify-content: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-0\\.5, [data-ext-id=\"com.nubeio.ce\"].gap-0\\.5 {\n  gap: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-1, [data-ext-id=\"com.nubeio.ce\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-1\\.5, [data-ext-id=\"com.nubeio.ce\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-2, [data-ext-id=\"com.nubeio.ce\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-3, [data-ext-id=\"com.nubeio.ce\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-4, [data-ext-id=\"com.nubeio.ce\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .overflow-hidden, [data-ext-id=\"com.nubeio.ce\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .border, [data-ext-id=\"com.nubeio.ce\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .border-t, [data-ext-id=\"com.nubeio.ce\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .p-2, [data-ext-id=\"com.nubeio.ce\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .p-4, [data-ext-id=\"com.nubeio.ce\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .px-2, [data-ext-id=\"com.nubeio.ce\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .px-2\\.5, [data-ext-id=\"com.nubeio.ce\"].px-2\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .px-3, [data-ext-id=\"com.nubeio.ce\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .py-1\\.5, [data-ext-id=\"com.nubeio.ce\"].py-1\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .py-2, [data-ext-id=\"com.nubeio.ce\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .py-6, [data-ext-id=\"com.nubeio.ce\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .pt-2, [data-ext-id=\"com.nubeio.ce\"].pt-2 {\n  padding-top: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-center, [data-ext-id=\"com.nubeio.ce\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-left, [data-ext-id=\"com.nubeio.ce\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-start, [data-ext-id=\"com.nubeio.ce\"].text-start {\n  text-align: start;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-base, [data-ext-id=\"com.nubeio.ce\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-sm, [data-ext-id=\"com.nubeio.ce\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-xl, [data-ext-id=\"com.nubeio.ce\"].text-xl {\n  font-size: var(--text-xl, 1.25rem);\n  line-height: var(--tw-leading, var(--text-xl--line-height, calc(1.75 / 1.25)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-xs, [data-ext-id=\"com.nubeio.ce\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .font-medium, [data-ext-id=\"com.nubeio.ce\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .font-semibold, [data-ext-id=\"com.nubeio.ce\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .no-underline, [data-ext-id=\"com.nubeio.ce\"].no-underline {\n  text-decoration-line: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .outline-hidden, [data-ext-id=\"com.nubeio.ce\"].outline-hidden {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n@media (forced-colors: active) {\n  [data-ext-id=\"com.nubeio.ce\"] .outline-hidden, [data-ext-id=\"com.nubeio.ce\"].outline-hidden {\n    outline-offset: 2px;\n    outline: 2px solid #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .transition-\\[width\\,height\\,padding\\], [data-ext-id=\"com.nubeio.ce\"].transition-\\[width\\,height\\,padding\\] {\n  transition-property: width, height, padding;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n@media (hover: hover) {\n  [data-ext-id=\"com.nubeio.ce\"] .hover\\:underline:hover, [data-ext-id=\"com.nubeio.ce\"].hover\\:underline:hover {\n    text-decoration-line: underline;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.nubeio.ce\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.nubeio.ce\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.nubeio.ce\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .disabled\\:opacity-60:disabled, [data-ext-id=\"com.nubeio.ce\"].disabled\\:opacity-60:disabled {\n  opacity: .6;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"], [data-ext-id=\"com.nubeio.ce\"].data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child, [data-ext-id=\"com.nubeio.ce\"].\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .\\[\\&\\>svg\\]\\:size-4 > svg, [data-ext-id=\"com.nubeio.ce\"].\\[\\&\\>svg\\]\\:size-4 > svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .\\[\\&\\>svg\\]\\:shrink-0 > svg, [data-ext-id=\"com.nubeio.ce\"].\\[\\&\\>svg\\]\\:shrink-0 > svg {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow, [data-ext-id=\"com.nubeio.ce\"].react-flow {\n  --xy-edge-stroke-default: #b1b1b7;\n  --xy-edge-stroke-width-default: 1;\n  --xy-edge-stroke-selected-default: #555;\n  --xy-connectionline-stroke-default: #b1b1b7;\n  --xy-connectionline-stroke-width-default: 1;\n  --xy-attribution-background-color-default: #ffffff80;\n  --xy-minimap-background-color-default: #fff;\n  --xy-minimap-mask-background-color-default: #f0f0f099;\n  --xy-minimap-mask-stroke-color-default: transparent;\n  --xy-minimap-mask-stroke-width-default: 1;\n  --xy-minimap-node-background-color-default: #e2e2e2;\n  --xy-minimap-node-stroke-color-default: transparent;\n  --xy-minimap-node-stroke-width-default: 2;\n  --xy-background-color-default: transparent;\n  --xy-background-pattern-dots-color-default: #91919a;\n  --xy-background-pattern-lines-color-default: #eee;\n  --xy-background-pattern-cross-color-default: #e2e2e2;\n  background-color: var(--xy-background-color, var(--xy-background-color-default));\n  --xy-node-color-default: inherit;\n  --xy-node-border-default: 1px solid #1a192b;\n  --xy-node-background-color-default: #fff;\n  --xy-node-group-background-color-default: #f0f0f040;\n  --xy-node-boxshadow-hover-default: 0 1px 4px 1px #00000014;\n  --xy-node-boxshadow-selected-default: 0 0 0 .5px #1a192b;\n  --xy-node-border-radius-default: 3px;\n  --xy-handle-background-color-default: #1a192b;\n  --xy-handle-border-color-default: #fff;\n  --xy-selection-background-color-default: #0059dc14;\n  --xy-selection-border-default: 1px dotted #0059dccc;\n  --xy-controls-button-background-color-default: #fefefe;\n  --xy-controls-button-background-color-hover-default: #f4f4f4;\n  --xy-controls-button-color-default: inherit;\n  --xy-controls-button-color-hover-default: inherit;\n  --xy-controls-button-border-color-default: #eee;\n  --xy-controls-box-shadow-default: 0 0 2px 1px #00000014;\n  --xy-edge-label-background-color-default: #fff;\n  --xy-edge-label-color-default: inherit;\n  --xy-resize-background-color-default: #3367d9;\n  direction: ltr;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow.dark, [data-ext-id=\"com.nubeio.ce\"].react-flow.dark {\n  --xy-edge-stroke-default: #3e3e3e;\n  --xy-edge-stroke-width-default: 1;\n  --xy-edge-stroke-selected-default: #727272;\n  --xy-connectionline-stroke-default: #b1b1b7;\n  --xy-connectionline-stroke-width-default: 1;\n  --xy-attribution-background-color-default: #96969640;\n  --xy-minimap-background-color-default: #141414;\n  --xy-minimap-mask-background-color-default: #3c3c3c99;\n  --xy-minimap-mask-stroke-color-default: transparent;\n  --xy-minimap-mask-stroke-width-default: 1;\n  --xy-minimap-node-background-color-default: #2b2b2b;\n  --xy-minimap-node-stroke-color-default: transparent;\n  --xy-minimap-node-stroke-width-default: 2;\n  --xy-background-color-default: #141414;\n  --xy-background-pattern-dots-color-default: #777;\n  --xy-background-pattern-lines-color-default: #777;\n  --xy-background-pattern-cross-color-default: #777;\n  --xy-node-color-default: #f8f8f8;\n  --xy-node-border-default: 1px solid #3c3c3c;\n  --xy-node-background-color-default: #1e1e1e;\n  --xy-node-group-background-color-default: #f0f0f040;\n  --xy-node-boxshadow-hover-default: 0 1px 4px 1px #ffffff14;\n  --xy-node-boxshadow-selected-default: 0 0 0 .5px #999;\n  --xy-handle-background-color-default: #bebebe;\n  --xy-handle-border-color-default: #1e1e1e;\n  --xy-selection-background-color-default: #c8c8dc14;\n  --xy-selection-border-default: 1px dotted #c8c8dccc;\n  --xy-controls-button-background-color-default: #2b2b2b;\n  --xy-controls-button-background-color-hover-default: #3e3e3e;\n  --xy-controls-button-color-default: #f8f8f8;\n  --xy-controls-button-color-hover-default: #fff;\n  --xy-controls-button-border-color-default: #5b5b5b;\n  --xy-controls-box-shadow-default: 0 0 2px 1px #00000014;\n  --xy-edge-label-background-color-default: #141414;\n  --xy-edge-label-color-default: #f8f8f8;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background, [data-ext-id=\"com.nubeio.ce\"].react-flow__background {\n  background-color: var(--xy-background-color-props, var(--xy-background-color, var(--xy-background-color-default)));\n  pointer-events: none;\n  z-index: -1;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__container, [data-ext-id=\"com.nubeio.ce\"].react-flow__container {\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane {\n  z-index: 1;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.draggable, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.draggable {\n  cursor: grab;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.dragging, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.dragging {\n  cursor: grabbing;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.selection {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__viewport, [data-ext-id=\"com.nubeio.ce\"].react-flow__viewport {\n  transform-origin: 0 0;\n  z-index: 2;\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__renderer, [data-ext-id=\"com.nubeio.ce\"].react-flow__renderer {\n  z-index: 4;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection {\n  z-index: 6;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-path {\n  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n  stroke-width: var(--xy-edge-stroke-width, var(--xy-edge-stroke-width-default));\n  fill: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection-path {\n  stroke: var(--xy-connectionline-stroke, var(--xy-connectionline-stroke-default));\n  stroke-width: var(--xy-connectionline-stroke-width, var(--xy-connectionline-stroke-width-default));\n  fill: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow .react-flow__edges, [data-ext-id=\"com.nubeio.ce\"].react-flow .react-flow__edges {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow .react-flow__edges svg, [data-ext-id=\"com.nubeio.ce\"].react-flow .react-flow__edges svg {\n  pointer-events: none;\n  position: absolute;\n  overflow: visible;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge {\n  pointer-events: visibleStroke;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.animated path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.animated path {\n  stroke-dasharray: 5;\n  animation: .5s linear infinite dashdraw;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.animated path.react-flow__edge-interaction, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.animated path.react-flow__edge-interaction {\n  stroke-dasharray: none;\n  animation: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.inactive, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.inactive {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selected .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selected .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable:focus .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable:focus .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable:focus-visible .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable:focus-visible .react-flow__edge-path {\n  stroke: var(--xy-edge-stroke-selected, var(--xy-edge-stroke-selected-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-textwrapper, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-textwrapper {\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge .react-flow__edge-text {\n  pointer-events: none;\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__arrowhead polyline, [data-ext-id=\"com.nubeio.ce\"].react-flow__arrowhead polyline {\n  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__arrowhead polyline.arrowclosed, [data-ext-id=\"com.nubeio.ce\"].react-flow__arrowhead polyline.arrowclosed {\n  fill: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection .animated, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection .animated {\n  stroke-dasharray: 5;\n  animation: .5s linear infinite dashdraw;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] svg.react-flow__connectionline {\n  z-index: 1001;\n  position: absolute;\n  overflow: visible;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodes, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodes {\n  pointer-events: none;\n  transform-origin: 0 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node, [data-ext-id=\"com.nubeio.ce\"].react-flow__node {\n  -webkit-user-select: none;\n  user-select: none;\n  pointer-events: all;\n  transform-origin: 0 0;\n  box-sizing: border-box;\n  cursor: default;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.draggable, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.draggable {\n  cursor: grab;\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.draggable.dragging, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.draggable.dragging {\n  cursor: grabbing;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection {\n  z-index: 3;\n  transform-origin: 0 0;\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect {\n  pointer-events: all;\n  cursor: grab;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle {\n  pointer-events: none;\n  background-color: var(--xy-handle-background-color, var(--xy-handle-background-color-default));\n  border: 1px solid var(--xy-handle-border-color, var(--xy-handle-border-color-default));\n  border-radius: 100%;\n  width: 6px;\n  min-width: 5px;\n  height: 6px;\n  min-height: 5px;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle.connectingfrom, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle.connectingfrom {\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle.connectionindicator, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle.connectionindicator {\n  pointer-events: all;\n  cursor: crosshair;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-bottom {\n  top: auto;\n  bottom: 0;\n  left: 50%;\n  transform: translate(-50%, 50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-top, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-top {\n  top: 0;\n  left: 50%;\n  transform: translate(-50%, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-left, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-left {\n  top: 50%;\n  left: 0;\n  transform: translate(-50%, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-right, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-right {\n  top: 50%;\n  right: 0;\n  transform: translate(50%, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edgeupdater, [data-ext-id=\"com.nubeio.ce\"].react-flow__edgeupdater {\n  cursor: move;\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.selection .react-flow__panel, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.selection .react-flow__panel {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel {\n  z-index: 5;\n  margin: 15px;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.top {\n  top: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.bottom {\n  bottom: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.top.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.top.center, [data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.bottom.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.bottom.center {\n  left: 50%;\n  transform: translateX(-15px) translateX(-50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.left {\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.right {\n  right: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.left.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.left.center, [data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.right.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.right.center {\n  top: 50%;\n  transform: translateY(-15px) translateY(-50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__attribution, [data-ext-id=\"com.nubeio.ce\"].react-flow__attribution {\n  background: var(--xy-attribution-background-color, var(--xy-attribution-background-color-default));\n  margin: 0;\n  padding: 2px 3px;\n  font-size: 10px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__attribution a, [data-ext-id=\"com.nubeio.ce\"].react-flow__attribution a {\n  color: #999;\n  text-decoration: none;\n}\n\n@keyframes dashdraw {\n  from {\n    stroke-dashoffset: 10px;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edgelabel-renderer, [data-ext-id=\"com.nubeio.ce\"].react-flow__edgelabel-renderer {\n  pointer-events: none;\n  -webkit-user-select: none;\n  user-select: none;\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__viewport-portal, [data-ext-id=\"com.nubeio.ce\"].react-flow__viewport-portal {\n  -webkit-user-select: none;\n  user-select: none;\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap {\n  background: var(--xy-minimap-background-color-props, var(--xy-minimap-background-color, var(--xy-minimap-background-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-svg {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-mask, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-mask {\n  fill: var(--xy-minimap-mask-background-color-props, var(--xy-minimap-mask-background-color, var(--xy-minimap-mask-background-color-default)));\n  stroke: var(--xy-minimap-mask-stroke-color-props, var(--xy-minimap-mask-stroke-color, var(--xy-minimap-mask-stroke-color-default)));\n  stroke-width: var(--xy-minimap-mask-stroke-width-props, var(--xy-minimap-mask-stroke-width, var(--xy-minimap-mask-stroke-width-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-node, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-node {\n  fill: var(--xy-minimap-node-background-color-props, var(--xy-minimap-node-background-color, var(--xy-minimap-node-background-color-default)));\n  stroke: var(--xy-minimap-node-stroke-color-props, var(--xy-minimap-node-stroke-color, var(--xy-minimap-node-stroke-color-default)));\n  stroke-width: var(--xy-minimap-node-stroke-width-props, var(--xy-minimap-node-stroke-width, var(--xy-minimap-node-stroke-width-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.dots, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.dots {\n  fill: var(--xy-background-pattern-color-props, var(--xy-background-pattern-color, var(--xy-background-pattern-dots-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.lines, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.lines {\n  stroke: var(--xy-background-pattern-color-props, var(--xy-background-pattern-color, var(--xy-background-pattern-lines-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.cross, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.cross {\n  stroke: var(--xy-background-pattern-color-props, var(--xy-background-pattern-color, var(--xy-background-pattern-cross-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls {\n  box-shadow: var(--xy-controls-box-shadow, var(--xy-controls-box-shadow-default));\n  flex-direction: column;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal {\n  flex-direction: row;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button {\n  background: var(--xy-controls-button-background-color, var(--xy-controls-button-background-color-default));\n  border: none;\n  border-bottom: 1px solid var(--xy-controls-button-border-color-props, var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default)));\n  width: 26px;\n  height: 26px;\n  color: var(--xy-controls-button-color-props, var(--xy-controls-button-color, var(--xy-controls-button-color-default)));\n  cursor: pointer;\n  -webkit-user-select: none;\n  user-select: none;\n  justify-content: center;\n  align-items: center;\n  padding: 4px;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button svg {\n  fill: currentColor;\n  width: 100%;\n  max-width: 12px;\n  max-height: 12px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.updating .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.updating .react-flow__edge-path {\n  stroke: #777;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-text {\n  font-size: 10px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group {\n  border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));\n  width: 150px;\n  color: var(--xy-node-color, var(--xy-node-color-default));\n  text-align: center;\n  border: var(--xy-node-border, var(--xy-node-border-default));\n  background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));\n  padding: 10px;\n  font-size: 12px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:hover {\n  box-shadow: var(--xy-node-boxshadow-hover, var(--xy-node-boxshadow-hover-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:focus-visible {\n  box-shadow: var(--xy-node-boxshadow-selected, var(--xy-node-boxshadow-selected-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group {\n  background-color: var(--xy-node-group-background-color, var(--xy-node-group-background-color-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection {\n  background: var(--xy-selection-background-color, var(--xy-selection-background-color-default));\n  border: var(--xy-selection-border, var(--xy-selection-border-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:hover {\n  background: var(--xy-controls-button-background-color-hover-props, var(--xy-controls-button-background-color-hover, var(--xy-controls-button-background-color-hover-default)));\n  color: var(--xy-controls-button-color-hover-props, var(--xy-controls-button-color-hover, var(--xy-controls-button-color-hover-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:disabled, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:disabled svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:disabled svg {\n  fill-opacity: .4;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:last-child, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:last-child {\n  border-bottom: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal .react-flow__controls-button, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal .react-flow__controls-button {\n  border-bottom: none;\n  border-right: 1px solid var(--xy-controls-button-border-color-props, var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal .react-flow__controls-button:last-child, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal .react-flow__controls-button:last-child {\n  border-right: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.right {\n  cursor: ew-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom {\n  cursor: ns-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom.right {\n  cursor: nwse-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top.right {\n  cursor: nesw-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle {\n  background-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));\n  border: 1px solid #fff;\n  border-radius: 1px;\n  width: 5px;\n  height: 5px;\n  translate: -50% -50%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.left {\n  top: 50%;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.right {\n  top: 50%;\n  left: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top {\n  top: 0;\n  left: 50%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom {\n  top: 100%;\n  left: 50%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom.left {\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top.right, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom.right {\n  left: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line {\n  border-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));\n  border-style: solid;\n  border-width: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.right {\n  width: 1px;\n  height: 100%;\n  top: 0;\n  transform: translate(-50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.left {\n  border-left-width: 1px;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.right {\n  border-right-width: 1px;\n  left: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.bottom {\n  width: 100%;\n  height: 1px;\n  left: 0;\n  transform: translate(0, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.top {\n  border-top-width: 1px;\n  top: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.bottom {\n  border-bottom-width: 1px;\n  top: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-textbg, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-textbg {\n  fill: var(--xy-edge-label-background-color, var(--xy-edge-label-background-color-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-text {\n  fill: var(--xy-edge-label-color, var(--xy-edge-label-color-default));\n}\n\n:root {\n  --sf-node-bg: #ffffffeb;\n  --sf-node-fg: #0f172a;\n  --sf-node-border: #e2e8f0;\n  --sf-node-divider: #eef2f7;\n  --sf-node-extra: #475569;\n  --sf-node-shadow: 0 1px 0 0 #0f172a0a inset,\n                       0 14px 32px -18px #0f172a73,\n                       0 2px 6px -2px #0f172a14;\n  --sf-handle-border: #fff;\n  --sf-handle-ring: #0f172a1a;\n  --sf-slot-label: #475569;\n  --sf-slot-value-bg: #0f172a0f;\n  --sf-slot-value-fg: #0f172a;\n  --sf-edge-label-bg: #fff;\n  --sf-palette-bg: #fff;\n  --sf-palette-border: #e2e8f0;\n  --sf-palette-hover: #f1f5f9;\n  --sf-font: ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif;\n  --sf-mono: ui-monospace, SFMono-Regular, Menlo, monospace;\n  --sf-radius: 14px;\n  --sf-radius-sm: 8px;\n  --sf-accent-default: #0ea5e9;\n  --sf-state-ready: #3b82f6;\n  --sf-state-running: #f59e0b;\n  --sf-state-ok: #10b981;\n  --sf-state-error: #ef4444;\n  --sf-state-cancelled: #64748b;\n  --sf-state-skipped: #94a3b8;\n  --sf-selected-ring: var(--sf-accent, var(--sf-accent-default));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  :root {\n    --sf-selected-ring: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 60%, transparent);\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --sf-node-bg: #0f172ac7;\n    --sf-node-fg: #f1f5f9;\n    --sf-node-border: #1e293b;\n    --sf-node-divider: #1e293b;\n    --sf-node-extra: #cbd5e1;\n    --sf-node-shadow: 0 1px 0 0 #ffffff0a inset,\n                         0 16px 36px -14px #0009,\n                         0 2px 6px -2px #0006;\n    --sf-handle-border: #0f172a;\n    --sf-handle-ring: #ffffff14;\n    --sf-slot-label: #cbd5e1;\n    --sf-slot-value-bg: #ffffff14;\n    --sf-slot-value-fg: #f1f5f9;\n    --sf-edge-label-bg: #0f172a;\n    --sf-palette-bg: #0f172aeb;\n    --sf-palette-border: #1e293b;\n    --sf-palette-hover: #1e293b;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node, [data-ext-id=\"com.nubeio.ce\"].sf-node {\n  font-family: var(--sf-font);\n  color: var(--sf-node-fg);\n  background: var(--sf-node-bg);\n  border: 1px solid var(--sf-node-border);\n  border-radius: var(--sf-radius);\n  width: var(--sf-node-width, 240px);\n  box-shadow: var(--sf-node-shadow);\n  -webkit-backdrop-filter: blur(10px) saturate(140%);\n  transition: box-shadow .16s, border-color .16s, transform .16s;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node:hover, [data-ext-id=\"com.nubeio.ce\"].sf-node:hover {\n  border-color: var(--sf-accent, var(--sf-accent-default));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node:hover, [data-ext-id=\"com.nubeio.ce\"].sf-node:hover {\n    border-color: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 35%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--selected, [data-ext-id=\"com.nubeio.ce\"].sf-node--selected {\n  border-color: var(--sf-accent, var(--sf-accent-default));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--selected, [data-ext-id=\"com.nubeio.ce\"].sf-node--selected {\n    border-color: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 70%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--selected, [data-ext-id=\"com.nubeio.ce\"].sf-node--selected {\n  box-shadow: var(--sf-node-shadow), 0 0 0 3px var(--sf-selected-ring);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node:before, [data-ext-id=\"com.nubeio.ce\"].sf-node:before {\n  content: \"\";\n  background: linear-gradient(90deg, var(--sf-accent, var(--sf-accent-default)) 0%, var(--sf-accent, var(--sf-accent-default)) 100%);\n  height: 3px;\n  display: block;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node:before, [data-ext-id=\"com.nubeio.ce\"].sf-node:before {\n    background: linear-gradient(90deg, var(--sf-accent, var(--sf-accent-default)) 0%, color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 50%, transparent) 100%);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__header, [data-ext-id=\"com.nubeio.ce\"].sf-node__header {\n  letter-spacing: -.005em;\n  align-items: center;\n  gap: 8px;\n  padding: 10px 12px 8px;\n  font-size: 12px;\n  font-weight: 600;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__icon, [data-ext-id=\"com.nubeio.ce\"].sf-node__icon {\n  background: var(--sf-accent, var(--sf-accent-default));\n  border-radius: 6px;\n  justify-content: center;\n  align-items: center;\n  width: 22px;\n  height: 22px;\n  display: inline-flex;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node__icon, [data-ext-id=\"com.nubeio.ce\"].sf-node__icon {\n    background: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 18%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__icon, [data-ext-id=\"com.nubeio.ce\"].sf-node__icon {\n  color: var(--sf-accent, var(--sf-accent-default));\n  flex-shrink: 0;\n  font-size: 10px;\n  font-weight: 700;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__title, [data-ext-id=\"com.nubeio.ce\"].sf-node__title {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--sf-node-fg);\n  flex: auto;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__kind, [data-ext-id=\"com.nubeio.ce\"].sf-node__kind {\n  text-transform: uppercase;\n  letter-spacing: .08em;\n  color: var(--sf-slot-label);\n  opacity: .7;\n  font-size: 10px;\n  font-weight: 500;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state, [data-ext-id=\"com.nubeio.ce\"].sf-node__state {\n  border-radius: 50%;\n  flex-shrink: 0;\n  width: 8px;\n  height: 8px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--ready, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--ready {\n  background: var(--sf-state-ready);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--running, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--running {\n  background: var(--sf-state-running);\n  box-shadow: 0 0 0 0 var(--sf-state-running);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node__state--running, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--running {\n    box-shadow: 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--running, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--running {\n  animation: 1.2s ease-in-out infinite sf-pulse-dot;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--ok, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--ok {\n  background: var(--sf-state-ok);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--error, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--error {\n  background: var(--sf-state-error);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--cancelled, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--cancelled {\n  background: var(--sf-state-cancelled);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--skipped, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--skipped {\n  background: var(--sf-state-skipped);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__body, [data-ext-id=\"com.nubeio.ce\"].sf-node__body {\n  border-top: 1px solid var(--sf-node-divider);\n  grid-template-columns: 1fr 1fr;\n  gap: 4px 12px;\n  min-width: 0;\n  padding: 6px 0 10px;\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__col, [data-ext-id=\"com.nubeio.ce\"].sf-node__col {\n  flex-direction: column;\n  gap: 4px;\n  min-width: 0;\n  padding: 6px 0;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__col--out, [data-ext-id=\"com.nubeio.ce\"].sf-node__col--out {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__extra, [data-ext-id=\"com.nubeio.ce\"].sf-node__extra {\n  border-top: 1px solid var(--sf-node-divider);\n  color: var(--sf-node-extra);\n  padding: 8px 12px;\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot-row, [data-ext-id=\"com.nubeio.ce\"].sf-slot-row {\n  flex-direction: column;\n  min-width: 0;\n  max-width: 100%;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot-row--input, [data-ext-id=\"com.nubeio.ce\"].sf-slot-row--input {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot-row--output, [data-ext-id=\"com.nubeio.ce\"].sf-slot-row--output {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot, [data-ext-id=\"com.nubeio.ce\"].sf-slot {\n  align-items: center;\n  gap: 8px;\n  padding: 2px 12px;\n  display: flex;\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot--output, [data-ext-id=\"com.nubeio.ce\"].sf-slot--output {\n  flex-direction: row-reverse;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__handle, [data-ext-id=\"com.nubeio.ce\"].sf-slot__handle {\n  box-shadow: 0 0 0 2px var(--sf-handle-ring);\n  transition: transform .12s, box-shadow .12s;\n  border: 2px solid var(--sf-handle-border) !important;\n  width: 10px !important;\n  height: 10px !important;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__handle:hover, [data-ext-id=\"com.nubeio.ce\"].sf-slot__handle:hover {\n  box-shadow: 0 0 0 3px var(--sf-accent, var(--sf-accent-default));\n  transform: scale(1.25);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-slot__handle:hover, [data-ext-id=\"com.nubeio.ce\"].sf-slot__handle:hover {\n    box-shadow: 0 0 0 3px color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__label, [data-ext-id=\"com.nubeio.ce\"].sf-slot__label {\n  color: var(--sf-slot-label);\n  white-space: nowrap;\n  font-size: 11px;\n  line-height: 1.2;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__required, [data-ext-id=\"com.nubeio.ce\"].sf-slot__required {\n  color: var(--sf-state-error);\n  margin-left: 2px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__value, [data-ext-id=\"com.nubeio.ce\"].sf-slot__value {\n  background: var(--sf-slot-value-bg);\n  color: var(--sf-slot-value-fg);\n  font-family: var(--sf-mono);\n  max-width: calc(var(--sf-node-width, 240px) - 32px);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  border-radius: 4px;\n  margin: 1px 12px 0;\n  padding: 1px 6px;\n  font-size: 10px;\n  line-height: 1.3;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--ready, [data-ext-id=\"com.nubeio.ce\"].sf-node--ready {\n  border-color: var(--sf-state-ready);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--ok, [data-ext-id=\"com.nubeio.ce\"].sf-node--ok {\n  border-color: var(--sf-state-ok);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--ok, [data-ext-id=\"com.nubeio.ce\"].sf-node--ok {\n    border-color: color-mix(in oklab, var(--sf-state-ok) 60%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--error, [data-ext-id=\"com.nubeio.ce\"].sf-node--error {\n  border-color: var(--sf-state-error);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--error, [data-ext-id=\"com.nubeio.ce\"].sf-node--error {\n    border-color: color-mix(in oklab, var(--sf-state-error) 70%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--cancelled, [data-ext-id=\"com.nubeio.ce\"].sf-node--cancelled {\n  border-color: var(--sf-state-cancelled);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--skipped, [data-ext-id=\"com.nubeio.ce\"].sf-node--skipped {\n  border-color: var(--sf-state-skipped);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--running, [data-ext-id=\"com.nubeio.ce\"].sf-node--running {\n  border-color: var(--sf-state-running);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--running, [data-ext-id=\"com.nubeio.ce\"].sf-node--running {\n    border-color: color-mix(in oklab, var(--sf-state-running) 70%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--running, [data-ext-id=\"com.nubeio.ce\"].sf-node--running {\n  animation: 1.6s ease-in-out infinite sf-pulse;\n}\n\n@keyframes sf-pulse {\n  0%, 100% {\n    box-shadow: var(--sf-node-shadow), 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 35%, transparent);\n  }\n\n  50% {\n    box-shadow: var(--sf-node-shadow), 0 0 0 8px color-mix(in oklab, var(--sf-state-running) 0%, transparent);\n  }\n}\n\n@keyframes sf-pulse-dot {\n  0%, 100% {\n    box-shadow: 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 50%, transparent);\n  }\n\n  50% {\n    box-shadow: 0 0 0 5px color-mix(in oklab, var(--sf-state-running) 0%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-edge--active, [data-ext-id=\"com.nubeio.ce\"].sf-edge--active {\n  animation: .6s linear infinite sf-dash;\n}\n\n@keyframes sf-dash {\n  to {\n    stroke-dashoffset: -20px;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.ce\"].ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .ext-card, [data-ext-id=\"com.nubeio.ce\"].ext-card {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 12px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .ext-wiresheet, [data-ext-id=\"com.nubeio.ce\"].ext-wiresheet {\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 12px;\n  width: 100%;\n  height: calc(100vh - 9rem);\n  min-height: 24rem;\n  position: relative;\n  overflow: hidden;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
+	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.nubeio.ce\"] :before, [data-ext-id=\"com.nubeio.ce\"]:before, [data-ext-id=\"com.nubeio.ce\"] :after, [data-ext-id=\"com.nubeio.ce\"]:after, [data-ext-id=\"com.nubeio.ce\"] ::backdrop, [data-ext-id=\"com.nubeio.ce\"]::backdrop {\n      --tw-border-style: solid;\n      --tw-font-weight: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n    }\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .absolute, [data-ext-id=\"com.nubeio.ce\"].absolute {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .fixed, [data-ext-id=\"com.nubeio.ce\"].fixed {\n  position: fixed;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .relative, [data-ext-id=\"com.nubeio.ce\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .z-10, [data-ext-id=\"com.nubeio.ce\"].z-10 {\n  z-index: 10;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .block, [data-ext-id=\"com.nubeio.ce\"].block {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .flex, [data-ext-id=\"com.nubeio.ce\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .grid, [data-ext-id=\"com.nubeio.ce\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .inline-flex, [data-ext-id=\"com.nubeio.ce\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .size-4, [data-ext-id=\"com.nubeio.ce\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .h-8, [data-ext-id=\"com.nubeio.ce\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .w-full, [data-ext-id=\"com.nubeio.ce\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .max-w-xl, [data-ext-id=\"com.nubeio.ce\"].max-w-xl {\n  max-width: var(--container-xl, 36rem);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .min-w-0, [data-ext-id=\"com.nubeio.ce\"].min-w-0 {\n  min-width: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .shrink-0, [data-ext-id=\"com.nubeio.ce\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .grid-cols-\\[1fr_120px\\], [data-ext-id=\"com.nubeio.ce\"].grid-cols-\\[1fr_120px\\] {\n  grid-template-columns: 1fr 120px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .flex-col, [data-ext-id=\"com.nubeio.ce\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .items-center, [data-ext-id=\"com.nubeio.ce\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .items-end, [data-ext-id=\"com.nubeio.ce\"].items-end {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .justify-between, [data-ext-id=\"com.nubeio.ce\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .justify-end, [data-ext-id=\"com.nubeio.ce\"].justify-end {\n  justify-content: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-0\\.5, [data-ext-id=\"com.nubeio.ce\"].gap-0\\.5 {\n  gap: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-1, [data-ext-id=\"com.nubeio.ce\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-1\\.5, [data-ext-id=\"com.nubeio.ce\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-2, [data-ext-id=\"com.nubeio.ce\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-3, [data-ext-id=\"com.nubeio.ce\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .gap-4, [data-ext-id=\"com.nubeio.ce\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .overflow-hidden, [data-ext-id=\"com.nubeio.ce\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .border, [data-ext-id=\"com.nubeio.ce\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .border-t, [data-ext-id=\"com.nubeio.ce\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .p-2, [data-ext-id=\"com.nubeio.ce\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .p-4, [data-ext-id=\"com.nubeio.ce\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .px-2, [data-ext-id=\"com.nubeio.ce\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .px-2\\.5, [data-ext-id=\"com.nubeio.ce\"].px-2\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .px-3, [data-ext-id=\"com.nubeio.ce\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .py-1\\.5, [data-ext-id=\"com.nubeio.ce\"].py-1\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .py-2, [data-ext-id=\"com.nubeio.ce\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .py-6, [data-ext-id=\"com.nubeio.ce\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .pt-2, [data-ext-id=\"com.nubeio.ce\"].pt-2 {\n  padding-top: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-center, [data-ext-id=\"com.nubeio.ce\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-left, [data-ext-id=\"com.nubeio.ce\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-start, [data-ext-id=\"com.nubeio.ce\"].text-start {\n  text-align: start;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-base, [data-ext-id=\"com.nubeio.ce\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-sm, [data-ext-id=\"com.nubeio.ce\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-xl, [data-ext-id=\"com.nubeio.ce\"].text-xl {\n  font-size: var(--text-xl, 1.25rem);\n  line-height: var(--tw-leading, var(--text-xl--line-height, calc(1.75 / 1.25)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .text-xs, [data-ext-id=\"com.nubeio.ce\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .font-medium, [data-ext-id=\"com.nubeio.ce\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .font-semibold, [data-ext-id=\"com.nubeio.ce\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .no-underline, [data-ext-id=\"com.nubeio.ce\"].no-underline {\n  text-decoration-line: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .outline-hidden, [data-ext-id=\"com.nubeio.ce\"].outline-hidden {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n@media (forced-colors: active) {\n  [data-ext-id=\"com.nubeio.ce\"] .outline-hidden, [data-ext-id=\"com.nubeio.ce\"].outline-hidden {\n    outline-offset: 2px;\n    outline: 2px solid #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .transition-\\[width\\,height\\,padding\\], [data-ext-id=\"com.nubeio.ce\"].transition-\\[width\\,height\\,padding\\] {\n  transition-property: width, height, padding;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n@media (hover: hover) {\n  [data-ext-id=\"com.nubeio.ce\"] .hover\\:underline:hover, [data-ext-id=\"com.nubeio.ce\"].hover\\:underline:hover {\n    text-decoration-line: underline;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.nubeio.ce\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.nubeio.ce\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.nubeio.ce\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .disabled\\:opacity-60:disabled, [data-ext-id=\"com.nubeio.ce\"].disabled\\:opacity-60:disabled {\n  opacity: .6;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"], [data-ext-id=\"com.nubeio.ce\"].data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child, [data-ext-id=\"com.nubeio.ce\"].\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .\\[\\&\\>svg\\]\\:size-4 > svg, [data-ext-id=\"com.nubeio.ce\"].\\[\\&\\>svg\\]\\:size-4 > svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .\\[\\&\\>svg\\]\\:shrink-0 > svg, [data-ext-id=\"com.nubeio.ce\"].\\[\\&\\>svg\\]\\:shrink-0 > svg {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow, [data-ext-id=\"com.nubeio.ce\"].react-flow {\n  --xy-edge-stroke-default: #b1b1b7;\n  --xy-edge-stroke-width-default: 1;\n  --xy-edge-stroke-selected-default: #555;\n  --xy-connectionline-stroke-default: #b1b1b7;\n  --xy-connectionline-stroke-width-default: 1;\n  --xy-attribution-background-color-default: #ffffff80;\n  --xy-minimap-background-color-default: #fff;\n  --xy-minimap-mask-background-color-default: #f0f0f099;\n  --xy-minimap-mask-stroke-color-default: transparent;\n  --xy-minimap-mask-stroke-width-default: 1;\n  --xy-minimap-node-background-color-default: #e2e2e2;\n  --xy-minimap-node-stroke-color-default: transparent;\n  --xy-minimap-node-stroke-width-default: 2;\n  --xy-background-color-default: transparent;\n  --xy-background-pattern-dots-color-default: #91919a;\n  --xy-background-pattern-lines-color-default: #eee;\n  --xy-background-pattern-cross-color-default: #e2e2e2;\n  background-color: var(--xy-background-color, var(--xy-background-color-default));\n  --xy-node-color-default: inherit;\n  --xy-node-border-default: 1px solid #1a192b;\n  --xy-node-background-color-default: #fff;\n  --xy-node-group-background-color-default: #f0f0f040;\n  --xy-node-boxshadow-hover-default: 0 1px 4px 1px #00000014;\n  --xy-node-boxshadow-selected-default: 0 0 0 .5px #1a192b;\n  --xy-node-border-radius-default: 3px;\n  --xy-handle-background-color-default: #1a192b;\n  --xy-handle-border-color-default: #fff;\n  --xy-selection-background-color-default: #0059dc14;\n  --xy-selection-border-default: 1px dotted #0059dccc;\n  --xy-controls-button-background-color-default: #fefefe;\n  --xy-controls-button-background-color-hover-default: #f4f4f4;\n  --xy-controls-button-color-default: inherit;\n  --xy-controls-button-color-hover-default: inherit;\n  --xy-controls-button-border-color-default: #eee;\n  --xy-controls-box-shadow-default: 0 0 2px 1px #00000014;\n  --xy-edge-label-background-color-default: #fff;\n  --xy-edge-label-color-default: inherit;\n  --xy-resize-background-color-default: #3367d9;\n  direction: ltr;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow.dark, [data-ext-id=\"com.nubeio.ce\"].react-flow.dark {\n  --xy-edge-stroke-default: #3e3e3e;\n  --xy-edge-stroke-width-default: 1;\n  --xy-edge-stroke-selected-default: #727272;\n  --xy-connectionline-stroke-default: #b1b1b7;\n  --xy-connectionline-stroke-width-default: 1;\n  --xy-attribution-background-color-default: #96969640;\n  --xy-minimap-background-color-default: #141414;\n  --xy-minimap-mask-background-color-default: #3c3c3c99;\n  --xy-minimap-mask-stroke-color-default: transparent;\n  --xy-minimap-mask-stroke-width-default: 1;\n  --xy-minimap-node-background-color-default: #2b2b2b;\n  --xy-minimap-node-stroke-color-default: transparent;\n  --xy-minimap-node-stroke-width-default: 2;\n  --xy-background-color-default: #141414;\n  --xy-background-pattern-dots-color-default: #777;\n  --xy-background-pattern-lines-color-default: #777;\n  --xy-background-pattern-cross-color-default: #777;\n  --xy-node-color-default: #f8f8f8;\n  --xy-node-border-default: 1px solid #3c3c3c;\n  --xy-node-background-color-default: #1e1e1e;\n  --xy-node-group-background-color-default: #f0f0f040;\n  --xy-node-boxshadow-hover-default: 0 1px 4px 1px #ffffff14;\n  --xy-node-boxshadow-selected-default: 0 0 0 .5px #999;\n  --xy-handle-background-color-default: #bebebe;\n  --xy-handle-border-color-default: #1e1e1e;\n  --xy-selection-background-color-default: #c8c8dc14;\n  --xy-selection-border-default: 1px dotted #c8c8dccc;\n  --xy-controls-button-background-color-default: #2b2b2b;\n  --xy-controls-button-background-color-hover-default: #3e3e3e;\n  --xy-controls-button-color-default: #f8f8f8;\n  --xy-controls-button-color-hover-default: #fff;\n  --xy-controls-button-border-color-default: #5b5b5b;\n  --xy-controls-box-shadow-default: 0 0 2px 1px #00000014;\n  --xy-edge-label-background-color-default: #141414;\n  --xy-edge-label-color-default: #f8f8f8;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background, [data-ext-id=\"com.nubeio.ce\"].react-flow__background {\n  background-color: var(--xy-background-color-props, var(--xy-background-color, var(--xy-background-color-default)));\n  pointer-events: none;\n  z-index: -1;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__container, [data-ext-id=\"com.nubeio.ce\"].react-flow__container {\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane {\n  z-index: 1;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.draggable, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.draggable {\n  cursor: grab;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.dragging, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.dragging {\n  cursor: grabbing;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.selection {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__viewport, [data-ext-id=\"com.nubeio.ce\"].react-flow__viewport {\n  transform-origin: 0 0;\n  z-index: 2;\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__renderer, [data-ext-id=\"com.nubeio.ce\"].react-flow__renderer {\n  z-index: 4;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection {\n  z-index: 6;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-path {\n  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n  stroke-width: var(--xy-edge-stroke-width, var(--xy-edge-stroke-width-default));\n  fill: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection-path {\n  stroke: var(--xy-connectionline-stroke, var(--xy-connectionline-stroke-default));\n  stroke-width: var(--xy-connectionline-stroke-width, var(--xy-connectionline-stroke-width-default));\n  fill: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow .react-flow__edges, [data-ext-id=\"com.nubeio.ce\"].react-flow .react-flow__edges {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow .react-flow__edges svg, [data-ext-id=\"com.nubeio.ce\"].react-flow .react-flow__edges svg {\n  pointer-events: none;\n  position: absolute;\n  overflow: visible;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge {\n  pointer-events: visibleStroke;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.animated path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.animated path {\n  stroke-dasharray: 5;\n  animation: .5s linear infinite dashdraw;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.animated path.react-flow__edge-interaction, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.animated path.react-flow__edge-interaction {\n  stroke-dasharray: none;\n  animation: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.inactive, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.inactive {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selected .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selected .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable:focus .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable:focus .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable:focus-visible .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable:focus-visible .react-flow__edge-path {\n  stroke: var(--xy-edge-stroke-selected, var(--xy-edge-stroke-selected-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-textwrapper, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-textwrapper {\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge .react-flow__edge-text {\n  pointer-events: none;\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__arrowhead polyline, [data-ext-id=\"com.nubeio.ce\"].react-flow__arrowhead polyline {\n  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__arrowhead polyline.arrowclosed, [data-ext-id=\"com.nubeio.ce\"].react-flow__arrowhead polyline.arrowclosed {\n  fill: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection .animated, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection .animated {\n  stroke-dasharray: 5;\n  animation: .5s linear infinite dashdraw;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] svg.react-flow__connectionline {\n  z-index: 1001;\n  position: absolute;\n  overflow: visible;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodes, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodes {\n  pointer-events: none;\n  transform-origin: 0 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node, [data-ext-id=\"com.nubeio.ce\"].react-flow__node {\n  -webkit-user-select: none;\n  user-select: none;\n  pointer-events: all;\n  transform-origin: 0 0;\n  box-sizing: border-box;\n  cursor: default;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.draggable, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.draggable {\n  cursor: grab;\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.draggable.dragging, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.draggable.dragging {\n  cursor: grabbing;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection {\n  z-index: 3;\n  transform-origin: 0 0;\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect {\n  pointer-events: all;\n  cursor: grab;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle {\n  pointer-events: none;\n  background-color: var(--xy-handle-background-color, var(--xy-handle-background-color-default));\n  border: 1px solid var(--xy-handle-border-color, var(--xy-handle-border-color-default));\n  border-radius: 100%;\n  width: 6px;\n  min-width: 5px;\n  height: 6px;\n  min-height: 5px;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle.connectingfrom, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle.connectingfrom {\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle.connectionindicator, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle.connectionindicator {\n  pointer-events: all;\n  cursor: crosshair;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-bottom {\n  top: auto;\n  bottom: 0;\n  left: 50%;\n  transform: translate(-50%, 50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-top, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-top {\n  top: 0;\n  left: 50%;\n  transform: translate(-50%, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-left, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-left {\n  top: 50%;\n  left: 0;\n  transform: translate(-50%, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-right, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-right {\n  top: 50%;\n  right: 0;\n  transform: translate(50%, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edgeupdater, [data-ext-id=\"com.nubeio.ce\"].react-flow__edgeupdater {\n  cursor: move;\n  pointer-events: all;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.selection .react-flow__panel, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.selection .react-flow__panel {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel {\n  z-index: 5;\n  margin: 15px;\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.top {\n  top: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.bottom {\n  bottom: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.top.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.top.center, [data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.bottom.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.bottom.center {\n  left: 50%;\n  transform: translateX(-15px) translateX(-50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.left {\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.right {\n  right: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.left.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.left.center, [data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.right.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.right.center {\n  top: 50%;\n  transform: translateY(-15px) translateY(-50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__attribution, [data-ext-id=\"com.nubeio.ce\"].react-flow__attribution {\n  background: var(--xy-attribution-background-color, var(--xy-attribution-background-color-default));\n  margin: 0;\n  padding: 2px 3px;\n  font-size: 10px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__attribution a, [data-ext-id=\"com.nubeio.ce\"].react-flow__attribution a {\n  color: #999;\n  text-decoration: none;\n}\n\n@keyframes dashdraw {\n  from {\n    stroke-dashoffset: 10px;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edgelabel-renderer, [data-ext-id=\"com.nubeio.ce\"].react-flow__edgelabel-renderer {\n  pointer-events: none;\n  -webkit-user-select: none;\n  user-select: none;\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__viewport-portal, [data-ext-id=\"com.nubeio.ce\"].react-flow__viewport-portal {\n  -webkit-user-select: none;\n  user-select: none;\n  width: 100%;\n  height: 100%;\n  position: absolute;\n  top: 0;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap {\n  background: var(--xy-minimap-background-color-props, var(--xy-minimap-background-color, var(--xy-minimap-background-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-svg {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-mask, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-mask {\n  fill: var(--xy-minimap-mask-background-color-props, var(--xy-minimap-mask-background-color, var(--xy-minimap-mask-background-color-default)));\n  stroke: var(--xy-minimap-mask-stroke-color-props, var(--xy-minimap-mask-stroke-color, var(--xy-minimap-mask-stroke-color-default)));\n  stroke-width: var(--xy-minimap-mask-stroke-width-props, var(--xy-minimap-mask-stroke-width, var(--xy-minimap-mask-stroke-width-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-node, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-node {\n  fill: var(--xy-minimap-node-background-color-props, var(--xy-minimap-node-background-color, var(--xy-minimap-node-background-color-default)));\n  stroke: var(--xy-minimap-node-stroke-color-props, var(--xy-minimap-node-stroke-color, var(--xy-minimap-node-stroke-color-default)));\n  stroke-width: var(--xy-minimap-node-stroke-width-props, var(--xy-minimap-node-stroke-width, var(--xy-minimap-node-stroke-width-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.dots, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.dots {\n  fill: var(--xy-background-pattern-color-props, var(--xy-background-pattern-color, var(--xy-background-pattern-dots-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.lines, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.lines {\n  stroke: var(--xy-background-pattern-color-props, var(--xy-background-pattern-color, var(--xy-background-pattern-lines-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.cross, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.cross {\n  stroke: var(--xy-background-pattern-color-props, var(--xy-background-pattern-color, var(--xy-background-pattern-cross-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls {\n  box-shadow: var(--xy-controls-box-shadow, var(--xy-controls-box-shadow-default));\n  flex-direction: column;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal {\n  flex-direction: row;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button {\n  background: var(--xy-controls-button-background-color, var(--xy-controls-button-background-color-default));\n  border: none;\n  border-bottom: 1px solid var(--xy-controls-button-border-color-props, var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default)));\n  width: 26px;\n  height: 26px;\n  color: var(--xy-controls-button-color-props, var(--xy-controls-button-color, var(--xy-controls-button-color-default)));\n  cursor: pointer;\n  -webkit-user-select: none;\n  user-select: none;\n  justify-content: center;\n  align-items: center;\n  padding: 4px;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button svg {\n  fill: currentColor;\n  width: 100%;\n  max-width: 12px;\n  max-height: 12px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.updating .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.updating .react-flow__edge-path {\n  stroke: #777;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-text {\n  font-size: 10px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group {\n  border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));\n  width: 150px;\n  color: var(--xy-node-color, var(--xy-node-color-default));\n  text-align: center;\n  border: var(--xy-node-border, var(--xy-node-border-default));\n  background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));\n  padding: 10px;\n  font-size: 12px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:hover {\n  box-shadow: var(--xy-node-boxshadow-hover, var(--xy-node-boxshadow-hover-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:focus-visible {\n  box-shadow: var(--xy-node-boxshadow-selected, var(--xy-node-boxshadow-selected-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group {\n  background-color: var(--xy-node-group-background-color, var(--xy-node-group-background-color-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection {\n  background: var(--xy-selection-background-color, var(--xy-selection-background-color-default));\n  border: var(--xy-selection-border, var(--xy-selection-border-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection:focus-visible {\n  outline: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:hover {\n  background: var(--xy-controls-button-background-color-hover-props, var(--xy-controls-button-background-color-hover, var(--xy-controls-button-background-color-hover-default)));\n  color: var(--xy-controls-button-color-hover-props, var(--xy-controls-button-color-hover, var(--xy-controls-button-color-hover-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:disabled, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:disabled svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:disabled svg {\n  fill-opacity: .4;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:last-child, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:last-child {\n  border-bottom: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal .react-flow__controls-button, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal .react-flow__controls-button {\n  border-bottom: none;\n  border-right: 1px solid var(--xy-controls-button-border-color-props, var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default)));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal .react-flow__controls-button:last-child, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal .react-flow__controls-button:last-child {\n  border-right: none;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.right {\n  cursor: ew-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom {\n  cursor: ns-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom.right {\n  cursor: nwse-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top.right {\n  cursor: nesw-resize;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle {\n  background-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));\n  border: 1px solid #fff;\n  border-radius: 1px;\n  width: 5px;\n  height: 5px;\n  translate: -50% -50%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.left {\n  top: 50%;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.right {\n  top: 50%;\n  left: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top {\n  top: 0;\n  left: 50%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom {\n  top: 100%;\n  left: 50%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom.left {\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top.right, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom.right {\n  left: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line {\n  border-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));\n  border-style: solid;\n  border-width: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.right {\n  width: 1px;\n  height: 100%;\n  top: 0;\n  transform: translate(-50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.left {\n  border-left-width: 1px;\n  left: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.right {\n  border-right-width: 1px;\n  left: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.bottom {\n  width: 100%;\n  height: 1px;\n  left: 0;\n  transform: translate(0, -50%);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.top {\n  border-top-width: 1px;\n  top: 0;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.bottom {\n  border-bottom-width: 1px;\n  top: 100%;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-textbg, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-textbg {\n  fill: var(--xy-edge-label-background-color, var(--xy-edge-label-background-color-default));\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-text {\n  fill: var(--xy-edge-label-color, var(--xy-edge-label-color-default));\n}\n\n:root {\n  --sf-node-bg: #ffffffeb;\n  --sf-node-fg: #0f172a;\n  --sf-node-border: #e2e8f0;\n  --sf-node-divider: #eef2f7;\n  --sf-node-extra: #475569;\n  --sf-node-shadow: 0 1px 0 0 #0f172a0a inset,\n                       0 14px 32px -18px #0f172a73,\n                       0 2px 6px -2px #0f172a14;\n  --sf-handle-border: #fff;\n  --sf-handle-ring: #0f172a1a;\n  --sf-slot-label: #475569;\n  --sf-slot-value-bg: #0f172a0f;\n  --sf-slot-value-fg: #0f172a;\n  --sf-edge-label-bg: #fff;\n  --sf-palette-bg: #fff;\n  --sf-palette-border: #e2e8f0;\n  --sf-palette-hover: #f1f5f9;\n  --sf-font: ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif;\n  --sf-mono: ui-monospace, SFMono-Regular, Menlo, monospace;\n  --sf-radius: 14px;\n  --sf-radius-sm: 8px;\n  --sf-accent-default: #0ea5e9;\n  --sf-state-ready: #3b82f6;\n  --sf-state-running: #f59e0b;\n  --sf-state-ok: #10b981;\n  --sf-state-error: #ef4444;\n  --sf-state-cancelled: #64748b;\n  --sf-state-skipped: #94a3b8;\n  --sf-selected-ring: var(--sf-accent, var(--sf-accent-default));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  :root {\n    --sf-selected-ring: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 60%, transparent);\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --sf-node-bg: #0f172ac7;\n    --sf-node-fg: #f1f5f9;\n    --sf-node-border: #1e293b;\n    --sf-node-divider: #1e293b;\n    --sf-node-extra: #cbd5e1;\n    --sf-node-shadow: 0 1px 0 0 #ffffff0a inset,\n                         0 16px 36px -14px #0009,\n                         0 2px 6px -2px #0006;\n    --sf-handle-border: #0f172a;\n    --sf-handle-ring: #ffffff14;\n    --sf-slot-label: #cbd5e1;\n    --sf-slot-value-bg: #ffffff14;\n    --sf-slot-value-fg: #f1f5f9;\n    --sf-edge-label-bg: #0f172a;\n    --sf-palette-bg: #0f172aeb;\n    --sf-palette-border: #1e293b;\n    --sf-palette-hover: #1e293b;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node, [data-ext-id=\"com.nubeio.ce\"].sf-node {\n  font-family: var(--sf-font);\n  color: var(--sf-node-fg);\n  background: var(--sf-node-bg);\n  border: 1px solid var(--sf-node-border);\n  border-radius: var(--sf-radius);\n  width: var(--sf-node-width, 240px);\n  box-shadow: var(--sf-node-shadow);\n  -webkit-backdrop-filter: blur(10px) saturate(140%);\n  transition: box-shadow .16s, border-color .16s, transform .16s;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node:hover, [data-ext-id=\"com.nubeio.ce\"].sf-node:hover {\n  border-color: var(--sf-accent, var(--sf-accent-default));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node:hover, [data-ext-id=\"com.nubeio.ce\"].sf-node:hover {\n    border-color: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 35%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--selected, [data-ext-id=\"com.nubeio.ce\"].sf-node--selected {\n  border-color: var(--sf-accent, var(--sf-accent-default));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--selected, [data-ext-id=\"com.nubeio.ce\"].sf-node--selected {\n    border-color: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 70%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--selected, [data-ext-id=\"com.nubeio.ce\"].sf-node--selected {\n  box-shadow: var(--sf-node-shadow), 0 0 0 3px var(--sf-selected-ring);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node:before, [data-ext-id=\"com.nubeio.ce\"].sf-node:before {\n  content: \"\";\n  background: linear-gradient(90deg, var(--sf-accent, var(--sf-accent-default)) 0%, var(--sf-accent, var(--sf-accent-default)) 100%);\n  height: 3px;\n  display: block;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node:before, [data-ext-id=\"com.nubeio.ce\"].sf-node:before {\n    background: linear-gradient(90deg, var(--sf-accent, var(--sf-accent-default)) 0%, color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 50%, transparent) 100%);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__header, [data-ext-id=\"com.nubeio.ce\"].sf-node__header {\n  letter-spacing: -.005em;\n  align-items: center;\n  gap: 8px;\n  padding: 10px 12px 8px;\n  font-size: 12px;\n  font-weight: 600;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__icon, [data-ext-id=\"com.nubeio.ce\"].sf-node__icon {\n  background: var(--sf-accent, var(--sf-accent-default));\n  border-radius: 6px;\n  justify-content: center;\n  align-items: center;\n  width: 22px;\n  height: 22px;\n  display: inline-flex;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node__icon, [data-ext-id=\"com.nubeio.ce\"].sf-node__icon {\n    background: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 18%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__icon, [data-ext-id=\"com.nubeio.ce\"].sf-node__icon {\n  color: var(--sf-accent, var(--sf-accent-default));\n  flex-shrink: 0;\n  font-size: 10px;\n  font-weight: 700;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__title, [data-ext-id=\"com.nubeio.ce\"].sf-node__title {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  min-width: 0;\n  color: var(--sf-node-fg);\n  flex: auto;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__kind, [data-ext-id=\"com.nubeio.ce\"].sf-node__kind {\n  text-transform: uppercase;\n  letter-spacing: .08em;\n  color: var(--sf-slot-label);\n  opacity: .7;\n  font-size: 10px;\n  font-weight: 500;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state, [data-ext-id=\"com.nubeio.ce\"].sf-node__state {\n  border-radius: 50%;\n  flex-shrink: 0;\n  width: 8px;\n  height: 8px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--ready, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--ready {\n  background: var(--sf-state-ready);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--running, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--running {\n  background: var(--sf-state-running);\n  box-shadow: 0 0 0 0 var(--sf-state-running);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node__state--running, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--running {\n    box-shadow: 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--running, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--running {\n  animation: 1.2s ease-in-out infinite sf-pulse-dot;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--ok, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--ok {\n  background: var(--sf-state-ok);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--error, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--error {\n  background: var(--sf-state-error);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--cancelled, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--cancelled {\n  background: var(--sf-state-cancelled);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__state--skipped, [data-ext-id=\"com.nubeio.ce\"].sf-node__state--skipped {\n  background: var(--sf-state-skipped);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__body, [data-ext-id=\"com.nubeio.ce\"].sf-node__body {\n  border-top: 1px solid var(--sf-node-divider);\n  grid-template-columns: 1fr 1fr;\n  gap: 4px 12px;\n  min-width: 0;\n  padding: 6px 0 10px;\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__col, [data-ext-id=\"com.nubeio.ce\"].sf-node__col {\n  flex-direction: column;\n  gap: 4px;\n  min-width: 0;\n  padding: 6px 0;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__col--out, [data-ext-id=\"com.nubeio.ce\"].sf-node__col--out {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node__extra, [data-ext-id=\"com.nubeio.ce\"].sf-node__extra {\n  border-top: 1px solid var(--sf-node-divider);\n  color: var(--sf-node-extra);\n  padding: 8px 12px;\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot-row, [data-ext-id=\"com.nubeio.ce\"].sf-slot-row {\n  flex-direction: column;\n  min-width: 0;\n  max-width: 100%;\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot-row--input, [data-ext-id=\"com.nubeio.ce\"].sf-slot-row--input {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot-row--output, [data-ext-id=\"com.nubeio.ce\"].sf-slot-row--output {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot, [data-ext-id=\"com.nubeio.ce\"].sf-slot {\n  align-items: center;\n  gap: 8px;\n  padding: 2px 12px;\n  display: flex;\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot--output, [data-ext-id=\"com.nubeio.ce\"].sf-slot--output {\n  flex-direction: row-reverse;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__handle, [data-ext-id=\"com.nubeio.ce\"].sf-slot__handle {\n  box-shadow: 0 0 0 2px var(--sf-handle-ring);\n  transition: transform .12s, box-shadow .12s;\n  border: 2px solid var(--sf-handle-border) !important;\n  width: 10px !important;\n  height: 10px !important;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__handle:hover, [data-ext-id=\"com.nubeio.ce\"].sf-slot__handle:hover {\n  box-shadow: 0 0 0 3px var(--sf-accent, var(--sf-accent-default));\n  transform: scale(1.25);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-slot__handle:hover, [data-ext-id=\"com.nubeio.ce\"].sf-slot__handle:hover {\n    box-shadow: 0 0 0 3px color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__label, [data-ext-id=\"com.nubeio.ce\"].sf-slot__label {\n  color: var(--sf-slot-label);\n  white-space: nowrap;\n  font-size: 11px;\n  line-height: 1.2;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__required, [data-ext-id=\"com.nubeio.ce\"].sf-slot__required {\n  color: var(--sf-state-error);\n  margin-left: 2px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-slot__value, [data-ext-id=\"com.nubeio.ce\"].sf-slot__value {\n  background: var(--sf-slot-value-bg);\n  color: var(--sf-slot-value-fg);\n  font-family: var(--sf-mono);\n  max-width: calc(var(--sf-node-width, 240px) - 32px);\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  border-radius: 4px;\n  margin: 1px 12px 0;\n  padding: 1px 6px;\n  font-size: 10px;\n  line-height: 1.3;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--ready, [data-ext-id=\"com.nubeio.ce\"].sf-node--ready {\n  border-color: var(--sf-state-ready);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--ok, [data-ext-id=\"com.nubeio.ce\"].sf-node--ok {\n  border-color: var(--sf-state-ok);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--ok, [data-ext-id=\"com.nubeio.ce\"].sf-node--ok {\n    border-color: color-mix(in oklab, var(--sf-state-ok) 60%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--error, [data-ext-id=\"com.nubeio.ce\"].sf-node--error {\n  border-color: var(--sf-state-error);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--error, [data-ext-id=\"com.nubeio.ce\"].sf-node--error {\n    border-color: color-mix(in oklab, var(--sf-state-error) 70%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--cancelled, [data-ext-id=\"com.nubeio.ce\"].sf-node--cancelled {\n  border-color: var(--sf-state-cancelled);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--skipped, [data-ext-id=\"com.nubeio.ce\"].sf-node--skipped {\n  border-color: var(--sf-state-skipped);\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--running, [data-ext-id=\"com.nubeio.ce\"].sf-node--running {\n  border-color: var(--sf-state-running);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.ce\"] .sf-node--running, [data-ext-id=\"com.nubeio.ce\"].sf-node--running {\n    border-color: color-mix(in oklab, var(--sf-state-running) 70%, var(--sf-node-border));\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-node--running, [data-ext-id=\"com.nubeio.ce\"].sf-node--running {\n  animation: 1.6s ease-in-out infinite sf-pulse;\n}\n\n@keyframes sf-pulse {\n  0%, 100% {\n    box-shadow: var(--sf-node-shadow), 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 35%, transparent);\n  }\n\n  50% {\n    box-shadow: var(--sf-node-shadow), 0 0 0 8px color-mix(in oklab, var(--sf-state-running) 0%, transparent);\n  }\n}\n\n@keyframes sf-pulse-dot {\n  0%, 100% {\n    box-shadow: 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 50%, transparent);\n  }\n\n  50% {\n    box-shadow: 0 0 0 5px color-mix(in oklab, var(--sf-state-running) 0%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .sf-edge--active, [data-ext-id=\"com.nubeio.ce\"].sf-edge--active {\n  animation: .6s linear infinite sf-dash;\n}\n\n@keyframes sf-dash {\n  to {\n    stroke-dashoffset: -20px;\n  }\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.ce\"].ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .ext-card, [data-ext-id=\"com.nubeio.ce\"].ext-card {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 12px;\n}\n\n[data-ext-id=\"com.nubeio.ce\"] .ext-wiresheet, [data-ext-id=\"com.nubeio.ce\"].ext-wiresheet {\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 12px;\n  width: 100%;\n  height: calc(100vh - 9rem);\n  min-height: 24rem;\n  position: relative;\n  overflow: hidden;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n/* this gets exported as style.css and can be used for the default theming */\n/* these are the necessary styles for React/Svelte Flow, they get used by base.css and style.css */\n[data-ext-id=\"com.nubeio.ce\"] .react-flow, [data-ext-id=\"com.nubeio.ce\"].react-flow {\n  direction: ltr;\n\n  --xy-edge-stroke-default: #b1b1b7;\n  --xy-edge-stroke-width-default: 1;\n  --xy-edge-stroke-selected-default: #555;\n\n  --xy-connectionline-stroke-default: #b1b1b7;\n  --xy-connectionline-stroke-width-default: 1;\n\n  --xy-attribution-background-color-default: rgba(255, 255, 255, 0.5);\n\n  --xy-minimap-background-color-default: #fff;\n  --xy-minimap-mask-background-color-default: rgba(240, 240, 240, 0.6);\n  --xy-minimap-mask-stroke-color-default: transparent;\n  --xy-minimap-mask-stroke-width-default: 1;\n  --xy-minimap-node-background-color-default: #e2e2e2;\n  --xy-minimap-node-stroke-color-default: transparent;\n  --xy-minimap-node-stroke-width-default: 2;\n\n  --xy-background-color-default: transparent;\n  --xy-background-pattern-dots-color-default: #91919a;\n  --xy-background-pattern-lines-color-default: #eee;\n  --xy-background-pattern-cross-color-default: #e2e2e2;\n  background-color: var(--xy-background-color, var(--xy-background-color-default));\n  --xy-node-color-default: inherit;\n  --xy-node-border-default: 1px solid #1a192b;\n  --xy-node-background-color-default: #fff;\n  --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);\n  --xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(0, 0, 0, 0.08);\n  --xy-node-boxshadow-selected-default: 0 0 0 0.5px #1a192b;\n  --xy-node-border-radius-default: 3px;\n\n  --xy-handle-background-color-default: #1a192b;\n  --xy-handle-border-color-default: #fff;\n\n  --xy-selection-background-color-default: rgba(0, 89, 220, 0.08);\n  --xy-selection-border-default: 1px dotted rgba(0, 89, 220, 0.8);\n\n  --xy-controls-button-background-color-default: #fefefe;\n  --xy-controls-button-background-color-hover-default: #f4f4f4;\n  --xy-controls-button-color-default: inherit;\n  --xy-controls-button-color-hover-default: inherit;\n  --xy-controls-button-border-color-default: #eee;\n  --xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.08);\n\n  --xy-edge-label-background-color-default: #ffffff;\n  --xy-edge-label-color-default: inherit;\n  --xy-resize-background-color-default: #3367d9;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow.dark, [data-ext-id=\"com.nubeio.ce\"].react-flow.dark {\n  --xy-edge-stroke-default: #3e3e3e;\n  --xy-edge-stroke-width-default: 1;\n  --xy-edge-stroke-selected-default: #727272;\n\n  --xy-connectionline-stroke-default: #b1b1b7;\n  --xy-connectionline-stroke-width-default: 1;\n\n  --xy-attribution-background-color-default: rgba(150, 150, 150, 0.25);\n\n  --xy-minimap-background-color-default: #141414;\n  --xy-minimap-mask-background-color-default: rgba(60, 60, 60, 0.6);\n  --xy-minimap-mask-stroke-color-default: transparent;\n  --xy-minimap-mask-stroke-width-default: 1;\n  --xy-minimap-node-background-color-default: #2b2b2b;\n  --xy-minimap-node-stroke-color-default: transparent;\n  --xy-minimap-node-stroke-width-default: 2;\n\n  --xy-background-color-default: #141414;\n  --xy-background-pattern-dots-color-default: #777;\n  --xy-background-pattern-lines-color-default: #777;\n  --xy-background-pattern-cross-color-default: #777;\n  --xy-node-color-default: #f8f8f8;\n  --xy-node-border-default: 1px solid #3c3c3c;\n  --xy-node-background-color-default: #1e1e1e;\n  --xy-node-group-background-color-default: rgba(240, 240, 240, 0.25);\n  --xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(255, 255, 255, 0.08);\n  --xy-node-boxshadow-selected-default: 0 0 0 0.5px #999;\n\n  --xy-handle-background-color-default: #bebebe;\n  --xy-handle-border-color-default: #1e1e1e;\n\n  --xy-selection-background-color-default: rgba(200, 200, 220, 0.08);\n  --xy-selection-border-default: 1px dotted rgba(200, 200, 220, 0.8);\n\n  --xy-controls-button-background-color-default: #2b2b2b;\n  --xy-controls-button-background-color-hover-default: #3e3e3e;\n  --xy-controls-button-color-default: #f8f8f8;\n  --xy-controls-button-color-hover-default: #fff;\n  --xy-controls-button-border-color-default: #5b5b5b;\n  --xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.08);\n\n  --xy-edge-label-background-color-default: #141414;\n  --xy-edge-label-color-default: #f8f8f8;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background, [data-ext-id=\"com.nubeio.ce\"].react-flow__background {\n  background-color: var(--xy-background-color-props, var(--xy-background-color, var(--xy-background-color-default)));\n  pointer-events: none;\n  z-index: -1;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__container, [data-ext-id=\"com.nubeio.ce\"].react-flow__container {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  top: 0;\n  left: 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane {\n  z-index: 1;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.draggable, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.draggable {\n    cursor: grab;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.dragging, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.dragging {\n    cursor: grabbing;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.selection {\n    cursor: pointer;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__viewport, [data-ext-id=\"com.nubeio.ce\"].react-flow__viewport {\n  transform-origin: 0 0;\n  z-index: 2;\n  pointer-events: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__renderer, [data-ext-id=\"com.nubeio.ce\"].react-flow__renderer {\n  z-index: 4;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection {\n  z-index: 6;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus-visible {\n  outline: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-path {\n  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n  stroke-width: var(--xy-edge-stroke-width, var(--xy-edge-stroke-width-default));\n  fill: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection-path {\n  stroke: var(--xy-connectionline-stroke, var(--xy-connectionline-stroke-default));\n  stroke-width: var(--xy-connectionline-stroke-width, var(--xy-connectionline-stroke-width-default));\n  fill: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow .react-flow__edges, [data-ext-id=\"com.nubeio.ce\"].react-flow .react-flow__edges {\n  position: absolute;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow .react-flow__edges svg, [data-ext-id=\"com.nubeio.ce\"].react-flow .react-flow__edges svg {\n    overflow: visible;\n    position: absolute;\n    pointer-events: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge {\n  pointer-events: visibleStroke;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable {\n    cursor: pointer;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.animated path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.animated path {\n    stroke-dasharray: 5;\n    animation: dashdraw 0.5s linear infinite;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.animated path.react-flow__edge-interaction, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.animated path.react-flow__edge-interaction {\n    stroke-dasharray: none;\n    animation: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.inactive, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.inactive {\n    pointer-events: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge:focus-visible {\n    outline: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selected .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selected .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable:focus .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable:focus .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.selectable:focus-visible .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.selectable:focus-visible .react-flow__edge-path {\n    stroke: var(--xy-edge-stroke-selected, var(--xy-edge-stroke-selected-default));\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-textwrapper, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-textwrapper {\n    pointer-events: all;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge .react-flow__edge-text {\n    pointer-events: none;\n    -webkit-user-select: none;\n       -moz-user-select: none;\n            user-select: none;\n  }\n/* Arrowhead marker styles - use CSS custom properties as default */\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__arrowhead polyline, [data-ext-id=\"com.nubeio.ce\"].react-flow__arrowhead polyline {\n  stroke: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__arrowhead polyline.arrowclosed, [data-ext-id=\"com.nubeio.ce\"].react-flow__arrowhead polyline.arrowclosed {\n  fill: var(--xy-edge-stroke, var(--xy-edge-stroke-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection {\n  pointer-events: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__connection .animated, [data-ext-id=\"com.nubeio.ce\"].react-flow__connection .animated {\n    stroke-dasharray: 5;\n    animation: dashdraw 0.5s linear infinite;\n  }\n[data-ext-id=\"com.nubeio.ce\"] svg.react-flow__connectionline {\n  z-index: 1001;\n  overflow: visible;\n  position: absolute;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodes, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodes {\n  pointer-events: none;\n  transform-origin: 0 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node, [data-ext-id=\"com.nubeio.ce\"].react-flow__node {\n  position: absolute;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n          user-select: none;\n  pointer-events: all;\n  transform-origin: 0 0;\n  box-sizing: border-box;\n  cursor: default;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable {\n    cursor: pointer;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.draggable, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.draggable {\n    cursor: grab;\n    pointer-events: all;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.draggable.dragging, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.draggable.dragging {\n      cursor: grabbing;\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection {\n  z-index: 3;\n  transform-origin: left top;\n  pointer-events: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect {\n    position: absolute;\n    pointer-events: all;\n    cursor: grab;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle {\n  position: absolute;\n  pointer-events: none;\n  min-width: 5px;\n  min-height: 5px;\n  width: 6px;\n  height: 6px;\n  background-color: var(--xy-handle-background-color, var(--xy-handle-background-color-default));\n  border: 1px solid var(--xy-handle-border-color, var(--xy-handle-border-color-default));\n  border-radius: 100%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle.connectingfrom, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle.connectingfrom {\n    pointer-events: all;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle.connectionindicator, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle.connectionindicator {\n    pointer-events: all;\n    cursor: crosshair;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-bottom {\n    top: auto;\n    left: 50%;\n    bottom: 0;\n    transform: translate(-50%, 50%);\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-top, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-top {\n    top: 0;\n    left: 50%;\n    transform: translate(-50%, -50%);\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-left, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-left {\n    top: 50%;\n    left: 0;\n    transform: translate(-50%, -50%);\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__handle-right, [data-ext-id=\"com.nubeio.ce\"].react-flow__handle-right {\n    top: 50%;\n    right: 0;\n    transform: translate(50%, -50%);\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edgeupdater, [data-ext-id=\"com.nubeio.ce\"].react-flow__edgeupdater {\n  cursor: move;\n  pointer-events: all;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__pane.selection .react-flow__panel, [data-ext-id=\"com.nubeio.ce\"].react-flow__pane.selection .react-flow__panel {\n  pointer-events: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel {\n  position: absolute;\n  z-index: 5;\n  margin: 15px;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.top {\n    top: 0;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.bottom {\n    bottom: 0;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.top.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.top.center, [data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.bottom.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.bottom.center {\n      left: 50%;\n      transform: translateX(-15px) translateX(-50%);\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.left {\n    left: 0;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.right {\n    right: 0;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.left.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.left.center, [data-ext-id=\"com.nubeio.ce\"] .react-flow__panel.right.center, [data-ext-id=\"com.nubeio.ce\"].react-flow__panel.right.center {\n      top: 50%;\n      transform: translateY(-15px) translateY(-50%);\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__attribution, [data-ext-id=\"com.nubeio.ce\"].react-flow__attribution {\n  font-size: 10px;\n  background: var(--xy-attribution-background-color, var(--xy-attribution-background-color-default));\n  padding: 2px 3px;\n  margin: 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__attribution a, [data-ext-id=\"com.nubeio.ce\"].react-flow__attribution a {\n    text-decoration: none;\n    color: #999;\n  }\n@keyframes dashdraw {\n  from {\n    stroke-dashoffset: 10;\n  }\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edgelabel-renderer, [data-ext-id=\"com.nubeio.ce\"].react-flow__edgelabel-renderer {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  pointer-events: none;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n          user-select: none;\n  left: 0;\n  top: 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__viewport-portal, [data-ext-id=\"com.nubeio.ce\"].react-flow__viewport-portal {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  left: 0;\n  top: 0;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n          user-select: none;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap {\n  background: var(\n    --xy-minimap-background-color-props,\n    var(--xy-minimap-background-color, var(--xy-minimap-background-color-default))\n  );\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-svg {\n    display: block;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-mask, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-mask {\n    fill: var(\n      --xy-minimap-mask-background-color-props,\n      var(--xy-minimap-mask-background-color, var(--xy-minimap-mask-background-color-default))\n    );\n    stroke: var(\n      --xy-minimap-mask-stroke-color-props,\n      var(--xy-minimap-mask-stroke-color, var(--xy-minimap-mask-stroke-color-default))\n    );\n    stroke-width: var(\n      --xy-minimap-mask-stroke-width-props,\n      var(--xy-minimap-mask-stroke-width, var(--xy-minimap-mask-stroke-width-default))\n    );\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__minimap-node, [data-ext-id=\"com.nubeio.ce\"].react-flow__minimap-node {\n    fill: var(\n      --xy-minimap-node-background-color-props,\n      var(--xy-minimap-node-background-color, var(--xy-minimap-node-background-color-default))\n    );\n    stroke: var(\n      --xy-minimap-node-stroke-color-props,\n      var(--xy-minimap-node-stroke-color, var(--xy-minimap-node-stroke-color-default))\n    );\n    stroke-width: var(\n      --xy-minimap-node-stroke-width-props,\n      var(--xy-minimap-node-stroke-width, var(--xy-minimap-node-stroke-width-default))\n    );\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.dots, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.dots {\n    fill: var(\n      --xy-background-pattern-color-props,\n      var(--xy-background-pattern-color, var(--xy-background-pattern-dots-color-default))\n    );\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.lines, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.lines {\n    stroke: var(\n      --xy-background-pattern-color-props,\n      var(--xy-background-pattern-color, var(--xy-background-pattern-lines-color-default))\n    );\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__background-pattern.cross, [data-ext-id=\"com.nubeio.ce\"].react-flow__background-pattern.cross {\n    stroke: var(\n      --xy-background-pattern-color-props,\n      var(--xy-background-pattern-color, var(--xy-background-pattern-cross-color-default))\n    );\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls {\n  display: flex;\n  flex-direction: column;\n  box-shadow: var(--xy-controls-box-shadow, var(--xy-controls-box-shadow-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal {\n    flex-direction: row;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button {\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    height: 26px;\n    width: 26px;\n    padding: 4px;\n    border: none;\n    background: var(--xy-controls-button-background-color, var(--xy-controls-button-background-color-default));\n    border-bottom: 1px solid\n      var(\n        --xy-controls-button-border-color-props,\n        var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default))\n      );\n    color: var(\n      --xy-controls-button-color-props,\n      var(--xy-controls-button-color, var(--xy-controls-button-color-default))\n    );\n    cursor: pointer;\n    -webkit-user-select: none;\n       -moz-user-select: none;\n            user-select: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button svg {\n      width: 100%;\n      max-width: 12px;\n      max-height: 12px;\n      fill: currentColor;\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge.updating .react-flow__edge-path, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge.updating .react-flow__edge-path {\n      stroke: #777;\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-text {\n    font-size: 10px;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node.selectable:focus-visible {\n    outline: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group {\n  padding: 10px;\n  border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));\n  width: 150px;\n  font-size: 12px;\n  color: var(--xy-node-color, var(--xy-node-color-default));\n  text-align: center;\n  border: var(--xy-node-border, var(--xy-node-border-default));\n  background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:hover, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:hover {\n      box-shadow: var(--xy-node-boxshadow-hover, var(--xy-node-boxshadow-hover-default));\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-input.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-input.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-default.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-default.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-output.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-output.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable.selected, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable.selected, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group.selectable:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group.selectable:focus-visible {\n      box-shadow: var(--xy-node-boxshadow-selected, var(--xy-node-boxshadow-selected-default));\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__node-group, [data-ext-id=\"com.nubeio.ce\"].react-flow__node-group {\n  background-color: var(--xy-node-group-background-color, var(--xy-node-group-background-color-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection {\n  background: var(--xy-selection-background-color, var(--xy-selection-background-color-default));\n  border: var(--xy-selection-border, var(--xy-selection-border-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__nodesselection-rect:focus-visible, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection:focus, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection:focus, [data-ext-id=\"com.nubeio.ce\"] .react-flow__selection:focus-visible, [data-ext-id=\"com.nubeio.ce\"].react-flow__selection:focus-visible {\n    outline: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:hover, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:hover {\n      background: var(\n        --xy-controls-button-background-color-hover-props,\n        var(--xy-controls-button-background-color-hover, var(--xy-controls-button-background-color-hover-default))\n      );\n      color: var(\n        --xy-controls-button-color-hover-props,\n        var(--xy-controls-button-color-hover, var(--xy-controls-button-color-hover-default))\n      );\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:disabled, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:disabled {\n      pointer-events: none;\n    }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:disabled svg, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:disabled svg {\n        fill-opacity: 0.4;\n      }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls-button:last-child, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls-button:last-child {\n    border-bottom: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal .react-flow__controls-button, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal .react-flow__controls-button {\n    border-bottom: none;\n    border-right: 1px solid\n      var(\n        --xy-controls-button-border-color-props,\n        var(--xy-controls-button-border-color, var(--xy-controls-button-border-color-default))\n      );\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__controls.horizontal .react-flow__controls-button:last-child, [data-ext-id=\"com.nubeio.ce\"].react-flow__controls.horizontal .react-flow__controls-button:last-child {\n    border-right: none;\n  }\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control {\n  position: absolute;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.right {\n  cursor: ew-resize;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom {\n  cursor: ns-resize;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom.right {\n  cursor: nwse-resize;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.bottom.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.bottom.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.top.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.top.right {\n  cursor: nesw-resize;\n}\n/* handle styles */\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle {\n  width: 5px;\n  height: 5px;\n  border: 1px solid #fff;\n  border-radius: 1px;\n  background-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));\n  translate: -50% -50%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.left {\n  left: 0;\n  top: 50%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.right {\n  left: 100%;\n  top: 50%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top {\n  left: 50%;\n  top: 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom {\n  left: 50%;\n  top: 100%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top.left {\n  left: 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom.left {\n  left: 0;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.top.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.top.right {\n  left: 100%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.handle.bottom.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.handle.bottom.right {\n  left: 100%;\n}\n/* line styles */\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line {\n  border-color: var(--xy-resize-background-color, var(--xy-resize-background-color-default));\n  border-width: 0;\n  border-style: solid;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.right {\n  width: 1px;\n  transform: translate(-50%, 0);\n  top: 0;\n  height: 100%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.left, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.left {\n  left: 0;\n  border-left-width: 1px;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.right, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.right {\n  left: 100%;\n  border-right-width: 1px;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.bottom {\n  height: 1px;\n  transform: translate(0, -50%);\n  left: 0;\n  width: 100%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.top, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.top {\n  top: 0;\n  border-top-width: 1px;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__resize-control.line.bottom, [data-ext-id=\"com.nubeio.ce\"].react-flow__resize-control.line.bottom {\n  border-bottom-width: 1px;\n  top: 100%;\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-textbg, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-textbg {\n  fill: var(--xy-edge-label-background-color, var(--xy-edge-label-background-color-default));\n}\n[data-ext-id=\"com.nubeio.ce\"] .react-flow__edge-text, [data-ext-id=\"com.nubeio.ce\"].react-flow__edge-text {\n  fill: var(--xy-edge-label-color, var(--xy-edge-label-color-default));\n}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
 
 })();
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import * as React from 'react';
-import React__default, { forwardRef, createElement, useState, memo, createContext, useCallback, useMemo, useRef, useEffect, useContext, useLayoutEffect } from 'react';
+import React__default, { forwardRef, createElement, useContext, memo, createContext, useMemo, useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 
 const HOST_CLIENT_CTX_KEY = "__starterExtSdkHostClientContextV1";
@@ -261,19 +261,6 @@ const createLucideIcon = (iconName, iconNode) => {
  */
 
 
-const ArrowLeft = createLucideIcon("ArrowLeft", [
-  ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
-  ["path", { d: "M19 12H5", key: "x3x0zl" }]
-]);
-
-/**
- * @license lucide-react v0.469.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
 const Cpu = createLucideIcon("Cpu", [
   ["rect", { width: "16", height: "16", x: "4", y: "4", rx: "2", key: "14l7u7" }],
   ["rect", { width: "6", height: "6", x: "9", y: "9", rx: "1", key: "5aljv4" }],
@@ -346,41 +333,6 @@ const Pencil = createLucideIcon("Pencil", [
 const Plus = createLucideIcon("Plus", [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "M12 5v14", key: "s699le" }]
-]);
-
-/**
- * @license lucide-react v0.469.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-const RefreshCw = createLucideIcon("RefreshCw", [
-  ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-  ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-  ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-  ["path", { d: "M8 16H3v5", key: "1cv678" }]
-]);
-
-/**
- * @license lucide-react v0.469.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-const Save = createLucideIcon("Save", [
-  [
-    "path",
-    {
-      d: "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-      key: "1c8476"
-    }
-  ],
-  ["path", { d: "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7", key: "1ydtos" }],
-  ["path", { d: "M7 3v4a1 1 0 0 0 1 1h7", key: "t51u73" }]
 ]);
 
 /**
@@ -2546,7 +2498,7 @@ function interpolate$1(a, b) {
 
 var degrees = 180 / Math.PI;
 
-var identity$2 = {
+var identity$3 = {
   translateX: 0,
   translateY: 0,
   rotate: 0,
@@ -2576,14 +2528,14 @@ var svgNode;
 /* eslint-disable no-undef */
 function parseCss(value) {
   const m = new (typeof DOMMatrix === "function" ? DOMMatrix : WebKitCSSMatrix)(value + "");
-  return m.isIdentity ? identity$2 : decompose(m.a, m.b, m.c, m.d, m.e, m.f);
+  return m.isIdentity ? identity$3 : decompose(m.a, m.b, m.c, m.d, m.e, m.f);
 }
 
 function parseSvg(value) {
-  if (value == null) return identity$2;
+  if (value == null) return identity$3;
   if (!svgNode) svgNode = document.createElementNS("http://www.w3.org/2000/svg", "g");
   svgNode.setAttribute("transform", value);
-  if (!(value = svgNode.transform.baseVal.consolidate())) return identity$2;
+  if (!(value = svgNode.transform.baseVal.consolidate())) return identity$3;
   value = value.matrix;
   return decompose(value.a, value.b, value.c, value.d, value.e, value.f);
 }
@@ -2857,7 +2809,7 @@ function schedule(node, name, id, index, group, timing) {
   var schedules = node.__transition;
   if (!schedules) node.__transition = {};
   else if (id in schedules) return;
-  create(node, id, {
+  create$1(node, id, {
     name: name,
     index: index, // For context during callback.
     group: group, // For context during callback.
@@ -2890,7 +2842,7 @@ function get(node, id) {
   return schedule;
 }
 
-function create(node, id, self) {
+function create$1(node, id, self) {
   var schedules = node.__transition,
       tween;
 
@@ -3769,12 +3721,12 @@ Transform.prototype = {
   }
 };
 
-var identity$1 = new Transform(1, 0, 0);
+var identity$2 = new Transform(1, 0, 0);
 
 transform.prototype = Transform.prototype;
 
 function transform(node) {
-  while (!node.__zoom) if (!(node = node.parentNode)) return identity$1;
+  while (!node.__zoom) if (!(node = node.parentNode)) return identity$2;
   return node.__zoom;
 }
 
@@ -3807,7 +3759,7 @@ function defaultExtent() {
 }
 
 function defaultTransform() {
-  return this.__zoom || identity$1;
+  return this.__zoom || identity$2;
 }
 
 function defaultWheelDelta(event) {
@@ -3910,7 +3862,7 @@ function zoom() {
       var e = extent.apply(this, arguments),
           t = this.__zoom,
           p0 = p == null ? centroid(e) : typeof p === "function" ? p.apply(this, arguments) : p;
-      return constrain(identity$1.translate(p0[0], p0[1]).scale(t.k).translate(
+      return constrain(identity$2.translate(p0[0], p0[1]).scale(t.k).translate(
         typeof x === "function" ? -x.apply(this, arguments) : -x,
         typeof y === "function" ? -y.apply(this, arguments) : -y
       ), e, translateExtent);
@@ -5156,7 +5108,7 @@ const connectionExists = (edge, edges) => {
  *a new edge even if the `id` property is different.
  *
  */
-const addEdge = (edgeParams, edges, options = {}) => {
+const addEdge$1 = (edgeParams, edges, options = {}) => {
     if (!edgeParams.source || !edgeParams.target) {
         devWarn('006', errorMessages['error006']());
         return edges;
@@ -6670,7 +6622,7 @@ const transformToViewport = (transform) => ({
     y: transform.y,
     zoom: transform.k,
 });
-const viewportToTransform = ({ x, y, zoom }) => identity$1.translate(x, y).scale(zoom);
+const viewportToTransform = ({ x, y, zoom }) => identity$2.translate(x, y).scale(zoom);
 const isWrappedWithClass = (event, className) => event.target.closest(`.${className}`);
 const isRightClickPan = (panOnDrag, usedButton) => usedButton === 2 && Array.isArray(panOnDrag) && panOnDrag.includes(2);
 // taken from d3-ease: https://github.com/d3/d3-ease/blob/main/src/cubic.js
@@ -7920,7 +7872,7 @@ var withSelectorExports = withSelector.exports;
 const useSyncExternalStoreExports = /*@__PURE__*/getDefaultExportFromCjs(withSelectorExports);
 
 const __vite_import_meta_env__ = {};
-const createStoreImpl = (createState) => {
+const createStoreImpl$1 = (createState) => {
   let state;
   const listeners = /* @__PURE__ */ new Set();
   const setState = (partial, replace) => {
@@ -7949,12 +7901,12 @@ const createStoreImpl = (createState) => {
   const initialState = state = createState(setState, getState, api);
   return api;
 };
-const createStore$1 = (createState) => createState ? createStoreImpl(createState) : createStoreImpl;
+const createStore$2 = (createState) => createState ? createStoreImpl$1(createState) : createStoreImpl$1;
 
 const { useDebugValue } = React__default;
 const { useSyncExternalStoreWithSelector } = useSyncExternalStoreExports;
-const identity = (arg) => arg;
-function useStoreWithEqualityFn(api, selector = identity, equalityFn) {
+const identity$1 = (arg) => arg;
+function useStoreWithEqualityFn(api, selector = identity$1, equalityFn) {
   const slice = useSyncExternalStoreWithSelector(
     api.subscribe,
     api.getState,
@@ -7966,7 +7918,7 @@ function useStoreWithEqualityFn(api, selector = identity, equalityFn) {
   return slice;
 }
 const createWithEqualityFnImpl = (createState, defaultEqualityFn) => {
-  const api = createStore$1(createState);
+  const api = createStore$2(createState);
   const useBoundStoreWithEqualityFn = (selector, equalityFn = defaultEqualityFn) => useStoreWithEqualityFn(api, selector, equalityFn);
   Object.assign(useBoundStoreWithEqualityFn, api);
   return useBoundStoreWithEqualityFn;
@@ -8037,7 +7989,7 @@ const zustandErrorMessage = errorMessages['error001']();
  * state. For many of the common use cases, there are dedicated hooks available
  * such as {@link useReactFlow}, {@link useViewport}, etc.
  */
-function useStore(selector, equalityFn) {
+function useStore$1(selector, equalityFn) {
     const store = useContext(StoreContext);
     if (store === null) {
         throw new Error(zustandErrorMessage);
@@ -8087,11 +8039,11 @@ const ARIA_LIVE_MESSAGE = 'react-flow__aria-live';
 const ariaLiveSelector = (s) => s.ariaLiveMessage;
 const ariaLabelConfigSelector = (s) => s.ariaLabelConfig;
 function AriaLiveMessage({ rfId }) {
-    const ariaLiveMessage = useStore(ariaLiveSelector);
+    const ariaLiveMessage = useStore$1(ariaLiveSelector);
     return (jsx("div", { id: `${ARIA_LIVE_MESSAGE}-${rfId}`, "aria-live": "assertive", "aria-atomic": "true", style: ariaLiveStyle, children: ariaLiveMessage }));
 }
 function A11yDescriptions({ rfId, disableKeyboardA11y }) {
-    const ariaLabelConfig = useStore(ariaLabelConfigSelector);
+    const ariaLabelConfig = useStore$1(ariaLabelConfigSelector);
     return (jsxs(Fragment, { children: [jsx("div", { id: `${ARIA_NODE_DESC_KEY}-${rfId}`, style: style, children: disableKeyboardA11y
                     ? ariaLabelConfig['node.a11yDescription.default']
                     : ariaLabelConfig['node.a11yDescription.keyboardDisabled'] }), jsx("div", { id: `${ARIA_EDGE_DESC_KEY}-${rfId}`, style: style, children: ariaLabelConfig['edge.a11yDescription.default'] }), !disableKeyboardA11y && jsx(AriaLiveMessage, { rfId: rfId })] }));
@@ -8157,7 +8109,7 @@ function areEqual(a, b) {
 }
 function SelectionListenerInner({ onSelectionChange, }) {
     const store = useStoreApi();
-    const { selectedNodes, selectedEdges } = useStore(selector$m, areEqual);
+    const { selectedNodes, selectedEdges } = useStore$1(selector$m, areEqual);
     useEffect(() => {
         const params = { nodes: selectedNodes, edges: selectedEdges };
         onSelectionChange?.(params);
@@ -8167,7 +8119,7 @@ function SelectionListenerInner({ onSelectionChange, }) {
 }
 const changeSelector = (s) => !!s.onSelectionChangeHandlers;
 function SelectionListener({ onSelectionChange, }) {
-    const storeHasSelectionChangeHandlers = useStore(changeSelector);
+    const storeHasSelectionChangeHandlers = useStore$1(changeSelector);
     if (onSelectionChange || storeHasSelectionChangeHandlers) {
         return jsx(SelectionListenerInner, { onSelectionChange: onSelectionChange });
     }
@@ -8273,7 +8225,7 @@ const initPrevValues = {
     rfId: '1',
 };
 function StoreUpdater(props) {
-    const { setNodes, setEdges, setMinZoom, setMaxZoom, setTranslateExtent, setNodeExtent, reset, setDefaultNodesAndEdges, } = useStore(selector$l, shallow$1);
+    const { setNodes, setEdges, setMinZoom, setMaxZoom, setTranslateExtent, setNodeExtent, reset, setDefaultNodesAndEdges, } = useStore$1(selector$l, shallow$1);
     const store = useStoreApi();
     // We use layout effects here so that the store is always populated before
     // any child useEffect or useLayoutEffect fires. With regular useEffect, the
@@ -9035,7 +8987,7 @@ function useReactFlow() {
     const viewportHelper = useViewportHelper();
     const store = useStoreApi();
     const batchContext = useBatchContext();
-    const viewportInitialized = useStore(selector$k);
+    const viewportInitialized = useStore$1(selector$k);
     const generalHelper = useMemo(() => {
         const getInternalNode = (id) => store.getState().nodeLookup.get(id);
         const setNodes = (payload) => {
@@ -9290,7 +9242,7 @@ const selector$j = (s) => ({
 function ZoomPane({ onPaneContextMenu, zoomOnScroll = true, zoomOnPinch = true, panOnScroll = false, panOnScrollSpeed = 0.5, panOnScrollMode = PanOnScrollMode.Free, zoomOnDoubleClick = true, panOnDrag = true, defaultViewport, translateExtent, minZoom, maxZoom, zoomActivationKeyCode, preventScrolling = true, children, noWheelClassName, noPanClassName, onViewportChange, isControlledViewport, paneClickDistance, selectionOnDrag, }) {
     const store = useStoreApi();
     const zoomPane = useRef(null);
-    const { userSelectionActive, lib, connectionInProgress } = useStore(selector$j, shallow$1);
+    const { userSelectionActive, lib, connectionInProgress } = useStore$1(selector$j, shallow$1);
     const zoomActivationKeyPressed = useKeyPress(zoomActivationKeyCode);
     const panZoom = useRef();
     useResizeHandler(zoomPane);
@@ -9385,7 +9337,7 @@ const selector$i = (s) => ({
     userSelectionRect: s.userSelectionRect,
 });
 function UserSelection() {
-    const { userSelectionActive, userSelectionRect } = useStore(selector$i, shallow$1);
+    const { userSelectionActive, userSelectionRect } = useStore$1(selector$i, shallow$1);
     const isActive = userSelectionActive && userSelectionRect;
     if (!isActive) {
         return null;
@@ -9413,7 +9365,7 @@ const selector$h = (s) => ({
 });
 function Pane({ isSelecting, selectionKeyPressed, selectionMode = SelectionMode.Full, panOnDrag, paneClickDistance, selectionOnDrag, onSelectionStart, onSelectionEnd, onPaneClick, onPaneContextMenu, onPaneScroll, onPaneMouseEnter, onPaneMouseMove, onPaneMouseLeave, children, }) {
     const store = useStoreApi();
-    const { userSelectionActive, elementsSelectable, dragging, connectionInProgress } = useStore(selector$h, shallow$1);
+    const { userSelectionActive, elementsSelectable, dragging, connectionInProgress } = useStore$1(selector$h, shallow$1);
     const isSelectionEnabled = elementsSelectable && (isSelecting || userSelectionActive);
     const container = useRef(null);
     const containerBounds = useRef();
@@ -9741,8 +9693,8 @@ function HandleComponent({ type = 'source', position = Position.Top, isValidConn
     const isTarget = type === 'target';
     const store = useStoreApi();
     const nodeId = useNodeId();
-    const { connectOnClick, noPanClassName, rfId } = useStore(selector$g, shallow$1);
-    const { connectingFrom, connectingTo, clickConnecting, isPossibleEndHandle, connectionInProcess, clickConnectionInProcess, valid, } = useStore(connectingSelector(nodeId, handleId, type), shallow$1);
+    const { connectOnClick, noPanClassName, rfId } = useStore$1(selector$g, shallow$1);
+    const { connectingFrom, connectingTo, clickConnecting, isPossibleEndHandle, connectionInProcess, clickConnectionInProcess, valid, } = useStore$1(connectingSelector(nodeId, handleId, type), shallow$1);
     if (!nodeId) {
         store.getState().onError?.('010', errorMessages['error010']());
     }
@@ -9754,7 +9706,7 @@ function HandleComponent({ type = 'source', position = Position.Top, isValidConn
         };
         if (hasDefaultEdges) {
             const { edges, setEdges } = store.getState();
-            setEdges(addEdge(edgeParams, edges));
+            setEdges(addEdge$1(edgeParams, edges));
         }
         onConnectAction?.(edgeParams);
         onConnect?.(edgeParams);
@@ -9943,7 +9895,7 @@ const selector$f = (s) => {
 };
 function NodesSelection({ onSelectionContextMenu, noPanClassName, disableKeyboardA11y, }) {
     const store = useStoreApi();
-    const { width, height, transformString, userSelectionActive } = useStore(selector$f, shallow$1);
+    const { width, height, transformString, userSelectionActive } = useStore$1(selector$f, shallow$1);
     const moveSelectedNodes = useMoveSelectedNodes();
     const nodeRef = useRef(null);
     useEffect(() => {
@@ -9989,7 +9941,7 @@ const selector$e = (s) => {
     return { nodesSelectionActive: s.nodesSelectionActive, userSelectionActive: s.userSelectionActive };
 };
 function FlowRendererComponent({ children, onPaneClick, onPaneMouseEnter, onPaneMouseMove, onPaneMouseLeave, onPaneContextMenu, onPaneScroll, paneClickDistance, deleteKeyCode, selectionKeyCode, selectionOnDrag, selectionMode, onSelectionStart, onSelectionEnd, multiSelectionKeyCode, panActivationKeyCode, zoomActivationKeyCode, elementsSelectable, zoomOnScroll, zoomOnPinch, panOnScroll: _panOnScroll, panOnScrollSpeed, panOnScrollMode, zoomOnDoubleClick, panOnDrag: _panOnDrag, defaultViewport, translateExtent, minZoom, maxZoom, preventScrolling, onSelectionContextMenu, noWheelClassName, noPanClassName, disableKeyboardA11y, onViewportChange, isControlledViewport, }) {
-    const { nodesSelectionActive, userSelectionActive } = useStore(selector$e, shallow$1);
+    const { nodesSelectionActive, userSelectionActive } = useStore$1(selector$e, shallow$1);
     const selectionKeyPressed = useKeyPress(selectionKeyCode, { target: win });
     const panActivationKeyPressed = useKeyPress(panActivationKeyCode, { target: win });
     const panOnDrag = panActivationKeyPressed || _panOnDrag;
@@ -10015,13 +9967,13 @@ const selector$d = (onlyRenderVisible) => (s) => {
  * @returns array with visible node ids
  */
 function useVisibleNodeIds(onlyRenderVisible) {
-    const nodeIds = useStore(useCallback(selector$d(onlyRenderVisible), [onlyRenderVisible]), shallow$1);
+    const nodeIds = useStore$1(useCallback(selector$d(onlyRenderVisible), [onlyRenderVisible]), shallow$1);
     return nodeIds;
 }
 
 const selector$c = (s) => s.updateNodeInternals;
 function useResizeObserver() {
-    const updateNodeInternals = useStore(selector$c);
+    const updateNodeInternals = useStore$1(selector$c);
     const [resizeObserver] = useState(() => {
         if (typeof ResizeObserver === 'undefined') {
             return null;
@@ -10101,7 +10053,7 @@ function useNodeObserver({ node, nodeType, hasDimensions, resizeObserver, }) {
 }
 
 function NodeWrapper({ id, onClick, onMouseEnter, onMouseMove, onMouseLeave, onContextMenu, onDoubleClick, nodesDraggable, elementsSelectable, nodesConnectable, nodesFocusable, resizeObserver, noDragClassName, noPanClassName, disableKeyboardA11y, rfId, nodeTypes, nodeClickDistance, onError, }) {
-    const { node, internals, isParent } = useStore((s) => {
+    const { node, internals, isParent } = useStore$1((s) => {
         const node = s.nodeLookup.get(id);
         const isParent = s.parentLookup.has(id);
         return {
@@ -10251,7 +10203,7 @@ const selector$b = (s) => ({
     onError: s.onError,
 });
 function NodeRendererComponent(props) {
-    const { nodesDraggable, nodesConnectable, nodesFocusable, elementsSelectable, onError } = useStore(selector$b, shallow$1);
+    const { nodesDraggable, nodesConnectable, nodesFocusable, elementsSelectable, onError } = useStore$1(selector$b, shallow$1);
     const nodeIds = useVisibleNodeIds(props.onlyRenderVisibleElements);
     const resizeObserver = useResizeObserver();
     return (jsx("div", { className: "react-flow__nodes", style: containerStyle, children: nodeIds.map((nodeId) => {
@@ -10295,7 +10247,7 @@ const NodeRenderer = memo(NodeRendererComponent);
  * @returns array with visible edge ids
  */
 function useVisibleEdgeIds(onlyRenderVisible) {
-    const edgeIds = useStore(useCallback((s) => {
+    const edgeIds = useStore$1(useCallback((s) => {
         if (!onlyRenderVisible) {
             return s.edges.map((edge) => edge.id);
         }
@@ -10366,8 +10318,8 @@ const Marker = ({ id, type, color, width = 12.5, height = 12.5, markerUnits = 's
  * that we can then use for creating our unique marker ids
  */
 const MarkerDefinitions = ({ defaultColor, rfId }) => {
-    const edges = useStore((s) => s.edges);
-    const defaultEdgeOptions = useStore((s) => s.defaultEdgeOptions);
+    const edges = useStore$1((s) => s.edges);
+    const defaultEdgeOptions = useStore$1((s) => s.defaultEdgeOptions);
     const markers = useMemo(() => {
         const markers = createMarkerIds(edges, {
             id: rfId,
@@ -10799,8 +10751,8 @@ function EdgeUpdateAnchors({ isReconnectable, reconnectRadius, edge, sourceX, so
 }
 
 function EdgeWrapper({ id, edgesFocusable, edgesReconnectable, elementsSelectable, onClick, onDoubleClick, onContextMenu, onMouseEnter, onMouseMove, onMouseLeave, reconnectRadius, onReconnect, onReconnectStart, onReconnectEnd, rfId, edgeTypes, noPanClassName, onError, disableKeyboardA11y, }) {
-    let edge = useStore((s) => s.edgeLookup.get(id));
-    const defaultEdgeOptions = useStore((s) => s.defaultEdgeOptions);
+    let edge = useStore$1((s) => s.edgeLookup.get(id));
+    const defaultEdgeOptions = useStore$1((s) => s.defaultEdgeOptions);
     edge = defaultEdgeOptions ? { ...defaultEdgeOptions, ...edge } : edge;
     let edgeType = edge.type || 'default';
     let EdgeComponent = edgeTypes?.[edgeType] || builtinEdgeTypes[edgeType];
@@ -10817,7 +10769,7 @@ function EdgeWrapper({ id, edgesFocusable, edgesReconnectable, elementsSelectabl
     const [updateHover, setUpdateHover] = useState(false);
     const [reconnecting, setReconnecting] = useState(false);
     const store = useStoreApi();
-    const { zIndex, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition } = useStore(useCallback((store) => {
+    const { zIndex, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition } = useStore$1(useCallback((store) => {
         const sourceNode = store.nodeLookup.get(edge.source);
         const targetNode = store.nodeLookup.get(edge.target);
         if (!sourceNode || !targetNode) {
@@ -10931,7 +10883,7 @@ const selector$a = (s) => ({
     onError: s.onError,
 });
 function EdgeRendererComponent({ defaultMarkerColor, onlyRenderVisibleElements, rfId, edgeTypes, noPanClassName, onReconnect, onEdgeContextMenu, onEdgeMouseEnter, onEdgeMouseMove, onEdgeMouseLeave, onEdgeClick, reconnectRadius, onEdgeDoubleClick, onReconnectStart, onReconnectEnd, disableKeyboardA11y, }) {
-    const { edgesFocusable, edgesReconnectable, elementsSelectable, onError } = useStore(selector$a, shallow$1);
+    const { edgesFocusable, edgesReconnectable, elementsSelectable, onError } = useStore$1(selector$a, shallow$1);
     const edgeIds = useVisibleEdgeIds(onlyRenderVisibleElements);
     return (jsxs("div", { className: "react-flow__edges", children: [jsx(MarkerDefinitions$1, { defaultColor: defaultMarkerColor, rfId: rfId }), edgeIds.map((id) => {
                 return (jsx(EdgeWrapper$1, { id: id, edgesFocusable: edgesFocusable, edgesReconnectable: edgesReconnectable, elementsSelectable: elementsSelectable, noPanClassName: noPanClassName, onReconnect: onReconnect, onContextMenu: onEdgeContextMenu, onMouseEnter: onEdgeMouseEnter, onMouseMove: onEdgeMouseMove, onMouseLeave: onEdgeMouseLeave, onClick: onEdgeClick, reconnectRadius: reconnectRadius, onDoubleClick: onEdgeDoubleClick, onReconnectStart: onReconnectStart, onReconnectEnd: onReconnectEnd, rfId: rfId, onError: onError, edgeTypes: edgeTypes, disableKeyboardA11y: disableKeyboardA11y }, id));
@@ -10942,7 +10894,7 @@ const EdgeRenderer = memo(EdgeRendererComponent);
 
 const selector$9 = (s) => `translate(${s.transform[0]}px,${s.transform[1]}px) scale(${s.transform[2]})`;
 function Viewport({ children }) {
-    const transform = useStore(selector$9);
+    const transform = useStore$1(selector$9);
     return (jsx("div", { className: "react-flow__viewport xyflow__viewport react-flow__container", style: { transform }, children: children }));
 }
 
@@ -10970,7 +10922,7 @@ const selector$8 = (state) => state.panZoom?.syncViewport;
  * @param viewport
  */
 function useViewportSync(viewport) {
-    const syncViewport = useStore(selector$8);
+    const syncViewport = useStore$1(selector$8);
     const store = useStoreApi();
     useEffect(() => {
         if (viewport) {
@@ -11020,7 +10972,7 @@ function getSelector(connectionSelector) {
  */
 function useConnection(connectionSelector) {
     const combinedSelector = getSelector();
-    return useStore(combinedSelector, shallow$1);
+    return useStore$1(combinedSelector, shallow$1);
 }
 
 const selector$7 = (s) => ({
@@ -11031,7 +10983,7 @@ const selector$7 = (s) => ({
     height: s.height,
 });
 function ConnectionLineWrapper({ containerStyle, style, type, component, }) {
-    const { nodesConnectable, width, height, isValid, inProgress } = useStore(selector$7, shallow$1);
+    const { nodesConnectable, width, height, isValid, inProgress } = useStore$1(selector$7, shallow$1);
     const renderConnection = !!(width && nodesConnectable && inProgress);
     if (!renderConnection) {
         return null;
@@ -11214,7 +11166,7 @@ const getInitialState = ({ nodes, edges, defaultNodes, defaultEdges, width, heig
     };
 };
 
-const createStore = ({ nodes, edges, defaultNodes, defaultEdges, width, height, fitView, fitViewOptions, minZoom, maxZoom, nodeOrigin, nodeExtent, zIndexMode, }) => createWithEqualityFn((set, get) => {
+const createStore$1 = ({ nodes, edges, defaultNodes, defaultEdges, width, height, fitView, fitViewOptions, minZoom, maxZoom, nodeOrigin, nodeExtent, zIndexMode, }) => createWithEqualityFn((set, get) => {
     async function resolveFitView() {
         const { nodeLookup, panZoom, fitViewOptions, fitViewResolver, width, height, minZoom, maxZoom } = get();
         if (!panZoom) {
@@ -11553,7 +11505,7 @@ const createStore = ({ nodes, edges, defaultNodes, defaultEdges, width, height, 
  * `<ReactFlowProvider />` for each flow.
  */
 function ReactFlowProvider({ initialNodes: nodes, initialEdges: edges, defaultNodes, defaultEdges, initialWidth: width, initialHeight: height, initialMinZoom: minZoom, initialMaxZoom: maxZoom, initialFitViewOptions: fitViewOptions, fitView, nodeOrigin, nodeExtent, zIndexMode, children, }) {
-    const [store] = useState(() => createStore({
+    const [store] = useState(() => createStore$1({
         nodes,
         edges,
         defaultNodes,
@@ -11622,56 +11574,6 @@ function ReactFlow({ nodes, edges, defaultNodes, defaultEdges, className, nodeTy
  */
 var index = fixedForwardRef(ReactFlow);
 
-const selector$6 = (s) => s.domNode?.querySelector('.react-flow__edgelabel-renderer');
-/**
- * Edges are SVG-based. If you want to render more complex labels you can use the
- * `<EdgeLabelRenderer />` component to access a div based renderer. This component
- * is a portal that renders the label in a `<div />` that is positioned on top of
- * the edges. You can see an example usage of the component in the
- * [edge label renderer example](/examples/edges/edge-label-renderer).
- * @public
- *
- * @example
- * ```jsx
- * import React from 'react';
- * import { getBezierPath, EdgeLabelRenderer, BaseEdge } from '@xyflow/react';
- *
- * export function CustomEdge({ id, data, ...props }) {
- *   const [edgePath, labelX, labelY] = getBezierPath(props);
- *
- *   return (
- *     <>
- *       <BaseEdge id={id} path={edgePath} />
- *       <EdgeLabelRenderer>
- *         <div
- *           style={{
- *             position: 'absolute',
- *             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
- *             background: '#ffcc00',
- *             padding: 10,
- *         }}
- *           className="nodrag nopan"
- *         >
- *          {data.label}
- *         </div>
- *       </EdgeLabelRenderer>
- *     </>
- *   );
- * };
- * ```
- *
- * @remarks The `<EdgeLabelRenderer />` has no pointer events by default. If you want to
- * add mouse interactions you need to set the style `pointerEvents: all` and add
- * the `nopan` class on the label or the element you want to interact with.
- */
-function EdgeLabelRenderer({ children }) {
-    const edgeLabelRenderer = useStore(selector$6);
-    if (!edgeLabelRenderer) {
-        return null;
-    }
-    return createPortal(children, edgeLabelRenderer);
-}
-
 function LinePattern({ dimensions, lineWidth, variant, className }) {
     return (jsx("path", { strokeWidth: lineWidth, d: `M${dimensions[0] / 2} 0 V${dimensions[1]} M0 ${dimensions[1] / 2} H${dimensions[0]}`, className: cc(['react-flow__background-pattern', variant, className]) }));
 }
@@ -11704,7 +11606,7 @@ gap = 20,
 // only used for lines and cross
 size, lineWidth = 1, offset = 0, color, bgColor, style, className, patternClassName, }) {
     const ref = useRef(null);
-    const { transform, patternId } = useStore(selector$3, shallow$1);
+    const { transform, patternId } = useStore$1(selector$3, shallow$1);
     const patternSize = size || defaultSize[variant];
     const isDots = variant === BackgroundVariant.Dots;
     const isCross = variant === BackgroundVariant.Cross;
@@ -11836,7 +11738,7 @@ const selector$2 = (s) => ({
 });
 function ControlsComponent({ style, showZoom = true, showFitView = true, showInteractive = true, fitViewOptions, onZoomIn, onZoomOut, onFitView, onInteractiveChange, className, children, position = 'bottom-left', orientation = 'vertical', 'aria-label': ariaLabel, }) {
     const store = useStoreApi();
-    const { isInteractive, minZoomReached, maxZoomReached, ariaLabelConfig } = useStore(selector$2, shallow$1);
+    const { isInteractive, minZoomReached, maxZoomReached, ariaLabelConfig } = useStore$1(selector$2, shallow$1);
     const { zoomIn, zoomOut, fitView } = useReactFlow();
     const onZoomInHandler = () => {
         zoomIn();
@@ -11883,7 +11785,7 @@ ControlsComponent.displayName = 'Controls';
  * @remarks To extend or customise the controls, you can use the [`<ControlButton />`](/api-reference/components/control-button) component
  *
  */
-const Controls = memo(ControlsComponent);
+memo(ControlsComponent);
 
 function MiniMapNodeComponent({ id, x, y, width, height, style, color, strokeColor, strokeWidth, className, borderRadius, shapeRendering, selected, onClick, }) {
     const { background, backgroundColor } = style || {};
@@ -11904,7 +11806,7 @@ function MiniMapNodes({ nodeStrokeColor, nodeColor, nodeClassName = '', nodeBord
  * a component properly.
  */
 nodeComponent: NodeComponent = MiniMapNode, onClick, }) {
-    const nodeIds = useStore(selectorNodeIds, shallow$1);
+    const nodeIds = useStore$1(selectorNodeIds, shallow$1);
     const nodeColorFunc = getAttrFunction(nodeColor);
     const nodeStrokeColorFunc = getAttrFunction(nodeStrokeColor);
     const nodeClassNameFunc = getAttrFunction(nodeClassName);
@@ -11920,7 +11822,7 @@ nodeComponent: NodeComponent = MiniMapNode, onClick, }) {
         jsx(NodeComponentWrapper, { id: nodeId, nodeColorFunc: nodeColorFunc, nodeStrokeColorFunc: nodeStrokeColorFunc, nodeClassNameFunc: nodeClassNameFunc, nodeBorderRadius: nodeBorderRadius, nodeStrokeWidth: nodeStrokeWidth, NodeComponent: NodeComponent, onClick: onClick, shapeRendering: shapeRendering }, nodeId))) }));
 }
 function NodeComponentWrapperInner({ id, nodeColorFunc, nodeStrokeColorFunc, nodeClassNameFunc, nodeBorderRadius, nodeStrokeWidth, shapeRendering, NodeComponent, onClick, }) {
-    const { node, x, y, width, height } = useStore((s) => {
+    const { node, x, y, width, height } = useStore$1((s) => {
         const node = s.nodeLookup.get(id);
         if (!node) {
             return { node: undefined, x: 0, y: 0, width: 0, height: 0 };
@@ -11976,7 +11878,7 @@ function MiniMapComponent({ style, className, nodeStrokeColor, nodeColor, nodeCl
 nodeComponent, bgColor, maskColor, maskStrokeColor, maskStrokeWidth, position = 'bottom-right', onClick, onNodeClick, pannable = false, zoomable = false, ariaLabel, inversePan, zoomStep = 1, offsetScale = 5, }) {
     const store = useStoreApi();
     const svg = useRef(null);
-    const { boundingRect, viewBB, rfId, panZoom, translateExtent, flowWidth, flowHeight, ariaLabelConfig } = useStore(selector$1, shallow$1);
+    const { boundingRect, viewBB, rfId, panZoom, translateExtent, flowWidth, flowHeight, ariaLabelConfig } = useStore$1(selector$1, shallow$1);
     const elementWidth = style?.width ?? defaultWidth;
     const elementHeight = style?.height ?? defaultHeight;
     const scaledWidth = boundingRect.width / elementWidth;
@@ -12076,7 +11978,7 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
     const store = useStoreApi();
     const resizeControlRef = useRef(null);
     const isHandleControl = variant === ResizeControlVariant.Handle;
-    const scale = useStore(useCallback(scaleSelector(isHandleControl && autoScale), [isHandleControl, autoScale]), shallow$1);
+    const scale = useStore$1(useCallback(scaleSelector(isHandleControl && autoScale), [isHandleControl, autoScale]), shallow$1);
     const resizer = useRef(null);
     const controlPosition = position ?? defaultPositions[variant];
     useEffect(() => {
@@ -12217,771 +12119,6913 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
  */
 memo(ResizeControl);
 
-const SLOT_COLORS = {
-  any: "#94a3b8",
-  // slate-400
-  string: "#3b82f6",
-  // blue-500
-  number: "#10b981",
-  // emerald-500
-  boolean: "#a855f7",
-  // purple-500
-  json: "#f59e0b",
-  // amber-500
-  bytes: "#64748b",
-  // slate-500
-  event: "#ec4899",
-  // pink-500
-  trigger: "#ef4444",
-  // red-500
-  stream: "#06b6d4"
-  // cyan-500
+const createStoreImpl = (createState) => {
+  let state;
+  const listeners = /* @__PURE__ */ new Set();
+  const setState = (partial, replace) => {
+    const nextState = typeof partial === "function" ? partial(state) : partial;
+    if (!Object.is(nextState, state)) {
+      const previousState = state;
+      state = (replace != null ? replace : typeof nextState !== "object" || nextState === null) ? nextState : Object.assign({}, state, nextState);
+      listeners.forEach((listener) => listener(state, previousState));
+    }
+  };
+  const getState = () => state;
+  const getInitialState = () => initialState;
+  const subscribe = (listener) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  };
+  const api = { setState, getState, getInitialState, subscribe };
+  const initialState = state = createState(setState, getState, api);
+  return api;
 };
-function colorForKind(kind) {
-  return SLOT_COLORS[kind] ?? SLOT_COLORS.any;
+const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
+
+const identity = (arg) => arg;
+function useStore(api, selector = identity) {
+  const slice = React__default.useSyncExternalStore(
+    api.subscribe,
+    React__default.useCallback(() => selector(api.getState()), [api, selector]),
+    React__default.useCallback(() => selector(api.getInitialState()), [api, selector])
+  );
+  React__default.useDebugValue(slice);
+  return slice;
+}
+const createImpl = (createState) => {
+  const api = createStore(createState);
+  const useBoundStore = (selector) => useStore(api, selector);
+  Object.assign(useBoundStore, api);
+  return useBoundStore;
+};
+const create = ((createState) => createState ? createImpl(createState) : createImpl);
+
+const propertyToComponent = /* @__PURE__ */ new Map();
+function indexComponentProperties(c) {
+  for (const p of Object.values(c.properties)) {
+    propertyToComponent.set(p.uid, c.uid);
+  }
+}
+function unindexComponentProperties(c) {
+  for (const p of Object.values(c.properties)) {
+    propertyToComponent.delete(p.uid);
+  }
+}
+const useStructural = create((set) => ({
+  components: /* @__PURE__ */ new Map(),
+  componentsByPath: /* @__PURE__ */ new Map(),
+  edges: /* @__PURE__ */ new Map(),
+  setNodes: (comps, edges) => {
+    const cByUid = /* @__PURE__ */ new Map();
+    const cByPath = /* @__PURE__ */ new Map();
+    propertyToComponent.clear();
+    const walk = (c) => {
+      cByUid.set(c.uid, c);
+      cByPath.set(c.path, c);
+      indexComponentProperties(c);
+      c.children?.forEach(walk);
+    };
+    comps.forEach(walk);
+    const eByUid = /* @__PURE__ */ new Map();
+    edges.forEach((e) => eByUid.set(e.uid, e));
+    set({ components: cByUid, componentsByPath: cByPath, edges: eByUid });
+  },
+  upsertComponent: (c) => set((s) => {
+    const components = new Map(s.components);
+    const componentsByPath = new Map(s.componentsByPath);
+    const prev = components.get(c.uid);
+    if (prev) unindexComponentProperties(prev);
+    components.set(c.uid, c);
+    componentsByPath.set(c.path, c);
+    indexComponentProperties(c);
+    return { components, componentsByPath };
+  }),
+  removeComponent: (uid) => set((s) => {
+    const components = new Map(s.components);
+    const old = components.get(uid);
+    if (old) unindexComponentProperties(old);
+    components.delete(uid);
+    const componentsByPath = new Map(s.componentsByPath);
+    if (old) componentsByPath.delete(old.path);
+    const edges = new Map(s.edges);
+    for (const [eid, e] of edges) {
+      if (e.sourceUid === uid || e.targetUid === uid) edges.delete(eid);
+    }
+    return { components, componentsByPath, edges };
+  }),
+  upsertEdge: (e) => set((s) => {
+    const edges = new Map(s.edges);
+    edges.set(e.uid, e);
+    return { edges };
+  }),
+  removeEdge: (uid) => set((s) => {
+    const edges = new Map(s.edges);
+    edges.delete(uid);
+    return { edges };
+  })
+}));
+const propertyDataType = /* @__PURE__ */ new Map();
+function makeRafBump(set) {
+  let scheduled = false;
+  return () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      set((s) => ({ version: s.version + 1 }));
+    });
+  };
+}
+const useStatusFlags = create((set, get) => {
+  const bump = makeRafBump(set);
+  return {
+    flags: /* @__PURE__ */ new Map(),
+    version: 0,
+    applyStatus: (uids, flags) => {
+      const m = get().flags;
+      for (let i = 0; i < uids.length; i++) m.set(uids[i], flags[i]);
+      bump();
+    },
+    reset: () => set({ flags: /* @__PURE__ */ new Map(), version: 0 })
+  };
+});
+const useSchemaVersion = create((set) => ({
+  version: 0,
+  bump: () => set((s) => ({ version: s.version + 1 }))
+}));
+function loadSchemaIndices(properties) {
+  propertyDataType.clear();
+  const seeded = /* @__PURE__ */ new Map();
+  for (const p of properties) {
+    propertyDataType.set(p.uid, p.dataType);
+    seeded.set(p.uid, p.statusFlags >>> 0);
+  }
+  useStatusFlags.setState({ flags: seeded, version: useStatusFlags.getState().version + 1 });
+  useSchemaVersion.getState().bump();
+}
+const useValues = create((set, get) => {
+  const bump = makeRafBump(set);
+  return {
+    values: /* @__PURE__ */ new Map(),
+    version: 0,
+    // Mutate in place immediately; coalesce the version bump to one rAF (see
+    // makeRafBump). Components select specific UIDs from the Map and observe
+    // changes on version bump — now at most once per frame regardless of how
+    // many WS frames landed since the last paint.
+    apply: (uids, vs) => {
+      const m = get().values;
+      for (let i = 0; i < uids.length; i++) {
+        m.set(uids[i], vs[i]);
+      }
+      bump();
+    },
+    reset: () => set({ values: /* @__PURE__ */ new Map(), version: 0 })
+  };
+});
+
+const store = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  loadSchemaIndices,
+  propertyDataType,
+  propertyToComponent,
+  useSchemaVersion,
+  useStatusFlags,
+  useStructural,
+  useValues
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const EVENT_CAP = 500;
+const events = [];
+const eventsVersion = { v: 0 };
+function recordEvent(kind, text) {
+  events.push({ t: performance.now(), kind, text });
+  if (events.length > EVENT_CAP) events.splice(0, events.length - EVENT_CAP);
+  eventsVersion.v++;
+}
+function clearEvents() {
+  events.length = 0;
+  eventsVersion.v++;
+}
+const metrics = {
+  // WS state
+  wsConnected: false,
+  reconnectCount: 0,
+  sessionId: "",
+  lastSeq: 0,
+  // Counters since last 1s sample
+  msgsThisSec: 0,
+  bytesThisSec: 0,
+  valuesThisSec: 0,
+  framesThisSec: 0,
+  // 1s rolling samples
+  msgsPerSec: 0,
+  bytesPerSec: 0,
+  valuesPerSec: 0,
+  framesPerSec: 0,
+  // Frame timing
+  fps: 0,
+  frameMs: 0,
+  maxFrameMs: 0,
+  longFramesPerSec: 0,
+  // Last binary frame stats
+  lastFrameValues: 0,
+  lastFrameSections: 0,
+  lastFrameBytes: 0,
+  // Wire parse time rolling avg (ms)
+  parseAvgMs: 0,
+  // Topology event counts
+  topoAdded: 0,
+  topoRemoved: 0,
+  topoChanged: 0,
+  // Viewport
+  zoom: 1,
+  panX: 0,
+  panY: 0,
+  // Last batch of select-change events from React Flow's onNodesChange. Captured here
+  // so the ClickDebugger can show them next to each click without needing console.
+  lastSelChange: "",
+  lastSelChangeAt: 0,
+  totalComponents: 0,
+  domNodes: 0,
+  domEdges: 0,
+  // Bytes-per-sec sparkline, 30 samples deep.
+  bytesSpark: new Float32Array(30)
+};
+function recordMessage(bytes, isBinary) {
+  metrics.msgsThisSec++;
+  metrics.bytesThisSec += bytes;
+  if (isBinary) metrics.framesThisSec++;
+}
+function recordValueCount(n, sections, bytes) {
+  metrics.valuesThisSec += n;
+  metrics.lastFrameValues = n;
+  metrics.lastFrameSections = sections;
+  metrics.lastFrameBytes = bytes;
+}
+function recordParse(ms) {
+  const alpha = 0.1;
+  metrics.parseAvgMs = metrics.parseAvgMs === 0 ? ms : metrics.parseAvgMs * (1 - alpha) + ms * alpha;
+}
+function recordTopology(kind) {
+  if (kind === "added") metrics.topoAdded++;
+  else if (kind === "removed") metrics.topoRemoved++;
+  else metrics.topoChanged++;
+}
+let lastSec = performance.now();
+let frames = 0;
+let lastFrameTs$1 = performance.now();
+let frameMsAccum = 0;
+let frameMsMax = 0;
+let longFramesAccum = 0;
+const LONG_FRAME_MS = 25;
+function tickInstrumentation(now) {
+  const dt = now - lastFrameTs$1;
+  lastFrameTs$1 = now;
+  frames++;
+  frameMsAccum += dt;
+  if (dt > frameMsMax) frameMsMax = dt;
+  if (dt > LONG_FRAME_MS) longFramesAccum++;
+  if (now - lastSec >= 1e3) {
+    const sec = (now - lastSec) / 1e3;
+    metrics.fps = frames / sec;
+    metrics.frameMs = frameMsAccum / frames;
+    metrics.maxFrameMs = frameMsMax;
+    metrics.longFramesPerSec = longFramesAccum;
+    frames = 0;
+    frameMsAccum = 0;
+    frameMsMax = 0;
+    longFramesAccum = 0;
+    lastSec = now;
+    metrics.msgsPerSec = metrics.msgsThisSec;
+    metrics.bytesPerSec = metrics.bytesThisSec;
+    metrics.valuesPerSec = metrics.valuesThisSec;
+    metrics.framesPerSec = metrics.framesThisSec;
+    metrics.msgsThisSec = 0;
+    metrics.bytesThisSec = 0;
+    metrics.valuesThisSec = 0;
+    metrics.framesThisSec = 0;
+    const s = metrics.bytesSpark;
+    s.copyWithin(0, 1);
+    s[s.length - 1] = metrics.bytesPerSec;
+    metrics.domNodes = document.querySelectorAll(".react-flow__node").length;
+    metrics.domEdges = document.querySelectorAll(".react-flow__edge").length;
+  }
 }
 
-function TypedEdge(props) {
-  const {
-    id,
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    data,
-    markerEnd,
-    label
-  } = props;
-  const slotKind = data?.slotKind ?? "any";
-  const active = Boolean(data?.active);
-  const color = colorForKind(slotKind);
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition
-  });
-  return /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsx(
-      BaseEdge,
-      {
-        id,
-        path: edgePath,
-        markerEnd,
-        style: {
-          stroke: color,
-          strokeWidth: active ? 2.5 : 1.5,
-          strokeDasharray: active ? "6 4" : void 0
-        },
-        className: active ? "sf-edge sf-edge--active" : "sf-edge"
+const RING_LIFETIME_MS = 800;
+const LOG_LIMIT = 8;
+function describeTarget(el) {
+  if (!el) return { nodeUid: null, targetTag: "<none>" };
+  let kind = "pane";
+  let node = el;
+  let nodeEl = null;
+  while (node) {
+    if (node.classList?.contains("react-flow__handle")) kind = "handle";
+    if (node.classList?.contains("react-flow__node")) {
+      nodeEl = node;
+      if (kind === "pane") kind = "node body";
+      break;
+    }
+    if (node.classList?.contains("react-flow__pane")) kind = "pane";
+    node = node.parentElement;
+  }
+  const uid = nodeEl?.dataset?.id ? Number(nodeEl.dataset.id) : null;
+  return { nodeUid: Number.isFinite(uid) ? uid : null, targetTag: kind };
+}
+let nextId = 1;
+function ClickDebugger() {
+  const [events, setEvents] = useState([]);
+  const [rings, setRings] = useState([]);
+  const downRef = useRef(null);
+  useStructural((s) => s.components);
+  const rSelChange = useRef(null);
+  useEffect(() => {
+    let raf = 0;
+    let lastTs = 0;
+    const tick = () => {
+      if (rSelChange.current && metrics.lastSelChangeAt !== lastTs) {
+        lastTs = metrics.lastSelChangeAt;
+        rSelChange.current.textContent = metrics.lastSelChange || "—";
       }
-    ),
-    label ? /* @__PURE__ */ jsx(EdgeLabelRenderer, { children: /* @__PURE__ */ jsx(
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  useEffect(() => {
+    const onDown = (e) => {
+      const id = nextId++;
+      const info = describeTarget(e.target);
+      downRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        ts: performance.now(),
+        button: e.button,
+        nodeUid: info.nodeUid,
+        targetTag: info.targetTag
+      };
+      setRings((r) => [...r, { id, x: e.clientX, y: e.clientY, ts: performance.now() }]);
+      setTimeout(() => setRings((r) => r.filter((x) => x.id !== id)), RING_LIFETIME_MS);
+    };
+    const onUp = (e) => {
+      const d = downRef.current;
+      if (!d) return;
+      downRef.current = null;
+      const dx = e.clientX - d.x;
+      const dy = e.clientY - d.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      setTimeout(() => {
+        const selected = document.querySelectorAll(".react-flow__node.selected").length;
+        const name = d.nodeUid != null ? useStructural.getState().components.get(d.nodeUid)?.name ?? null : null;
+        const ev = {
+          id: nextId++,
+          x: d.x,
+          y: d.y,
+          button: d.button,
+          nodeName: name,
+          nodeUid: d.nodeUid,
+          targetTag: d.targetTag,
+          distance: dist,
+          duration: performance.now() - d.ts,
+          selectedAfter: selected,
+          ts: Date.now()
+        };
+        setEvents((es) => [ev, ...es].slice(0, LOG_LIMIT));
+      }, 60);
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("pointerup", onUp, true);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("pointerup", onUp, true);
+    };
+  }, []);
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx("div", { style: { position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9998 }, children: rings.map((r) => /* @__PURE__ */ jsx(
       "div",
       {
         style: {
           position: "absolute",
-          transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-          background: "var(--sf-edge-label-bg, #ffffff)",
-          border: `1px solid ${color}`,
-          color,
-          borderRadius: 4,
-          padding: "1px 6px",
+          left: r.x - 14,
+          top: r.y - 14,
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          border: "2px solid #4a9eff",
+          animation: "ce-ring-fade 800ms ease-out forwards",
+          boxSizing: "border-box"
+        }
+      },
+      r.id
+    )) }),
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        style: {
+          position: "fixed",
+          right: 12,
+          bottom: 12,
+          zIndex: 30,
+          background: "rgba(20,23,30,0.92)",
+          border: "1px solid #2c313c",
+          borderRadius: 6,
+          padding: 8,
+          color: "#cbd3e0",
           fontSize: 10,
-          pointerEvents: "all"
+          fontFamily: "ui-monospace, SFMono-Regular, monospace",
+          minWidth: 320,
+          maxWidth: 460
         },
-        className: "sf-edge__label nodrag nopan",
-        children: label
+        children: [
+          /* @__PURE__ */ jsxs("div", { style: { color: "#8892a0", marginBottom: 4, display: "flex", gap: 8 }, children: [
+            /* @__PURE__ */ jsxs("span", { children: [
+              "click debugger · last ",
+              LOG_LIMIT
+            ] }),
+            /* @__PURE__ */ jsxs("span", { style: { marginLeft: "auto", color: "#cbd3e0" }, children: [
+              "rf: ",
+              /* @__PURE__ */ jsx("span", { ref: rSelChange, children: "—" })
+            ] })
+          ] }),
+          events.length === 0 && /* @__PURE__ */ jsx("div", { style: { color: "#5a6172" }, children: "click somewhere…" }),
+          events.map((e) => {
+            const buttonName = e.button === 0 ? "L" : e.button === 2 ? "R" : `M${e.button}`;
+            const kind = e.distance < 4 ? "click" : "drag";
+            const sel = e.selectedAfter > 0 ? `sel=${e.selectedAfter}` : "sel=0";
+            const onWhat = e.nodeName != null ? `${e.nodeName}  [${e.targetTag}]` : `(${e.targetTag})`;
+            return /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6 }, children: [
+              /* @__PURE__ */ jsx("span", { style: { color: e.button === 2 ? "#f59e0b" : "#9ecbff", width: 14 }, children: buttonName }),
+              /* @__PURE__ */ jsx("span", { style: { width: 36 }, children: kind }),
+              /* @__PURE__ */ jsxs("span", { style: { color: "#8892a0", width: 70 }, children: [
+                e.distance.toFixed(0),
+                "px · ",
+                e.duration.toFixed(0),
+                "ms"
+              ] }),
+              /* @__PURE__ */ jsx("span", { style: { color: e.selectedAfter > 0 ? "#4ade80" : "#ef4444", width: 38 }, children: sel }),
+              /* @__PURE__ */ jsx(
+                "span",
+                {
+                  style: {
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: e.nodeName ? "#e6e8eb" : "#9aa3b2"
+                  },
+                  title: e.nodeUid != null ? `uid ${e.nodeUid}` : void 0,
+                  children: onWhat
+                }
+              )
+            ] }, e.id);
+          })
+        ]
       }
-    ) }) : null
+    ),
+    /* @__PURE__ */ jsx("style", { children: `
+        @keyframes ce-ring-fade {
+          0%   { opacity: 1; transform: scale(0.7); }
+          80%  { opacity: 0.7; transform: scale(1.6); }
+          100% { opacity: 0;   transform: scale(2);   }
+        }
+      ` })
   ] });
 }
 
-const DEFAULT_EDGE_TYPES = {
-  typed: TypedEdge
-};
-
-function useFlowGraph({
-  initial,
-  registry,
-  overlay,
-  onChange
-}) {
-  const [graph, setGraph] = useState(initial);
-  const effectiveSlotValues = useMemo(() => {
-    const base = overlay?.slotValues;
-    const result = {};
-    if (base) {
-      for (const [nodeId, slots] of Object.entries(base)) {
-        result[nodeId] = { ...slots };
-      }
-    }
-    for (const e of graph.edges) {
-      const upstream = base?.[e.source]?.[e.sourceSlot];
-      if (upstream === void 0) continue;
-      (result[e.target] ??= {})[e.targetSlot] = upstream;
-    }
-    return result;
-  }, [overlay, graph.edges]);
-  useEffect(() => {
-    setGraph((prev) => prev === initial ? prev : initial);
-  }, [initial]);
-  const update = useCallback(
-    (next) => {
-      lastGraphRef.current = next;
-      setGraph(next);
-      onChange?.(next);
-    },
-    [onChange]
-  );
-  const buildRfNodes = useCallback(
-    (g) => g.nodes.map((n) => {
-      const entry = registry.get(n.kind);
-      const state = overlay?.nodes[n.id];
-      const slotValues = effectiveSlotValues[n.id];
-      return {
-        id: n.id,
-        type: n.kind,
-        position: n.position,
-        data: {
-          kindSpec: entry?.spec,
-          label: n.label,
-          state,
-          slotValues,
-          raw: n.data
-        }
-      };
-    }),
-    [registry, overlay, effectiveSlotValues]
-  );
-  const [rfNodes, setRfNodes] = useState(() => buildRfNodes(initial));
-  const lastGraphRef = useRef(initial);
-  useEffect(() => {
-    if (graph === lastGraphRef.current) return;
-    lastGraphRef.current = graph;
-    setRfNodes((prev) => {
-      const byId = new Map(prev.map((n) => [n.id, n]));
-      return graph.nodes.map((n) => {
-        const existing = byId.get(n.id);
-        const entry = registry.get(n.kind);
-        const state = overlay?.nodes[n.id];
-        const slotValues = effectiveSlotValues[n.id];
-        const data = {
-          kindSpec: entry?.spec,
-          label: n.label,
-          state,
-          slotValues,
-          raw: n.data
-        };
-        if (!existing) {
-          return { id: n.id, type: n.kind, position: n.position, data };
-        }
-        return { ...existing, type: n.kind, position: n.position, data };
-      });
-    });
-  }, [graph, registry, overlay, effectiveSlotValues]);
-  useEffect(() => {
-    setRfNodes(
-      (prev) => prev.map((rn) => {
-        const prevData = rn.data ?? {};
-        const state = overlay?.nodes[rn.id];
-        const slotValues = effectiveSlotValues[rn.id];
-        if (prevData.state === state && prevData.slotValues === slotValues) {
-          return rn;
-        }
-        const data = { ...prevData, state, slotValues };
-        return { ...rn, data };
-      })
-    );
-  }, [overlay, effectiveSlotValues]);
-  const rfNodesRef = useRef(rfNodes);
-  useEffect(() => {
-    rfNodesRef.current = rfNodes;
-  }, [rfNodes]);
-  const activeEdgeSet = useMemo(
-    () => new Set(overlay?.activeEdges ?? []),
-    [overlay]
-  );
-  const buildRfEdges = useCallback(
-    (g) => g.edges.map((e) => {
-      const src = g.nodes.find((n) => n.id === e.source);
-      const slotKind = src ? registry.get(src.kind)?.spec.outputs.find((s) => s.name === e.sourceSlot)?.kind : void 0;
-      return {
-        id: e.id,
-        source: e.source,
-        sourceHandle: e.sourceSlot,
-        target: e.target,
-        targetHandle: e.targetSlot,
-        type: "typed",
-        data: { slotKind: slotKind ?? "any", active: activeEdgeSet.has(e.id) }
-      };
-    }),
-    [registry, activeEdgeSet]
-  );
-  const [rfEdges, setRfEdges] = useState(() => buildRfEdges(initial));
-  useEffect(() => {
-    setRfEdges((prev) => {
-      const byId = new Map(prev.map((e) => [e.id, e]));
-      const fresh = buildRfEdges(graph);
-      return fresh.map((re) => {
-        const existing = byId.get(re.id);
-        if (!existing) return re;
-        return { ...existing, ...re, selected: existing.selected };
-      });
-    });
-  }, [graph, buildRfEdges]);
-  useEffect(() => {
-    setRfEdges(
-      (prev) => prev.map((re) => {
-        const prevData = re.data ?? {};
-        const nextActive = activeEdgeSet.has(re.id);
-        if (prevData.active === nextActive) return re;
-        return { ...re, data: { ...prevData, active: nextActive } };
-      })
-    );
-  }, [activeEdgeSet]);
-  const rfEdgesRef = useRef(rfEdges);
-  useEffect(() => {
-    rfEdgesRef.current = rfEdges;
-  }, [rfEdges]);
-  const onNodesChange = useCallback(
-    (changes) => {
-      const next = applyNodeChanges(changes, rfNodesRef.current);
-      setRfNodes(next);
-      const persistent = changes.some(
-        (c) => c.type === "position" && c.dragging === false || c.type === "add" || c.type === "remove" || c.type === "replace"
-      );
-      if (!persistent) return;
-      const currentGraph = lastGraphRef.current;
-      const keepIds = new Set(next.map((rn) => rn.id));
-      const updated = {
-        ...currentGraph,
-        nodes: next.map((rn) => {
-          const orig = currentGraph.nodes.find((n) => n.id === rn.id);
-          if (!orig) {
-            return {
-              id: rn.id,
-              kind: rn.type ?? "unknown",
-              position: rn.position
-            };
-          }
-          return { ...orig, position: rn.position };
-        }),
-        // Cascade-prune edges that reference a deleted node. Without
-        // this, xyflow's separate `onEdgesChange` cascade can race
-        // with this handler and the deploy round-trip ends up with
-        // dangling links the backend validator will reject.
-        edges: currentGraph.edges.filter(
-          (e) => keepIds.has(e.source) && keepIds.has(e.target)
-        )
-      };
-      update(updated);
-    },
-    [update]
-  );
-  const onEdgesChange = useCallback(
-    (changes) => {
-      const next = applyEdgeChanges(changes, rfEdgesRef.current);
-      setRfEdges(next);
-      const persistent = changes.some(
-        (c) => c.type === "add" || c.type === "remove" || c.type === "replace"
-      );
-      if (!persistent) return;
-      const currentGraph = lastGraphRef.current;
-      update({
-        ...currentGraph,
-        edges: next.map((re) => {
-          const orig = currentGraph.edges.find((e) => e.id === re.id);
-          if (!orig) {
-            return {
-              id: re.id,
-              source: re.source,
-              sourceSlot: re.sourceHandle ?? "out",
-              target: re.target,
-              targetSlot: re.targetHandle ?? "in"
-            };
-          }
-          return orig;
-        })
-      });
-    },
-    [update]
-  );
-  const onConnect = useCallback(
-    (connection) => {
-      const currentGraph = lastGraphRef.current;
-      const merged = addEdge({ ...connection, type: "typed" }, rfEdgesRef.current);
-      const newOnes = merged.filter(
-        (m) => !rfEdgesRef.current.find((e) => e.id === m.id)
-      );
-      if (newOnes.length === 0) return;
-      setRfEdges(merged);
-      const additions = newOnes.map((re) => ({
-        id: re.id,
-        source: re.source,
-        sourceSlot: re.sourceHandle ?? "out",
-        target: re.target,
-        targetSlot: re.targetHandle ?? "in"
-      }));
-      update({ ...currentGraph, edges: [...currentGraph.edges, ...additions] });
-    },
-    [update]
-  );
-  const addNode = useCallback(
-    (node) => {
-      const currentGraph = lastGraphRef.current;
-      update({ ...currentGraph, nodes: [...currentGraph.nodes, node] });
-    },
-    [update]
-  );
-  const removeNode = useCallback(
-    (id) => {
-      const currentGraph = lastGraphRef.current;
-      update({
-        nodes: currentGraph.nodes.filter((n) => n.id !== id),
-        edges: currentGraph.edges.filter((e) => e.source !== id && e.target !== id)
-      });
-    },
-    [update]
-  );
-  return {
-    graph,
-    rfNodes,
-    rfEdges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    addNode,
-    removeNode,
-    setGraph: update
-  };
-}
-
-function defaultCompatible(a, b) {
-  if (a === "any" || b === "any") return true;
-  return a === b;
-}
-function useTypedConnect({
-  registry,
-  nodes,
-  compatible = defaultCompatible
-}) {
-  return useCallback(
-    (c) => {
-      if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) {
-        return false;
-      }
-      if (c.source === c.target) return false;
-      const src = nodes.find((n) => n.id === c.source);
-      const dst = nodes.find((n) => n.id === c.target);
-      if (!src || !dst) return false;
-      const srcSpec = registry.get(src.kind)?.spec;
-      const dstSpec = registry.get(dst.kind)?.spec;
-      if (!srcSpec || !dstSpec) return false;
-      const srcSlot = srcSpec.outputs.find((s) => s.name === c.sourceHandle);
-      const dstSlot = dstSpec.inputs.find((s) => s.name === c.targetHandle);
-      if (!srcSlot || !dstSlot) return false;
-      return compatible(srcSlot.kind, dstSlot.kind);
-    },
-    [registry, nodes, compatible]
-  );
-}
-
-const DEFAULT_FLOW_MESSAGES = {
-  state: {
-    idle: "Idle",
-    ready: "Ready",
-    running: "Running",
-    ok: "Succeeded",
-    error: "Failed",
-    cancelled: "Cancelled",
-    skipped: "Skipped"
+class Ring {
+  buf;
+  i = 0;
+  filled = 0;
+  constructor(size) {
+    this.buf = new Float64Array(size);
   }
+  push(v) {
+    this.buf[this.i] = v;
+    this.i = (this.i + 1) % this.buf.length;
+    if (this.filled < this.buf.length) this.filled++;
+  }
+  /** Sorted copy of the live values. */
+  sorted() {
+    const out = [];
+    for (let k = 0; k < this.filled; k++) out.push(this.buf[k]);
+    out.sort((a, b) => a - b);
+    return out;
+  }
+  get count() {
+    return this.filled;
+  }
+  clear() {
+    this.i = 0;
+    this.filled = 0;
+  }
+}
+function pct(sorted, p) {
+  if (sorted.length === 0) return 0;
+  const idx = Math.min(sorted.length - 1, Math.floor(p / 100 * sorted.length));
+  return sorted[idx];
+}
+const frameDurations = new Ring(600);
+let lastFrameTs = 0;
+let frameRafRunning = false;
+function frameTick(now) {
+  if (lastFrameTs !== 0) frameDurations.push(now - lastFrameTs);
+  lastFrameTs = now;
+  if (frameRafRunning) requestAnimationFrame(frameTick);
+}
+const longTasks = [];
+const LONGTASK_KEEP = 100;
+let longTaskTotalMs = 0;
+let longTaskCount = 0;
+let longTaskCountWindow = 0;
+let longTaskMsWindow = 0;
+const msgStats = /* @__PURE__ */ new Map();
+function diagRecordMessage(type, bytes) {
+  let s = msgStats.get(type);
+  if (!s) {
+    s = { count: 0, bytes: 0 };
+    msgStats.set(type, s);
+  }
+  s.count++;
+  s.bytes += bytes;
+}
+const uidUpdateCounts = /* @__PURE__ */ new Map();
+let valueUpdatesThisWindow = 0;
+let statusUpdatesThisWindow = 0;
+function diagRecordValueUids(uids) {
+  for (let i = 0; i < uids.length; i++) {
+    const u = uids[i];
+    uidUpdateCounts.set(u, (uidUpdateCounts.get(u) ?? 0) + 1);
+    valueUpdatesThisWindow++;
+  }
+}
+function diagRecordStatusUids(uids) {
+  statusUpdatesThisWindow += uids.length;
+}
+const frameValueCounts = new Ring(300);
+const frameStatusCounts = new Ring(300);
+const frameByteSizes = new Ring(300);
+let framesThisWindow = 0;
+function diagRecordFrame(valueUids, statusUids, bytes) {
+  frameValueCounts.push(valueUids);
+  frameStatusCounts.push(statusUids);
+  frameByteSizes.push(bytes);
+  framesThisWindow++;
+}
+const renderCounts = /* @__PURE__ */ new Map();
+let totalRendersThisWindow = 0;
+function diagRecordRender(label) {
+  renderCounts.set(label, (renderCounts.get(label) ?? 0) + 1);
+  totalRendersThisWindow++;
+}
+const diagGauges = {
+  subscribedComponents: 0,
+  visibleNodes: 0,
+  totalComponents: 0,
+  domNodes: 0,
+  ghostNodes: 0,
+  edges: 0,
+  wsConnected: false,
+  tickHz: 0,
+  reconnects: 0,
+  lastSeq: 0
 };
-function mergeFlowMessages(override) {
-  if (!override) return DEFAULT_FLOW_MESSAGES;
-  return {
-    state: { ...DEFAULT_FLOW_MESSAGES.state, ...override.state ?? {} },
-    kindLabels: override.kindLabels,
-    slotLabels: override.slotLabels
+function avg(r) {
+  const s = r.sorted();
+  if (s.length === 0) return 0;
+  let sum = 0;
+  for (const v of s) sum += v;
+  return sum / s.length;
+}
+let windowStart = 0;
+function diagSnapshot(nowMs) {
+  const windowMs = windowStart === 0 ? 1e3 : nowMs - windowStart;
+  const secs = Math.max(1e-3, windowMs / 1e3);
+  const fs = frameDurations.sorted();
+  const p50 = pct(fs, 50);
+  const fps = p50 > 0 ? 1e3 / p50 : 0;
+  const messages = [...msgStats.entries()].map(([type, s]) => ({
+    type,
+    perSec: s.count / secs,
+    bytesPerSec: s.bytes / secs
+  })).sort((a, b) => b.bytesPerSec - a.bytesPerSec);
+  const topChattyUids = [...uidUpdateCounts.entries()].map(([uid, c]) => ({ uid, updatesPerSec: c / secs })).sort((a, b) => b.updatesPerSec - a.updatesPerSec).slice(0, 20);
+  const topRenderers = [...renderCounts.entries()].map(([label, c]) => ({ label, rendersPerSec: c / secs })).sort((a, b) => b.rendersPerSec - a.rendersPerSec).slice(0, 20);
+  const snap = {
+    ts: nowMs,
+    windowMs,
+    frame: {
+      fps,
+      p50,
+      p95: pct(fs, 95),
+      p99: pct(fs, 99),
+      max: fs.length ? fs[fs.length - 1] : 0,
+      samples: fs.length
+    },
+    longTasks: {
+      countTotal: longTaskCount,
+      totalMs: longTaskTotalMs,
+      countWindow: longTaskCountWindow,
+      msWindow: longTaskMsWindow,
+      recent: longTasks.slice(-8).reverse()
+    },
+    perSec: {
+      frames: framesThisWindow / secs,
+      valueUpdates: valueUpdatesThisWindow / secs,
+      statusUpdates: statusUpdatesThisWindow / secs,
+      renders: totalRendersThisWindow / secs
+    },
+    frameAnatomy: {
+      avgValueUids: avg(frameValueCounts),
+      avgStatusUids: avg(frameStatusCounts),
+      avgBytes: avg(frameByteSizes),
+      maxBytes: frameByteSizes.sorted().pop() ?? 0
+    },
+    messages,
+    topChattyUids,
+    topRenderers,
+    gauges: { ...diagGauges }
   };
+  return snap;
 }
-
-const FlowI18nContext = createContext(DEFAULT_FLOW_MESSAGES);
-function FlowI18nProvider({ value, children }) {
-  const merged = useMemo(() => mergeFlowMessages(value), [value]);
-  return /* @__PURE__ */ jsx(FlowI18nContext.Provider, { value: merged, children });
+function diagResetWindow(nowMs) {
+  windowStart = nowMs;
+  msgStats.clear();
+  uidUpdateCounts.clear();
+  renderCounts.clear();
+  valueUpdatesThisWindow = 0;
+  statusUpdatesThisWindow = 0;
+  framesThisWindow = 0;
+  totalRendersThisWindow = 0;
+  longTaskCountWindow = 0;
+  longTaskMsWindow = 0;
+  frameValueCounts.clear();
+  frameStatusCounts.clear();
+  frameByteSizes.clear();
 }
-function useFlowMessages() {
-  return useContext(FlowI18nContext);
-}
-
-function FlowCanvas({
-  registry,
-  graph,
-  overlay,
-  onChange,
-  readOnly = false,
-  showMiniMap = true,
-  showControls = true,
-  showBackground = true,
-  reactFlowProps,
-  i18n,
-  children,
-  style,
-  className
-}) {
-  const nodeTypes = useMemo(() => registry.toNodeTypes(), [registry]);
-  const flow = useFlowGraph({ initial: graph, registry, overlay, onChange });
-  const isValidConnection = useTypedConnect({ registry, nodes: flow.graph.nodes });
-  return /* @__PURE__ */ jsx(FlowI18nProvider, { value: i18n, children: /* @__PURE__ */ jsx(ReactFlowProvider, { children: /* @__PURE__ */ jsx(
-    "div",
-    {
-      className,
-      style: { width: "100%", height: "100%", minHeight: 320, ...style },
-      children: /* @__PURE__ */ jsxs(
-        index,
-        {
-          nodes: flow.rfNodes,
-          edges: flow.rfEdges,
-          nodeTypes,
-          edgeTypes: DEFAULT_EDGE_TYPES,
-          onNodesChange: readOnly ? void 0 : flow.onNodesChange,
-          onEdgesChange: readOnly ? void 0 : flow.onEdgesChange,
-          onConnect: readOnly ? void 0 : flow.onConnect,
-          isValidConnection,
-          nodesDraggable: !readOnly,
-          nodesConnectable: !readOnly,
-          elementsSelectable: true,
-          fitView: true,
-          ...reactFlowProps,
-          children: [
-            showBackground ? /* @__PURE__ */ jsx(Background, { gap: 16, size: 1 }) : null,
-            showControls ? /* @__PURE__ */ jsx(Controls, {}) : null,
-            showMiniMap ? /* @__PURE__ */ jsx(MiniMap, { pannable: true, zoomable: true }) : null,
-            children
-          ]
+let started = false;
+let observer = null;
+function startDiagnostics() {
+  if (started) return;
+  started = true;
+  windowStart = performance.now();
+  frameRafRunning = true;
+  lastFrameTs = 0;
+  requestAnimationFrame(frameTick);
+  if (typeof PerformanceObserver !== "undefined") {
+    try {
+      observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          longTasks.push({ start: entry.startTime, duration: entry.duration });
+          if (longTasks.length > LONGTASK_KEEP) longTasks.shift();
+          longTaskCount++;
+          longTaskTotalMs += entry.duration;
+          longTaskCountWindow++;
+          longTaskMsWindow += entry.duration;
         }
-      )
+      });
+      observer.observe({ entryTypes: ["longtask"] });
+    } catch {
     }
-  ) }) });
+  }
+}
+function stopDiagnostics() {
+  frameRafRunning = false;
+  started = false;
+  observer?.disconnect();
+  observer = null;
+}
+const snapshotHistory = [];
+const SNAPSHOT_HISTORY = 60;
+let reporterTimer = null;
+function getSnapshotHistory() {
+  return snapshotHistory;
+}
+function startDiagReporter(intervalMs = 1e3) {
+  if (reporterTimer != null) return;
+  const tick = () => {
+    const now = performance.now();
+    const snap = diagSnapshot(now);
+    snapshotHistory.push(snap);
+    if (snapshotHistory.length > SNAPSHOT_HISTORY) snapshotHistory.shift();
+    diagResetWindow(now);
+    reporterTimer = window.setTimeout(tick, intervalMs);
+  };
+  reporterTimer = window.setTimeout(tick, intervalMs);
+}
+function stopDiagReporter() {
+  if (reporterTimer != null) {
+    window.clearTimeout(reporterTimer);
+    reporterTimer = null;
+  }
 }
 
-function SlotHandle({ spec, side, id, labelOverride }) {
-  const position = side === "input" ? Position.Left : Position.Right;
-  const type = side === "input" ? "target" : "source";
-  const handleId = id ?? spec.name;
-  const color = colorForKind(spec.kind);
-  const label = labelOverride ?? spec.label ?? spec.name;
+const COLLAPSED_KEY$1 = "ce-ui.diagpanel.collapsed";
+function fmtBytes(n) {
+  if (n < 1024) return `${n.toFixed(0)} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+}
+const rowS = { display: "flex", justifyContent: "space-between", padding: "1px 0" };
+const lab = { color: "#8892a0" };
+const val = { color: "#e6e8eb", fontVariantNumeric: "tabular-nums" };
+function DiagPanel({
+  wsRef,
+  autoRate,
+  manualRate,
+  onSetManualRate,
+  onToggleAutoRate
+}) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(COLLAPSED_KEY$1) !== "0";
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLLAPSED_KEY$1, collapsed ? "1" : "0");
+    } catch {
+    }
+  }, [collapsed]);
+  const [snap, setSnap] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const storeApi = useStoreApi();
+  const rDot = useRef(null);
+  const rConn = useRef(null);
+  const rReconn = useRef(null);
+  const rSession = useRef(null);
+  const rSeq = useRef(null);
+  const rTopo = useRef(null);
+  const rFps = useRef(null);
+  const rFrame = useRef(null);
+  const rJank = useRef(null);
+  const rZoom = useRef(null);
+  const rMsgs = useRef(null);
+  const rBytes = useRef(null);
+  const rValues = useRef(null);
+  const rFrameLast = useRef(null);
+  const rParse = useRef(null);
+  const rNodes = useRef(null);
+  const rEdges = useRef(null);
+  const rCanvas = useRef(null);
+  useEffect(() => {
+    let raf = 0;
+    const last = /* @__PURE__ */ new Map();
+    const set = (el, v) => {
+      if (!el) return;
+      if (last.get(el) === v) return;
+      last.set(el, v);
+      el.textContent = v;
+    };
+    let lastConn = null;
+    const tick = (t) => {
+      tickInstrumentation(t);
+      const tr = storeApi.getState().transform;
+      metrics.zoom = tr[2];
+      metrics.panX = tr[0];
+      metrics.panY = tr[1];
+      metrics.totalComponents = useStructural.getState().components.size;
+      if (rDot.current && lastConn !== metrics.wsConnected) {
+        rDot.current.style.background = metrics.wsConnected ? "#4ade80" : "#ef4444";
+        lastConn = metrics.wsConnected;
+      }
+      set(rConn.current, metrics.wsConnected ? "connected" : "disconnected");
+      set(rReconn.current, String(metrics.reconnectCount));
+      set(rSession.current, metrics.sessionId ? metrics.sessionId.slice(0, 8) : "—");
+      set(rSeq.current, String(metrics.lastSeq));
+      set(rTopo.current, `+${metrics.topoAdded} -${metrics.topoRemoved} ~${metrics.topoChanged}`);
+      set(rFps.current, metrics.fps.toFixed(1));
+      set(rFrame.current, metrics.frameMs.toFixed(2) + " ms");
+      set(rJank.current, `${metrics.longFramesPerSec} (max ${metrics.maxFrameMs.toFixed(1)} ms)`);
+      set(rZoom.current, metrics.zoom.toFixed(3));
+      set(rMsgs.current, `${metrics.msgsPerSec} /s  (${metrics.framesPerSec} bin)`);
+      set(rBytes.current, fmtBytes(metrics.bytesPerSec) + "/s");
+      set(rValues.current, `${metrics.valuesPerSec} /s`);
+      set(
+        rFrameLast.current,
+        `${metrics.lastFrameValues} v · ${metrics.lastFrameSections} sec · ${fmtBytes(metrics.lastFrameBytes)}`
+      );
+      set(rParse.current, metrics.parseAvgMs.toFixed(3) + " ms");
+      set(rNodes.current, `${metrics.domNodes} / ${metrics.totalComponents}`);
+      set(rEdges.current, String(metrics.domEdges));
+      drawSparkline(rCanvas.current);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [storeApi]);
+  useEffect(() => {
+    if (collapsed) return;
+    const id = window.setInterval(() => {
+      const hist = getSnapshotHistory();
+      setSnap(hist.length ? hist[hist.length - 1] : null);
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [collapsed]);
+  const labelForUid = (uid) => {
+    const comps = useStructural.getState().components;
+    for (const c of comps.values()) {
+      for (const [pname, p] of Object.entries(c.properties)) {
+        if (p.uid === uid) return `${c.name || c.type}.${pname}`;
+      }
+    }
+    return String(uid);
+  };
+  if (collapsed) {
+    return /* @__PURE__ */ jsxs(
+      "button",
+      {
+        onClick: () => setCollapsed(false),
+        title: "Show diagnostics",
+        style: {
+          position: "fixed",
+          top: 12,
+          right: 12,
+          zIndex: 31,
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+          padding: "6px 11px",
+          background: "rgba(20,23,30,0.92)",
+          border: "1px solid #2c313c",
+          borderRadius: 6,
+          color: "#cbd3e0",
+          fontSize: 11,
+          fontFamily: "ui-monospace, SFMono-Regular, monospace",
+          cursor: "pointer"
+        },
+        children: [
+          /* @__PURE__ */ jsx(
+            "span",
+            {
+              ref: rDot,
+              style: { width: 8, height: 8, borderRadius: 4, background: "#ef4444", display: "inline-block" }
+            }
+          ),
+          /* @__PURE__ */ jsx("span", { ref: rConn, children: "disconnected" }),
+          /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: "▾" })
+        ]
+      }
+    );
+  }
+  const rate = wsRef?.getRate() ?? null;
+  const storms = snap != null && snap.perSec.renders > Math.max(120, snap.perSec.frames * 4) && snap.perSec.renders > (snap.gauges.visibleNodes || 1) * 2;
+  const renderStorm = !!storms;
+  const slowP95 = snap != null && snap.frame.p95 > 32;
   return /* @__PURE__ */ jsxs(
     "div",
     {
-      className: `sf-slot sf-slot--${side}`,
-      "data-slot-kind": spec.kind,
-      "data-slot-required": spec.required ? "" : void 0,
+      style: {
+        position: "fixed",
+        top: 12,
+        right: 12,
+        bottom: 12,
+        width: 320,
+        zIndex: 31,
+        background: "rgba(20,23,30,0.96)",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        color: "#e6e8eb",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        display: "flex",
+        flexDirection: "column"
+      },
       children: [
-        /* @__PURE__ */ jsx(
-          Handle,
+        /* @__PURE__ */ jsxs(
+          "div",
           {
-            id: handleId,
-            type,
-            position,
-            className: "sf-slot__handle",
-            "data-slot-kind": spec.kind,
-            style: { background: color }
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "8px 10px",
+              borderBottom: "1px solid #2c313c"
+            },
+            children: [
+              /* @__PURE__ */ jsx(
+                "span",
+                {
+                  ref: rDot,
+                  style: { width: 8, height: 8, borderRadius: 4, background: "#ef4444", display: "inline-block" }
+                }
+              ),
+              /* @__PURE__ */ jsx("span", { ref: rConn, style: { fontWeight: 600 }, children: "disconnected" }),
+              /* @__PURE__ */ jsxs("span", { style: { color: "#8892a0", fontSize: 10 }, children: [
+                "reconn ",
+                /* @__PURE__ */ jsx("span", { ref: rReconn, children: "0" })
+              ] }),
+              /* @__PURE__ */ jsx("span", { style: { flex: 1 } }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => {
+                    const text = snap ? formatReport(snap, rate, labelForUid) : "(no snapshot yet)";
+                    void navigator.clipboard?.writeText(text).then(() => {
+                      setCopied(true);
+                      window.setTimeout(() => setCopied(false), 1200);
+                    }).catch(() => {
+                    });
+                  },
+                  title: "Copy a diagnostics report to clipboard",
+                  style: {
+                    background: copied ? "#3b6eff" : "#222731",
+                    border: "1px solid #2c313c",
+                    borderRadius: 3,
+                    color: copied ? "#fff" : "#cbd3e0",
+                    cursor: "pointer",
+                    fontSize: 10,
+                    fontFamily: "inherit",
+                    padding: "2px 8px",
+                    marginRight: 4
+                  },
+                  children: copied ? "copied ✓" : "copy"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setCollapsed(true),
+                  title: "Collapse to indicator",
+                  style: {
+                    background: "transparent",
+                    border: "none",
+                    color: "#8892a0",
+                    cursor: "pointer",
+                    fontSize: 14
+                  },
+                  children: "▴"
+                }
+              )
+            ]
           }
         ),
-        /* @__PURE__ */ jsxs("span", { className: "sf-slot__label", children: [
-          label,
-          spec.required ? /* @__PURE__ */ jsx("span", { className: "sf-slot__required", "aria-hidden": "true", children: " *" }) : null
+        /* @__PURE__ */ jsxs("div", { style: { flex: 1, overflowY: "auto", padding: "8px 10px" }, children: [
+          /* @__PURE__ */ jsxs(Section, { title: autoRate ? "push rate (auto: follows zoom)" : "push rate (manual)", children: [
+            /* @__PURE__ */ jsx("div", { style: { display: "flex", gap: 4, flexWrap: "wrap" }, children: [1, 5, 10, 30, 60].map((hz) => /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: () => !autoRate && onSetManualRate(hz),
+                disabled: autoRate,
+                title: autoRate ? "turn off auto-scale to set manually" : `${hz} Hz`,
+                style: {
+                  flex: 1,
+                  padding: "3px 0",
+                  background: !autoRate && manualRate === hz ? "#3b6eff" : "#222731",
+                  color: !autoRate && manualRate === hz ? "#fff" : "#cbd3e0",
+                  border: "1px solid #2c313c",
+                  borderRadius: 3,
+                  cursor: autoRate ? "default" : "pointer",
+                  opacity: autoRate ? 0.45 : 1,
+                  fontSize: 10,
+                  fontFamily: "inherit"
+                },
+                children: [
+                  hz,
+                  "Hz"
+                ]
+              },
+              hz
+            )) }),
+            /* @__PURE__ */ jsxs(
+              "label",
+              {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  marginTop: 5,
+                  color: "#cbd3e0",
+                  fontSize: 10,
+                  cursor: "pointer"
+                },
+                children: [
+                  /* @__PURE__ */ jsx("input", { type: "checkbox", checked: autoRate, onChange: onToggleAutoRate }),
+                  "auto-scale rate with zoom"
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs("div", { style: { color: "#5a6172", fontSize: 9, marginTop: 3 }, children: [
+              "current: ",
+              rate ?? "engine default",
+              " Hz",
+              autoRate ? " (zoom-driven)" : " (manual)"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs(Section, { title: "live", children: [
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "FPS" }),
+              /* @__PURE__ */ jsxs("span", { style: val, children: [
+                /* @__PURE__ */ jsx("span", { ref: rFps, children: "0" }),
+                "  ",
+                "(",
+                /* @__PURE__ */ jsx("span", { ref: rFrame, children: "0.00 ms" }),
+                ")"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "long frames /s" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rJank, children: "0 (max 0.0 ms)" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "zoom" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rZoom, children: "1.000" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "messages" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rMsgs, children: "0 /s" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "bytes" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rBytes, children: "0 B/s" })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "canvas",
+              {
+                ref: rCanvas,
+                width: 296,
+                height: 36,
+                style: { width: "100%", height: 36, background: "#0f1115", border: "1px solid #1f242e", margin: "2px 0" }
+              }
+            ),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "values" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rValues, children: "0 /s" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "last frame" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rFrameLast, children: "—" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "parse (avg)" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rParse, children: "0.000 ms" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "nodes (DOM/total)" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rNodes, children: "0 / 0" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "edges (DOM)" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rEdges, children: "0" })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs(Section, { title: "topology", children: [
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "session" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rSession, children: "—" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "seq" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rSeq, children: "0" })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { style: rowS, children: [
+              /* @__PURE__ */ jsx("span", { style: lab, children: "events (+/-/~)" }),
+              /* @__PURE__ */ jsx("span", { style: val, ref: rTopo, children: "+0 -0 ~0" })
+            ] })
+          ] }),
+          snap == null ? /* @__PURE__ */ jsx("div", { style: { color: "#5a6172", padding: "8px 0" }, children: "collecting…" }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+            /* @__PURE__ */ jsxs(Section, { title: "frames (windowed)", children: [
+              /* @__PURE__ */ jsx(Row, { k: "fps (from p50)", v: snap.frame.fps.toFixed(1) }),
+              /* @__PURE__ */ jsx(Row, { k: "p50", v: `${snap.frame.p50.toFixed(1)} ms` }),
+              /* @__PURE__ */ jsx(Row, { k: "p95", v: `${snap.frame.p95.toFixed(1)} ms`, warn: slowP95 }),
+              /* @__PURE__ */ jsx(Row, { k: "p99", v: `${snap.frame.p99.toFixed(1)} ms` }),
+              /* @__PURE__ */ jsx(Row, { k: "max", v: `${snap.frame.max.toFixed(1)} ms`, warn: snap.frame.max > 100 })
+            ] }),
+            /* @__PURE__ */ jsxs(Section, { title: "long tasks (≥50ms blocks)", children: [
+              /* @__PURE__ */ jsx(
+                Row,
+                {
+                  k: "this window",
+                  v: `${snap.longTasks.countWindow} (${snap.longTasks.msWindow.toFixed(0)}ms)`,
+                  warn: snap.longTasks.countWindow > 0
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                Row,
+                {
+                  k: "lifetime",
+                  v: `${snap.longTasks.countTotal} / ${snap.longTasks.totalMs.toFixed(0)}ms`
+                }
+              ),
+              snap.longTasks.recent.slice(0, 3).map((lt, i) => /* @__PURE__ */ jsx(Row, { k: `  recent ${i + 1}`, v: `${lt.duration.toFixed(0)} ms`, warn: true }, i))
+            ] }),
+            /* @__PURE__ */ jsxs(Section, { title: "render pressure", children: [
+              /* @__PURE__ */ jsx(Row, { k: "frames/sec", v: snap.perSec.frames.toFixed(1) }),
+              /* @__PURE__ */ jsx(Row, { k: "renders/sec", v: snap.perSec.renders.toFixed(0), warn: renderStorm }),
+              renderStorm && /* @__PURE__ */ jsx("div", { style: { color: "#ef4444", fontSize: 9, marginTop: 2 }, children: "⚠ re-render storm — renders ≫ frames" })
+            ] }),
+            /* @__PURE__ */ jsxs(Section, { title: "value plane", children: [
+              /* @__PURE__ */ jsx(Row, { k: "value updates/sec", v: snap.perSec.valueUpdates.toFixed(0) }),
+              /* @__PURE__ */ jsx(Row, { k: "status updates/sec", v: snap.perSec.statusUpdates.toFixed(0) }),
+              /* @__PURE__ */ jsx(Row, { k: "avg val uids/frame", v: snap.frameAnatomy.avgValueUids.toFixed(0) }),
+              /* @__PURE__ */ jsx(Row, { k: "avg status uids/frame", v: snap.frameAnatomy.avgStatusUids.toFixed(0) }),
+              /* @__PURE__ */ jsx(Row, { k: "avg frame bytes", v: fmtBytes(snap.frameAnatomy.avgBytes) }),
+              /* @__PURE__ */ jsx(Row, { k: "max frame bytes", v: fmtBytes(snap.frameAnatomy.maxBytes) })
+            ] }),
+            /* @__PURE__ */ jsx(Section, { title: "bytes/sec by message", children: snap.messages.slice(0, 6).map((m) => /* @__PURE__ */ jsx(Row, { k: m.type, v: `${fmtBytes(m.bytesPerSec)}/s` }, m.type)) }),
+            /* @__PURE__ */ jsxs(Section, { title: "chattiest props", children: [
+              snap.topChattyUids.slice(0, 8).map((u) => /* @__PURE__ */ jsx(Row, { k: labelForUid(u.uid), v: `${u.updatesPerSec.toFixed(0)}/s` }, u.uid)),
+              snap.topChattyUids.length === 0 && /* @__PURE__ */ jsx("div", { style: { color: "#5a6172", fontSize: 9 }, children: "nothing updating" })
+            ] }),
+            /* @__PURE__ */ jsxs(Section, { title: "structure", children: [
+              /* @__PURE__ */ jsx(Row, { k: "visible nodes", v: String(snap.gauges.visibleNodes) }),
+              /* @__PURE__ */ jsx(Row, { k: "subscribed (streaming)", v: String(snap.gauges.subscribedComponents) }),
+              /* @__PURE__ */ jsx(Row, { k: "ghost nodes", v: String(snap.gauges.ghostNodes) }),
+              /* @__PURE__ */ jsx(Row, { k: "edges", v: String(snap.gauges.edges) }),
+              /* @__PURE__ */ jsx(Row, { k: "total components", v: String(snap.gauges.totalComponents) }),
+              /* @__PURE__ */ jsx(Row, { k: "reconnects", v: String(snap.gauges.reconnects), warn: snap.gauges.reconnects > 0 })
+            ] })
+          ] })
         ] })
       ]
     }
   );
 }
-
-function r(e){var t,f,n="";if("string"==typeof e||"number"==typeof e)n+=e;else if("object"==typeof e)if(Array.isArray(e)){var o=e.length;for(t=0;t<o;t++)e[t]&&(f=r(e[t]))&&(n&&(n+=" "),n+=f);}else for(f in e)e[f]&&(n&&(n+=" "),n+=f);return n}function clsx(){for(var e,t,f=0,n="",o=arguments.length;f<o;f++)(e=arguments[f])&&(t=r(e))&&(n&&(n+=" "),n+=t);return n}
-
-function cn(...inputs) {
-  return clsx(inputs);
+function formatReport(s, rate, labelForUid) {
+  const lines = [];
+  lines.push("=== ce-ui diagnostics ===");
+  lines.push(`pushRate=${rate ?? "engine-default"}`);
+  lines.push(
+    `frame: fps=${s.frame.fps.toFixed(1)} p50=${s.frame.p50.toFixed(1)}ms p95=${s.frame.p95.toFixed(1)}ms p99=${s.frame.p99.toFixed(1)}ms max=${s.frame.max.toFixed(1)}ms`
+  );
+  lines.push(
+    `longTasks: window=${s.longTasks.countWindow} (${s.longTasks.msWindow.toFixed(0)}ms) lifetime=${s.longTasks.countTotal}/${s.longTasks.totalMs.toFixed(0)}ms`
+  );
+  lines.push(
+    `render: frames/s=${s.perSec.frames.toFixed(1)} renders/s=${s.perSec.renders.toFixed(0)}`
+  );
+  lines.push(
+    `value: upd/s=${s.perSec.valueUpdates.toFixed(0)} status/s=${s.perSec.statusUpdates.toFixed(0)} avgValUids=${s.frameAnatomy.avgValueUids.toFixed(0)} avgStatusUids=${s.frameAnatomy.avgStatusUids.toFixed(0)} avgBytes=${s.frameAnatomy.avgBytes.toFixed(0)} maxBytes=${s.frameAnatomy.maxBytes.toFixed(0)}`
+  );
+  lines.push("bytes/s by msg:");
+  for (const m of s.messages.slice(0, 6)) {
+    lines.push(`  ${m.type}: ${m.bytesPerSec.toFixed(0)} B/s (${m.perSec.toFixed(0)}/s)`);
+  }
+  lines.push("chattiest props:");
+  for (const u of s.topChattyUids.slice(0, 10)) {
+    lines.push(`  ${labelForUid(u.uid)} (${u.uid}): ${u.updatesPerSec.toFixed(0)}/s`);
+  }
+  const g = s.gauges;
+  lines.push(
+    `structure: visible=${g.visibleNodes} ghost=${g.ghostNodes} edges=${g.edges} total=${g.totalComponents} reconnects=${g.reconnects} ws=${g.wsConnected ? "up" : "down"}`
+  );
+  lines.push("");
+  lines.push("--- raw ---");
+  lines.push(JSON.stringify(s));
+  return lines.join("\n");
+}
+function Section({ title, children }) {
+  return /* @__PURE__ */ jsxs("div", { style: { marginBottom: 10 }, children: [
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          color: "#5a6172",
+          fontSize: 9,
+          textTransform: "uppercase",
+          letterSpacing: 0.4,
+          marginBottom: 3
+        },
+        children: title
+      }
+    ),
+    children
+  ] });
+}
+function Row({ k, v, warn }) {
+  return /* @__PURE__ */ jsxs("div", { style: { display: "flex", justifyContent: "space-between", padding: "1px 0" }, children: [
+    /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: k }),
+    /* @__PURE__ */ jsx("span", { style: { color: warn ? "#ef4444" : "#e6e8eb", flexShrink: 0, marginLeft: 8 }, children: v })
+  ] });
+}
+function drawSparkline(canvas) {
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  const data = metrics.bytesSpark;
+  let max = 1;
+  for (let i = 0; i < data.length; i++) if (data[i] > max) max = data[i];
+  ctx.strokeStyle = "#4a9eff";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < data.length; i++) {
+    const x = i / (data.length - 1) * w;
+    const y = h - data[i] / max * (h - 2) - 1;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
 }
 
-const VARIANT_PARTS = {
-  full: {},
-  compact: { kindBadge: false },
-  minimal: { kindBadge: false, icon: false, stateDot: false },
-  chip: { body: false, extra: false, kindBadge: false }
+const COLLAPSED_KEY = "ce-ui.eventspanel.collapsed";
+const KIND_COLOR = {
+  "ws-open": "#4ade80",
+  "ws-close": "#ef4444",
+  schema: "#9ecbff",
+  subscribe: "#9ecbff",
+  unsubscribe: "#8892a0",
+  frame: "#a8b3c7",
+  topology: "#ffd166",
+  rest: "#f59e0b"
 };
-function BaseNode({
-  spec,
-  label,
-  state = "idle",
-  selected,
-  slotValues,
-  variant = "full",
-  parts,
-  children
-}) {
-  const messages = useFlowMessages();
-  const accent = spec.color ?? "var(--sf-accent-default, #0ea5e9)";
-  const resolvedLabel = label ?? messages.kindLabels?.[spec.kind] ?? spec.label;
-  const p = { ...VARIANT_PARTS[variant], ...parts };
-  const show = {
-    header: p.header !== false,
-    icon: p.icon !== false,
-    title: p.title !== false,
-    kindBadge: p.kindBadge !== false,
-    stateDot: p.stateDot !== false,
-    body: p.body !== false,
-    inputs: p.inputs !== false,
-    outputs: p.outputs !== false,
-    extra: p.extra !== false
+const KIND_LABEL = {
+  "ws-open": "OPEN",
+  "ws-close": "CLOSE",
+  schema: "SCHEMA",
+  subscribe: "SUB",
+  unsubscribe: "UNSUB",
+  frame: "FRAME",
+  topology: "TOPO",
+  rest: "REST"
+};
+const ALL_KINDS = [
+  "ws-open",
+  "ws-close",
+  "schema",
+  "subscribe",
+  "unsubscribe",
+  "frame",
+  "topology",
+  "rest"
+];
+function EventsPanel() {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(COLLAPSED_KEY) !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const [paused, setPaused] = useState(false);
+  const [excluded, setExcluded] = useState(() => /* @__PURE__ */ new Set(["frame"]));
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "0");
+    } catch {
+    }
+  }, [collapsed]);
+  const listRef = useRef(null);
+  const lastVersion = useRef(-1);
+  const stickToBottom = useRef(true);
+  useEffect(() => {
+    if (collapsed) return;
+    let raf = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      if (paused) return;
+      if (eventsVersion.v === lastVersion.current) return;
+      lastVersion.current = eventsVersion.v;
+      renderList(listRef.current, events, excluded, stickToBottom.current);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [collapsed, paused, excluded]);
+  const onScroll = () => {
+    const el = listRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 12;
+    stickToBottom.current = atBottom;
   };
+  if (collapsed) {
+    return /* @__PURE__ */ jsx(
+      "button",
+      {
+        onClick: () => setCollapsed(false),
+        title: "Show events log",
+        style: {
+          position: "fixed",
+          top: 12,
+          right: 304,
+          zIndex: 30,
+          padding: "6px 10px",
+          background: "rgba(20, 23, 30, 0.92)",
+          border: "1px solid #2c313c",
+          borderRadius: 6,
+          color: "#cbd3e0",
+          fontSize: 11,
+          fontFamily: "ui-monospace, SFMono-Regular, monospace",
+          cursor: "pointer"
+        },
+        children: "events ▾"
+      }
+    );
+  }
   return /* @__PURE__ */ jsxs(
     "div",
     {
-      className: cn(
-        "sf-node",
-        `sf-node--${state}`,
-        `sf-node--variant-${variant}`,
-        selected && "sf-node--selected"
-      ),
-      "data-node-kind": spec.kind,
-      "data-node-state": state,
-      "data-node-variant": variant,
-      style: { ["--sf-accent"]: accent },
+      style: {
+        position: "fixed",
+        top: 12,
+        right: 304,
+        bottom: 12,
+        width: 420,
+        zIndex: 30,
+        background: "rgba(20, 23, 30, 0.96)",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        color: "#e6e8eb",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        display: "flex",
+        flexDirection: "column"
+      },
       children: [
-        show.header ? /* @__PURE__ */ jsxs("div", { className: "sf-node__header", children: [
-          show.icon ? /* @__PURE__ */ jsx("span", { className: "sf-node__icon", "aria-hidden": "true", children: /* @__PURE__ */ jsx(NodeIcon, { icon: spec.icon, fallback: spec.label }) }) : null,
-          show.title ? /* @__PURE__ */ jsx("span", { className: "sf-node__title", children: resolvedLabel }) : null,
-          show.kindBadge ? /* @__PURE__ */ jsx("span", { className: "sf-node__kind", children: spec.kind }) : null,
-          show.stateDot ? /* @__PURE__ */ jsx(StateDot, { state }) : null
-        ] }) : null,
-        show.body ? /* @__PURE__ */ jsxs("div", { className: "sf-node__body", children: [
-          show.inputs ? /* @__PURE__ */ jsx("div", { className: "sf-node__col sf-node__col--in", children: spec.inputs.map((s) => /* @__PURE__ */ jsx(SlotRow, { kindId: spec.kind, spec: s, side: "input", value: slotValues?.[s.name] }, `in-${s.name}`)) }) : null,
-          show.outputs ? /* @__PURE__ */ jsx("div", { className: "sf-node__col sf-node__col--out", children: spec.outputs.map((s) => /* @__PURE__ */ jsx(SlotRow, { kindId: spec.kind, spec: s, side: "output", value: slotValues?.[s.name] }, `out-${s.name}`)) }) : null
-        ] }) : null,
-        show.extra && children ? /* @__PURE__ */ jsx("div", { className: "sf-node__extra", children }) : null
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "8px 10px",
+              borderBottom: "1px solid #2c313c"
+            },
+            children: [
+              /* @__PURE__ */ jsx("span", { style: { fontWeight: 600, fontSize: 12, flex: 1 }, children: "events" }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setPaused((p) => !p),
+                  title: paused ? "Resume" : "Pause",
+                  style: btn(paused ? "#3b6eff" : "transparent"),
+                  children: paused ? "▶ resume" : "❚❚ pause"
+                }
+              ),
+              /* @__PURE__ */ jsx("button", { onClick: () => clearEvents(), title: "Clear log", style: btn("transparent"), children: "clear" }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setCollapsed(true),
+                  title: "Hide events log",
+                  style: btn("transparent"),
+                  children: "▴"
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            style: {
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 4,
+              padding: "6px 10px",
+              borderBottom: "1px solid #2c313c"
+            },
+            children: ALL_KINDS.map((k) => {
+              const on = !excluded.has(k);
+              return /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setExcluded((cur) => {
+                    const next = new Set(cur);
+                    if (next.has(k)) next.delete(k);
+                    else next.add(k);
+                    return next;
+                  }),
+                  style: {
+                    fontSize: 10,
+                    padding: "2px 6px",
+                    background: on ? KIND_COLOR[k] : "transparent",
+                    color: on ? "#0f1115" : KIND_COLOR[k],
+                    border: `1px solid ${KIND_COLOR[k]}`,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    opacity: on ? 1 : 0.55
+                  },
+                  children: KIND_LABEL[k]
+                },
+                k
+              );
+            })
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            ref: listRef,
+            onScroll,
+            style: {
+              flex: 1,
+              overflowY: "auto",
+              padding: "4px 8px",
+              lineHeight: 1.45,
+              whiteSpace: "pre"
+            }
+          }
+        )
       ]
     }
   );
 }
-const BADGE_MAX = 48;
-function SlotRow({
-  kindId,
-  spec,
-  side,
-  value
-}) {
-  const messages = useFlowMessages();
-  const rendered = renderSlotValue(value);
-  const labelOverride = messages.slotLabels?.[`${kindId}.${spec.name}`];
-  return /* @__PURE__ */ jsxs("div", { className: cn("sf-slot-row", `sf-slot-row--${side}`), children: [
-    /* @__PURE__ */ jsx(SlotHandle, { spec, side, labelOverride }),
-    rendered !== null ? /* @__PURE__ */ jsx(
-      "span",
-      {
-        className: "sf-slot__value",
-        "data-slot-kind": spec.kind,
-        title: rendered,
-        children: rendered.length > BADGE_MAX ? `${rendered.slice(0, BADGE_MAX - 1)}…` : rendered
-      }
-    ) : null
-  ] });
+function btn(bg) {
+  return {
+    fontSize: 11,
+    padding: "2px 8px",
+    background: bg,
+    color: "#cbd3e0",
+    border: "1px solid #2c313c",
+    borderRadius: 3,
+    cursor: "pointer",
+    fontFamily: "inherit"
+  };
 }
-const STATE_LABEL = {
-  idle: "Idle",
-  ready: "Ready",
-  running: "Running",
-  ok: "Succeeded",
-  error: "Failed",
-  cancelled: "Cancelled",
-  skipped: "Skipped"
+function renderList(el, buf, excluded, stickToBottom) {
+  if (!el) return;
+  const t0 = buf.length > 0 ? buf[0].t : 0;
+  let html = "";
+  for (let i = 0; i < buf.length; i++) {
+    const e = buf[i];
+    if (excluded.has(e.kind)) continue;
+    const rel = ((e.t - t0) / 1e3).toFixed(2).padStart(7);
+    const color = KIND_COLOR[e.kind];
+    const label = KIND_LABEL[e.kind].padEnd(6);
+    html += `<div><span style="color:#5a6172">${rel}s</span> <span style="color:${color}">${label}</span> <span style="color:#cbd3e0">${escapeHtml(e.text)}</span></div>`;
+  }
+  el.innerHTML = html;
+  if (stickToBottom) el.scrollTop = el.scrollHeight;
+}
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+let BASE = "/api/v0";
+function setEngineBase(origin) {
+  BASE = `${origin.replace(/\/+$/, "")}/api/v0`;
+}
+class RestError extends Error {
+  constructor(status, message, url) {
+    super(message);
+    this.status = status;
+    this.url = url;
+  }
+}
+let currentSessionId = null;
+function setRestSessionId(id) {
+  currentSessionId = id;
+}
+async function http(method, path, body) {
+  const url = `${BASE}${path}`;
+  const headers = {};
+  if (body !== void 0) headers["Content-Type"] = "application/json";
+  if (currentSessionId && method !== "GET") headers["X-CE-Session"] = currentSessionId;
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body !== void 0 ? JSON.stringify(body) : void 0
+  });
+  let payload = {};
+  try {
+    payload = await res.json();
+  } catch {
+  }
+  if (method !== "GET") {
+    const status = res.ok && !payload.error ? res.status : `ERR ${res.status}`;
+    recordEvent("rest", `${method} ${path} → ${status}`);
+  }
+  if (!res.ok || payload.error) {
+    throw new RestError(res.status, payload.error ?? res.statusText, url);
+  }
+  return payload.data;
+}
+function getRootNodes(opts) {
+  const q = new URLSearchParams();
+  if (opts?.depth != null) q.set("depth", String(opts.depth));
+  if (opts?.nested != null) q.set("nested", String(opts.nested));
+  if (opts?.withEdges != null) q.set("withEdges", String(opts.withEdges));
+  const qs = q.toString();
+  return http("GET", `/nodes${qs ? "?" + qs : ""}`);
+}
+function getNodeByUid(uid, opts) {
+  const q = new URLSearchParams();
+  if (opts?.depth != null) q.set("depth", String(opts.depth));
+  if (opts?.nested != null) q.set("nested", String(opts.nested));
+  if (opts?.withEdges != null) q.set("withEdges", String(opts.withEdges));
+  const qs = q.toString();
+  return http("GET", `/nodes/uid/${uid}${qs ? "?" + qs : ""}`);
+}
+function addNode(req) {
+  return http("POST", `/nodes`, req);
+}
+function updateNode(uid, req) {
+  return http("PATCH", `/nodes/uid/${uid}`, req);
+}
+function patchOverrides(uid, req) {
+  return http("PATCH", `/overrides/nodes/uid/${uid}`, req);
+}
+function callAction(uid, action, params) {
+  return http("POST", `/call/nodes/uid/${uid}`, {
+    action,
+    params
+  });
+}
+function removeNode(uid) {
+  return http("DELETE", `/nodes/uid/${uid}`);
+}
+function getEdges(component) {
+  const qs = component != null ? `?component=${encodeURIComponent(String(component))}` : "";
+  return http("GET", `/edges${qs}`);
+}
+function addEdge(req) {
+  return http("POST", `/edge`, req);
+}
+function bulkUpdate(updates) {
+  return http("PATCH", `/bulknodes`, { updates });
+}
+function bulkDelete(req) {
+  return http("DELETE", `/bulknodes`, req);
+}
+function copyNodes(req) {
+  return http("POST", `/copy/nodes`, {
+    includeInternalEdges: true,
+    ...req
+  });
+}
+function restoreItems(req) {
+  return http("POST", `/restore`, req);
+}
+function bulkPartialError(res) {
+  if (!res.result?.partialSuccess) return null;
+  const errs = [
+    ...res.result.errors?.components ?? res.result.componentErrors ?? [],
+    ...res.result.errors?.edges ?? res.result.edgeErrors ?? []
+  ];
+  if (errs.length === 0) return "bulk op partially failed";
+  const first = errs[0];
+  return `bulk op: ${errs.length} item(s) failed — ${first.message}`;
+}
+function removeEdge(uid) {
+  return http("DELETE", `/edge/uid/${uid}`);
+}
+function updateEdge(uid, req) {
+  return http("PATCH", `/edge/uid/${uid}`, req);
+}
+function getExtensions() {
+  return http("GET", `/extensions`);
+}
+
+const rest = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  RestError,
+  addEdge,
+  addNode,
+  bulkDelete,
+  bulkPartialError,
+  bulkUpdate,
+  callAction,
+  copyNodes,
+  getEdges,
+  getExtensions,
+  getNodeByUid,
+  getRootNodes,
+  patchOverrides,
+  removeEdge,
+  removeNode,
+  restoreItems,
+  setEngineBase,
+  setRestSessionId,
+  updateEdge,
+  updateNode
+}, Symbol.toStringTag, { value: 'Module' }));
+
+function FindPanel({
+  open,
+  currentParentUid,
+  onClose,
+  onPick
+}) {
+  const [query, setQuery] = useState("");
+  const [all, setAll] = useState(null);
+  const [sel, setSel] = useState(0);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    setQuery("");
+    setSel(0);
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await getRootNodes({ depth: -1, nested: true });
+        if (cancelled) return;
+        const flat = [];
+        const walk = (c) => {
+          if (c.uid !== 0) {
+            const path = c.path.startsWith("root/") ? c.path.slice(5) : c.path;
+            flat.push({
+              uid: c.uid,
+              name: c.name || c.type,
+              type: c.type,
+              path,
+              parent: c.parent,
+              here: c.parent === currentParentUid
+            });
+          }
+          c.children?.forEach(walk);
+        };
+        resp.nodes.forEach(walk);
+        setAll(flat);
+      } catch {
+        if (!cancelled) setAll([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, currentParentUid]);
+  useEffect(() => {
+    if (open) {
+      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [open]);
+  const results = useMemo(() => {
+    if (!all) return [];
+    const q = query.trim().toLowerCase();
+    if (!q) return all.slice(0, 50);
+    const scored = all.map((h) => {
+      const name = h.name.toLowerCase();
+      let score = -1;
+      if (name === q) score = 0;
+      else if (name.startsWith(q)) score = 1;
+      else if (name.includes(q)) score = 2;
+      else if (h.path.toLowerCase().includes(q) || h.type.toLowerCase().includes(q)) score = 3;
+      return { h, score };
+    }).filter((x) => x.score >= 0).sort(
+      (a, b) => Number(b.h.here) - Number(a.h.here) || a.score - b.score || a.h.name.localeCompare(b.h.name)
+    ).slice(0, 50).map((x) => x.h);
+    return scored;
+  }, [all, query]);
+  useEffect(() => {
+    if (sel >= results.length) setSel(0);
+  }, [results, sel]);
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-idx="${sel}"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [sel]);
+  if (!open) return null;
+  const pick = (h) => {
+    if (!h) return;
+    onPick(h.uid);
+    onClose();
+  };
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      onMouseDown: onClose,
+      style: {
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        background: "rgba(0,0,0,0.35)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        paddingTop: "12vh"
+      },
+      children: /* @__PURE__ */ jsxs(
+        "div",
+        {
+          onMouseDown: (e) => e.stopPropagation(),
+          style: {
+            width: 480,
+            maxWidth: "90vw",
+            background: "#1a1d24",
+            border: "1px solid #2c313c",
+            borderRadius: 8,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.6)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            fontFamily: "-apple-system, system-ui, sans-serif"
+          },
+          children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                ref: inputRef,
+                value: query,
+                onChange: (e) => {
+                  setQuery(e.target.value);
+                  setSel(0);
+                },
+                onKeyDown: (e) => {
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    onClose();
+                  } else if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setSel((s) => Math.min(results.length - 1, s + 1));
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setSel((s) => Math.max(0, s - 1));
+                  } else if (e.key === "Enter") {
+                    e.preventDefault();
+                    pick(results[sel]);
+                  }
+                  e.stopPropagation();
+                },
+                placeholder: "Find component by name, type, or path…",
+                spellCheck: false,
+                style: {
+                  background: "#0f1115",
+                  color: "#e6e8eb",
+                  border: "none",
+                  borderBottom: "1px solid #2c313c",
+                  padding: "12px 14px",
+                  fontSize: 14,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  outline: "none"
+                }
+              }
+            ),
+            /* @__PURE__ */ jsx("div", { ref: listRef, style: { maxHeight: "50vh", overflowY: "auto" }, children: all == null ? /* @__PURE__ */ jsx("div", { style: { padding: "12px 14px", color: "#5a6172", fontSize: 12 }, children: "loading…" }) : results.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "12px 14px", color: "#5a6172", fontSize: 12 }, children: "no matches" }) : results.map((h, i) => {
+              const prev = i > 0 ? results[i - 1] : null;
+              const showHereHeader = h.here && (prev === null || !prev.here);
+              const showElsewhereHeader = !h.here && (prev === null || prev.here);
+              return /* @__PURE__ */ jsxs("div", { children: [
+                showHereHeader && /* @__PURE__ */ jsx(FindHeader, { label: "this folder" }),
+                showElsewhereHeader && /* @__PURE__ */ jsx(FindHeader, { label: "elsewhere" }),
+                /* @__PURE__ */ jsxs(
+                  "button",
+                  {
+                    "data-idx": i,
+                    onMouseEnter: () => setSel(i),
+                    onClick: () => pick(h),
+                    style: {
+                      display: "flex",
+                      width: "100%",
+                      textAlign: "left",
+                      alignItems: "baseline",
+                      gap: 8,
+                      padding: "8px 14px 8px 12px",
+                      background: i === sel ? "#2c3a55" : "transparent",
+                      border: "none",
+                      // Left accent on same-folder rows so they read as "here"
+                      // even mid-scroll, past the section header.
+                      borderLeft: `2px solid ${h.here ? "#4a9eff" : "transparent"}`,
+                      cursor: "pointer",
+                      fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 13, flexShrink: 0 }, children: h.name }),
+                      /* @__PURE__ */ jsx(
+                        "span",
+                        {
+                          style: {
+                            color: "#5a6172",
+                            fontSize: 11,
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                          },
+                          title: `${h.path} · ${h.type}`,
+                          children: h.here ? h.type : h.path
+                        }
+                      ),
+                      !h.here && /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", fontSize: 10, flexShrink: 0 }, children: h.type })
+                    ]
+                  }
+                )
+              ] }, h.uid);
+            }) }),
+            /* @__PURE__ */ jsx(
+              "div",
+              {
+                style: {
+                  padding: "6px 14px",
+                  borderTop: "1px solid #2c313c",
+                  color: "#5a6172",
+                  fontSize: 10,
+                  fontFamily: "ui-monospace, monospace"
+                },
+                children: "↑↓ navigate · ↵ go · esc close"
+              }
+            )
+          ]
+        }
+      )
+    }
+  );
+}
+function FindHeader({ label }) {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      style: {
+        padding: "6px 14px 3px 14px",
+        color: "#5a6172",
+        fontSize: 9,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace"
+      },
+      children: label
+    }
+  );
+}
+
+const PRESENCE_PALETTE = [
+  "#f97316",
+  // orange
+  "#a855f7",
+  // purple
+  "#06b6d4",
+  // cyan
+  "#ec4899",
+  // pink
+  "#84cc16",
+  // lime
+  "#eab308",
+  // yellow
+  "#ef4444",
+  // red
+  "#14b8a6"
+  // teal
+];
+let nextColor = 0;
+const nowMs = () => performance.now();
+const usePresence = create((set, get) => ({
+  collaborators: /* @__PURE__ */ new Map(),
+  version: 0,
+  upsert: (sessionId, state) => set((s) => {
+    const next = new Map(s.collaborators);
+    const existing = next.get(sessionId);
+    next.set(sessionId, {
+      sessionId,
+      state,
+      colorIdx: existing ? existing.colorIdx : nextColor++ % PRESENCE_PALETTE.length,
+      lastSeen: nowMs()
+    });
+    return { collaborators: next, version: s.version + 1 };
+  }),
+  sweep: (ttlMs) => set((s) => {
+    const cutoff = nowMs() - ttlMs;
+    let changed = false;
+    const next = new Map(s.collaborators);
+    for (const [id, c] of next) {
+      if (c.lastSeen < cutoff) {
+        next.delete(id);
+        changed = true;
+      }
+    }
+    return changed ? { collaborators: next, version: s.version + 1 } : s;
+  }),
+  remove: (sessionId) => set((s) => {
+    if (!s.collaborators.has(sessionId)) return s;
+    const next = new Map(s.collaborators);
+    next.delete(sessionId);
+    return { collaborators: next, version: s.version + 1 };
+  }),
+  replaceAll: (entries) => set((s) => {
+    const next = /* @__PURE__ */ new Map();
+    for (const e of entries) {
+      const existing = get().collaborators.get(e.sessionId);
+      next.set(e.sessionId, {
+        sessionId: e.sessionId,
+        state: e.state,
+        colorIdx: existing ? existing.colorIdx : nextColor++ % PRESENCE_PALETTE.length,
+        lastSeen: nowMs()
+      });
+    }
+    return { collaborators: next, version: s.version + 1 };
+  }),
+  reset: () => set({ collaborators: /* @__PURE__ */ new Map(), version: 0 })
+}));
+
+function PresenceBar() {
+  const collaborators = usePresence((s) => s.collaborators);
+  if (collaborators.size === 0) return null;
+  const list = [...collaborators.values()];
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        // Sit just above the breadcrumb (also bottom-centered at bottom:12) so
+        // the two don't overlap.
+        position: "fixed",
+        bottom: 52,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 25,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        background: "rgba(20,23,30,0.92)",
+        border: "1px solid #2c313c",
+        borderRadius: 20,
+        padding: "5px 12px",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        color: "#cbd3e0"
+      },
+      children: [
+        /* @__PURE__ */ jsxs("span", { style: { color: "#8892a0", fontSize: 10 }, children: [
+          list.length,
+          " other",
+          list.length === 1 ? "" : "s"
+        ] }),
+        list.map((c) => {
+          const color = PRESENCE_PALETTE[c.colorIdx];
+          const name = c.state.userName ?? c.sessionId.slice(0, 6);
+          const selCount = c.state.selectedComponents?.length ?? 0;
+          return /* @__PURE__ */ jsxs(
+            "span",
+            {
+              title: selCount > 0 ? `${name} — ${selCount} selected` : `${name} — viewing`,
+              style: { display: "flex", alignItems: "center", gap: 4 },
+              children: [
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      background: color,
+                      display: "inline-block"
+                    }
+                  }
+                ),
+                /* @__PURE__ */ jsx("span", { children: name }),
+                selCount > 0 && /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172", fontSize: 9 }, children: [
+                  "×",
+                  selCount
+                ] })
+              ]
+            },
+            c.sessionId
+          );
+        })
+      ]
+    }
+  );
+}
+
+const BUCKETS = [
+  { minZoom: 0, hz: 1 },
+  // far out — can't read anything
+  { minZoom: 0.3, hz: 4 },
+  // shapes legible, values not really
+  { minZoom: 0.55, hz: 10 },
+  // readable → full (ceiling) rate
+  { minZoom: 1.3, hz: 15 }
+  // deep zoom on a few nodes
+];
+function rateForZoom(zoom) {
+  let hz = BUCKETS[0].hz;
+  for (const b of BUCKETS) {
+    if (zoom >= b.minZoom) hz = b.hz;
+  }
+  return hz;
+}
+const POLL_MS = 1e3;
+const LOW_FPS = 30;
+const GOOD_FPS = 50;
+const MIN_HZ = 1;
+const BACKOFF = 0.5;
+const RECOVER = 0.25;
+function ZoomRateController({
+  enabled,
+  setRate
+}) {
+  const store = useStoreApi();
+  const scale = useRef(1);
+  const lastSent = useRef(null);
+  useEffect(() => {
+    if (!enabled) {
+      lastSent.current = null;
+      scale.current = 1;
+      return;
+    }
+    const evaluate = () => {
+      const zoom = store.getState().transform[2];
+      const ceiling = rateForZoom(zoom);
+      const fps = metrics.fps;
+      if (fps > 0) {
+        if (fps < LOW_FPS) scale.current = Math.max(0.02, scale.current * BACKOFF);
+        else if (fps > GOOD_FPS) scale.current = Math.min(1, scale.current + RECOVER);
+      }
+      const want = Math.max(MIN_HZ, Math.min(ceiling, Math.round(ceiling * scale.current)));
+      if (want !== lastSent.current) {
+        lastSent.current = want;
+        setRate(want);
+      }
+    };
+    evaluate();
+    const id = window.setInterval(evaluate, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [enabled, setRate, store]);
+  return null;
+}
+
+const isIterable = (obj) => Symbol.iterator in obj;
+const hasIterableEntries = (value) => (
+  // HACK: avoid checking entries type
+  "entries" in value
+);
+const compareEntries = (valueA, valueB) => {
+  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
+  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
+  if (mapA.size !== mapB.size) {
+    return false;
+  }
+  for (const [key, value] of mapA) {
+    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
+      return false;
+    }
+  }
+  return true;
 };
-function StateDot({ state }) {
-  const messages = useFlowMessages();
-  if (state === "idle") return null;
-  const label = messages.state[state] ?? STATE_LABEL[state];
+const compareIterables = (valueA, valueB) => {
+  const iteratorA = valueA[Symbol.iterator]();
+  const iteratorB = valueB[Symbol.iterator]();
+  let nextA = iteratorA.next();
+  let nextB = iteratorB.next();
+  while (!nextA.done && !nextB.done) {
+    if (!Object.is(nextA.value, nextB.value)) {
+      return false;
+    }
+    nextA = iteratorA.next();
+    nextB = iteratorB.next();
+  }
+  return !!nextA.done && !!nextB.done;
+};
+function shallow(valueA, valueB) {
+  if (Object.is(valueA, valueB)) {
+    return true;
+  }
+  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
+    return false;
+  }
+  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
+    return false;
+  }
+  if (isIterable(valueA) && isIterable(valueB)) {
+    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
+      return compareEntries(valueA, valueB);
+    }
+    return compareIterables(valueA, valueB);
+  }
+  return compareEntries(
+    { entries: () => Object.entries(valueA) },
+    { entries: () => Object.entries(valueB) }
+  );
+}
+
+function useShallow(selector) {
+  const prev = React__default.useRef(void 0);
+  return (state) => {
+    const next = selector(state);
+    return shallow(prev.current, next) ? prev.current : prev.current = next;
+  };
+}
+
+const CATEGORY_INPUT = 0;
+const CATEGORY_OUTPUT = 1;
+const CATEGORY_CONFIG = 2;
+const DATATYPE_NUMBER = 0;
+const DATATYPE_BOOL = 1;
+const DATATYPE_STRING = 2;
+const ROLE_NORMAL = 0;
+const ROLE_STATUS = 1;
+const STATUS_OVERRIDDEN = 1 << 5;
+const TYPE_BOOL = 1;
+const TYPE_U32 = 16;
+const TYPE_I32 = 17;
+const TYPE_F32 = 18;
+const TYPE_U64 = 32;
+const TYPE_I64 = 33;
+const TYPE_F64 = 34;
+const TYPE_STR = 48;
+const TYPE_STATUS = 64;
+const MSG_UPDATE = 1;
+const MSG_SNAPSHOT = 2;
+
+const CeWiresheetContext = createContext(null);
+const COLOR_NUMBER = "#4a9eff";
+const COLOR_BOOL = "#4ade80";
+const COLOR_STRING = "#f59e0b";
+const TITLE_H = 40;
+const ROW_H = 18;
+const NODE_W = 220;
+const GHOST_H = ROW_H;
+const GHOST_W_MIN = 90;
+const GHOST_W_MAX = 260;
+function ghostWidthFor(path, propName) {
+  const text = `${path || "root"} · ${propName}`;
+  const w = 22 + Math.ceil(text.length * 6.2);
+  return Math.max(GHOST_W_MIN, Math.min(GHOST_W_MAX, w));
+}
+function stripRoot(path) {
+  if (path === "root" || path === "") return "root";
+  if (path.startsWith("root/")) return path.slice(5);
+  return path;
+}
+const DATATYPE_LABEL = {
+  [DATATYPE_NUMBER]: "number",
+  [DATATYPE_BOOL]: "bool",
+  [DATATYPE_STRING]: "string"
+};
+const LOD_ZOOM = 0.12;
+const EMPTY_VALUES = Object.freeze({});
+const EMPTY_FLAGS = Object.freeze({});
+function colorForType(dt) {
+  if (dt === DATATYPE_BOOL) return COLOR_BOOL;
+  if (dt === DATATYPE_STRING) return COLOR_STRING;
+  return COLOR_NUMBER;
+}
+function inferDataType(v) {
+  if (typeof v === "boolean") return DATATYPE_BOOL;
+  if (typeof v === "string") return DATATYPE_STRING;
+  return DATATYPE_NUMBER;
+}
+function fmtValue(v, dt) {
+  if (v === void 0) return "—";
+  if (typeof v === "bigint") return v.toString();
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "string") return JSON.stringify(v).slice(1, -1);
+  if (dt === DATATYPE_BOOL) return v ? "true" : "false";
+  if (Number.isInteger(v)) return v.toString();
+  return v.toFixed(2);
+}
+function PropertyContextMenu({
+  x,
+  y,
+  propName,
+  propUid,
+  category,
+  dataType,
+  currentValue,
+  overridden,
+  componentUid,
+  onClose
+}) {
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [draft, setDraft] = useState(
+    currentValue == null ? "" : typeof currentValue === "string" ? currentValue : String(currentValue)
+  );
+  const [durationSec, setDurationSec] = useState(60);
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-menu]")) return;
+      onClose();
+    };
+    document.addEventListener("mousedown", dismiss);
+    document.addEventListener("contextmenu", dismiss);
+    return () => {
+      document.removeEventListener("mousedown", dismiss);
+      document.removeEventListener("contextmenu", dismiss);
+    };
+  }, [onClose]);
+  const canConnect = category === CATEGORY_INPUT || category === CATEGORY_OUTPUT;
+  const overridable = category === CATEGORY_INPUT || category === CATEGORY_CONFIG || category === CATEGORY_OUTPUT;
+  const parse = (raw) => {
+    const t = raw.trim();
+    if (t === "") return null;
+    if (dataType === DATATYPE_BOOL) {
+      const lower = t.toLowerCase();
+      return lower === "true" || lower === "1" || lower === "yes";
+    }
+    if (dataType === DATATYPE_STRING) return t;
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  };
+  const optimisticSetBit = async (uid, bit, on) => {
+    const { useStatusFlags: useStatusFlags2 } = await Promise.resolve().then(() => store);
+    const s = useStatusFlags2.getState();
+    const cur = s.flags.get(uid) ?? 0;
+    const next = on ? cur | bit : cur & ~bit;
+    s.applyStatus([uid], [next]);
+  };
+  const setOverride = async () => {
+    const parsed = parse(draft);
+    if (parsed == null) {
+      onClose();
+      return;
+    }
+    onClose();
+    const { useStructural: useStructural2 } = await Promise.resolve().then(() => store);
+    const cur = useStructural2.getState().components.get(componentUid);
+    const uid = cur?.properties[propName]?.uid;
+    if (uid != null) await optimisticSetBit(uid, STATUS_OVERRIDDEN, true);
+    try {
+      const { patchOverrides } = await Promise.resolve().then(() => rest);
+      const updated = await patchOverrides(componentUid, {
+        setOverrides: [
+          { property: propName, value: parsed, duration: durationSec }
+        ]
+      });
+      useStructural2.getState().upsertComponent(updated);
+    } catch (e) {
+      console.error("set override failed:", e.message);
+      if (uid != null) await optimisticSetBit(uid, STATUS_OVERRIDDEN, false);
+    }
+  };
+  const clearOverride = async () => {
+    onClose();
+    const { useStructural: useStructural2 } = await Promise.resolve().then(() => store);
+    const cur = useStructural2.getState().components.get(componentUid);
+    const uid = cur?.properties[propName]?.uid;
+    if (uid != null) await optimisticSetBit(uid, STATUS_OVERRIDDEN, false);
+    try {
+      const { patchOverrides } = await Promise.resolve().then(() => rest);
+      const updated = await patchOverrides(componentUid, { clearOverrides: [propName] });
+      useStructural2.getState().upsertComponent(updated);
+    } catch (e) {
+      console.error("clear override failed:", e.message);
+      if (uid != null) await optimisticSetBit(uid, STATUS_OVERRIDDEN, true);
+    }
+  };
+  return createPortal(
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        "data-ce-menu": true,
+        onContextMenu: (e) => e.preventDefault(),
+        style: {
+          position: "fixed",
+          left: x,
+          top: y,
+          zIndex: 100,
+          background: "#1a1d24",
+          border: "1px solid #2c313c",
+          borderRadius: 4,
+          padding: 4,
+          minWidth: 180,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+          fontSize: 11,
+          color: "#e6e8eb",
+          fontFamily: "-apple-system, system-ui, sans-serif"
+        },
+        children: [
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              style: { padding: "4px 8px", color: "#8892a0", borderBottom: "1px solid #2c313c", marginBottom: 4 },
+              children: [
+                propName,
+                " ",
+                /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
+                  "· ",
+                  dataType
+                ] })
+              ]
+            }
+          ),
+          promptOpen ? /* @__PURE__ */ jsxs("div", { style: { padding: "4px 6px", display: "flex", flexDirection: "column", gap: 4 }, children: [
+            dataType === DATATYPE_BOOL ? /* @__PURE__ */ jsxs(
+              "select",
+              {
+                autoFocus: true,
+                className: "nodrag",
+                value: draft || "true",
+                onChange: (e) => setDraft(e.target.value),
+                onKeyDown: (e) => {
+                  if (e.key === "Enter") setOverride();
+                  else if (e.key === "Escape") onClose();
+                  e.stopPropagation();
+                },
+                style: overrideInputStyle,
+                children: [
+                  /* @__PURE__ */ jsx("option", { value: "true", children: "true" }),
+                  /* @__PURE__ */ jsx("option", { value: "false", children: "false" })
+                ]
+              }
+            ) : /* @__PURE__ */ jsx(
+              "input",
+              {
+                autoFocus: true,
+                className: "nodrag",
+                type: dataType === DATATYPE_NUMBER ? "number" : "text",
+                inputMode: dataType === DATATYPE_NUMBER ? "decimal" : void 0,
+                step: dataType === DATATYPE_NUMBER ? "any" : void 0,
+                value: draft,
+                onChange: (e) => setDraft(e.target.value),
+                onKeyDown: (e) => {
+                  if (e.key === "Enter") setOverride();
+                  else if (e.key === "Escape") onClose();
+                  e.stopPropagation();
+                },
+                style: overrideInputStyle,
+                placeholder: "override value…"
+              }
+            ),
+            /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0", fontSize: 10 }, children: [
+              /* @__PURE__ */ jsx("span", { style: { flex: 1 }, children: "duration" }),
+              /* @__PURE__ */ jsxs(
+                "select",
+                {
+                  className: "nodrag",
+                  value: durationSec,
+                  onChange: (e) => setDurationSec(Number(e.target.value)),
+                  onClick: (e) => e.stopPropagation(),
+                  style: {
+                    background: "#0f1115",
+                    color: "#e6e8eb",
+                    border: "1px solid #2c313c",
+                    borderRadius: 2,
+                    padding: "2px 4px",
+                    fontSize: 11,
+                    fontFamily: "inherit"
+                  },
+                  children: [
+                    /* @__PURE__ */ jsx("option", { value: 10, children: "10 sec" }),
+                    /* @__PURE__ */ jsx("option", { value: 30, children: "30 sec" }),
+                    /* @__PURE__ */ jsx("option", { value: 60, children: "1 min" }),
+                    /* @__PURE__ */ jsx("option", { value: 300, children: "5 min" }),
+                    /* @__PURE__ */ jsx("option", { value: 1200, children: "20 min" }),
+                    /* @__PURE__ */ jsx("option", { value: 3600, children: "1 hr" }),
+                    /* @__PURE__ */ jsx("option", { value: 7200, children: "2 hr" }),
+                    /* @__PURE__ */ jsx("option", { value: 86400, children: "24 hr" }),
+                    /* @__PURE__ */ jsx("option", { value: 0, children: "permanent" })
+                  ]
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: setOverride,
+                style: {
+                  padding: "3px 6px",
+                  background: "#3b6eff",
+                  color: "#fff",
+                  border: "1px solid #5a83ff",
+                  borderRadius: 2,
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontFamily: "inherit"
+                },
+                children: "Set override"
+              }
+            )
+          ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+            overridable && /* @__PURE__ */ jsx(
+              MenuItem,
+              {
+                onClick: () => setPromptOpen(true),
+                label: overridden ? "Change override…" : "Set override…"
+              }
+            ),
+            overridable && overridden && /* @__PURE__ */ jsx(MenuItem, { onClick: clearOverride, label: "Clear override", danger: true }),
+            canConnect && /* @__PURE__ */ jsx(MenuItem, { onClick: () => setPickerOpen(true), label: "Connect to…" })
+          ] }),
+          pickerOpen && /* @__PURE__ */ jsx(
+            ConnectPicker,
+            {
+              x,
+              y,
+              sourceComponentUid: componentUid,
+              sourcePropUid: propUid,
+              sourceCategory: category === CATEGORY_OUTPUT ? "output" : "input",
+              onClose: () => {
+                setPickerOpen(false);
+                onClose();
+              }
+            }
+          )
+        ]
+      }
+    ),
+    document.body
+  );
+}
+function ConnectPicker({
+  x,
+  y,
+  sourceComponentUid,
+  sourcePropUid,
+  sourceCategory,
+  onClose
+}) {
+  const [filter, setFilter] = useState("");
+  const [expanded, setExpanded] = useState(null);
+  const ctx = useContext(CeWiresheetContext);
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [newFilter, setNewFilter] = useState("");
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-menu]")) return;
+      onClose();
+    };
+    const onEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [onClose]);
+  const wantCategory = sourceCategory === "output" ? CATEGORY_INPUT : CATEGORY_OUTPUT;
+  const [allComponents, setAllComponents] = useState(null);
+  const [allEdges, setAllEdges] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { getRootNodes } = await Promise.resolve().then(() => rest);
+      try {
+        const resp = await getRootNodes({ depth: -1, nested: true, withEdges: true });
+        if (cancelled) return;
+        const flat = [];
+        const walk = (c) => {
+          flat.push(c);
+          c.children?.forEach(walk);
+        };
+        const root = resp.nodes[0];
+        root?.children?.forEach(walk);
+        setAllComponents(flat);
+        setAllEdges(resp.edges ?? []);
+      } catch {
+        if (cancelled) return;
+        setAllComponents([...useStructural.getState().components.values()]);
+        setAllEdges([...useStructural.getState().edges.values()]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const takenInputUids = /* @__PURE__ */ new Set();
+  if (sourceCategory === "output" && allEdges) {
+    for (const e of allEdges) {
+      if (e.targetPropertyUid != null) takenInputUids.add(e.targetPropertyUid);
+    }
+  }
+  const sourceParent = useStructural.getState().components.get(sourceComponentUid)?.parent;
+  const groups = [];
+  const componentList = allComponents ?? [];
+  for (const c of componentList) {
+    if (c.uid === sourceComponentUid) continue;
+    const props = [];
+    for (const [name, p] of Object.entries(c.properties)) {
+      if (p.category !== wantCategory) continue;
+      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
+      if (takenInputUids.has(p.uid)) continue;
+      props.push({ propUid: p.uid, propName: name });
+    }
+    if (props.length === 0) continue;
+    props.sort((a, b) => a.propName.localeCompare(b.propName));
+    groups.push({
+      componentUid: c.uid,
+      componentName: c.name || c.type,
+      path: c.path,
+      sibling: sourceParent !== void 0 && c.parent === sourceParent,
+      props
+    });
+  }
+  groups.sort((a, b) => {
+    if (a.sibling !== b.sibling) return a.sibling ? -1 : 1;
+    if (a.sibling) return a.componentName.localeCompare(b.componentName);
+    return a.path.localeCompare(b.path);
+  });
+  const f = filter.trim().toLowerCase();
+  const filteredGroups = f ? groups.map((g) => {
+    const nameMatch = g.componentName.toLowerCase().includes(f) || g.path.toLowerCase().includes(f);
+    if (nameMatch) return g;
+    const props = g.props.filter((p) => p.propName.toLowerCase().includes(f));
+    return props.length > 0 ? { ...g, props } : null;
+  }).filter((g) => g !== null) : groups;
+  const create = async (target) => {
+    const { addEdge } = await Promise.resolve().then(() => rest);
+    const payload = sourceCategory === "output" ? {
+      sourceUid: sourceComponentUid,
+      sourcePropUid,
+      targetUid: target.componentUid,
+      targetPropUid: target.propUid
+    } : {
+      sourceUid: target.componentUid,
+      sourcePropUid: target.propUid,
+      targetUid: sourceComponentUid,
+      targetPropUid: sourcePropUid
+    };
+    try {
+      await addEdge(payload);
+    } catch (e) {
+      console.error("add edge failed:", e.message);
+    }
+    onClose();
+  };
+  const allFilteredProps = filteredGroups.flatMap(
+    (g) => g.props.map((p) => ({ componentUid: g.componentUid, propUid: p.propUid }))
+  );
+  const createAndConnect = async (type) => {
+    if (!ctx) return;
+    const c = await ctx.createComponent(type);
+    if (!c) {
+      onClose();
+      return;
+    }
+    const prop = Object.values(c.properties ?? {}).find((p) => p.category === wantCategory);
+    if (prop) await create({ componentUid: c.uid, propUid: prop.uid });
+    else onClose();
+  };
+  const nf = newFilter.trim().toLowerCase();
+  const newTypes = (ctx?.componentTypes ?? []).filter(
+    (t) => !nf || t.name.toLowerCase().includes(nf) || t.type.toLowerCase().includes(nf)
+  );
+  const PICKER_W = 240;
+  const left = Math.min(x + 184, window.innerWidth - PICKER_W - 8);
+  const top = Math.min(y, window.innerHeight - 320);
+  return createPortal(
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        "data-ce-menu": true,
+        onContextMenu: (e) => e.preventDefault(),
+        style: {
+          position: "fixed",
+          left,
+          top,
+          zIndex: 101,
+          background: "#1a1d24",
+          border: "1px solid #2c313c",
+          borderRadius: 4,
+          width: PICKER_W,
+          maxHeight: 320,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+          fontSize: 11,
+          color: "#e6e8eb",
+          fontFamily: "-apple-system, system-ui, sans-serif",
+          display: "flex",
+          flexDirection: "column"
+        },
+        children: [
+          /* @__PURE__ */ jsxs("div", { style: { padding: "6px 8px", borderBottom: "1px solid #2c313c" }, children: [
+            /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }, children: creatingNew ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setCreatingNew(false),
+                  title: "Back to existing components",
+                  style: {
+                    background: "transparent",
+                    border: "none",
+                    color: "#9ecbff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    padding: 0
+                  },
+                  children: "‹"
+                }
+              ),
+              /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", fontSize: 10, flex: 1 }, children: "New component" })
+            ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsxs("span", { style: { color: "#8892a0", fontSize: 10, flex: 1 }, children: [
+                "Existing component → ",
+                wantCategory,
+                "…"
+              ] }),
+              ctx && /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setCreatingNew(true),
+                  title: "Create a new component and connect to it",
+                  style: {
+                    fontSize: 10,
+                    padding: "1px 6px",
+                    background: "#2c3a55",
+                    color: "#9ecbff",
+                    border: "1px solid #3b5388",
+                    borderRadius: 3,
+                    cursor: "pointer",
+                    fontFamily: "inherit"
+                  },
+                  children: "+ New"
+                }
+              )
+            ] }) }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                autoFocus: true,
+                value: creatingNew ? newFilter : filter,
+                onChange: (e) => creatingNew ? setNewFilter(e.target.value) : setFilter(e.target.value),
+                onKeyDown: (e) => {
+                  if (e.key === "Escape") onClose();
+                  else if (!creatingNew && e.key === "Enter" && allFilteredProps.length === 1) {
+                    create(allFilteredProps[0]);
+                  }
+                  e.stopPropagation();
+                },
+                placeholder: creatingNew ? "filter types…" : "filter…",
+                style: {
+                  width: "100%",
+                  background: "#0f1115",
+                  color: "#e6e8eb",
+                  border: "1px solid #2c313c",
+                  borderRadius: 2,
+                  padding: "3px 6px",
+                  fontSize: 11,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  boxSizing: "border-box",
+                  outline: "none"
+                }
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto" }, children: creatingNew ? newTypes.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 11 }, children: ctx ? "no matching types" : "unavailable" }) : newTypes.map((t) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => createAndConnect(t.type),
+              style: {
+                display: "flex",
+                width: "100%",
+                textAlign: "left",
+                padding: "5px 8px",
+                background: "transparent",
+                color: "#e6e8eb",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 11,
+                fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 6
+              },
+              onMouseEnter: (e) => e.currentTarget.style.background = "#232733",
+              onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+              children: [
+                /* @__PURE__ */ jsx("span", { children: t.name }),
+                /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 9 }, children: t.group })
+              ]
+            },
+            t.type
+          )) : filteredGroups.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 11 }, children: allComponents == null ? "loading…" : "no candidates" }) : filteredGroups.map((g, idx) => {
+            const isOpen = f ? true : expanded === g.componentUid;
+            const prev = idx > 0 ? filteredGroups[idx - 1] : null;
+            const sectionBreak = prev !== null && prev.sibling && !g.sibling;
+            const parentPath = g.path.replace(/\/[^/]*$/, "");
+            const showPath = !g.sibling && parentPath && parentPath !== "root";
+            return /* @__PURE__ */ jsxs("div", { children: [
+              sectionBreak && /* @__PURE__ */ jsx(
+                "div",
+                {
+                  style: {
+                    padding: "6px 8px 2px 8px",
+                    color: "#5a6172",
+                    fontSize: 9,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4,
+                    borderTop: "1px solid #2c313c",
+                    marginTop: 2
+                  },
+                  children: "other folders"
+                }
+              ),
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: () => setExpanded((cur) => cur === g.componentUid ? null : g.componentUid),
+                  style: {
+                    display: "flex",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "5px 8px",
+                    background: "transparent",
+                    color: "#e6e8eb",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 11,
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                    alignItems: "center",
+                    gap: 6
+                  },
+                  onMouseEnter: (e) => e.currentTarget.style.background = "#232733",
+                  onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+                  children: [
+                    /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", width: 8, flexShrink: 0 }, children: isOpen ? "▾" : "▸" }),
+                    /* @__PURE__ */ jsxs(
+                      "span",
+                      {
+                        style: {
+                          flex: 1,
+                          minWidth: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          overflow: "hidden"
+                        },
+                        children: [
+                          /* @__PURE__ */ jsx(
+                            "span",
+                            {
+                              style: {
+                                color: "#9ecbff",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap"
+                              },
+                              children: g.componentName
+                            }
+                          ),
+                          showPath && /* @__PURE__ */ jsx(
+                            "span",
+                            {
+                              style: {
+                                color: "#5a6172",
+                                fontSize: 9,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap"
+                              },
+                              title: g.path,
+                              children: parentPath
+                            }
+                          )
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: g.props.length })
+                  ]
+                }
+              ),
+              isOpen && /* @__PURE__ */ jsx("div", { style: { paddingBottom: 2 }, children: g.props.map((p) => /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => create({ componentUid: g.componentUid, propUid: p.propUid }),
+                  style: {
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "3px 8px 3px 28px",
+                    background: "transparent",
+                    color: "#e6e8eb",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 11,
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                  },
+                  onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
+                  onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+                  children: p.propName
+                },
+                p.propUid
+              )) })
+            ] }, g.componentUid);
+          }) })
+        ]
+      }
+    ),
+    document.body
+  );
+}
+function MenuItem({ onClick, label, danger }) {
+  return /* @__PURE__ */ jsx(
+    "button",
+    {
+      onClick,
+      style: {
+        display: "block",
+        width: "100%",
+        textAlign: "left",
+        padding: "5px 8px",
+        background: "transparent",
+        color: danger ? "#ffb8b8" : "#e6e8eb",
+        border: "none",
+        borderRadius: 2,
+        cursor: "pointer",
+        fontSize: 11,
+        fontFamily: "inherit"
+      },
+      onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+      children: label
+    }
+  );
+}
+function PropertyValueEditor({
+  componentUid,
+  propName,
+  value,
+  dataType
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const display = fmtValue(value, dataType);
+  const start = () => {
+    setDraft(value == null ? "" : typeof value === "string" ? value : String(value));
+    setEditing(true);
+  };
+  const commit = async () => {
+    setEditing(false);
+    const raw = draft.trim();
+    if (raw === "") return;
+    let parsed;
+    if (dataType === DATATYPE_BOOL) {
+      const lower = raw.toLowerCase();
+      parsed = lower === "true" || lower === "1" || lower === "yes";
+    } else if (dataType === DATATYPE_STRING) {
+      parsed = raw;
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return;
+      parsed = n;
+    }
+    try {
+      const { updateNode } = await Promise.resolve().then(() => rest);
+      await updateNode(componentUid, { properties: { [propName]: { value: parsed } } });
+    } catch (e) {
+      console.error("update value failed:", e.message);
+    }
+  };
+  if (editing) {
+    const stop = (e) => e.stopPropagation();
+    if (dataType === DATATYPE_BOOL) {
+      return /* @__PURE__ */ jsxs(
+        "select",
+        {
+          autoFocus: true,
+          className: "nodrag",
+          value: draft,
+          onChange: (e) => commitWith(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Escape") setEditing(false);
+            e.stopPropagation();
+          },
+          onBlur: () => setEditing(false),
+          onClick: stop,
+          onPointerDown: stop,
+          style: editorInputStyle,
+          children: [
+            /* @__PURE__ */ jsx("option", { value: "true", children: "true" }),
+            /* @__PURE__ */ jsx("option", { value: "false", children: "false" })
+          ]
+        }
+      );
+    }
+    return /* @__PURE__ */ jsx(
+      "input",
+      {
+        autoFocus: true,
+        className: "nodrag",
+        type: dataType === DATATYPE_NUMBER ? "number" : "text",
+        inputMode: dataType === DATATYPE_NUMBER ? "decimal" : void 0,
+        step: dataType === DATATYPE_NUMBER ? "any" : void 0,
+        value: draft,
+        onChange: (e) => setDraft(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") commit();
+          else if (e.key === "Escape") setEditing(false);
+          e.stopPropagation();
+        },
+        onBlur: commit,
+        onClick: stop,
+        onPointerDown: stop,
+        style: editorInputStyle
+      }
+    );
+  }
   return /* @__PURE__ */ jsx(
     "span",
     {
-      className: cn("sf-node__state", `sf-node__state--${state}`),
-      "aria-label": label,
-      title: label
+      onClick: (e) => {
+        e.stopPropagation();
+        start();
+      },
+      style: {
+        color: dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
+        fontVariantNumeric: "tabular-nums",
+        cursor: "text",
+        padding: "0 2px",
+        borderRadius: 2
+      },
+      title: "click to edit",
+      children: display
     }
   );
-}
-function NodeIcon({ icon, fallback }) {
-  const seed = (icon ?? fallback ?? "").trim();
-  if (!seed) return /* @__PURE__ */ jsx("span", { className: "sf-node__icon-glyph" });
-  const initials = seed.split(/[-\s_]+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("");
-  return /* @__PURE__ */ jsx("span", { className: "sf-node__icon-glyph", children: initials || seed[0]?.toUpperCase() });
-}
-function renderSlotValue(v) {
-  if (v === null || v === void 0) return null;
-  if (typeof v === "string") return v;
-  if (typeof v === "number" || typeof v === "boolean" || typeof v === "bigint") {
-    return String(v);
-  }
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
-}
-
-class NodeKindRegistry {
-  entries = /* @__PURE__ */ new Map();
-  register(entry) {
-    if (this.entries.has(entry.spec.kind)) {
-      throw new Error(`NodeKindRegistry: duplicate kind "${entry.spec.kind}"`);
+  async function commitWith(raw) {
+    setDraft(raw);
+    setEditing(false);
+    let parsed;
+    if (dataType === DATATYPE_BOOL) {
+      parsed = raw === "true";
+    } else if (dataType === DATATYPE_STRING) {
+      parsed = raw;
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return;
+      parsed = n;
     }
-    this.entries.set(entry.spec.kind, entry);
-    return this;
-  }
-  registerAll(entries) {
-    for (const e of entries) this.register(e);
-    return this;
-  }
-  get(kind) {
-    return this.entries.get(kind);
-  }
-  has(kind) {
-    return this.entries.has(kind);
-  }
-  list() {
-    return Array.from(this.entries.values());
-  }
-  /** Build the `nodeTypes` map @xyflow/react expects. */
-  toNodeTypes() {
-    const out = {};
-    for (const [kind, entry] of this.entries) out[kind] = entry.component;
-    return out;
+    try {
+      const { updateNode } = await Promise.resolve().then(() => rest);
+      await updateNode(componentUid, { properties: { [propName]: { value: parsed } } });
+    } catch (e) {
+      console.error("update value failed:", e.message);
+    }
   }
 }
-
-function EngineNode(props) {
-  const data = props.data;
-  return /* @__PURE__ */ jsx(
-    BaseNode,
+const editorInputStyle = {
+  width: 90,
+  background: "#0f1115",
+  color: "#e6e8eb",
+  border: "1px solid #4a9eff",
+  borderRadius: 2,
+  padding: "0 4px",
+  fontFamily: "inherit",
+  fontSize: 11,
+  textAlign: "right",
+  outline: "none"
+};
+const overrideInputStyle = {
+  background: "#0f1115",
+  color: "#e6e8eb",
+  border: "1px solid #4a9eff",
+  borderRadius: 2,
+  padding: "3px 6px",
+  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+  fontSize: 11,
+  outline: "none"
+};
+function StatusDot({ color, text }) {
+  const [hover, setHover] = useState(false);
+  return /* @__PURE__ */ jsxs(
+    "span",
     {
-      spec: data.kindSpec,
-      label: data.label,
-      selected: props.selected,
-      variant: "full"
+      onMouseEnter: () => setHover(true),
+      onMouseLeave: () => setHover(false),
+      style: {
+        position: "relative",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0
+      },
+      children: [
+        /* @__PURE__ */ jsx(
+          "span",
+          {
+            style: {
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              background: color,
+              boxShadow: "0 0 0 1px rgba(0,0,0,0.4)",
+              display: "block"
+            }
+          }
+        ),
+        hover && /* @__PURE__ */ jsx(
+          "span",
+          {
+            style: {
+              position: "absolute",
+              top: "100%",
+              right: 0,
+              marginTop: 6,
+              padding: "3px 7px",
+              background: "#0f1115",
+              border: "1px solid " + color,
+              borderRadius: 3,
+              color: "#e6e8eb",
+              fontSize: 10,
+              fontFamily: "ui-monospace, SFMono-Regular, monospace",
+              whiteSpace: "nowrap",
+              zIndex: 50,
+              pointerEvents: "none",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.5)"
+            },
+            children: text || "—"
+          }
+        )
+      ]
     }
   );
 }
-
-const POINT_IN_SPEC = {
-  kind: "point-in",
-  label: "Input Point",
-  category: "io",
-  color: "#0ea5e9",
-  icon: "arrow-down",
-  inputs: [],
-  outputs: [{ name: "out", kind: "number", label: "value" }]
-};
-const POINT_OUT_SPEC = {
-  kind: "point-out",
-  label: "Output Point",
-  category: "io",
-  color: "#22c55e",
-  icon: "arrow-up",
-  inputs: [{ name: "in", kind: "number", label: "value" }],
-  outputs: []
-};
-const MATH_SPEC = {
-  kind: "math",
-  label: "Math",
-  category: "logic",
-  color: "#a855f7",
-  icon: "plus",
-  inputs: [
-    { name: "a", kind: "number" },
-    { name: "b", kind: "number" }
-  ],
-  outputs: [{ name: "out", kind: "number" }]
-};
-const LOGIC_SPEC = {
-  kind: "logic",
-  label: "Logic",
-  category: "logic",
-  color: "#f59e0b",
-  icon: "git-branch",
-  inputs: [
-    { name: "a", kind: "boolean" },
-    { name: "b", kind: "boolean" }
-  ],
-  outputs: [{ name: "out", kind: "boolean" }]
-};
-const WIRESHEET_KINDS = [
-  POINT_IN_SPEC,
-  POINT_OUT_SPEC,
-  MATH_SPEC,
-  LOGIC_SPEC
-];
-function buildRegistry() {
-  const reg = new NodeKindRegistry();
-  for (const spec of WIRESHEET_KINDS) reg.register({ spec, component: EngineNode });
-  return reg;
+function parseStatus(raw) {
+  if (raw == null) return "";
+  if (typeof raw !== "string") {
+    if (typeof raw === "object") return summarizeStatusObject(raw);
+    return String(raw);
+  }
+  const t = raw.trim();
+  if (t === "" || t === "{}") return "";
+  try {
+    const obj = JSON.parse(t);
+    if (obj == null) return "";
+    if (typeof obj === "string") return obj;
+    if (typeof obj === "object") return summarizeStatusObject(obj);
+  } catch {
+  }
+  return t;
 }
-
-const EMPTY = { nodes: [], edges: [] };
-function WiresheetPanel({ deviceId }) {
-  const registry = React.useMemo(() => buildRegistry(), []);
-  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3", children: [
-    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
-      /* @__PURE__ */ jsxs(
-        "a",
-        {
-          href: `/extensions/${EXTENSION_ID}/devices`,
-          className: "inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground",
-          children: [
-            /* @__PURE__ */ jsx(ArrowLeft, { className: "size-4" }),
-            " Devices"
-          ]
+function summarizeStatusObject(obj) {
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === "string" && v.trim() !== "") return `${k}: ${v}`;
+    if (typeof v === "boolean" && v) return k;
+    if (typeof v === "number" && v !== 0) return `${k}=${v}`;
+  }
+  return "";
+}
+function statusColorFor(s) {
+  const v = s.toUpperCase();
+  if (!v || v === "NONE" || v === "OK") return { bg: "#4ade80", label: v || "ok" };
+  if (v === "STALE") return { bg: "#f59e0b", label: "stale" };
+  if (v === "OVERRIDDEN") return { bg: "#9ecbff", label: "overridden" };
+  if (v === "ERROR" || v === "FAULT" || v === "DOWN") return { bg: "#ef4444", label: v.toLowerCase() };
+  return { bg: "#8892a0", label: s };
+}
+function FunctionBlockInner({ data, selected }) {
+  const schemaV = useSchemaVersion((s) => s.version);
+  const restComp = useStructural((s) => s.components.get(data.componentUid));
+  const ourUids = useMemo(() => {
+    if (!restComp) return [];
+    return Object.values(restComp.properties).map((p) => p.uid);
+  }, [restComp]);
+  const lod = useStore$1((s) => s.transform[2] < LOD_ZOOM);
+  const valuesByUid = useValues(
+    useShallow((s) => {
+      if (lod) return EMPTY_VALUES;
+      const out = {};
+      for (const uid of ourUids) out[uid] = s.values.get(uid);
+      return out;
+    })
+  );
+  const flagsByUid = useStatusFlags(
+    useShallow((s) => {
+      if (lod) return EMPTY_FLAGS;
+      const out = {};
+      for (const uid of ourUids) out[uid] = s.flags.get(uid) ?? 0;
+      return out;
+    })
+  );
+  const [menu, setMenu] = useState(null);
+  const otherSelectorKeys = usePresence(
+    useShallow((s) => {
+      const out = [];
+      for (const c of s.collaborators.values()) {
+        if (c.state.selectedComponents?.includes(data.componentUid)) {
+          const name = c.state.userName ?? c.sessionId.slice(0, 6);
+          out.push(`${PRESENCE_PALETTE[c.colorIdx]}	${name}`);
         }
-      ),
-      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsxs("span", { className: "ext-eyebrow", children: [
-          "device: ",
-          deviceId || "—"
-        ] }),
-        /* @__PURE__ */ jsxs(
-          "button",
+      }
+      return out;
+    })
+  );
+  const otherSelectors = otherSelectorKeys.map((k) => {
+    const [color, name] = k.split("	");
+    return { color, name };
+  });
+  const structural = useMemo(() => {
+    if (!restComp) return null;
+    const isUserFacing = (p) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL;
+    const entries = Object.entries(restComp.properties);
+    const userRows = entries.filter(([, p]) => isUserFacing(p)).map(([name, p]) => ({
+      uid: p.uid,
+      name,
+      category: p.category,
+      dataType: propertyDataType.get(p.uid) ?? inferDataType(p.value),
+      systemRole: p.systemRole
+    }));
+    const rows2 = [
+      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT),
+      ...userRows.filter((r) => r.category === CATEGORY_INPUT),
+      ...userRows.filter((r) => r.category === CATEGORY_CONFIG)
+    ];
+    const statusEntry = entries.find(([, p]) => p.systemRole === ROLE_STATUS);
+    const statusText2 = parseStatus(statusEntry?.[1].value);
+    return {
+      rows: rows2,
+      // + ROW_H for the bottom lip (drill-in button + action marker).
+      nodeH: TITLE_H + rows2.length * ROW_H + ROW_H,
+      kind: restComp.type,
+      statusText: statusText2,
+      statusColor: statusColorFor(statusText2),
+      statusPropExists: statusEntry != null
+    };
+  }, [restComp, schemaV]);
+  diagRecordRender("FunctionBlock");
+  if (!restComp || !structural) {
+    return /* @__PURE__ */ jsxs(
+      "div",
+      {
+        style: {
+          width: NODE_W,
+          height: 40,
+          background: "#1a1d24",
+          border: "1px dashed #3b4350",
+          borderRadius: 4,
+          color: "#8892a0",
+          fontSize: 11,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "ui-monospace, SFMono-Regular, monospace"
+        },
+        children: [
+          "uid ",
+          data.componentUid
+        ]
+      }
+    );
+  }
+  const values = valuesByUid;
+  const statusFlagsMap = flagsByUid;
+  const { rows, nodeH, kind, statusText, statusColor, statusPropExists } = structural;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      onContextMenu: (e) => {
+        let el = e.target;
+        let uid = null;
+        while (el && el !== e.currentTarget) {
+          const v = el.dataset?.rowUid;
+          if (v != null) {
+            uid = Number(v);
+            break;
+          }
+          el = el.parentElement;
+        }
+        if (uid == null) return;
+        const p = rows.find((r) => r.uid === uid);
+        if (!p) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
+        setMenu({
+          x: e.clientX,
+          y: e.clientY,
+          propName: p.name,
+          propUid: p.uid,
+          category: p.category,
+          dataType: p.dataType,
+          currentValue: values[p.uid],
+          overridden: (flags & STATUS_OVERRIDDEN) !== 0
+        });
+      },
+      style: {
+        width: NODE_W,
+        minHeight: nodeH,
+        background: "#1a1d24",
+        border: selected ? "1px solid #4a9eff" : otherSelectors.length > 0 ? `1px solid ${otherSelectors[0].color}` : "1px solid #2c313c",
+        borderRadius: 4,
+        color: "#e6e8eb",
+        fontSize: 11,
+        // Selection glow priority: our own selection (blue) wins; otherwise a
+        // collaborator's selection paints a glow in their color. Both stack
+        // their shadow over the default drop shadow.
+        boxShadow: selected ? "0 0 0 1px #4a9eff, 0 0 12px rgba(74,158,255,0.45)" : otherSelectors.length > 0 ? `0 0 0 1px ${otherSelectors[0].color}, 0 0 10px ${otherSelectors[0].color}66` : "0 1px 2px rgba(0,0,0,0.4)",
+        transition: "box-shadow 80ms ease, border-color 80ms ease",
+        position: "relative",
+        overflow: "visible"
+      },
+      children: [
+        otherSelectors.length > 0 && /* @__PURE__ */ jsx(
+          "div",
           {
-            type: "button",
-            className: "inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm",
-            children: [
-              /* @__PURE__ */ jsx(RefreshCw, { className: "size-4" }),
-              " Reload"
-            ]
+            style: {
+              position: "absolute",
+              top: -9,
+              left: 6,
+              display: "flex",
+              gap: 3,
+              zIndex: 5,
+              pointerEvents: "none"
+            },
+            children: otherSelectors.map((o) => /* @__PURE__ */ jsx(
+              "span",
+              {
+                title: `${o.name} has this selected`,
+                style: {
+                  fontSize: 9,
+                  lineHeight: "12px",
+                  padding: "0 4px",
+                  background: o.color,
+                  color: "#0f1115",
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  whiteSpace: "nowrap"
+                },
+                children: o.name
+              },
+              o.name
+            ))
           }
         ),
         /* @__PURE__ */ jsxs(
-          "button",
+          "div",
           {
-            type: "button",
-            className: "inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground",
+            onContextMenu: (e) => {
+              if (!data.onContextMenu) return;
+              e.preventDefault();
+              e.stopPropagation();
+              data.onContextMenu(data.componentUid, e.clientX, e.clientY);
+            },
+            onDoubleClick: (e) => {
+              e.stopPropagation();
+              data.onEnter?.(data.componentUid);
+            },
+            style: {
+              height: TITLE_H,
+              padding: "4px 8px",
+              background: "#232733",
+              borderBottom: "1px solid #2c313c",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              boxSizing: "border-box"
+            },
             children: [
-              /* @__PURE__ */ jsx(Save, { className: "size-4" }),
-              " Save to engine"
+              /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      fontWeight: 600,
+                      fontSize: 12,
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    },
+                    children: data.name ?? kind
+                  }
+                ),
+                statusPropExists && /* @__PURE__ */ jsx(StatusDot, { color: statusColor.bg, text: statusText })
+              ] }),
+              /* @__PURE__ */ jsx(
+                "div",
+                {
+                  style: {
+                    fontSize: 10,
+                    lineHeight: 1.35,
+                    color: "#8892a0",
+                    fontFamily: "ui-monospace, monospace",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
+                  },
+                  title: kind,
+                  children: kind
+                }
+              )
+            ]
+          }
+        ),
+        !lod && /* @__PURE__ */ jsxs(
+          "div",
+          {
+            onDoubleClick: (e) => {
+              e.stopPropagation();
+              data.onEnter?.(data.componentUid);
+            },
+            title: "Double-click to enter this component's level",
+            style: {
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: TITLE_H + rows.length * ROW_H,
+              height: ROW_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 8px",
+              boxSizing: "border-box",
+              borderTop: "1px solid #2c313c",
+              background: "#1e222b",
+              borderBottomLeftRadius: 4,
+              borderBottomRightRadius: 4,
+              cursor: "pointer"
+            },
+            children: [
+              /* @__PURE__ */ jsx(
+                "span",
+                {
+                  title: data.hasActions ? "This component has actions" : void 0,
+                  style: { fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` },
+                  children: data.hasActions ? "⚡" : ""
+                }
+              ),
+              data.hasChildren && /* @__PURE__ */ jsxs(
+                "span",
+                {
+                  title: `Has ${data.childCount ?? ""} child${data.childCount === 1 ? "" : "ren"} — double-click to enter`,
+                  style: {
+                    fontSize: 11,
+                    color: "#9ecbff",
+                    lineHeight: `${ROW_H}px`,
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                  },
+                  children: [
+                    "⧉ ",
+                    data.childCount ?? ""
+                  ]
+                }
+              )
+            ]
+          }
+        ),
+        !lod && rows.map((p, i) => {
+          const isInput = p.category === CATEGORY_INPUT;
+          const isOutput = p.category === CATEGORY_OUTPUT;
+          const v = values[p.uid];
+          const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
+          const overridden = (flags & STATUS_OVERRIDDEN) !== 0;
+          const editable = isInput || p.category === CATEGORY_CONFIG;
+          return /* @__PURE__ */ jsxs(
+            "div",
+            {
+              "data-row-uid": p.uid,
+              style: {
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: TITLE_H + i * ROW_H,
+                height: ROW_H,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "0 12px",
+                fontSize: 11,
+                fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                background: overridden ? "rgba(245,158,11,0.08)" : "transparent"
+              },
+              children: [
+                /* @__PURE__ */ jsxs(
+                  "span",
+                  {
+                    style: {
+                      color: isInput ? "#8892a0" : isOutput ? "#cbd3e0" : "#9aa3b2",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4
+                    },
+                    children: [
+                      p.name,
+                      p.category === CATEGORY_CONFIG ? " (cfg)" : "",
+                      overridden && /* @__PURE__ */ jsx(
+                        "span",
+                        {
+                          title: "overridden",
+                          style: {
+                            fontSize: 9,
+                            padding: "0 4px",
+                            background: "#f59e0b",
+                            color: "#0f1115",
+                            borderRadius: 2,
+                            fontWeight: 600
+                          },
+                          children: "OVR"
+                        }
+                      )
+                    ]
+                  }
+                ),
+                editable ? /* @__PURE__ */ jsx(
+                  PropertyValueEditor,
+                  {
+                    componentUid: data.componentUid,
+                    propName: p.name,
+                    value: v,
+                    dataType: p.dataType
+                  }
+                ) : /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
+                      fontVariantNumeric: "tabular-nums",
+                      // Same 2px horizontal padding as the inline editor's display
+                      // span, so input and output values line up at the same right
+                      // edge instead of outputs sitting 2px further right.
+                      padding: "0 2px"
+                    },
+                    title: DATATYPE_LABEL[p.dataType],
+                    children: fmtValue(v, p.dataType)
+                  }
+                )
+              ]
+            },
+            p.uid
+          );
+        }),
+        rows.map((p, i) => {
+          if (p.category === CATEGORY_CONFIG) return null;
+          const isInput = p.category === CATEGORY_INPUT;
+          const c = colorForType(p.dataType);
+          const HANDLE_W = 35;
+          const rowTop = TITLE_H + i * ROW_H;
+          return /* @__PURE__ */ jsx(
+            Handle,
+            {
+              id: String(p.uid),
+              type: isInput ? "target" : "source",
+              position: isInput ? Position.Left : Position.Right,
+              "data-row-uid": p.uid,
+              style: {
+                top: rowTop,
+                [isInput ? "left" : "right"]: 0,
+                width: HANDLE_W,
+                height: ROW_H,
+                background: "transparent",
+                border: "none",
+                borderRadius: 0,
+                // Cancel React Flow's default translate (which would push the handle
+                // outside the node by 50% of its width). With translate(0,0) the box
+                // sits exactly where `left:0` / `right:0` puts it — flush at the edge.
+                transform: "none"
+              },
+              children: /* @__PURE__ */ jsx(
+                "span",
+                {
+                  style: {
+                    position: "absolute",
+                    top: "50%",
+                    // Center the visible marker ON the port-side edge of the hit box:
+                    //   input → x=0 (box's left edge = node's left edge)
+                    //   output → x=100% (box's right edge = node's right edge)
+                    left: isInput ? 0 : "100%",
+                    transform: "translate(-50%, -50%)",
+                    width: 8,
+                    height: 8,
+                    background: c,
+                    border: "1px solid #0f1115",
+                    borderRadius: 1,
+                    pointerEvents: "none"
+                  }
+                }
+              )
+            },
+            `h-${p.uid}`
+          );
+        }),
+        menu && /* @__PURE__ */ jsx(
+          PropertyContextMenu,
+          {
+            x: menu.x,
+            y: menu.y,
+            propName: menu.propName,
+            propUid: menu.propUid,
+            category: menu.category,
+            dataType: menu.dataType,
+            currentValue: menu.currentValue,
+            overridden: menu.overridden,
+            componentUid: data.componentUid,
+            onClose: () => setMenu(null)
+          }
+        )
+      ]
+    }
+  );
+}
+const FunctionBlock = memo(FunctionBlockInner, (a, b) => {
+  return a.selected === b.selected && a.data.componentUid === b.data.componentUid && a.data.name === b.data.name && a.data.hasChildren === b.data.hasChildren && a.data.childCount === b.data.childCount && a.data.onEnter === b.data.onEnter && a.data.onContextMenu === b.data.onContextMenu;
+});
+function GhostNodeInner({ data }) {
+  const isInputSide = data.side === "input";
+  const [popOpen, setPopOpen] = useState(false);
+  const rootRef = useRef(null);
+  const count = data.connections.length;
+  const first = data.connections[0];
+  const labelLeft = stripRoot(first?.externalPath ?? "");
+  const labelRight = first?.externalPropName ?? "";
+  const onClick = (e) => {
+    e.stopPropagation();
+    setPopOpen((v) => !v);
+  };
+  useEffect(() => {
+    if (!popOpen) return;
+    const dismiss = (ev) => {
+      const el = ev.target;
+      if (el && el.closest("[data-ce-ghost-pop]")) return;
+      if (el && rootRef.current?.contains(el)) return;
+      setPopOpen(false);
+    };
+    document.addEventListener("mousedown", dismiss);
+    return () => document.removeEventListener("mousedown", dismiss);
+  }, [popOpen]);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      ref: rootRef,
+      onClick,
+      onDoubleClick: (e) => {
+        e.stopPropagation();
+        if (count === 1) {
+          data.onNavigate?.(data.connections[0].externalComponentUid);
+          setPopOpen(false);
+        } else {
+          setPopOpen(true);
+        }
+      },
+      title: count === 1 ? `${first?.externalPath} · ${first?.externalPropName} — double-click to open` : `${count} cross-folder connections — click to expand`,
+      style: {
+        // Inner box fills whatever width the RF node was given. App.tsx sizes
+        // each ghost to its content so this collapses tight around the text.
+        width: "100%",
+        height: GHOST_H,
+        background: popOpen ? "#1a1d24" : "#0f1115",
+        border: "1px dashed #5a6172",
+        borderRadius: 3,
+        display: "flex",
+        alignItems: "center",
+        padding: "0 8px",
+        gap: 6,
+        fontSize: 10,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        color: "#8892a0",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        cursor: "pointer",
+        boxSizing: "border-box",
+        // Make sure clicks reach us even though RF marks the node
+        // non-selectable + non-draggable.
+        pointerEvents: "all"
+      },
+      children: [
+        /* @__PURE__ */ jsx(
+          "span",
+          {
+            style: {
+              color: "#9ecbff",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0
+            },
+            children: labelLeft
+          }
+        ),
+        /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", flexShrink: 0 }, children: "·" }),
+        /* @__PURE__ */ jsx(
+          "span",
+          {
+            style: {
+              color: "#e6e8eb",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0
+            },
+            children: labelRight
+          }
+        ),
+        count > 1 && /* @__PURE__ */ jsxs(
+          "span",
+          {
+            style: {
+              flexShrink: 0,
+              fontSize: 9,
+              padding: "0 4px",
+              background: "#3b6eff",
+              color: "#fff",
+              borderRadius: 2,
+              fontWeight: 600
+            },
+            children: [
+              "+",
+              count - 1
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          Handle,
+          {
+            id: data.handleId,
+            type: isInputSide ? "target" : "source",
+            position: isInputSide ? Position.Left : Position.Right,
+            style: {
+              width: 8,
+              height: 8,
+              background: "#5a6172",
+              border: "1px solid #0f1115",
+              borderRadius: 1,
+              // Cancel React Flow's default 50% translate so the marker sits flush
+              // at the ghost's edge, mirroring the real node's handle geometry.
+              transform: "none",
+              top: "50%",
+              marginTop: -4,
+              [isInputSide ? "left" : "right"]: -4
+            }
+          }
+        ),
+        popOpen && rootRef.current && /* @__PURE__ */ jsx(
+          GhostPopover,
+          {
+            anchor: rootRef.current,
+            isInputSide,
+            connections: data.connections,
+            onPick: (uid) => {
+              setPopOpen(false);
+              data.onNavigate?.(uid);
+            },
+            onDeleteEdge: data.onDeleteEdge
+          }
+        )
+      ]
+    }
+  );
+}
+function GhostPopover({
+  anchor,
+  isInputSide,
+  connections,
+  onPick,
+  onDeleteEdge
+}) {
+  const rect = anchor.getBoundingClientRect();
+  const top = rect.bottom + 4;
+  const left = isInputSide ? rect.left : rect.right - 220;
+  return createPortal(
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        "data-ce-ghost-pop": true,
+        onClick: (e) => e.stopPropagation(),
+        onContextMenu: (e) => e.preventDefault(),
+        style: {
+          position: "fixed",
+          top,
+          left,
+          zIndex: 100,
+          background: "#1a1d24",
+          border: "1px solid #2c313c",
+          borderRadius: 4,
+          padding: 4,
+          minWidth: 220,
+          maxWidth: 360,
+          maxHeight: 280,
+          overflowY: "auto",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+          fontSize: 11,
+          color: "#e6e8eb",
+          fontFamily: "ui-monospace, SFMono-Regular, monospace"
+        },
+        children: [
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              style: {
+                padding: "4px 8px 6px 8px",
+                color: "#5a6172",
+                fontSize: 9,
+                textTransform: "uppercase",
+                letterSpacing: 0.4,
+                borderBottom: "1px solid #2c313c",
+                marginBottom: 4
+              },
+              children: [
+                connections.length,
+                " connection",
+                connections.length === 1 ? "" : "s"
+              ]
+            }
+          ),
+          connections.map((c) => {
+            const pathLabel = stripRoot(c.externalPath);
+            return /* @__PURE__ */ jsxs(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  width: "100%",
+                  alignItems: "center",
+                  gap: 4,
+                  borderRadius: 2
+                },
+                onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
+                onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+                children: [
+                  /* @__PURE__ */ jsxs(
+                    "button",
+                    {
+                      onClick: () => onPick(c.externalComponentUid),
+                      style: {
+                        display: "flex",
+                        flex: 1,
+                        minWidth: 0,
+                        alignItems: "baseline",
+                        gap: 6,
+                        padding: "4px 8px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#e6e8eb",
+                        fontSize: 11,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        textAlign: "left"
+                      },
+                      title: "open this component's folder",
+                      children: [
+                        /* @__PURE__ */ jsx("span", { style: { color: "#9ecbff", flexShrink: 0 }, children: pathLabel }),
+                        /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: "·" }),
+                        /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.externalPropName })
+                      ]
+                    }
+                  ),
+                  onDeleteEdge && /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      onClick: () => void onDeleteEdge(c.edgeUid),
+                      title: "delete this edge",
+                      style: {
+                        flexShrink: 0,
+                        padding: "2px 6px",
+                        marginRight: 4,
+                        background: "transparent",
+                        border: "1px solid transparent",
+                        borderRadius: 2,
+                        color: "#8892a0",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        fontSize: 11
+                      },
+                      onMouseEnter: (e) => {
+                        e.currentTarget.style.background = "#3a1a1a";
+                        e.currentTarget.style.color = "#ffb8b8";
+                        e.currentTarget.style.borderColor = "#6b2a2a";
+                      },
+                      onMouseLeave: (e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "#8892a0";
+                        e.currentTarget.style.borderColor = "transparent";
+                      },
+                      children: "✕"
+                    }
+                  )
+                ]
+              },
+              c.edgeUid
+            );
+          })
+        ]
+      }
+    ),
+    document.body
+  );
+}
+const GhostNode = memo(GhostNodeInner, (a, b) => {
+  return a.data.connections === b.data.connections && a.data.handleId === b.data.handleId && a.data.side === b.data.side && a.data.width === b.data.width && a.data.onNavigate === b.data.onNavigate;
+});
+function userFacingRowIndex(comp, propName) {
+  const entries = Object.entries(comp.properties).filter(
+    ([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL
+  );
+  const order = [CATEGORY_OUTPUT, CATEGORY_INPUT, CATEGORY_CONFIG];
+  const sorted = [];
+  for (const cat of order) {
+    for (const [n, p] of entries) {
+      if (p.category === cat) sorted.push(n);
+    }
+  }
+  return sorted.indexOf(propName);
+}
+
+const MARGIN = 400;
+const EST_H = 240;
+const DEBOUNCE_MS = 200;
+function VisibilitySub({ onVisible }) {
+  const rf = useReactFlow();
+  const transform = useStore$1((s) => s.transform);
+  const nodeCount = useStore$1((s) => s.nodes.length);
+  const timer = useRef(null);
+  useEffect(() => {
+    if (timer.current != null) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      const [tx, ty, zoom] = transform;
+      if (!zoom) return;
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      const vx0 = (0 - tx) / zoom - MARGIN;
+      const vy0 = (0 - ty) / zoom - MARGIN;
+      const vx1 = (W - tx) / zoom + MARGIN;
+      const vy1 = (H - ty) / zoom + MARGIN;
+      const visible = /* @__PURE__ */ new Set();
+      for (const n of rf.getNodes()) {
+        if (n.type === "ghost") continue;
+        const px = n.position.x;
+        const py = n.position.y;
+        const w = n.width ?? NODE_W;
+        const h = n.measured?.height ?? EST_H;
+        if (px + w >= vx0 && px <= vx1 && py + h >= vy0 && py <= vy1) {
+          const uid = Number(n.id);
+          if (Number.isFinite(uid)) visible.add(uid);
+        }
+      }
+      onVisible(visible);
+    }, DEBOUNCE_MS);
+    return () => {
+      if (timer.current != null) window.clearTimeout(timer.current);
+    };
+  }, [transform, nodeCount, rf, onVisible]);
+  return null;
+}
+
+const alignUp = (n, m) => n + (m - 1) & -8;
+const STR_DECODER = new TextDecoder();
+function decodeBinaryFrame(buf) {
+  const view = new DataView(buf);
+  const msgType = view.getUint8(0);
+  const timestampMs = view.getUint32(4, true);
+  const sectionCount = view.getUint8(8);
+  const sections = [];
+  let off = 16;
+  for (let s = 0; s < sectionCount; s++) {
+    off = alignUp(off, 8);
+    const typeTag = view.getUint8(off);
+    const count = view.getUint32(off + 4, true);
+    const sectionBytes = view.getUint32(off + 8, true);
+    const sectionStart = off;
+    const uidsOff = off + 16;
+    const uids = new Uint32Array(buf, uidsOff, count);
+    let payloadOff = uidsOff + count * 4;
+    const is64 = (typeTag & 240) === 32;
+    if (is64) payloadOff = alignUp(payloadOff, 8);
+    let values;
+    switch (typeTag) {
+      case TYPE_BOOL: {
+        const bytes = new Uint8Array(buf, payloadOff, count);
+        const out = new Array(count);
+        for (let i = 0; i < count; i++) out[i] = bytes[i] !== 0;
+        values = out;
+        break;
+      }
+      case TYPE_U32:
+      case TYPE_STATUS:
+        values = new Uint32Array(buf, payloadOff, count);
+        break;
+      case TYPE_I32:
+        values = new Int32Array(buf, payloadOff, count);
+        break;
+      case TYPE_F32:
+        values = new Float32Array(buf, payloadOff, count);
+        break;
+      case TYPE_U64: {
+        const u = new BigUint64Array(buf, payloadOff, count);
+        const out = new Array(count);
+        for (let i = 0; i < count; i++) {
+          const v = u[i];
+          out[i] = v <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(v) : v;
+        }
+        values = out;
+        break;
+      }
+      case TYPE_I64: {
+        const a = new BigInt64Array(buf, payloadOff, count);
+        const out = new Array(count);
+        for (let i = 0; i < count; i++) {
+          const v = a[i];
+          out[i] = v <= BigInt(Number.MAX_SAFE_INTEGER) && v >= BigInt(Number.MIN_SAFE_INTEGER) ? Number(v) : v;
+        }
+        values = out;
+        break;
+      }
+      case TYPE_F64:
+        values = new Float64Array(buf, payloadOff, count);
+        break;
+      case TYPE_STR: {
+        const offsets = new Uint32Array(buf, payloadOff, count + 1);
+        const blobOff = payloadOff + (count + 1) * 4;
+        const blob = new Uint8Array(buf, blobOff, offsets[count]);
+        const dec = STR_DECODER;
+        const out = new Array(count);
+        for (let i = 0; i < count; i++) {
+          out[i] = dec.decode(blob.subarray(offsets[i], offsets[i + 1]));
+        }
+        values = out;
+        break;
+      }
+      default:
+        values = [];
+        break;
+    }
+    sections.push({ typeTag, uids, values });
+    off = sectionStart + sectionBytes;
+  }
+  return { msgType, timestampMs, sections };
+}
+
+const SESSION_STORAGE_KEY = "ce-ui.sessionId";
+const TICKHZ_STORAGE_KEY = "ce-ui.tickHz";
+const RECONNECT_MS = 500;
+const RECONNECT_MAX_MS = 3e4;
+const STABLE_MS = 5e3;
+const SESSION_CHANNEL = "ce-ui.session-ownership";
+const tabId = `${Math.floor(performance.now())}-${Math.trunc(performance.timeOrigin) % 1e5}`;
+let sessionChannel = null;
+let activeOwnedSessionId = null;
+function ensureChannel() {
+  if (sessionChannel) return sessionChannel;
+  if (typeof BroadcastChannel === "undefined") return null;
+  sessionChannel = new BroadcastChannel(SESSION_CHANNEL);
+  sessionChannel.onmessage = (ev) => {
+    const m = ev.data;
+    if (m.kind === "own?" && m.from !== tabId && m.sessionId === activeOwnedSessionId) {
+      sessionChannel?.postMessage({ kind: "owned", sessionId: m.sessionId, by: tabId });
+    }
+  };
+  return sessionChannel;
+}
+function isSessionFree(candidate, timeoutMs = 180) {
+  const ch = ensureChannel();
+  if (!ch) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let settled = false;
+    const onReply = (ev) => {
+      const m = ev.data;
+      if (m.kind === "owned" && m.sessionId === candidate && m.by !== tabId && !settled) {
+        settled = true;
+        ch.removeEventListener("message", onReply);
+        resolve(false);
+      }
+    };
+    ch.addEventListener("message", onReply);
+    ch.postMessage({ kind: "own?", sessionId: candidate, from: tabId });
+    window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      ch.removeEventListener("message", onReply);
+      resolve(true);
+    }, timeoutMs);
+  });
+}
+class CeRestWs {
+  ws = null;
+  reconnectTimer = null;
+  explicitlyClosed = false;
+  subscribedComponents = /* @__PURE__ */ new Set();
+  desiredSubscribed = /* @__PURE__ */ new Set();
+  sessionId = null;
+  // Highest topology `seq` we've received. Sent on reconnect via `lastSeq` so the server
+  // can replay missed topology events from its ring buffer instead of forcing a full
+  // re-bootstrap.
+  lastSeq = null;
+  // Desired value/status push rate for this session. null = use engine
+  // default. Persisted so a reconnect re-applies it via the configure
+  // message. Live changes also go out as a `setRate` message.
+  tickHz = null;
+  // Reconnect backoff state.
+  reconnectDelay = RECONNECT_MS;
+  openedAt = null;
+  url;
+  h;
+  constructor(url, h) {
+    this.url = url;
+    this.h = h;
+    try {
+      const savedHz = window.localStorage.getItem(TICKHZ_STORAGE_KEY);
+      if (savedHz != null) {
+        const n = Number(savedHz);
+        if (Number.isFinite(n) && n >= 1 && n <= 1e3) this.tickHz = n;
+      }
+    } catch {
+    }
+    try {
+      this.sessionId = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+    } catch {
+      this.sessionId = null;
+    }
+  }
+  // Run the cross-tab ownership check once, before the first connect, so a
+  // duplicated tab drops the copied sessionId and gets its own session. Only
+  // gates the FIRST connect — reconnects keep the established session.
+  resumeChecked = false;
+  async ensureResumeAllowed() {
+    if (this.resumeChecked) return;
+    this.resumeChecked = true;
+    if (!this.sessionId) return;
+    const free = await isSessionFree(this.sessionId);
+    if (!free) {
+      recordEvent("ws-open", `session ${this.sessionId.slice(0, 8)} owned by another tab → fresh`);
+      this.sessionId = null;
+      try {
+        window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      } catch {
+      }
+    }
+  }
+  async connect() {
+    if (this.ws) return;
+    await this.ensureResumeAllowed();
+    if (this.ws) return;
+    this.explicitlyClosed = false;
+    const ws = new WebSocket(this.url);
+    ws.binaryType = "arraybuffer";
+    this.ws = ws;
+    ws.onopen = () => {
+      metrics.wsConnected = true;
+      this.openedAt = performance.now();
+      this.h.onOpen();
+      const msg = { type: "configure" };
+      if (this.sessionId) msg.sessionId = this.sessionId;
+      if (this.lastSeq != null) msg.lastSeq = this.lastSeq;
+      if (this.tickHz != null) msg.tickHz = this.tickHz;
+      ws.send(JSON.stringify(msg));
+      recordEvent(
+        "ws-open",
+        `→ configure${this.sessionId ? ` sid=${this.sessionId.slice(0, 8)}` : ""}${this.lastSeq != null ? ` lastSeq=${this.lastSeq}` : ""}${this.tickHz != null ? ` tickHz=${this.tickHz}` : ""}`
+      );
+      this.subscribedComponents.clear();
+    };
+    ws.onclose = () => {
+      metrics.wsConnected = false;
+      metrics.reconnectCount++;
+      this.ws = null;
+      const lived = this.openedAt != null ? performance.now() - this.openedAt : 0;
+      this.openedAt = null;
+      if (lived >= STABLE_MS) {
+        this.reconnectDelay = RECONNECT_MS;
+      } else {
+        this.reconnectDelay = Math.min(this.reconnectDelay * 2, RECONNECT_MAX_MS);
+      }
+      recordEvent("ws-close", `connection closed (lived ${lived.toFixed(0)}ms, next in ${this.reconnectDelay}ms)`);
+      this.h.onClose();
+      if (!this.explicitlyClosed) this.scheduleReconnect();
+    };
+    ws.onerror = () => {
+    };
+    ws.onmessage = (ev) => this.handleMessage(ev.data);
+  }
+  close() {
+    this.explicitlyClosed = true;
+    if (this.reconnectTimer != null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.ws?.close();
+    this.ws = null;
+  }
+  scheduleReconnect() {
+    if (this.reconnectTimer != null) return;
+    if (typeof document !== "undefined" && document.hidden) {
+      const onVisible = () => {
+        if (document.hidden) return;
+        document.removeEventListener("visibilitychange", onVisible);
+        if (!this.explicitlyClosed && !this.ws) void this.connect();
+      };
+      document.addEventListener("visibilitychange", onVisible);
+      return;
+    }
+    const delay = Math.random() * this.reconnectDelay;
+    this.reconnectTimer = window.setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connect();
+    }, delay);
+  }
+  /**
+   * Set this session's value/status push rate (Hz). Clamped [1,1000]; the
+   * engine clamps too. Persisted so a reconnect re-applies it. Sends a live
+   * `setRate` message if the socket is open; otherwise the next configure
+   * carries it.
+   */
+  setRate(hz) {
+    const clamped = Math.max(1, Math.min(1e3, Math.round(hz)));
+    this.tickHz = clamped;
+    try {
+      window.localStorage.setItem(TICKHZ_STORAGE_KEY, String(clamped));
+    } catch {
+    }
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: "setRate", tickHz: clamped }));
+      recordEvent("rest", `→ setRate ${clamped}Hz`);
+    }
+    diagGauges.tickHz = clamped;
+  }
+  getRate() {
+    return this.tickHz;
+  }
+  /**
+   * Publish opaque presence state for this session. The engine relays it
+   * verbatim to other sessions (last-write-wins, ≤4 KB). No-op if the socket
+   * isn't open — presence is ephemeral, a missed publish self-heals on the
+   * next selection change.
+   */
+  publishPresence(state) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type: "presence", state }));
+  }
+  /**
+   * Diff-and-send subscribe / unsubscribe. Caller sets the desired component set; we
+   * only emit the delta vs. what the server currently holds.
+   */
+  setDesiredSubscription(desired) {
+    this.desiredSubscribed = desired;
+    this.flushSubscriptions();
+  }
+  flushSubscriptions() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const added = [];
+    const removed = [];
+    for (const uid of this.desiredSubscribed) {
+      if (!this.subscribedComponents.has(uid)) added.push(uid);
+    }
+    for (const uid of this.subscribedComponents) {
+      if (!this.desiredSubscribed.has(uid)) removed.push(uid);
+    }
+    if (added.length > 0) {
+      this.ws.send(JSON.stringify({ type: "subscribe", components: added }));
+      for (const u of added) this.subscribedComponents.add(u);
+      recordEvent("subscribe", `+[${added.join(",")}]`);
+    }
+    if (removed.length > 0) {
+      this.ws.send(JSON.stringify({ type: "unsubscribe", components: removed }));
+      for (const u of removed) this.subscribedComponents.delete(u);
+      recordEvent("unsubscribe", `-[${removed.join(",")}]`);
+    }
+  }
+  /** Most-recently observed sessionId; exposed so REST mutations can send the
+   *  X-CE-Session header for change attribution. */
+  getSessionId() {
+    return this.sessionId;
+  }
+  handleMessage(data) {
+    const isBinary = typeof data !== "string";
+    const bytes = isBinary ? data.byteLength : data.length;
+    recordMessage(bytes, isBinary);
+    const t0 = performance.now();
+    try {
+      this.dispatchMessage(data);
+    } finally {
+      recordParse(performance.now() - t0);
+    }
+  }
+  dispatchMessage(data) {
+    if (typeof data === "string") {
+      let msg;
+      try {
+        msg = JSON.parse(data);
+      } catch {
+        return;
+      }
+      diagRecordMessage(msg.type ?? "unknown", data.length);
+      if (msg.type === "schema") {
+        const s = msg;
+        if (s.sessionId) {
+          this.sessionId = s.sessionId;
+          activeOwnedSessionId = s.sessionId;
+          ensureChannel();
+          try {
+            window.sessionStorage.setItem(SESSION_STORAGE_KEY, s.sessionId);
+          } catch {
+          }
+        }
+        if (typeof s.currentSeq === "number") {
+          this.lastSeq = s.currentSeq;
+          metrics.lastSeq = s.currentSeq;
+        }
+        metrics.sessionId = s.sessionId ?? "";
+        recordEvent(
+          "schema",
+          `sid=${s.sessionId?.slice(0, 8) ?? "—"} seq=${s.currentSeq} props=${s.properties?.length ?? 0}${s.resumed ? " (resumed)" : ""}`
+        );
+        this.h.onSchema(s);
+        this.flushSubscriptions();
+        if (this.tickHz != null) {
+          this.ws?.send(JSON.stringify({ type: "setRate", tickHz: this.tickHz }));
+          recordEvent("rest", `→ setRate ${this.tickHz}Hz (assert post-schema)`);
+        }
+        return;
+      }
+      if (msg.type === "topologyAdded" || msg.type === "topologyRemoved" || msg.type === "topologyChanged") {
+        const t = msg;
+        if (this.lastSeq != null && t.seq !== this.lastSeq + 1) {
+          this.ws?.close();
+          return;
+        }
+        this.lastSeq = t.seq;
+        metrics.lastSeq = t.seq;
+        if (t.type === "topologyAdded") recordTopology("added");
+        else if (t.type === "topologyRemoved") recordTopology("removed");
+        else recordTopology("changed");
+        recordEvent("topology", summarizeTopology(t));
+        this.h.onTopology(t);
+        return;
+      }
+      if (msg.type === "presence") {
+        const p = msg;
+        recordEvent("rest", `presence ← ${p.sessionId?.slice(0, 8)}`);
+        this.h.onPresence(p);
+        return;
+      }
+      if (msg.type === "presenceSnapshot") {
+        const p = msg;
+        recordEvent("rest", `presenceSnapshot (${p.presences?.length ?? 0})`);
+        this.h.onPresenceSnapshot(p);
+        return;
+      }
+      if (msg.type === "presenceLeft") {
+        const p = msg;
+        recordEvent("rest", `presenceLeft ${p.sessionId?.slice(0, 8)}`);
+        this.h.onPresenceLeft(p);
+        return;
+      }
+      if (msg.type === "presenceError") {
+        recordEvent("rest", `presenceError: ${msg.reason ?? "?"}`);
+        return;
+      }
+      return;
+    }
+    const frame = decodeBinaryFrame(data);
+    if (frame.msgType !== MSG_UPDATE && frame.msgType !== MSG_SNAPSHOT) return;
+    let n = 0;
+    let valUids = 0;
+    let statusUids = 0;
+    for (const s of frame.sections) {
+      n += s.uids.length;
+      if (s.typeTag === TYPE_STATUS) {
+        statusUids += s.uids.length;
+        diagRecordStatusUids(s.uids);
+      } else {
+        valUids += s.uids.length;
+        diagRecordValueUids(s.uids);
+      }
+    }
+    recordValueCount(n, frame.sections.length, data.byteLength);
+    diagRecordMessage("binaryFrame", data.byteLength);
+    diagRecordFrame(valUids, statusUids, data.byteLength);
+    recordEvent(
+      "frame",
+      `${frame.msgType === MSG_SNAPSHOT ? "snapshot" : "update"} ${valUids}v +${statusUids}s · ${frame.sections.length} sec · ${data.byteLength}B`
+    );
+    this.h.onFrame(frame);
+  }
+}
+function summarizeTopology(t) {
+  if (t.type === "topologyAdded") {
+    return `+ comp[${t.components.map((c) => c.uid).join(",")}] edge[${t.edges.map((e) => e.uid).join(",")}]`;
+  }
+  if (t.type === "topologyRemoved") {
+    return `- comp[${t.componentUids.join(",")}] edge[${t.edgeUids.join(",")}]`;
+  }
+  return `~ comp[${t.components.map((c) => c.uid).join(",")}]`;
+}
+function wsUrlFromBase(origin) {
+  return `${origin.replace(/^http/, "ws").replace(/\/+$/, "")}/ws`;
+}
+
+const EDGE_SELECTED_CSS = `
+  .react-flow__edge.selected .react-flow__edge-path {
+    stroke: #ffd166 !important;
+    stroke-width: 2.5 !important;
+    filter: drop-shadow(0 0 4px rgba(255,209,102,0.6));
+  }
+`;
+const nodeTypes = { fb: FunctionBlock, ghost: GhostNode };
+const FB_TITLE_H = 40;
+const FB_ROW_H = 18;
+const GHOST_GAP = 60;
+let wsClient = null;
+const DND_TYPE = "application/x-ce-component-type";
+const ROOT_UID = 0;
+const MARQUEE_DRAG_PX = 8;
+const TAB_SUFFIX = Math.trunc(performance.now() * 1e3 + performance.timeOrigin).toString(36).slice(-4);
+function CeEditor({ base }) {
+  return /* @__PURE__ */ jsx(ReactFlowProvider, { children: /* @__PURE__ */ jsx(Inner, { base }) });
+}
+function Inner({ base }) {
+  useMemo(() => setEngineBase(base), [base]);
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+  const [pendingEdges, setPendingEdges] = useState(null);
+  const sessionIdRef = useRef(null);
+  const POS_SETTLE_PX = 0.5;
+  const posAnims = useRef(
+    /* @__PURE__ */ new Map()
+  );
+  const posAnimRaf = useRef(null);
+  const posAnimLastTick = useRef(null);
+  const tickPosAnims = useCallback(() => {
+    const now = performance.now();
+    const last = posAnimLastTick.current;
+    const dt = last != null ? Math.min(0.05, (now - last) / 1e3) : 1 / 60;
+    posAnimLastTick.current = now;
+    const anims = posAnims.current;
+    if (anims.size === 0) {
+      posAnimRaf.current = null;
+      posAnimLastTick.current = null;
+      return;
+    }
+    const alpha = 1 - Math.exp(-9 * dt);
+    const patch = /* @__PURE__ */ new Map();
+    for (const [id, a] of anims) {
+      const nx = a.curPos.x + (a.endPos.x - a.curPos.x) * alpha;
+      const ny = a.curPos.y + (a.endPos.y - a.curPos.y) * alpha;
+      if (Math.abs(a.endPos.x - nx) < POS_SETTLE_PX && Math.abs(a.endPos.y - ny) < POS_SETTLE_PX) {
+        patch.set(id, a.endPos);
+        anims.delete(id);
+      } else {
+        a.curPos = { x: nx, y: ny };
+        patch.set(id, { x: nx, y: ny });
+      }
+    }
+    if (patch.size > 0) {
+      setNodes(
+        (ns) => ns.map((n) => {
+          const p = patch.get(n.id);
+          if (p) return { ...n, position: p };
+          if (n.type === "ghost") {
+            const g = n;
+            const anchor = patch.get(String(g.data.anchorUid));
+            if (!anchor) return n;
+            const gx = g.data.side === "input" ? anchor.x + NODE_W + GHOST_GAP : anchor.x - g.data.width - GHOST_GAP;
+            const gy = anchor.y + FB_TITLE_H + g.data.anchorRowIdx * FB_ROW_H;
+            return { ...g, position: { x: gx, y: gy } };
+          }
+          return n;
+        })
+      );
+    }
+    posAnimRaf.current = anims.size > 0 ? requestAnimationFrame(tickPosAnims) : null;
+    if (anims.size === 0) posAnimLastTick.current = null;
+  }, []);
+  const animateNodeTo = useCallback(
+    (id, fromPos, toPos) => {
+      const existing = posAnims.current.get(id);
+      posAnims.current.set(id, {
+        curPos: existing ? existing.curPos : fromPos,
+        endPos: toPos
+      });
+      if (posAnimRaf.current == null) {
+        posAnimRaf.current = requestAnimationFrame(tickPosAnims);
+      }
+    },
+    [tickPosAnims]
+  );
+  useEffect(() => {
+    return () => {
+      if (posAnimRaf.current != null) {
+        cancelAnimationFrame(posAnimRaf.current);
+        posAnimRaf.current = null;
+      }
+      posAnims.current.clear();
+      posAnimLastTick.current = null;
+    };
+  }, []);
+  const [error, setError] = useState(null);
+  const [palette, setPalette] = useState([]);
+  const [actionsByType, setActionsByType] = useState(
+    () => /* @__PURE__ */ new Map()
+  );
+  const actionTypesRef = useRef(/* @__PURE__ */ new Set());
+  const [crumbs, setCrumbs] = useState([{ uid: ROOT_UID, name: "root" }]);
+  const currentParentUid = crumbs[crumbs.length - 1].uid;
+  const rf = useReactFlow();
+  const marquee = useRef(null);
+  const [marqueeRect, setMarqueeRect] = useState(null);
+  const isPaneTarget = (target) => {
+    let el = target;
+    while (el) {
+      if (el.classList?.contains("react-flow__node")) return false;
+      if (el.classList?.contains("react-flow__edge")) return false;
+      if (el.classList?.contains("react-flow__handle")) return false;
+      if (el.classList?.contains("react-flow__pane")) return true;
+      el = el.parentElement;
+    }
+    return false;
+  };
+  const onCanvasPointerDown = useCallback((e) => {
+    if (e.button === 2 && isPaneTarget(e.target)) {
+      marquee.current = { startX: e.clientX, startY: e.clientY, active: false };
+    }
+  }, []);
+  const onCanvasPointerMove = useCallback((e) => {
+    const m = marquee.current;
+    if (!m) return;
+    const dx = e.clientX - m.startX;
+    const dy = e.clientY - m.startY;
+    if (!m.active && Math.hypot(dx, dy) < MARQUEE_DRAG_PX) return;
+    m.active = true;
+    setMarqueeRect({
+      x: Math.min(m.startX, e.clientX),
+      y: Math.min(m.startY, e.clientY),
+      w: Math.abs(dx),
+      h: Math.abs(dy)
+    });
+  }, []);
+  const onCanvasPointerUp = useCallback(
+    (e) => {
+      const m = marquee.current;
+      marquee.current = null;
+      if (!m) return;
+      if (!m.active) {
+        setMarqueeRect(null);
+        setNodeMenu(null);
+        setPaneMenu({ x: e.clientX, y: e.clientY });
+        return;
+      }
+      const a = rf.screenToFlowPosition({ x: m.startX, y: m.startY });
+      const b = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      const rect = {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        width: Math.abs(b.x - a.x),
+        height: Math.abs(b.y - a.y)
+      };
+      const partially = e.clientX < m.startX;
+      const hits = rf.getIntersectingNodes(rect, partially);
+      const hitIds = new Set(hits.filter((n) => n.type !== "ghost").map((n) => n.id));
+      const multi = e.shiftKey || e.metaKey || e.ctrlKey;
+      setNodes(
+        (ns) => ns.map((n) => {
+          if (n.type === "ghost") return n;
+          const want = multi ? n.selected || hitIds.has(n.id) : hitIds.has(n.id);
+          return n.selected === want ? n : { ...n, selected: want };
+        })
+      );
+      if (!multi) setEdges((es) => es.map((ed) => ed.selected ? { ...ed, selected: false } : ed));
+      setMarqueeRect(null);
+    },
+    [rf]
+  );
+  useEffect(() => {
+    const findHit = (target) => {
+      let el = target;
+      while (el) {
+        if (el.classList?.contains("react-flow__node")) {
+          const id = el.dataset.id ?? null;
+          return id ? { kind: "node", id } : null;
+        }
+        if (el.classList?.contains("react-flow__edge")) {
+          const id = el.dataset.id ?? null;
+          return id ? { kind: "edge", id } : null;
+        }
+        if (el.classList?.contains("react-flow__pane")) return null;
+        el = el.parentElement;
+      }
+      return null;
+    };
+    const isPane = (target) => {
+      let el = target;
+      while (el) {
+        if (el.classList?.contains("react-flow__pane")) return true;
+        if (el.classList?.contains("react-flow__node")) return false;
+        if (el.classList?.contains("react-flow__edge")) return false;
+        el = el.parentElement;
+      }
+      return false;
+    };
+    let downAt = null;
+    const onDown = (e) => {
+      if (e.button !== 0) {
+        downAt = null;
+        return;
+      }
+      downAt = { x: e.clientX, y: e.clientY, hit: findHit(e.target) };
+    };
+    const onUp = (e) => {
+      const d = downAt;
+      downAt = null;
+      if (!d) return;
+      const dist = Math.hypot(e.clientX - d.x, e.clientY - d.y);
+      if (dist > 4) return;
+      const upHit = findHit(e.target);
+      const multi = e.shiftKey || e.metaKey || e.ctrlKey;
+      if (d.hit?.kind === "node" && upHit?.kind === "node" && upHit.id === d.hit.id) {
+        const id = d.hit.id;
+        if (id.startsWith("ghost:")) return;
+        metrics.lastSelChange = `click→${useStructural.getState().components.get(Number(id))?.name ?? id} (capture)`;
+        metrics.lastSelChangeAt = performance.now();
+        setNodes(
+          (ns) => ns.map((n) => {
+            if (multi) return n.id === id ? { ...n, selected: !n.selected } : n;
+            const want = n.id === id;
+            return n.selected === want ? n : { ...n, selected: want };
+          })
+        );
+        if (!multi) {
+          setEdges((es) => es.map((edge) => edge.selected ? { ...edge, selected: false } : edge));
+        }
+        return;
+      }
+      if (d.hit?.kind === "edge" && upHit?.kind === "edge" && upHit.id === d.hit.id) {
+        const id = d.hit.id;
+        metrics.lastSelChange = `edge→${id}`;
+        metrics.lastSelChangeAt = performance.now();
+        setEdges(
+          (es) => es.map((edge) => {
+            if (multi) return edge.id === id ? { ...edge, selected: !edge.selected } : edge;
+            const want = edge.id === id;
+            return edge.selected === want ? edge : { ...edge, selected: want };
+          })
+        );
+        if (!multi) {
+          setNodes((ns) => ns.map((n) => n.selected ? { ...n, selected: false } : n));
+        }
+        return;
+      }
+      if (!d.hit && !upHit && isPane(e.target)) {
+        metrics.lastSelChange = "pane→clear (capture)";
+        metrics.lastSelChangeAt = performance.now();
+        setNodes((ns) => ns.map((n) => n.selected ? { ...n, selected: false } : n));
+        setEdges((es) => es.map((edge) => edge.selected ? { ...edge, selected: false } : edge));
+      }
+    };
+    window.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("pointerup", onUp, true);
+    return () => {
+      window.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("pointerup", onUp, true);
+    };
+  }, []);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable)) {
+        return;
+      }
+      setNodes((ns) => ns.map((n) => n.selected ? { ...n, selected: false } : n));
+      setEdges((es) => es.map((edge) => edge.selected ? { ...edge, selected: false } : edge));
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const enter = useCallback((uid) => {
+    const c = useStructural.getState().components.get(uid);
+    if (!c) return;
+    setCrumbs((cur) => [...cur, { uid: c.uid, name: c.name || c.type }]);
+  }, []);
+  const [focusAfterLoad, setFocusAfterLoad] = useState(null);
+  const [findOpen, setFindOpen] = useState(false);
+  const [clickDebugOpen, setClickDebugOpen] = useState(() => {
+    try {
+      return window.localStorage.getItem("ce-ui.clickDebug") === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("ce-ui.clickDebug", clickDebugOpen ? "1" : "0");
+    } catch {
+    }
+  }, [clickDebugOpen]);
+  const [pendingPasteSelection, setPendingPasteSelection] = useState(null);
+  const goToComponent = useCallback(async (uid) => {
+    try {
+      const targetResp = await getNodeByUid(uid, { depth: 0 });
+      const target = targetResp.nodes[0];
+      if (!target) return;
+      const chain = [];
+      let cursor = target.parent;
+      while (cursor !== ROOT_UID) {
+        const r = await getNodeByUid(cursor, { depth: 0 });
+        const c = r.nodes[0];
+        if (!c) break;
+        chain.unshift({ uid: c.uid, name: c.name || c.type });
+        if (c.parent === c.uid) break;
+        cursor = c.parent;
+      }
+      setFocusAfterLoad(uid);
+      setCrumbs([{ uid: ROOT_UID, name: "root" }, ...chain]);
+    } catch (e) {
+      setError(e.message);
+    }
+  }, []);
+  const [nodeMenu, setNodeMenu] = useState(
+    null
+  );
+  const [movePickerOpen, setMovePickerOpen] = useState(false);
+  const [actionPickerOpen, setActionPickerOpen] = useState(false);
+  const [paneMenu, setPaneMenu] = useState(null);
+  const openNodeContextMenu = useCallback(
+    (uid, x, y) => {
+      setNodeMenu({ x, y, uid });
+      setPaneMenu(null);
+      setMovePickerOpen(false);
+      setActionPickerOpen(false);
+      setNodes((ns) => {
+        const target = ns.find((n) => n.id === String(uid));
+        if (target?.selected) return ns;
+        return ns.map((n) => {
+          const want = n.id === String(uid);
+          return n.selected === want ? n : { ...n, selected: want };
+        });
+      });
+    },
+    []
+  );
+  const getActionsFor = useCallback(
+    (uids) => {
+      const comps = useStructural.getState().components;
+      const lists = uids.map((u) => comps.get(u)?.type).filter((t) => !!t).map((t) => actionsByType.get(t) ?? []);
+      if (lists.length === 0) return [];
+      const [first, ...rest] = lists;
+      return first.filter((a) => rest.every((l) => l.some((b) => b.name === a.name)));
+    },
+    [actionsByType]
+  );
+  const invokeAction = useCallback(
+    (uids, action, params) => Promise.all(uids.map((u) => callAction(u, action, params))),
+    []
+  );
+  const goToCrumb = useCallback((idx) => {
+    setCrumbs((cur) => cur.slice(0, idx + 1));
+  }, []);
+  const copySelectionToClipboard = useCallback(() => {
+    const selectedReal = nodes.filter((n) => n.selected && n.type !== "ghost");
+    if (selectedReal.length === 0) return;
+    const uids = selectedReal.map((n) => Number(n.id));
+    const xs = selectedReal.map((n) => n.position.x);
+    const ys = selectedReal.map((n) => n.position.y);
+    const centroid = {
+      x: (Math.min(...xs) + Math.max(...xs)) / 2,
+      y: (Math.min(...ys) + Math.max(...ys)) / 2
+    };
+    clipboardRef.current = { uids, centroid };
+    metrics.lastSelChange = `copied ${uids.length}c`;
+    metrics.lastSelChangeAt = performance.now();
+  }, [nodes]);
+  const deleteGhostEdge = useCallback(async (edgeUid) => {
+    try {
+      await removeEdge(edgeUid);
+    } catch (e) {
+      setError(e.message);
+      return;
+    }
+    useStructural.getState().removeEdge(edgeUid);
+    setEdges((es) => es.filter((e) => e.id !== String(edgeUid)));
+    setNodes(
+      (ns) => ns.flatMap((n) => {
+        if (n.type !== "ghost") return [n];
+        const g = n;
+        const idx = g.data.connections.findIndex((c) => c.edgeUid === edgeUid);
+        if (idx < 0) return [n];
+        const next = g.data.connections.filter((_, i) => i !== idx);
+        if (next.length === 0) return [];
+        return [{ ...g, data: { ...g.data, connections: next } }];
+      })
+    );
+  }, []);
+  const reload = useCallback(async () => {
+    try {
+      let resp;
+      if (currentParentUid === ROOT_UID) {
+        resp = await getRootNodes({ depth: 1, nested: true, withEdges: true });
+      } else {
+        resp = await getNodeByUid(currentParentUid, {
+          depth: 1,
+          nested: true,
+          withEdges: true
+        });
+      }
+      const parent = resp.nodes[0];
+      const children = parent?.children ?? [];
+      const scopedEdges = resp.edges ?? [];
+      const childUids = new Set(children.map((c) => c.uid));
+      const childByUid = new Map(children.map((c) => [c.uid, c]));
+      const inEdges = [];
+      const crossEdges = [];
+      for (const e of scopedEdges) {
+        const src = childUids.has(e.sourceUid);
+        const dst = childUids.has(e.targetUid);
+        if (src && dst) inEdges.push(e);
+        else if (src !== dst) crossEdges.push(e);
+      }
+      useStructural.getState().setNodes(children, inEdges);
+      const ghostGroups = /* @__PURE__ */ new Map();
+      for (const e of crossEdges) {
+        const externalIsTarget = childUids.has(e.sourceUid);
+        const visibleUid = externalIsTarget ? e.sourceUid : e.targetUid;
+        const externalUid = externalIsTarget ? e.targetUid : e.sourceUid;
+        const visibleComp = childByUid.get(visibleUid);
+        if (!visibleComp) continue;
+        const propName = externalIsTarget ? e.sourceProperty : e.targetProperty;
+        const visibleProp = visibleComp.properties[propName];
+        if (!visibleProp) continue;
+        const rowIdx = userFacingRowIndex(visibleComp, propName);
+        if (rowIdx < 0) continue;
+        const externalPropName = externalIsTarget ? e.targetProperty : e.sourceProperty;
+        const externalPath = externalIsTarget ? e.targetPath ?? "" : e.sourcePath ?? "";
+        const key = `${visibleUid}:${visibleProp.uid}`;
+        let group = ghostGroups.get(key);
+        if (!group) {
+          group = {
+            visibleUid,
+            visiblePropUid: visibleProp.uid,
+            rowIdx,
+            side: externalIsTarget ? "input" : "output",
+            connections: [],
+            edgeUids: [],
+            visibleX: visibleComp.metadata?.position?.x ?? 0,
+            visibleY: visibleComp.metadata?.position?.y ?? 0
+          };
+          ghostGroups.set(key, group);
+        }
+        group.connections.push({
+          externalComponentUid: externalUid,
+          externalPath,
+          externalPropName,
+          edgeUid: e.uid
+        });
+        group.edgeUids.push(e.uid);
+      }
+      const ghostNodes = [];
+      const ghostEdges = [];
+      for (const g of ghostGroups.values()) {
+        const first = g.connections[0];
+        const labelPath = stripRoot(first.externalPath);
+        const gw = ghostWidthFor(labelPath, first.externalPropName) + (g.connections.length > 1 ? 26 : 0);
+        const gx = g.side === "input" ? g.visibleX + NODE_W + GHOST_GAP : g.visibleX - gw - GHOST_GAP;
+        const gy = g.visibleY + FB_TITLE_H + g.rowIdx * FB_ROW_H + (FB_ROW_H - GHOST_H) / 2;
+        const ghostId = `ghost:${g.visibleUid}:${g.visiblePropUid}`;
+        const handleId = `gh:${g.visibleUid}:${g.visiblePropUid}`;
+        ghostNodes.push({
+          id: ghostId,
+          type: "ghost",
+          position: { x: gx, y: gy },
+          width: gw,
+          // selectable: false would strip pointer events on the wrapper in
+          // some RF configs, defeating the popover. Keep selectable + harmless;
+          // the doc-level click handler skips ghost ids so it doesn't latch
+          // selection visually. Still non-draggable.
+          draggable: false,
+          data: {
+            connections: g.connections,
+            handleId,
+            side: g.side,
+            anchorUid: g.visibleUid,
+            anchorRowIdx: g.rowIdx,
+            width: gw,
+            onNavigate: goToComponent,
+            onDeleteEdge: deleteGhostEdge
+          }
+        });
+        const visibleHandleId = String(g.visiblePropUid);
+        for (const edgeUid of g.edgeUids) {
+          const e = crossEdges.find((x) => x.uid === edgeUid);
+          const externalIsTarget = g.side === "input";
+          ghostEdges.push({
+            id: String(edgeUid),
+            source: externalIsTarget ? String(g.visibleUid) : ghostId,
+            sourceHandle: externalIsTarget ? visibleHandleId : handleId,
+            target: externalIsTarget ? ghostId : String(g.visibleUid),
+            targetHandle: externalIsTarget ? handleId : visibleHandleId,
+            style: e.loopBack === true ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 },
+            animated: false
+          });
+        }
+      }
+      setNodes((prev) => {
+        const selectedIds = /* @__PURE__ */ new Set();
+        for (const n of prev) if (n.selected) selectedIds.add(n.id);
+        const real = buildRfNodes(
+          children,
+          enter,
+          openNodeContextMenu,
+          selectedIds,
+          actionTypesRef.current
+        );
+        return [...real, ...ghostNodes];
+      });
+      setEdges([]);
+      setPendingEdges([...buildRfEdges(inEdges, children), ...ghostEdges]);
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [currentParentUid, enter, openNodeContextMenu, goToComponent, deleteGhostEdge]);
+  const reloadRef = useRef(reload);
+  reloadRef.current = reload;
+  const pasteFromClipboard = useCallback(async () => {
+    const cb = clipboardRef.current;
+    if (!cb || cb.uids.length === 0) return;
+    try {
+      const res = await copyNodes({
+        componentUids: cb.uids,
+        destParentUid: currentParentUid,
+        includeInternalEdges: true
+      });
+      const clones = res.nodes ?? [];
+      if (clones.length === 0) {
+        setError("paste: nothing cloned (sources may have been deleted)");
+        return;
+      }
+      const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
+      const xs = clones.map((c) => c.metadata?.position?.x ?? 0);
+      const ys = clones.map((c) => c.metadata?.position?.y ?? 0);
+      const dx = cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2;
+      const dy = cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2;
+      const updates = clones.map((c) => ({
+        uid: c.uid,
+        position: {
+          x: Math.round((c.metadata?.position?.x ?? 0) + dx),
+          y: Math.round((c.metadata?.position?.y ?? 0) + dy)
+        }
+      }));
+      await bulkUpdate(updates);
+      const newUids = clones.map((c) => c.uid);
+      setPendingPasteSelection(newUids);
+      pushUndo({ kind: "delete", componentUids: newUids });
+      await reload();
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [currentParentUid, reload, rf]);
+  const undo = useCallback(async () => {
+    const pid = currentParentUidRef.current;
+    const stack = undoStacksByParent.current.get(pid);
+    const entry = stack?.pop();
+    if (!entry) return;
+    try {
+      if (entry.kind === "move") {
+        if (entry.updates.length === 1) {
+          const u = entry.updates[0];
+          await updateNode(u.uid, { position: u.position });
+        } else if (entry.updates.length > 1) {
+          await bulkUpdate(entry.updates);
+        }
+      } else if (entry.kind === "delete") {
+        await bulkDelete({
+          componentUids: entry.componentUids,
+          edgeUids: entry.edgeUids
+        });
+      } else if (entry.kind === "restore") {
+        await restoreItems({
+          componentUids: entry.componentUids,
+          edgeUids: entry.edgeUids
+        });
+      }
+      await reload();
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [reload]);
+  useEffect(() => {
+    const onKey = (e) => {
+      const cmd = e.metaKey || e.ctrlKey;
+      if (cmd && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setFindOpen(true);
+        return;
+      }
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable)) {
+        return;
+      }
+      if (!cmd) return;
+      const key = e.key.toLowerCase();
+      if (key === "c") {
+        e.preventDefault();
+        copySelectionToClipboard();
+      } else if (key === "v") {
+        e.preventDefault();
+        void pasteFromClipboard();
+      } else if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        void undo();
+      } else if (key === "d" && e.shiftKey) {
+        e.preventDefault();
+        setClickDebugOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [copySelectionToClipboard, pasteFromClipboard, undo]);
+  useEffect(() => {
+    reload();
+  }, [reload]);
+  useEffect(() => {
+    if (focusAfterLoad == null) return;
+    const targetId = String(focusAfterLoad);
+    const target = nodes.find((n) => n.id === targetId);
+    if (!target || target.type === "ghost") return;
+    const restComp = useStructural.getState().components.get(focusAfterLoad);
+    const userPropCount = restComp ? Object.values(restComp.properties).filter(
+      (p) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL
+    ).length : 4;
+    const FB_TITLE = 40;
+    const FB_ROW = 18;
+    const estH = FB_TITLE + userPropCount * FB_ROW + 4;
+    const cx = target.position.x + NODE_W / 2;
+    const cy = target.position.y + estH / 2;
+    rf.setCenter(cx, cy, { duration: 400, zoom: rf.getZoom() });
+    setNodes(
+      (ns) => ns.map((n) => {
+        const want = n.id === targetId;
+        return n.selected === want ? n : { ...n, selected: want };
+      })
+    );
+    setFocusAfterLoad(null);
+  }, [nodes, focusAfterLoad, rf]);
+  useEffect(() => {
+    if (pendingPasteSelection == null) return;
+    const wantedIds = new Set(pendingPasteSelection.map(String));
+    let foundCount = 0;
+    for (const n of nodes) if (wantedIds.has(n.id)) foundCount++;
+    if (foundCount < wantedIds.size) return;
+    setNodes(
+      (ns) => ns.map((n) => {
+        if (n.type === "ghost") return n;
+        const want = wantedIds.has(n.id);
+        return n.selected === want ? n : { ...n, selected: want };
+      })
+    );
+    setEdges((es) => es.map((e) => e.selected ? { ...e, selected: false } : e));
+    setPendingPasteSelection(null);
+  }, [nodes, pendingPasteSelection]);
+  const handlesReady = useStore$1((s) => {
+    if (!pendingEdges) return false;
+    const lookup = s.nodeLookup;
+    if (!lookup) return false;
+    for (const e of pendingEdges) {
+      const src = lookup.get(e.source);
+      const dst = lookup.get(e.target);
+      const srcBounds = src?.internals?.handleBounds?.source;
+      const dstBounds = dst?.internals?.handleBounds?.target;
+      if (!srcBounds || !dstBounds) return false;
+      if (!srcBounds.some((h) => h.id === e.sourceHandle)) return false;
+      if (!dstBounds.some((h) => h.id === e.targetHandle)) return false;
+    }
+    return true;
+  });
+  useEffect(() => {
+    if (handlesReady && pendingEdges != null) {
+      setEdges(pendingEdges);
+      setPendingEdges(null);
+    }
+  }, [handlesReady, pendingEdges]);
+  useEffect(() => {
+    fetch(`${base}/api/v0/schema`).then((r) => r.json()).then((j) => {
+      const exts = j.data;
+      const seen = /* @__PURE__ */ new Map();
+      const actions = /* @__PURE__ */ new Map();
+      for (const e of exts) {
+        const id = `${e.vendor}-${e.name}`;
+        let group = seen.get(id);
+        if (!group) {
+          group = { id, vendor: e.vendor, name: e.name, version: e.version, components: [] };
+          seen.set(id, group);
+        }
+        const have = new Set(group.components.map((c) => c.type));
+        for (const c of e.components ?? []) {
+          const type = `${id}::${c.name}`;
+          if (c.actions && c.actions.length > 0 && !actions.has(type)) {
+            actions.set(type, c.actions);
+          }
+          if (have.has(type)) continue;
+          have.add(type);
+          group.components.push({ name: c.name, type, icon: c.icon });
+        }
+      }
+      setActionsByType(actions);
+      actionTypesRef.current = new Set(actions.keys());
+      const list = [...seen.values()].filter((g) => g.components.length > 0);
+      list.sort((a, b) => a.id.localeCompare(b.id));
+      for (const g of list) g.components.sort((a, b) => a.name.localeCompare(b.name));
+      setPalette(list);
+    }).catch(() => {
+    });
+  }, []);
+  useEffect(() => {
+    const comps = useStructural.getState().components;
+    setNodes((ns) => {
+      let changed = false;
+      const next = ns.map((n) => {
+        if (n.type !== "fb") return n;
+        const t = comps.get(Number(n.id))?.type;
+        const has = t ? actionsByType.has(t) : false;
+        if (n.data.hasActions === has) return n;
+        changed = true;
+        return { ...n, data: { ...n.data, hasActions: has } };
+      });
+      return changed ? next : ns;
+    });
+  }, [actionsByType]);
+  useEffect(() => {
+    startDiagnostics();
+    startDiagReporter(1e3);
+    return () => {
+      stopDiagReporter();
+      stopDiagnostics();
+    };
+  }, []);
+  const onVisibleSubscription = useCallback((uids) => {
+    wsClient?.setDesiredSubscription(uids);
+    diagGauges.subscribedComponents = uids.size;
+  }, []);
+  const rateThrottle = useRef({
+    timer: null,
+    pending: null
+  });
+  const wsAdapter = useMemo(
+    () => ({
+      setRate: (hz) => {
+        const t = rateThrottle.current;
+        if (t.timer != null) {
+          t.pending = hz;
+          return;
+        }
+        wsClient?.setRate(hz);
+        t.pending = null;
+        t.timer = window.setTimeout(() => {
+          t.timer = null;
+          if (t.pending != null) {
+            wsClient?.setRate(t.pending);
+            t.pending = null;
+          }
+        }, 200);
+      },
+      getRate: () => wsClient?.getRate() ?? null
+    }),
+    []
+  );
+  const [autoRate, setAutoRate] = useState(() => {
+    try {
+      return window.localStorage.getItem("ce-ui.autoRate") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [manualRate, setManualRate] = useState(() => {
+    try {
+      const v = Number(window.localStorage.getItem("ce-ui.manualRate"));
+      return Number.isFinite(v) && v >= 1 ? v : 10;
+    } catch {
+      return 10;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("ce-ui.autoRate", autoRate ? "1" : "0");
+      window.localStorage.setItem("ce-ui.manualRate", String(manualRate));
+    } catch {
+    }
+  }, [autoRate, manualRate]);
+  const onSetManualRate = useCallback((hz) => {
+    setManualRate(hz);
+    wsClient?.setRate(hz);
+  }, []);
+  useEffect(() => {
+    if (!autoRate) wsClient?.setRate(manualRate);
+  }, [autoRate, manualRate]);
+  const userName = useMemo(() => {
+    let base2 = "user";
+    try {
+      base2 = window.localStorage.getItem("ce-ui.userName") || "user";
+    } catch {
+    }
+    return `${base2}-${TAB_SUFFIX}`;
+  }, []);
+  const selectedUidsKey = nodes.filter((n) => n.selected && n.type !== "ghost").map((n) => n.id).join(",");
+  const selKeyRef = useRef(selectedUidsKey);
+  selKeyRef.current = selectedUidsKey;
+  const publishPresence = useCallback(() => {
+    const key = selKeyRef.current;
+    wsClient?.publishPresence({
+      userName,
+      selectedComponents: key ? key.split(",").map(Number) : [],
+      parentUid: currentParentUid
+    });
+  }, [userName, currentParentUid]);
+  useEffect(() => {
+    const t = window.setTimeout(publishPresence, 150);
+    return () => window.clearTimeout(t);
+  }, [selectedUidsKey, currentParentUid, userName, publishPresence]);
+  useEffect(() => {
+    const HEARTBEAT_MS = 2e4;
+    const SWEEP_MS = 8e3;
+    const PRESENCE_TTL_MS = 5e4;
+    const hb = window.setInterval(publishPresence, HEARTBEAT_MS);
+    const sw = window.setInterval(() => usePresence.getState().sweep(PRESENCE_TTL_MS), SWEEP_MS);
+    return () => {
+      window.clearInterval(hb);
+      window.clearInterval(sw);
+    };
+  }, [publishPresence]);
+  const totalComponentCount = useStructural((s) => s.components.size);
+  diagGauges.visibleNodes = nodes.filter((n) => n.type !== "ghost").length;
+  diagGauges.ghostNodes = nodes.filter((n) => n.type === "ghost").length;
+  diagGauges.edges = edges.length;
+  diagGauges.totalComponents = totalComponentCount;
+  diagGauges.wsConnected = metrics.wsConnected;
+  diagGauges.reconnects = metrics.reconnectCount;
+  diagGauges.lastSeq = metrics.lastSeq;
+  useEffect(() => {
+    if (wsClient) return;
+    const ws = new CeRestWs(wsUrlFromBase(base), {
+      onSchema: (msg) => {
+        loadSchemaIndices(msg.properties);
+        setRestSessionId(msg.sessionId);
+        sessionIdRef.current = msg.sessionId;
+      },
+      onFrame: (frame) => {
+        for (const s of frame.sections) {
+          if (s.typeTag === TYPE_STATUS) {
+            useStatusFlags.getState().applyStatus(s.uids, s.values);
+          } else {
+            useValues.getState().apply(s.uids, s.values);
+          }
+        }
+      },
+      onTopology: (msg) => {
+        if (msg.type === "topologyAdded") {
+          scheduleTopologyReload();
+        } else if (msg.type === "topologyRemoved") {
+          const dropC = new Set(msg.componentUids.map(String));
+          const dropE = new Set(msg.edgeUids.map(String));
+          setNodes((ns) => ns.filter((n) => !dropC.has(n.id)));
+          setEdges((es) => es.filter((e) => !dropE.has(e.id)));
+          for (const uid of msg.componentUids) {
+            useStructural.getState().removeComponent(uid);
+          }
+          for (const uid of msg.edgeUids) {
+            useStructural.getState().removeEdge(uid);
+          }
+        } else if (msg.type === "topologyChanged") {
+          const shapeChanged = msg.components.some(
+            (c) => c.addedProperties && c.addedProperties.length > 0 || c.removedProperties && c.removedProperties.length > 0 || c.parent !== void 0
+          );
+          if (shapeChanged) {
+            scheduleTopologyReload();
+            return;
+          }
+          const isOwnEcho = msg.originSessionId === sessionIdRef.current;
+          const patches = /* @__PURE__ */ new Map();
+          for (const p of msg.components) {
+            const id = String(p.uid);
+            if (isOwnEcho && draggingNodes.current.has(id) && p.position && !p.name) {
+              continue;
+            }
+            patches.set(id, { position: p.position, name: p.name });
+          }
+          if (patches.size === 0) return;
+          setNodes(
+            (ns) => ns.map((n) => {
+              if (n.type === "ghost") return n;
+              const fb = n;
+              const p = patches.get(fb.id);
+              if (!p) return n;
+              const newPos = p.position ?? fb.position;
+              const newName = p.name ?? fb.data.name;
+              const samePos = newPos === fb.position;
+              const sameName = newName === fb.data.name;
+              if (samePos && sameName) return n;
+              if (!samePos && !isOwnEcho && p.position) {
+                animateNodeTo(fb.id, fb.position, p.position);
+                return sameName ? n : { ...fb, data: { ...fb.data, name: newName } };
+              }
+              posAnims.current.delete(fb.id);
+              return {
+                ...fb,
+                position: samePos ? fb.position : newPos,
+                data: sameName ? fb.data : { ...fb.data, name: newName }
+              };
+            })
+          );
+        }
+      },
+      onPresence: (m) => {
+        usePresence.getState().upsert(m.sessionId, m.state ?? {});
+      },
+      onPresenceSnapshot: (m) => {
+        usePresence.getState().replaceAll(
+          (m.presences ?? []).map((p) => ({
+            sessionId: p.sessionId,
+            state: p.state ?? {}
+          }))
+        );
+      },
+      onPresenceLeft: (m) => {
+        usePresence.getState().remove(m.sessionId);
+      },
+      onOpen: () => {
+      },
+      onClose: () => {
+        usePresence.getState().reset();
+      }
+    });
+    ws.connect();
+    wsClient = ws;
+  }, []);
+  const topoTimer = useRef(null);
+  const scheduleTopologyReload = useCallback(() => {
+    if (topoTimer.current != null) return;
+    topoTimer.current = window.setTimeout(() => {
+      topoTimer.current = null;
+      reloadRef.current();
+    }, 0);
+  }, []);
+  const mouseScreenPos = useRef({
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
+  });
+  useEffect(() => {
+    const onMove = (e) => {
+      mouseScreenPos.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+  const clipboardRef = useRef(null);
+  const undoStacksByParent = useRef(/* @__PURE__ */ new Map());
+  const UNDO_MAX = 50;
+  const currentParentUidRef = useRef(currentParentUid);
+  useEffect(() => {
+    currentParentUidRef.current = currentParentUid;
+  }, [currentParentUid]);
+  const pushUndo = useCallback((entry) => {
+    const pid = currentParentUidRef.current;
+    const m = undoStacksByParent.current;
+    let stack = m.get(pid);
+    if (!stack) {
+      stack = [];
+      m.set(pid, stack);
+    }
+    stack.push(entry);
+    if (stack.length > UNDO_MAX) stack.shift();
+  }, []);
+  const draggingNodes = useRef(/* @__PURE__ */ new Set());
+  const DRAG_PATCH_MS = 100;
+  const dragPatchState = useRef({ lastSent: 0, pending: /* @__PURE__ */ new Map(), timer: null });
+  const flushDragPatch = useCallback(() => {
+    const s = dragPatchState.current;
+    s.timer = null;
+    if (s.pending.size === 0) return;
+    s.lastSent = performance.now();
+    const updates = [...s.pending.entries()].map(([uid, p]) => ({
+      uid,
+      position: { x: Math.round(p.x), y: Math.round(p.y) }
+    }));
+    s.pending.clear();
+    if (updates.length === 1) {
+      const u = updates[0];
+      updateNode(u.uid, { position: u.position }).catch(() => {
+      });
+    } else {
+      bulkUpdate(updates).catch(() => {
+      });
+    }
+  }, []);
+  const sendDragPatch = useCallback(
+    (uid, pos) => {
+      const s = dragPatchState.current;
+      s.pending.set(uid, pos);
+      const now = performance.now();
+      if (now - s.lastSent >= DRAG_PATCH_MS) {
+        flushDragPatch();
+        return;
+      }
+      if (s.timer == null) {
+        s.timer = window.setTimeout(flushDragPatch, DRAG_PATCH_MS - (now - s.lastSent));
+      }
+    },
+    [flushDragPatch]
+  );
+  const cancelDragPatch = useCallback((id) => {
+    const s = dragPatchState.current;
+    s.pending.delete(Number(id));
+    if (s.timer != null && s.pending.size === 0) {
+      window.clearTimeout(s.timer);
+      s.timer = null;
+    }
+  }, []);
+  const onEdgesChange = useCallback((changes) => {
+    setEdges((es) => applyEdgeChanges(changes, es));
+  }, []);
+  const [edgeMenu, setEdgeMenu] = useState(
+    null
+  );
+  const onEdgeContextMenu = useCallback((e, edge) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEdgeMenu({ x: e.clientX, y: e.clientY, edgeId: edge.id });
+    setEdges(
+      (es) => es.map((ed) => ed.id === edge.id ? ed.selected ? ed : { ...ed, selected: true } : ed)
+    );
+  }, []);
+  const reEvaluateEdges = useCallback(async (ids) => {
+    const results = await Promise.allSettled(
+      ids.map((uid) => updateEdge(uid, { reEvaluate: true }))
+    );
+    const failed = results.find((r) => r.status === "rejected");
+    if (failed) setError(failed.reason.message);
+  }, []);
+  const setEdgesLoopBack = useCallback(async (ids) => {
+    if (ids.length === 0) return;
+    const results = await Promise.allSettled(
+      ids.map((uid) => updateEdge(uid, { loopBack: true }))
+    );
+    const failed = results.find((r) => r.status === "rejected");
+    if (failed) setError(failed.reason.message);
+    await reload();
+  }, [reload]);
+  const onNodesChange = useCallback((changes) => {
+    setNodes((ns) => {
+      const next = applyNodeChanges(changes, ns);
+      const movedAnchors = /* @__PURE__ */ new Map();
+      for (const ch of changes) {
+        if (ch.type !== "position" || !ch.position) continue;
+        const n = next.find((m) => m.id === ch.id);
+        if (!n || n.type === "ghost") continue;
+        movedAnchors.set(ch.id, ch.position);
+      }
+      if (movedAnchors.size === 0) return next;
+      return next.map((n) => {
+        if (n.type !== "ghost") return n;
+        const g = n;
+        const anchor = movedAnchors.get(String(g.data.anchorUid));
+        if (!anchor) return n;
+        const gx = g.data.side === "input" ? anchor.x + NODE_W + GHOST_GAP : anchor.x - g.data.width - GHOST_GAP;
+        const gy = anchor.y + FB_TITLE_H + g.data.anchorRowIdx * FB_ROW_H;
+        return { ...g, position: { x: gx, y: gy } };
+      });
+    });
+    const selChanges = changes.filter((c) => c.type === "select");
+    if (selChanges.length > 0) {
+      const comps = useStructural.getState().components;
+      const compact = selChanges.map((c) => {
+        const id = c.id;
+        const sel = c.selected;
+        const name = comps.get(Number(id))?.name ?? id;
+        return `${name}=${sel ? "+" : "-"}`;
+      }).join(" ");
+      metrics.lastSelChange = compact;
+      metrics.lastSelChangeAt = performance.now();
+    }
+    for (const ch of changes) {
+      if (ch.type === "position" && ch.dragging) {
+        posAnims.current.delete(ch.id);
+      }
+    }
+  }, []);
+  const dragStartPositions = useRef(
+    []
+  );
+  const onNodeDragStart = useCallback(
+    (_e, _node, ns) => {
+      const real = ns.filter((n) => n.type !== "ghost");
+      for (const n of real) draggingNodes.current.add(n.id);
+      dragStartPositions.current = real.map((n) => ({
+        uid: Number(n.id),
+        position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
+      }));
+    },
+    []
+  );
+  const onNodeDrag = useCallback(
+    (_e, _node, ns) => {
+      for (const n of ns) {
+        if (n.type === "ghost") continue;
+        sendDragPatch(Number(n.id), n.position);
+      }
+    },
+    [sendDragPatch]
+  );
+  const onNodeDragStop = useCallback(
+    (_e, _node, ns) => {
+      const real = ns.filter((n) => n.type !== "ghost");
+      for (const n of real) {
+        draggingNodes.current.delete(n.id);
+        cancelDragPatch(n.id);
+      }
+      if (real.length === 0) return;
+      const updates = real.map((n) => ({
+        uid: Number(n.id),
+        position: { x: Math.round(n.position.x), y: Math.round(n.position.y) }
+      }));
+      const starts = dragStartPositions.current;
+      if (starts.length > 0) {
+        const moved = starts.filter((s) => {
+          const u = updates.find((x) => x.uid === s.uid);
+          return u && (u.position.x !== s.position.x || u.position.y !== s.position.y);
+        });
+        if (moved.length > 0) pushUndo({ kind: "move", updates: moved });
+      }
+      dragStartPositions.current = [];
+      if (updates.length === 1) {
+        const u = updates[0];
+        updateNode(u.uid, { position: u.position }).catch(
+          (e) => setError(e.message)
+        );
+      } else {
+        bulkUpdate(updates).catch((e) => setError(e.message));
+      }
+    },
+    [cancelDragPatch, pushUndo]
+  );
+  const onConnect = useCallback(async (c) => {
+    if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) return;
+    try {
+      await addEdge({
+        sourceUid: Number(c.source),
+        sourcePropUid: Number(c.sourceHandle),
+        targetUid: Number(c.target),
+        targetPropUid: Number(c.targetHandle)
+      });
+      await reload();
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [reload]);
+  const onNodesDelete = useCallback(
+    async (ns) => {
+      const real = ns.filter((n) => n.type !== "ghost");
+      if (real.length === 0) return;
+      const uids = real.map((n) => Number(n.id));
+      try {
+        if (uids.length === 1) {
+          await removeNode(uids[0]);
+        } else {
+          await bulkDelete({ componentUids: uids });
+        }
+        for (const uid of uids) useStructural.getState().removeComponent(uid);
+        pushUndo({ kind: "restore", componentUids: uids });
+      } catch (e) {
+        setError(e.message);
+      }
+      await reload();
+    },
+    [reload, pushUndo]
+  );
+  const onEdgesDelete = useCallback(
+    async (es) => {
+      if (es.length === 0) return;
+      const uids = es.map((e) => Number(e.id));
+      try {
+        if (uids.length === 1) {
+          await removeEdge(uids[0]);
+        } else {
+          await bulkDelete({ edgeUids: uids });
+        }
+        for (const uid of uids) useStructural.getState().removeEdge(uid);
+        pushUndo({ kind: "restore", edgeUids: uids });
+      } catch (err) {
+        setError(err.message);
+      }
+      setEdges((cur) => cur.filter((e) => !es.find((d) => d.id === e.id)));
+    },
+    [pushUndo]
+  );
+  const onAddNode = useCallback(
+    async (type, worldPos) => {
+      const vp = rf.getViewport();
+      const pos = worldPos ?? {
+        x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
+        y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom)
+      };
+      const base2 = sanitizeName(type);
+      const siblings = new Set(
+        Array.from(useStructural.getState().components.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
+      );
+      let name = base2;
+      let n = 1;
+      while (siblings.has(name)) {
+        n += 1;
+        name = `${base2}${n}`;
+      }
+      try {
+        const created = await addNode({
+          type,
+          name,
+          parentUid: currentParentUid,
+          defaultValues: { position: { x: Math.round(pos.x), y: Math.round(pos.y) } }
+        });
+        if (created?.uid != null) {
+          pushUndo({ kind: "delete", componentUids: [created.uid] });
+        }
+        await reload();
+      } catch (e) {
+        setError(e.message);
+      }
+    },
+    [rf, reload, currentParentUid, pushUndo]
+  );
+  const componentTypes = useMemo(
+    () => palette.flatMap(
+      (g) => g.components.map((c) => ({ name: c.name, type: c.type, group: g.id }))
+    ),
+    [palette]
+  );
+  const createComponent = useCallback(
+    async (type) => {
+      const baseName = sanitizeName(type);
+      const siblings = new Set(
+        Array.from(useStructural.getState().components.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
+      );
+      let name = baseName;
+      let n = 1;
+      while (siblings.has(name)) {
+        n += 1;
+        name = `${baseName}${n}`;
+      }
+      const vp = rf.getViewport();
+      const pos = {
+        x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
+        y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom)
+      };
+      try {
+        const created = await addNode({
+          type,
+          name,
+          parentUid: currentParentUid,
+          defaultValues: { position: { x: Math.round(pos.x), y: Math.round(pos.y) } }
+        });
+        if (created?.uid != null) pushUndo({ kind: "delete", componentUids: [created.uid] });
+        await reload();
+        return created ?? null;
+      } catch (e) {
+        setError(e.message);
+        return null;
+      }
+    },
+    [rf, reload, currentParentUid, pushUndo]
+  );
+  const ceCtx = useMemo(
+    () => ({ componentTypes, createComponent }),
+    [componentTypes, createComponent]
+  );
+  const onDragOver = useCallback((e) => {
+    if (e.dataTransfer.types.includes(DND_TYPE)) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+  const onDrop = useCallback(
+    (e) => {
+      const type = e.dataTransfer.getData(DND_TYPE);
+      if (!type) return;
+      e.preventDefault();
+      const worldPos = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      onAddNode(type, worldPos);
+    },
+    [rf, onAddNode]
+  );
+  return /* @__PURE__ */ jsxs(CeWiresheetContext.Provider, { value: ceCtx, children: [
+    /* @__PURE__ */ jsx("style", { children: EDGE_SELECTED_CSS }),
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: { position: "absolute", inset: 0 },
+        onDragOver,
+        onDrop,
+        onPointerDown: onCanvasPointerDown,
+        onPointerMove: onCanvasPointerMove,
+        onPointerUp: onCanvasPointerUp,
+        onContextMenu: (e) => {
+          e.preventDefault();
+        },
+        children: /* @__PURE__ */ jsxs(
+          index,
+          {
+            nodes,
+            edges,
+            nodeTypes,
+            onNodesChange,
+            onEdgesChange,
+            onEdgeContextMenu,
+            onNodeDragStart,
+            onNodeDrag,
+            onNodeDragStop,
+            onConnect,
+            onNodesDelete,
+            onEdgesDelete,
+            defaultViewport: { x: 80, y: 80, zoom: 1 },
+            minZoom: 0.1,
+            maxZoom: 2,
+            onlyRenderVisibleElements: true,
+            nodeOrigin: [0, 0],
+            deleteKeyCode: ["Delete", "Backspace"],
+            panOnDrag: [0],
+            selectionMode: SelectionMode.Partial,
+            multiSelectionKeyCode: ["Shift", "Meta", "Control"],
+            nodeDragThreshold: 4,
+            panOnScroll: false,
+            panOnScrollMode: PanOnScrollMode.Free,
+            proOptions: { hideAttribution: true },
+            children: [
+              /* @__PURE__ */ jsx(Background, { color: "#1f242e", gap: 20 }),
+              /* @__PURE__ */ jsx(
+                MiniMap,
+                {
+                  position: "bottom-right",
+                  pannable: true,
+                  zoomable: true,
+                  ariaLabel: "Graph overview",
+                  style: {
+                    backgroundColor: "#2b313c",
+                    border: "1px solid #3d444d",
+                    borderRadius: 6
+                  },
+                  maskColor: "rgba(10,12,16,0.45)",
+                  nodeStrokeWidth: 2,
+                  nodeColor: miniMapNodeColor,
+                  nodeStrokeColor: miniMapNodeStroke
+                }
+              ),
+              /* @__PURE__ */ jsx(ZoomRateController, { enabled: autoRate, setRate: wsAdapter.setRate }),
+              /* @__PURE__ */ jsx(VisibilitySub, { onVisible: onVisibleSubscription })
             ]
           }
         )
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      Palette,
+      {
+        palette,
+        onAdd: (t) => onAddNode(t),
+        currentParentUid
+      }
+    ),
+    /* @__PURE__ */ jsx(Breadcrumb, { crumbs, onGoTo: goToCrumb }),
+    clickDebugOpen && /* @__PURE__ */ jsx(ClickDebugger, {}),
+    /* @__PURE__ */ jsx(EventsPanel, {}),
+    /* @__PURE__ */ jsx(
+      DiagPanel,
+      {
+        wsRef: wsAdapter,
+        autoRate,
+        manualRate,
+        onSetManualRate,
+        onToggleAutoRate: () => setAutoRate((v) => !v)
+      }
+    ),
+    /* @__PURE__ */ jsx(PresenceBar, {}),
+    /* @__PURE__ */ jsx(
+      FindPanel,
+      {
+        open: findOpen,
+        currentParentUid,
+        onClose: () => setFindOpen(false),
+        onPick: (uid) => void goToComponent(uid)
+      }
+    ),
+    marqueeRect && /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          position: "fixed",
+          left: marqueeRect.x,
+          top: marqueeRect.y,
+          width: marqueeRect.w,
+          height: marqueeRect.h,
+          border: "1px solid #4a9eff",
+          background: "rgba(74,158,255,0.12)",
+          zIndex: 40,
+          pointerEvents: "none"
+        }
+      }
+    ),
+    nodeMenu && !movePickerOpen && !actionPickerOpen && /* @__PURE__ */ jsx(
+      NodeContextMenu,
+      {
+        x: nodeMenu.x,
+        y: nodeMenu.y,
+        hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
+        onMoveInto: () => setMovePickerOpen(true),
+        onAction: () => setActionPickerOpen(true),
+        onClose: () => setNodeMenu(null)
+      }
+    ),
+    nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
+      ActionPicker,
+      {
+        x: nodeMenu.x,
+        y: nodeMenu.y,
+        targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+        actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
+        onInvoke: invokeAction,
+        onClose: () => {
+          setActionPickerOpen(false);
+          setNodeMenu(null);
+        }
+      }
+    ),
+    nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
+      MoveIntoPicker,
+      {
+        x: nodeMenu.x,
+        y: nodeMenu.y,
+        movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+        onMove: async (newParent) => {
+          const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+          for (const uid of moving) {
+            try {
+              await updateNode(uid, { parentUid: newParent });
+            } catch (e) {
+              setError(e.message);
+            }
+          }
+          setMovePickerOpen(false);
+          setNodeMenu(null);
+          await reload();
+        },
+        onClose: () => {
+          setMovePickerOpen(false);
+          setNodeMenu(null);
+        }
+      }
+    ),
+    paneMenu && /* @__PURE__ */ jsx(
+      PaneContextMenu,
+      {
+        x: paneMenu.x,
+        y: paneMenu.y,
+        canGoUp: crumbs.length > 1,
+        parentName: crumbs.length > 1 ? crumbs[crumbs.length - 2].name : "",
+        palette,
+        canPaste: (clipboardRef.current?.uids.length ?? 0) > 0,
+        onUp: () => goToCrumb(crumbs.length - 2),
+        onAdd: (type) => void onAddNode(type, rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y })),
+        onPaste: () => {
+          mouseScreenPos.current = { x: paneMenu.x, y: paneMenu.y };
+          void pasteFromClipboard();
+        },
+        onClose: () => setPaneMenu(null)
+      }
+    ),
+    edgeMenu && (() => {
+      const rest = useStructural.getState().edges.get(Number(edgeMenu.edgeId));
+      if (!rest) return null;
+      const isLoop = rest.loopBack === true;
+      return /* @__PURE__ */ jsx(
+        EdgeContextMenu,
+        {
+          x: edgeMenu.x,
+          y: edgeMenu.y,
+          isLoopBack: isLoop,
+          onPrimary: () => {
+            const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
+            const filtered = ids.filter((id) => {
+              const e = useStructural.getState().edges.get(Number(id));
+              return e ? e.loopBack === true === isLoop : false;
+            });
+            if (isLoop) void reEvaluateEdges(filtered.map(Number));
+            else void setEdgesLoopBack(filtered.map(Number));
+            setEdgeMenu(null);
+          },
+          onDelete: () => {
+            const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
+            const drop = edges.filter((e) => ids.includes(e.id));
+            void onEdgesDelete(drop);
+            setEdgeMenu(null);
+          },
+          onClose: () => setEdgeMenu(null)
+        }
+      );
+    })(),
+    error && /* @__PURE__ */ jsx(ErrorBanner, { message: error, onClose: () => setError(null) })
+  ] });
+}
+function selectedEdgeIds(edges, rightClickedId) {
+  const sel = edges.filter((e) => e.selected).map((e) => e.id);
+  return sel.length > 1 && sel.includes(rightClickedId) ? sel : [rightClickedId];
+}
+function EdgeContextMenu({
+  x,
+  y,
+  isLoopBack,
+  onPrimary,
+  onDelete,
+  onClose
+}) {
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-edge-menu]")) return;
+      onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
+    };
+  }, [onClose]);
+  const primaryLabel = isLoopBack ? "Reevaluate" : "Set as loopback";
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-ce-edge-menu": true,
+      onContextMenu: (e) => e.preventDefault(),
+      style: {
+        position: "fixed",
+        left: x,
+        top: y,
+        zIndex: 100,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 4,
+        padding: 4,
+        minWidth: 160,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        fontSize: 12,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif"
+      },
+      children: [
+        /* @__PURE__ */ jsx(EdgeMenuItem, { label: primaryLabel, onClick: onPrimary }),
+        /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Delete", onClick: onDelete, danger: true })
+      ]
+    }
+  );
+}
+function EdgeMenuItem({
+  label,
+  onClick,
+  danger
+}) {
+  const [hover, setHover] = useState(false);
+  return /* @__PURE__ */ jsx(
+    "button",
+    {
+      onClick,
+      onMouseEnter: () => setHover(true),
+      onMouseLeave: () => setHover(false),
+      style: {
+        width: "100%",
+        textAlign: "left",
+        background: hover ? danger ? "#3a1a1a" : "#232733" : "transparent",
+        color: danger ? "#ffb8b8" : "#e6e8eb",
+        border: "none",
+        padding: "6px 10px",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        fontSize: 12,
+        borderRadius: 3
+      },
+      children: label
+    }
+  );
+}
+function PaneContextMenu({
+  x,
+  y,
+  canGoUp,
+  parentName,
+  palette,
+  canPaste,
+  onUp,
+  onAdd,
+  onPaste,
+  onClose
+}) {
+  const [adding, setAdding] = useState(false);
+  const [filter, setFilter] = useState("");
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-node-menu]")) return;
+      onClose();
+    };
+    const onEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [onClose]);
+  const W = adding ? 240 : 180;
+  const left = Math.min(x, window.innerWidth - W - 8);
+  const top = Math.min(y, window.innerHeight - (adding ? 320 : 140));
+  const all = palette.flatMap(
+    (g) => g.components.map((c) => ({ name: c.name, type: c.type, group: g.id }))
+  );
+  const f = filter.trim().toLowerCase();
+  const filtered = f ? all.filter((c) => c.name.toLowerCase().includes(f) || c.type.toLowerCase().includes(f)) : all;
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ce-node-menu": true,
+      onContextMenu: (e) => e.preventDefault(),
+      style: {
+        position: "fixed",
+        left,
+        top,
+        zIndex: 100,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 4,
+        width: W,
+        maxHeight: adding ? 320 : void 0,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        fontSize: 12,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden"
+      },
+      children: adding ? /* @__PURE__ */ jsxs(Fragment, { children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              padding: "6px 8px",
+              borderBottom: "1px solid #2c313c",
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            },
+            children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setAdding(false),
+                  title: "Back",
+                  style: {
+                    background: "transparent",
+                    border: "none",
+                    color: "#9ecbff",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    padding: 0
+                  },
+                  children: "‹"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  autoFocus: true,
+                  value: filter,
+                  onChange: (e) => setFilter(e.target.value),
+                  placeholder: "Filter components…",
+                  style: { ...acInput, flex: 1 }
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx("div", { style: { overflowY: "auto", padding: 4 }, children: filtered.length === 0 ? /* @__PURE__ */ jsx("div", { style: { color: "#5a6172", padding: "6px 8px" }, children: "no matches" }) : filtered.map((c) => /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: () => {
+              onAdd(c.type);
+              onClose();
+            },
+            style: acBtn,
+            children: [
+              /* @__PURE__ */ jsx("span", { children: c.name }),
+              /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: c.group })
+            ]
+          },
+          c.type
+        )) })
+      ] }) : /* @__PURE__ */ jsxs("div", { style: { padding: 4 }, children: [
+        canGoUp && /* @__PURE__ */ jsx(
+          EdgeMenuItem,
+          {
+            label: `‹ Up to ${parentName}`,
+            onClick: () => {
+              onUp();
+              onClose();
+            }
+          }
+        ),
+        /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Add component…", onClick: () => setAdding(true) }),
+        canPaste && /* @__PURE__ */ jsx(
+          EdgeMenuItem,
+          {
+            label: "Paste",
+            onClick: () => {
+              onPaste();
+              onClose();
+            }
+          }
+        )
+      ] })
+    }
+  );
+}
+function NodeContextMenu({
+  x,
+  y,
+  hasActions,
+  onMoveInto,
+  onAction,
+  onClose
+}) {
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-node-menu]")) return;
+      onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
+    };
+  }, [onClose]);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-ce-node-menu": true,
+      onContextMenu: (e) => e.preventDefault(),
+      style: {
+        position: "fixed",
+        left: x,
+        top: y,
+        zIndex: 100,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 4,
+        padding: 4,
+        minWidth: 160,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        fontSize: 12,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif"
+      },
+      children: [
+        /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Move into…", onClick: onMoveInto }),
+        hasActions && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Action…", onClick: onAction })
+      ]
+    }
+  );
+}
+function MoveIntoPicker({
+  x,
+  y,
+  movingUids,
+  onMove,
+  onClose
+}) {
+  const [filter, setFilter] = useState("");
+  const [allComponents, setAllComponents] = useState(null);
+  const movingSet = new Set(movingUids);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await getRootNodes({ depth: -1, nested: true });
+        if (cancelled) return;
+        const flat = [];
+        const walk = (c) => {
+          flat.push(c);
+          c.children?.forEach(walk);
+        };
+        resp.nodes.forEach(walk);
+        setAllComponents(flat);
+      } catch {
+        if (cancelled) return;
+        setAllComponents([...useStructural.getState().components.values()]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const movingPaths = (allComponents ?? []).filter((c) => movingSet.has(c.uid)).map((c) => c.path);
+  const isMovingOrDescendant = (path) => {
+    for (const mp of movingPaths) {
+      if (path === mp || path.startsWith(mp + "/")) return true;
+    }
+    return false;
+  };
+  const candidates = [];
+  for (const c of allComponents ?? []) {
+    if (movingSet.has(c.uid)) continue;
+    if (isMovingOrDescendant(c.path)) continue;
+    candidates.push({
+      uid: c.uid,
+      name: c.name || c.type,
+      kind: c.type,
+      path: c.path
+    });
+  }
+  candidates.sort((a, b) => a.path.localeCompare(b.path));
+  const f = filter.trim().toLowerCase();
+  const visible = f ? candidates.filter(
+    (c) => c.name.toLowerCase().includes(f) || c.kind.toLowerCase().includes(f) || c.path.toLowerCase().includes(f)
+  ) : candidates;
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-node-menu]")) return;
+      onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
+    };
+  }, [onClose]);
+  const PICKER_W = 260;
+  const left = Math.min(x, window.innerWidth - PICKER_W - 8);
+  const top = Math.min(y, window.innerHeight - 320);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-ce-node-menu": true,
+      onContextMenu: (e) => e.preventDefault(),
+      style: {
+        position: "fixed",
+        left,
+        top,
+        zIndex: 101,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 4,
+        width: PICKER_W,
+        maxHeight: 320,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        fontSize: 12,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        display: "flex",
+        flexDirection: "column"
+      },
+      children: [
+        /* @__PURE__ */ jsxs("div", { style: { padding: "6px 8px", borderBottom: "1px solid #2c313c" }, children: [
+          /* @__PURE__ */ jsxs("div", { style: { color: "#8892a0", fontSize: 10, marginBottom: 4 }, children: [
+            "Move ",
+            movingUids.length === 1 ? "1 component" : `${movingUids.length} components`,
+            " into…"
+          ] }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              autoFocus: true,
+              value: filter,
+              onChange: (e) => setFilter(e.target.value),
+              onKeyDown: (e) => {
+                if (e.key === "Escape") onClose();
+                else if (e.key === "Enter" && visible.length === 1) onMove(visible[0].uid);
+                e.stopPropagation();
+              },
+              placeholder: "filter…",
+              style: {
+                width: "100%",
+                background: "#0f1115",
+                color: "#e6e8eb",
+                border: "1px solid #2c313c",
+                borderRadius: 2,
+                padding: "3px 6px",
+                fontSize: 12,
+                fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                boxSizing: "border-box",
+                outline: "none"
+              }
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto" }, children: visible.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 12 }, children: allComponents == null ? "loading…" : "no destinations" }) : visible.map((c) => {
+          const pathLabel = c.path === "root" ? "root" : c.path.startsWith("root/") ? c.path.slice(5) : c.path;
+          return /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => onMove(c.uid),
+              style: {
+                display: "flex",
+                width: "100%",
+                textAlign: "left",
+                padding: "5px 8px",
+                background: "transparent",
+                color: "#e6e8eb",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 12,
+                fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                alignItems: "baseline",
+                gap: 6
+              },
+              onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
+              onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+              children: [
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      color: "#9ecbff",
+                      flex: 1,
+                      minWidth: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    },
+                    title: c.path,
+                    children: pathLabel
+                  }
+                ),
+                /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 11, flexShrink: 0 }, children: c.kind })
+              ]
+            },
+            c.uid
+          );
+        }) })
+      ]
+    }
+  );
+}
+const acInput = {
+  background: "#0f1115",
+  border: "1px solid #2c313c",
+  borderRadius: 4,
+  color: "#e6e8eb",
+  fontSize: 12,
+  padding: "4px 6px",
+  fontFamily: "inherit"
+};
+const acBtn = {
+  width: "100%",
+  textAlign: "left",
+  background: "transparent",
+  color: "#e6e8eb",
+  border: "none",
+  borderRadius: 4,
+  padding: "6px 8px",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: 12,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 6
+};
+const acBtnPrimary = {
+  width: "100%",
+  background: "#2d6cdf",
+  color: "#fff",
+  border: "none",
+  borderRadius: 4,
+  padding: "7px 8px",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: 12,
+  marginTop: 6
+};
+const acRow = { display: "flex", justifyContent: "space-between", padding: "2px 0" };
+function actionKind(type) {
+  const t = type.toLowerCase();
+  if (t === "bool" || t === "boolean") return "bool";
+  if (/^(u?int\d*|[iuf]\d+|float|double|number)$/.test(t)) return "num";
+  return "str";
+}
+function defaultForType(type) {
+  const k = actionKind(type);
+  return k === "bool" ? false : k === "num" ? 0 : "";
+}
+function coerceParam(type, raw) {
+  const k = actionKind(type);
+  if (k === "num") {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+  }
+  if (k === "bool") return raw === "true" || raw === "1";
+  return raw;
+}
+function ParamField({
+  def,
+  value,
+  onChange
+}) {
+  const kind = actionKind(def.type);
+  return /* @__PURE__ */ jsxs("label", { style: { display: "flex", flexDirection: "column", gap: 3, margin: "0 0 8px" }, children: [
+    /* @__PURE__ */ jsxs("span", { style: { color: "#8892a0", fontSize: 10 }, children: [
+      def.label ?? def.name,
+      /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
+        " · ",
+        def.type
       ] })
     ] }),
-    /* @__PURE__ */ jsx("div", { className: "ext-wiresheet", children: /* @__PURE__ */ jsx(FlowCanvas, { registry, graph: EMPTY, showMiniMap: true, showControls: true, showBackground: true }) })
+    def.enum ? /* @__PURE__ */ jsx(
+      "select",
+      {
+        value: String(value ?? ""),
+        onChange: (e) => onChange(coerceParam(def.type, e.target.value)),
+        style: acInput,
+        children: def.enum.map((opt) => /* @__PURE__ */ jsx("option", { value: String(opt), children: String(opt) }, String(opt)))
+      }
+    ) : kind === "bool" ? /* @__PURE__ */ jsx(
+      "input",
+      {
+        type: "checkbox",
+        checked: Boolean(value),
+        onChange: (e) => onChange(e.target.checked),
+        style: { width: 14, height: 14 }
+      }
+    ) : /* @__PURE__ */ jsx(
+      "input",
+      {
+        type: kind === "num" ? "number" : "text",
+        value: value === null || value === void 0 ? "" : String(value),
+        onChange: (e) => onChange(coerceParam(def.type, e.target.value)),
+        style: acInput
+      }
+    )
   ] });
+}
+function ActionPicker({
+  x,
+  y,
+  actions,
+  targetUids,
+  onInvoke,
+  onClose
+}) {
+  const [selected, setSelected] = useState(null);
+  const [values, setValues] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    const dismiss = (e) => {
+      const el = e.target;
+      if (el && el.closest("[data-ce-node-menu]")) return;
+      onClose();
+    };
+    const onEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [onClose]);
+  const run = async (a, params) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await onInvoke(targetUids, a.name, params);
+      setResult(res[0]?.returns ?? {});
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const choose = (a) => {
+    setError(null);
+    setResult(null);
+    if (!a.params || a.params.length === 0) {
+      void run(a, {});
+      return;
+    }
+    const init = {};
+    for (const p of a.params) init[p.name] = p.default ?? defaultForType(p.type);
+    setValues(init);
+    setSelected(a);
+  };
+  const PICKER_W = 280;
+  const left = Math.min(x, window.innerWidth - PICKER_W - 8);
+  const top = Math.min(y, window.innerHeight - 360);
+  const count = targetUids.length;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-ce-node-menu": true,
+      onContextMenu: (e) => e.preventDefault(),
+      style: {
+        position: "fixed",
+        left,
+        top,
+        zIndex: 101,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 4,
+        width: PICKER_W,
+        maxHeight: 360,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        fontSize: 12,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        display: "flex",
+        flexDirection: "column"
+      },
+      children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              padding: "6px 8px",
+              borderBottom: "1px solid #2c313c",
+              display: "flex",
+              alignItems: "center",
+              gap: 6
+            },
+            children: [
+              selected && !result && /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => {
+                    setSelected(null);
+                    setError(null);
+                  },
+                  title: "Back",
+                  style: {
+                    background: "transparent",
+                    border: "none",
+                    color: "#9ecbff",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    padding: 0
+                  },
+                  children: "‹"
+                }
+              ),
+              /* @__PURE__ */ jsx("div", { style: { color: "#8892a0", fontSize: 10, flex: 1 }, children: result ? "Result" : selected ? selected.label ?? selected.name : `Action on ${count === 1 ? "1 component" : `${count} components`}` })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto", padding: 8 }, children: result ? /* @__PURE__ */ jsxs("div", { children: [
+          Object.keys(result).length === 0 ? /* @__PURE__ */ jsx("div", { style: { color: "#5a6172" }, children: "done — no return values" }) : Object.entries(result).map(([k, v]) => /* @__PURE__ */ jsxs("div", { style: acRow, children: [
+            /* @__PURE__ */ jsx("span", { style: { color: "#8892a0" }, children: k }),
+            /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontVariantNumeric: "tabular-nums" }, children: String(v) })
+          ] }, k)),
+          /* @__PURE__ */ jsx("button", { onClick: onClose, style: acBtnPrimary, children: "Close" })
+        ] }) : selected ? /* @__PURE__ */ jsxs(
+          "form",
+          {
+            onSubmit: (e) => {
+              e.preventDefault();
+              void run(selected, values);
+            },
+            children: [
+              (selected.params ?? []).map((p) => /* @__PURE__ */ jsx(
+                ParamField,
+                {
+                  def: p,
+                  value: values[p.name],
+                  onChange: (v) => setValues((cur) => ({ ...cur, [p.name]: v }))
+                },
+                p.name
+              )),
+              error && /* @__PURE__ */ jsx("div", { style: { color: "#ffb8b8", margin: "6px 0" }, children: error }),
+              /* @__PURE__ */ jsx("button", { type: "submit", disabled: busy, style: acBtnPrimary, children: busy ? "Running…" : `Run on ${count === 1 ? "1 component" : `${count} components`}` })
+            ]
+          }
+        ) : actions.length === 0 ? /* @__PURE__ */ jsx("div", { style: { color: "#5a6172" }, children: "no actions for this component" }) : /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", gap: 2 }, children: [
+          error && /* @__PURE__ */ jsx("div", { style: { color: "#ffb8b8", margin: "2px 0 6px" }, children: error }),
+          actions.map((a) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => choose(a),
+              disabled: busy,
+              title: a.description,
+              style: acBtn,
+              children: [
+                /* @__PURE__ */ jsx("span", { children: a.label ?? a.name }),
+                a.params && a.params.length > 0 ? /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: "…" }) : null
+              ]
+            },
+            a.name
+          ))
+        ] }) })
+      ]
+    }
+  );
+}
+function sanitizeName(type) {
+  const idx = type.lastIndexOf("::");
+  const local = idx >= 0 ? type.slice(idx + 2) : type;
+  const cleaned = local.replace(/[^A-Za-z0-9_]/g, "");
+  return cleaned || "node";
+}
+function buildRfNodes(comps, onEnter, onContextMenu, selectedIds, actionTypes) {
+  const allZero = comps.every(
+    (c) => (c.metadata?.position?.x ?? 0) === 0 && (c.metadata?.position?.y ?? 0) === 0
+  );
+  const cols = Math.max(1, Math.ceil(Math.sqrt(comps.length)));
+  const GRID_X = NODE_W + 60;
+  const GRID_Y = 220;
+  return comps.map((c, i) => {
+    const px = c.metadata?.position?.x ?? 0;
+    const py = c.metadata?.position?.y ?? 0;
+    const pos = allZero ? { x: i % cols * GRID_X, y: Math.floor(i / cols) * GRID_Y } : { x: px, y: py };
+    const id = String(c.uid);
+    return {
+      id,
+      type: "fb",
+      position: pos,
+      width: NODE_W,
+      data: {
+        componentUid: c.uid,
+        name: c.name,
+        hasChildren: (c.childrenCount ?? 0) > 0,
+        childCount: c.childrenCount ?? 0,
+        hasActions: actionTypes?.has(c.type) ?? false,
+        onEnter,
+        onContextMenu
+      },
+      draggable: true,
+      selected: selectedIds?.has(id) ?? false
+    };
+  });
+}
+function miniMapNodeColor(n) {
+  if (n.selected) return "#6cb1ff";
+  if (n.type === "ghost") return "#5a626e";
+  return n.data?.hasChildren ? "#4f80c4" : "#7b8593";
+}
+function miniMapNodeStroke(n) {
+  if (n.selected) return "#8cc4ff";
+  return n.data?.hasChildren ? "#6cb1ff" : "#9aa3b2";
+}
+function buildRfEdges(edges, comps) {
+  const cByUid = /* @__PURE__ */ new Map();
+  for (const c of comps) cByUid.set(c.uid, c);
+  const out = [];
+  for (const e of edges) {
+    const src = cByUid.get(e.sourceUid);
+    const dst = cByUid.get(e.targetUid);
+    const srcProp = src?.properties[e.sourceProperty];
+    const dstProp = dst?.properties[e.targetProperty];
+    if (!srcProp || !dstProp) continue;
+    const isLoop = e.loopBack === true;
+    out.push({
+      id: String(e.uid),
+      source: String(e.sourceUid),
+      sourceHandle: String(srcProp.uid),
+      target: String(e.targetUid),
+      targetHandle: String(dstProp.uid),
+      style: isLoop ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 },
+      animated: false
+    });
+  }
+  return out;
+}
+function Breadcrumb({ crumbs, onGoTo }) {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      style: {
+        position: "fixed",
+        bottom: 12,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 20,
+        display: "flex",
+        alignItems: "center",
+        background: "rgba(20,23,30,0.92)",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        padding: "6px 12px",
+        gap: 6,
+        fontSize: 12,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        maxWidth: "70%",
+        overflowX: "auto"
+      },
+      children: crumbs.map((c, i) => {
+        const last = i === crumbs.length - 1;
+        return /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => onGoTo(i),
+              disabled: last,
+              style: {
+                background: "transparent",
+                color: last ? "#e6e8eb" : "#9ecbff",
+                border: "none",
+                padding: 0,
+                cursor: last ? "default" : "pointer",
+                fontFamily: "inherit",
+                fontSize: 12,
+                fontWeight: last ? 600 : 400
+              },
+              children: c.name
+            }
+          ),
+          !last && /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: "/" })
+        ] }, c.uid);
+      })
+    }
+  );
+}
+function Palette({
+  palette,
+  onAdd,
+  currentParentUid
+}) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem("ce-ui.palette.collapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("ce-ui.palette.collapsed", collapsed ? "1" : "0");
+    } catch {
+    }
+  }, [collapsed]);
+  const [open, setOpen] = useState(/* @__PURE__ */ new Set());
+  const [filter, setFilter] = useState("");
+  const toggle = (id) => setOpen((cur) => {
+    const next = new Set(cur);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+  const f = filter.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!f) return palette;
+    return palette.map((g) => ({
+      ...g,
+      components: g.components.filter(
+        (c) => c.name.toLowerCase().includes(f) || c.type.toLowerCase().includes(f)
+      )
+    })).filter((g) => g.components.length > 0);
+  }, [palette, f]);
+  const effectivelyOpen = (id) => f ? true : open.has(id);
+  if (collapsed) {
+    return /* @__PURE__ */ jsx(
+      "button",
+      {
+        onClick: () => setCollapsed(false),
+        title: "Show component palette",
+        style: {
+          position: "fixed",
+          top: 12,
+          left: 12,
+          zIndex: 20,
+          width: 28,
+          height: 80,
+          background: "rgba(20,23,30,0.92)",
+          border: "1px solid #2c313c",
+          borderRadius: 6,
+          color: "#cbd3e0",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 14,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        },
+        children: "▸"
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        position: "fixed",
+        top: 12,
+        left: 12,
+        bottom: 12,
+        zIndex: 20,
+        background: "rgba(20, 23, 30, 0.96)",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        color: "#e6e8eb",
+        fontSize: 12,
+        width: 260,
+        display: "flex",
+        flexDirection: "column"
+      },
+      children: [
+        /* @__PURE__ */ jsxs("div", { style: { padding: "10px 12px", borderBottom: "1px solid #2c313c" }, children: [
+          /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", marginBottom: 8 }, children: [
+            /* @__PURE__ */ jsx("div", { style: { fontWeight: 600, fontSize: 13, flex: 1 }, children: "Add component" }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => setCollapsed(true),
+                title: "Hide palette",
+                style: {
+                  background: "transparent",
+                  border: "none",
+                  color: "#8892a0",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: 14,
+                  padding: "0 4px",
+                  lineHeight: 1
+                },
+                children: "◂"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              value: filter,
+              onChange: (e) => setFilter(e.target.value),
+              placeholder: "filter…",
+              spellCheck: false,
+              style: {
+                width: "100%",
+                background: "#222731",
+                color: "#cbd3e0",
+                border: "1px solid #2c313c",
+                borderRadius: 3,
+                padding: "4px 6px",
+                fontSize: 11,
+                fontFamily: "ui-monospace, monospace",
+                boxSizing: "border-box"
+              }
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxs("div", { style: { flex: 1, overflowY: "auto", padding: "4px 0" }, children: [
+          filtered.length === 0 && /* @__PURE__ */ jsx("div", { style: { padding: "10px 12px", color: "#5a6172", fontSize: 11 }, children: "no matches" }),
+          filtered.map((g) => {
+            const isOpen = effectivelyOpen(g.id);
+            return /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: () => toggle(g.id),
+                  style: {
+                    width: "100%",
+                    textAlign: "left",
+                    background: "transparent",
+                    color: "#e6e8eb",
+                    border: "none",
+                    padding: "6px 12px",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6
+                  },
+                  children: [
+                    /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", fontFamily: "ui-monospace, monospace", width: 8 }, children: isOpen ? "▾" : "▸" }),
+                    /* @__PURE__ */ jsx("span", { style: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: g.id }),
+                    /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: g.components.length })
+                  ]
+                }
+              ),
+              isOpen && /* @__PURE__ */ jsx("div", { style: { paddingBottom: 4 }, children: g.components.map((c) => /* @__PURE__ */ jsx(PaletteItem, { component: c, onAdd: () => onAdd(c.type) }, c.type)) })
+            ] }, g.id);
+          })
+        ] }),
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              padding: "8px 12px",
+              borderTop: "1px solid #2c313c",
+              fontSize: 10,
+              color: "#8892a0",
+              lineHeight: 1.5
+            },
+            children: [
+              "drag onto canvas, or double-click to add at center.",
+              /* @__PURE__ */ jsx("br", {}),
+              "drag handle → handle to connect • Delete to remove.",
+              /* @__PURE__ */ jsxs("div", { style: { marginTop: 4, color: "#5a6172" }, children: [
+                "parent uid: ",
+                currentParentUid
+              ] })
+            ]
+          }
+        )
+      ]
+    }
+  );
+}
+function PaletteItem({
+  component,
+  onAdd
+}) {
+  const [dragging, setDragging] = useState(false);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      draggable: true,
+      onDragStart: (e) => {
+        e.dataTransfer.effectAllowed = "copy";
+        e.dataTransfer.setData(DND_TYPE, component.type);
+        setDragging(true);
+      },
+      onDragEnd: () => setDragging(false),
+      onDoubleClick: onAdd,
+      title: `${component.type} — double-click to add, drag to drop on canvas`,
+      style: {
+        margin: "0 8px 2px 8px",
+        padding: "4px 8px 4px 22px",
+        background: dragging ? "#2c3a55" : "#1a1d24",
+        color: "#cbd3e0",
+        border: "1px solid #2c313c",
+        borderRadius: 3,
+        cursor: "grab",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        userSelect: "none",
+        display: "flex",
+        flexDirection: "column",
+        gap: 1
+      },
+      children: [
+        /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: component.name }),
+        /* @__PURE__ */ jsx("span", { style: { fontSize: 9, color: "#5a6172", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: component.type })
+      ]
+    }
+  );
+}
+function ErrorBanner({ message, onClose }) {
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      onClick: onClose,
+      style: {
+        position: "fixed",
+        bottom: 12,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 30,
+        background: "#3a1a1a",
+        border: "1px solid #6b2a2a",
+        color: "#ffb8b8",
+        padding: "6px 12px",
+        borderRadius: 4,
+        fontSize: 12,
+        cursor: "pointer",
+        fontFamily: "ui-monospace, monospace"
+      },
+      children: [
+        message,
+        "  (click to dismiss)"
+      ]
+    }
+  );
+}
+
+function WiresheetPanel({ deviceId }) {
+  const [device, setDevice] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  React.useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    fetchTemplate(`${EXTENSION_ID}.device_get`, { device_id: deviceId }).then((rows) => {
+      if (!alive) return;
+      setDevice(rows[0] ?? null);
+      setLoading(false);
+    }).catch((e) => {
+      if (!alive) return;
+      setError(e instanceof Error ? e.message : String(e));
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [deviceId]);
+  const base = device ? `http://${device.ip}:${device.port}` : null;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        // Full-bleed, but below the host sidebar (which is `fixed … z-10`) so
+        // the rubix nav floats over the wiresheet rather than being covered.
+        position: "fixed",
+        inset: 0,
+        zIndex: 5,
+        background: "#0b0e14"
+      },
+      children: [
+        loading && /* @__PURE__ */ jsx(Centered, { children: "Loading engine…" }),
+        !loading && error && /* @__PURE__ */ jsxs(Centered, { children: [
+          "Failed to load engine ",
+          /* @__PURE__ */ jsx("code", { children: deviceId }),
+          ": ",
+          error
+        ] }),
+        !loading && !error && !device && /* @__PURE__ */ jsxs(Centered, { children: [
+          "No such engine: ",
+          /* @__PURE__ */ jsx("code", { children: deviceId })
+        ] }),
+        !loading && base && /* @__PURE__ */ jsx(CeEditor, { base })
+      ]
+    }
+  );
+}
+function Centered({ children }) {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      style: {
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#9aa4b2",
+        fontSize: 14,
+        gap: 6
+      },
+      children
+    }
+  );
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-02T00:47:18.114Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-03T14:24:57.046Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
@@ -12990,7 +19034,7 @@ function MainRouter() {
   const route = useExtensionRoute();
   if (route && route.startsWith("wiresheet")) {
     const deviceId = route.split("/")[1] ?? "";
-    return /* @__PURE__ */ jsx(Page, { eyebrow: "Control Engine", title: "Wiresheet", children: /* @__PURE__ */ jsx(WiresheetPanel, { deviceId }) });
+    return /* @__PURE__ */ jsx(WiresheetPanel, { deviceId });
   }
   return /* @__PURE__ */ jsx(Page, { eyebrow: "Control Engine", title: "Devices", children: /* @__PURE__ */ jsx(DevicesPanel, {}) });
 }
