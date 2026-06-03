@@ -12981,7 +12981,7 @@ function WiresheetPanel({ deviceId }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-02T00:47:18.114Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-03T03:31:09.833Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
