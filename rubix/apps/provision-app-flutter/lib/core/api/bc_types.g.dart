@@ -20,6 +20,23 @@ Map<String, dynamic> _$TemplatePointToJson(_TemplatePoint instance) =>
       'widget': instance.widget,
     };
 
+_WidgetGroup _$WidgetGroupFromJson(Map<String, dynamic> json) => _WidgetGroup(
+  layout: json['layout'] as String?,
+  title: json['title'] as String?,
+  primary: json['primary'] as String?,
+  secondary:
+      (json['secondary'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const <String>[],
+);
+
+Map<String, dynamic> _$WidgetGroupToJson(_WidgetGroup instance) =>
+    <String, dynamic>{
+      'layout': instance.layout,
+      'title': instance.title,
+      'primary': instance.primary,
+      'secondary': instance.secondary,
+    };
+
 _ScannedTemplate _$ScannedTemplateFromJson(Map<String, dynamic> json) =>
     _ScannedTemplate(
       displayName: json['display_name'] as String,
@@ -30,7 +47,9 @@ _ScannedTemplate _$ScannedTemplateFromJson(Map<String, dynamic> json) =>
               ?.map((e) => TemplatePoint.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <TemplatePoint>[],
-      widgetGroup: json['widget_group'] as String? ?? '',
+      widgetGroup: json['widget_group'] == null
+          ? null
+          : WidgetGroup.fromJson(json['widget_group'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$ScannedTemplateToJson(_ScannedTemplate instance) =>

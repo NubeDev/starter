@@ -282,9 +282,287 @@ as String,
 
 
 /// @nodoc
+mixin _$WidgetGroup {
+
+ String? get layout; String? get title; String? get primary; List<String> get secondary;
+/// Create a copy of WidgetGroup
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WidgetGroupCopyWith<WidgetGroup> get copyWith => _$WidgetGroupCopyWithImpl<WidgetGroup>(this as WidgetGroup, _$identity);
+
+  /// Serializes this WidgetGroup to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WidgetGroup&&(identical(other.layout, layout) || other.layout == layout)&&(identical(other.title, title) || other.title == title)&&(identical(other.primary, primary) || other.primary == primary)&&const DeepCollectionEquality().equals(other.secondary, secondary));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,layout,title,primary,const DeepCollectionEquality().hash(secondary));
+
+@override
+String toString() {
+  return 'WidgetGroup(layout: $layout, title: $title, primary: $primary, secondary: $secondary)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WidgetGroupCopyWith<$Res>  {
+  factory $WidgetGroupCopyWith(WidgetGroup value, $Res Function(WidgetGroup) _then) = _$WidgetGroupCopyWithImpl;
+@useResult
+$Res call({
+ String? layout, String? title, String? primary, List<String> secondary
+});
+
+
+
+
+}
+/// @nodoc
+class _$WidgetGroupCopyWithImpl<$Res>
+    implements $WidgetGroupCopyWith<$Res> {
+  _$WidgetGroupCopyWithImpl(this._self, this._then);
+
+  final WidgetGroup _self;
+  final $Res Function(WidgetGroup) _then;
+
+/// Create a copy of WidgetGroup
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? layout = freezed,Object? title = freezed,Object? primary = freezed,Object? secondary = null,}) {
+  return _then(_self.copyWith(
+layout: freezed == layout ? _self.layout : layout // ignore: cast_nullable_to_non_nullable
+as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,primary: freezed == primary ? _self.primary : primary // ignore: cast_nullable_to_non_nullable
+as String?,secondary: null == secondary ? _self.secondary : secondary // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [WidgetGroup].
+extension WidgetGroupPatterns on WidgetGroup {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _WidgetGroup value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _WidgetGroup() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _WidgetGroup value)  $default,){
+final _that = this;
+switch (_that) {
+case _WidgetGroup():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _WidgetGroup value)?  $default,){
+final _that = this;
+switch (_that) {
+case _WidgetGroup() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? layout,  String? title,  String? primary,  List<String> secondary)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _WidgetGroup() when $default != null:
+return $default(_that.layout,_that.title,_that.primary,_that.secondary);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? layout,  String? title,  String? primary,  List<String> secondary)  $default,) {final _that = this;
+switch (_that) {
+case _WidgetGroup():
+return $default(_that.layout,_that.title,_that.primary,_that.secondary);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? layout,  String? title,  String? primary,  List<String> secondary)?  $default,) {final _that = this;
+switch (_that) {
+case _WidgetGroup() when $default != null:
+return $default(_that.layout,_that.title,_that.primary,_that.secondary);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _WidgetGroup implements WidgetGroup {
+  const _WidgetGroup({this.layout, this.title, this.primary, final  List<String> secondary = const <String>[]}): _secondary = secondary;
+  factory _WidgetGroup.fromJson(Map<String, dynamic> json) => _$WidgetGroupFromJson(json);
+
+@override final  String? layout;
+@override final  String? title;
+@override final  String? primary;
+ final  List<String> _secondary;
+@override@JsonKey() List<String> get secondary {
+  if (_secondary is EqualUnmodifiableListView) return _secondary;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_secondary);
+}
+
+
+/// Create a copy of WidgetGroup
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$WidgetGroupCopyWith<_WidgetGroup> get copyWith => __$WidgetGroupCopyWithImpl<_WidgetGroup>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$WidgetGroupToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WidgetGroup&&(identical(other.layout, layout) || other.layout == layout)&&(identical(other.title, title) || other.title == title)&&(identical(other.primary, primary) || other.primary == primary)&&const DeepCollectionEquality().equals(other._secondary, _secondary));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,layout,title,primary,const DeepCollectionEquality().hash(_secondary));
+
+@override
+String toString() {
+  return 'WidgetGroup(layout: $layout, title: $title, primary: $primary, secondary: $secondary)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$WidgetGroupCopyWith<$Res> implements $WidgetGroupCopyWith<$Res> {
+  factory _$WidgetGroupCopyWith(_WidgetGroup value, $Res Function(_WidgetGroup) _then) = __$WidgetGroupCopyWithImpl;
+@override @useResult
+$Res call({
+ String? layout, String? title, String? primary, List<String> secondary
+});
+
+
+
+
+}
+/// @nodoc
+class __$WidgetGroupCopyWithImpl<$Res>
+    implements _$WidgetGroupCopyWith<$Res> {
+  __$WidgetGroupCopyWithImpl(this._self, this._then);
+
+  final _WidgetGroup _self;
+  final $Res Function(_WidgetGroup) _then;
+
+/// Create a copy of WidgetGroup
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? layout = freezed,Object? title = freezed,Object? primary = freezed,Object? secondary = null,}) {
+  return _then(_WidgetGroup(
+layout: freezed == layout ? _self.layout : layout // ignore: cast_nullable_to_non_nullable
+as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String?,primary: freezed == primary ? _self.primary : primary // ignore: cast_nullable_to_non_nullable
+as String?,secondary: null == secondary ? _self._secondary : secondary // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$ScannedTemplate {
 
-@JsonKey(name: 'display_name') String get displayName; String get icon; String get category; List<TemplatePoint> get points;@JsonKey(name: 'widget_group') String get widgetGroup;
+@JsonKey(name: 'display_name') String get displayName; String get icon; String get category; List<TemplatePoint> get points;@JsonKey(name: 'widget_group') WidgetGroup? get widgetGroup;
 /// Create a copy of ScannedTemplate
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -317,11 +595,11 @@ abstract mixin class $ScannedTemplateCopyWith<$Res>  {
   factory $ScannedTemplateCopyWith(ScannedTemplate value, $Res Function(ScannedTemplate) _then) = _$ScannedTemplateCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'display_name') String displayName, String icon, String category, List<TemplatePoint> points,@JsonKey(name: 'widget_group') String widgetGroup
+@JsonKey(name: 'display_name') String displayName, String icon, String category, List<TemplatePoint> points,@JsonKey(name: 'widget_group') WidgetGroup? widgetGroup
 });
 
 
-
+$WidgetGroupCopyWith<$Res>? get widgetGroup;
 
 }
 /// @nodoc
@@ -334,17 +612,29 @@ class _$ScannedTemplateCopyWithImpl<$Res>
 
 /// Create a copy of ScannedTemplate
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? displayName = null,Object? icon = null,Object? category = null,Object? points = null,Object? widgetGroup = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? displayName = null,Object? icon = null,Object? category = null,Object? points = null,Object? widgetGroup = freezed,}) {
   return _then(_self.copyWith(
 displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String,points: null == points ? _self.points : points // ignore: cast_nullable_to_non_nullable
-as List<TemplatePoint>,widgetGroup: null == widgetGroup ? _self.widgetGroup : widgetGroup // ignore: cast_nullable_to_non_nullable
-as String,
+as List<TemplatePoint>,widgetGroup: freezed == widgetGroup ? _self.widgetGroup : widgetGroup // ignore: cast_nullable_to_non_nullable
+as WidgetGroup?,
   ));
 }
+/// Create a copy of ScannedTemplate
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WidgetGroupCopyWith<$Res>? get widgetGroup {
+    if (_self.widgetGroup == null) {
+    return null;
+  }
 
+  return $WidgetGroupCopyWith<$Res>(_self.widgetGroup!, (value) {
+    return _then(_self.copyWith(widgetGroup: value));
+  });
+}
 }
 
 
@@ -426,7 +716,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'display_name')  String displayName,  String icon,  String category,  List<TemplatePoint> points, @JsonKey(name: 'widget_group')  String widgetGroup)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'display_name')  String displayName,  String icon,  String category,  List<TemplatePoint> points, @JsonKey(name: 'widget_group')  WidgetGroup? widgetGroup)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ScannedTemplate() when $default != null:
 return $default(_that.displayName,_that.icon,_that.category,_that.points,_that.widgetGroup);case _:
@@ -447,7 +737,7 @@ return $default(_that.displayName,_that.icon,_that.category,_that.points,_that.w
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'display_name')  String displayName,  String icon,  String category,  List<TemplatePoint> points, @JsonKey(name: 'widget_group')  String widgetGroup)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'display_name')  String displayName,  String icon,  String category,  List<TemplatePoint> points, @JsonKey(name: 'widget_group')  WidgetGroup? widgetGroup)  $default,) {final _that = this;
 switch (_that) {
 case _ScannedTemplate():
 return $default(_that.displayName,_that.icon,_that.category,_that.points,_that.widgetGroup);case _:
@@ -467,7 +757,7 @@ return $default(_that.displayName,_that.icon,_that.category,_that.points,_that.w
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'display_name')  String displayName,  String icon,  String category,  List<TemplatePoint> points, @JsonKey(name: 'widget_group')  String widgetGroup)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'display_name')  String displayName,  String icon,  String category,  List<TemplatePoint> points, @JsonKey(name: 'widget_group')  WidgetGroup? widgetGroup)?  $default,) {final _that = this;
 switch (_that) {
 case _ScannedTemplate() when $default != null:
 return $default(_that.displayName,_that.icon,_that.category,_that.points,_that.widgetGroup);case _:
@@ -482,7 +772,7 @@ return $default(_that.displayName,_that.icon,_that.category,_that.points,_that.w
 @JsonSerializable()
 
 class _ScannedTemplate implements ScannedTemplate {
-  const _ScannedTemplate({@JsonKey(name: 'display_name') required this.displayName, required this.icon, required this.category, final  List<TemplatePoint> points = const <TemplatePoint>[], @JsonKey(name: 'widget_group') this.widgetGroup = ''}): _points = points;
+  const _ScannedTemplate({@JsonKey(name: 'display_name') required this.displayName, required this.icon, required this.category, final  List<TemplatePoint> points = const <TemplatePoint>[], @JsonKey(name: 'widget_group') this.widgetGroup}): _points = points;
   factory _ScannedTemplate.fromJson(Map<String, dynamic> json) => _$ScannedTemplateFromJson(json);
 
 @override@JsonKey(name: 'display_name') final  String displayName;
@@ -495,7 +785,7 @@ class _ScannedTemplate implements ScannedTemplate {
   return EqualUnmodifiableListView(_points);
 }
 
-@override@JsonKey(name: 'widget_group') final  String widgetGroup;
+@override@JsonKey(name: 'widget_group') final  WidgetGroup? widgetGroup;
 
 /// Create a copy of ScannedTemplate
 /// with the given fields replaced by the non-null parameter values.
@@ -530,11 +820,11 @@ abstract mixin class _$ScannedTemplateCopyWith<$Res> implements $ScannedTemplate
   factory _$ScannedTemplateCopyWith(_ScannedTemplate value, $Res Function(_ScannedTemplate) _then) = __$ScannedTemplateCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'display_name') String displayName, String icon, String category, List<TemplatePoint> points,@JsonKey(name: 'widget_group') String widgetGroup
+@JsonKey(name: 'display_name') String displayName, String icon, String category, List<TemplatePoint> points,@JsonKey(name: 'widget_group') WidgetGroup? widgetGroup
 });
 
 
-
+@override $WidgetGroupCopyWith<$Res>? get widgetGroup;
 
 }
 /// @nodoc
@@ -547,18 +837,30 @@ class __$ScannedTemplateCopyWithImpl<$Res>
 
 /// Create a copy of ScannedTemplate
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? displayName = null,Object? icon = null,Object? category = null,Object? points = null,Object? widgetGroup = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? displayName = null,Object? icon = null,Object? category = null,Object? points = null,Object? widgetGroup = freezed,}) {
   return _then(_ScannedTemplate(
 displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,icon: null == icon ? _self.icon : icon // ignore: cast_nullable_to_non_nullable
 as String,category: null == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String,points: null == points ? _self._points : points // ignore: cast_nullable_to_non_nullable
-as List<TemplatePoint>,widgetGroup: null == widgetGroup ? _self.widgetGroup : widgetGroup // ignore: cast_nullable_to_non_nullable
-as String,
+as List<TemplatePoint>,widgetGroup: freezed == widgetGroup ? _self.widgetGroup : widgetGroup // ignore: cast_nullable_to_non_nullable
+as WidgetGroup?,
   ));
 }
 
+/// Create a copy of ScannedTemplate
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WidgetGroupCopyWith<$Res>? get widgetGroup {
+    if (_self.widgetGroup == null) {
+    return null;
+  }
 
+  return $WidgetGroupCopyWith<$Res>(_self.widgetGroup!, (value) {
+    return _then(_self.copyWith(widgetGroup: value));
+  });
+}
 }
 
 

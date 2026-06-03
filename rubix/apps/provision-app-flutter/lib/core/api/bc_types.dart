@@ -29,6 +29,24 @@ abstract class TemplatePoint with _$TemplatePoint {
       _$TemplatePointFromJson(json);
 }
 
+/// A template's bento/card widget group. The backend (`decode_summary`) emits
+/// this as a JSON *object* — `{layout, title, primary, secondary}` — or `null`
+/// when the template declares none. The React `ScannedTemplate.widget_group:
+/// string` type was wrong but never crashed because TS skips runtime checks;
+/// Dart enforces the cast, so it is modelled here as the real nested shape.
+@freezed
+abstract class WidgetGroup with _$WidgetGroup {
+  const factory WidgetGroup({
+    String? layout,
+    String? title,
+    String? primary,
+    @Default(<String>[]) List<String> secondary,
+  }) = _WidgetGroup;
+
+  factory WidgetGroup.fromJson(Map<String, dynamic> json) =>
+      _$WidgetGroupFromJson(json);
+}
+
 @freezed
 abstract class ScannedTemplate with _$ScannedTemplate {
   const factory ScannedTemplate({
@@ -36,7 +54,7 @@ abstract class ScannedTemplate with _$ScannedTemplate {
     required String icon,
     required String category,
     @Default(<TemplatePoint>[]) List<TemplatePoint> points,
-    @JsonKey(name: 'widget_group') @Default('') String widgetGroup,
+    @JsonKey(name: 'widget_group') WidgetGroup? widgetGroup,
   }) = _ScannedTemplate;
 
   factory ScannedTemplate.fromJson(Map<String, dynamic> json) =>

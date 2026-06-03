@@ -8,7 +8,7 @@
 # Override the dev port:  make run PORT=8090
 
 FLUTTER ?= flutter
-PORT    ?= 8080
+PORT    ?= 8742
 DEVICE  ?= chrome
 
 .DEFAULT_GOAL := help
