@@ -22,11 +22,15 @@ class NavPage {
   final NavGroup group;
 }
 
+// Order MUST match the StatefulShellBranch order in app_router.dart and the
+// `_branchKeys` order. Home is the landing branch (index 0); Scan no longer
+// holds a dock slot — the center FAB is its fast action — so it lives in the
+// secondary/overflow group while staying a real branch.
 const navPages = <NavPage>[
   NavPage(
-    route: '/scan',
-    label: 'Scan',
-    icon: LucideIcons.scanLine,
+    route: '/home',
+    label: 'Home',
+    icon: LucideIcons.home,
     group: NavGroup.primary,
   ),
   NavPage(
@@ -46,6 +50,12 @@ const navPages = <NavPage>[
     label: 'Sites',
     icon: LucideIcons.building2,
     group: NavGroup.primary,
+  ),
+  NavPage(
+    route: '/scan',
+    label: 'Scan',
+    icon: LucideIcons.scanLine,
+    group: NavGroup.secondary,
   ),
   NavPage(
     route: '/templates',

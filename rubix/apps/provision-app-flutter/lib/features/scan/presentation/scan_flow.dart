@@ -25,9 +25,17 @@ import 'package:provision_app/shared/widgets/toast.dart';
 /// success reveal. [onPreview] jumps the shell to the Page preview tab. Ported
 /// from the React `ScanFlow.tsx`.
 class ScanFlow extends ConsumerStatefulWidget {
-  const ScanFlow({required this.onPreview, super.key});
+  const ScanFlow({
+    required this.onPreview,
+    this.startManual = false,
+    super.key,
+  });
 
   final void Function(String pageId) onPreview;
+
+  /// Open straight into the manual "pick a type" entry instead of the camera —
+  /// the Home screen's "Add manually" action routes here with this set.
+  final bool startManual;
 
   @override
   ConsumerState<ScanFlow> createState() => _ScanFlowState();
@@ -52,7 +60,7 @@ const _stepTitle = <_Step, String>{
 
 class _ScanFlowState extends ConsumerState<ScanFlow> {
   _Step _step = _Step.scan;
-  bool _typeMode = false;
+  late bool _typeMode = widget.startManual;
   String _barcode = '';
   ScannedIdentity? _identity;
   Placement _place = Placement.empty;

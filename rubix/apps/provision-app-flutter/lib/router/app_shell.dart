@@ -44,7 +44,7 @@ class AppShell extends ConsumerWidget {
             activeRoute: activeRoute,
             accent: look.accent,
             onSelect: _goRoute,
-            onFab: () => _goBranch(0), // Scan is the FAB action
+            onFab: () => _goRoute('/scan'), // Scan is the FAB action
           ),
           const ToastHost(),
         ],
@@ -54,7 +54,7 @@ class AppShell extends ConsumerWidget {
 
   /// Map a branch index back to its route, for NavBar highlighting.
   String primaryAndSecondaryRoute(int index) =>
-      index >= 0 && index < navPages.length ? navPages[index].route : '/scan';
+      index >= 0 && index < navPages.length ? navPages[index].route : '/home';
 
   void _goRoute(String route) {
     final index = navPages.indexWhere((p) => p.route == route);
