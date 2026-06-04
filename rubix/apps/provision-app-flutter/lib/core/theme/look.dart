@@ -50,12 +50,14 @@ class Look {
   final Color themeAccent;
   final Color? statusAccent;
 
-  /// Resolve the look from the chosen [theme] and an optional live [status].
+  /// Resolve the look from the chosen [theme]. The live [status] no longer
+  /// tints the accent or the ambient glow — the Nube brand teal stays constant,
+  /// so the app reads as one colour instead of shifting green/amber on
+  /// connection state. (Status is still surfaced explicitly via the semantic
+  /// dots in [statuses].)
   factory Look.resolve(AppTheme theme, StatusKey? status) {
-    final statusColor = status != null ? statuses[status]!.accent : null;
-    final accent = statusColor ?? theme.accent;
     return Look(
-      accent: accent,
+      accent: theme.accent,
       accent2: theme.accent2,
       accentOn: theme.accentOn,
       accent2On: theme.accent2On,
@@ -66,15 +68,9 @@ class Look {
       radius: theme.radius,
       glowAlpha: theme.glowAlpha,
       baseGradient: theme.gradient,
-      statusTint: statusColor != null
-          ? RadialWash(
-              color: statusColor.withValues(alpha: 0.1),
-              alignment: Alignment.center,
-              radius: 1.2,
-            )
-          : null,
+      statusTint: null,
       themeAccent: theme.accent,
-      statusAccent: statusColor,
+      statusAccent: null,
     );
   }
 

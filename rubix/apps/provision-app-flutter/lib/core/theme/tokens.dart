@@ -29,22 +29,22 @@ abstract final class RubixTokens {
   static const inkVariant = Color(0xFFB9C7C6);
   static const inkMuted = Color(0xFF7E8888); // kit caption grey
 
-  // ── primary = DNA teal (the heading-accent + "live" accent) ───────────────
-  static const primary = Color(0xFF61A3AE); // DNA kit "teal"
-  static const primaryContainer = Color(0xFF2D6971);
-  static const primaryOn = Color(0xFF04181C);
-  static const primaryDim = Color(0xFF4497A2);
+  // ── primary = Nube iO brand teal (#4497A2 leaf), lifted for the dark base ──
+  static const primary = Color(0xFF4497A2); // Nube teal-500 ⭐ brand
+  static const primaryContainer = Color(0xFF295A61); // teal-800
+  static const primaryOn = Color(0xFF021416);
+  static const primaryDim = Color(0xFF61A3AE); // teal-400, lifted for dark bg
 
-  // ── secondary = DNA yellow (callout / underline / small badges) ───────────
-  static const coral = Color(0xFFFBB93E); // DNA kit "yellow"
-  static const coralContainer = Color(0xFF76360F);
+  // ── secondary = Nube yellow callout (#FBBD41) ─────────────────────────────
+  static const coral = Color(0xFFFBBD41); // Nube yellow-400
+  static const coralContainer = Color(0xFF76360F); // yellow-900
   static const coralOn = Color(0xFF241200);
 
-  // ── status colors — semantic dots (connected/warning/offline/idle) ────────
-  static const online = Color(0xFF5DCAA5); // kit "green" · connected
-  static const fault = Color(0xFFE24B4A); // kit "red" · offline/alarm
-  static const warning = Color(0xFFC9A24A); // kit "amber" · warning
-  static const offline = Color(0xFF7E8888); // kit grey · idle
+  // ── status colors — Nube semantic ramp (green/amber/red) ──────────────────
+  static const online = Color(0xFF21C45D); // Nube green-500 · connected
+  static const fault = Color(0xFFEF4343); // Nube red-500 · offline/alarm
+  static const warning = Color(0xFFF59F0A); // Nube amber-500 · warning
+  static const offline = Color(0xFF737373); // Nube grey-500 · idle
 
   // ── radii (rem → logical px, 1rem = 16) ──────────────────────────────────
   static const radiusSm = 4.0;
