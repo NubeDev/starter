@@ -9,6 +9,7 @@ import 'package:provision_app/features/home/domain/relative_time.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
+import 'package:provision_app/shared/widgets/refreshable.dart';
 
 /// The app's landing screen — "Home A · Action-led" from Figma. Replaces booting
 /// straight into the camera: the scanner only opens when the operator taps
@@ -44,104 +45,110 @@ class HomeScreen extends ConsumerWidget {
     final look = context.look;
     final data = ref.watch(homeDataProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. Status pill is the global floating TopBar (rendered by AppShell),
-          //    so it isn't repeated here — the top padding clears it.
+    return Refreshable(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Status pill is the global floating TopBar (rendered by AppShell),
+            //    so it isn't repeated here — the top padding clears it.
 
-          // 2. Hero — eyebrow + "Provision a device" with "device" in the teal
-          //    heading-accent (only the last word is tinted).
-          const SectionLabel('Provision'),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  const TextSpan(text: 'Provision a '),
-                  TextSpan(
-                    text: 'device',
-                    style: TextStyle(color: look.accent),
-                  ),
-                ],
+            // 2. Hero — eyebrow + "Provision a device" with "device" in the teal
+            //    heading-accent (only the last word is tinted).
+            const SectionLabel('Provision'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'Provision a '),
+                    TextSpan(
+                      text: 'device',
+                      style: TextStyle(color: look.accent),
+                    ),
+                  ],
+                ),
+                style: RubixText.headlineMobile,
               ),
-              style: RubixText.headlineMobile,
             ),
-          ),
 
-          // 3. Action cards.
-          _ActionCard(
-            icon: LucideIcons.scanLine,
-            title: 'Start scanning',
-            subtitle: 'Point at a device QR',
-            primary: true,
-            onTap: onScan,
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: LucideIcons.keyboard,
-            title: 'Add manually',
-            subtitle: 'Enter device details',
-            primary: false,
-            onTap: onAddManually,
-          ),
-          const SizedBox(height: 20),
+            // 3. Action cards.
+            _ActionCard(
+              icon: LucideIcons.scanLine,
+              title: 'Start scanning',
+              subtitle: 'Point at a device QR',
+              primary: true,
+              onTap: onScan,
+            ),
+            const SizedBox(height: 12),
+            _ActionCard(
+              icon: LucideIcons.keyboard,
+              title: 'Add manually',
+              subtitle: 'Enter device details',
+              primary: false,
+              onTap: onAddManually,
+            ),
+            const SizedBox(height: 20),
 
-          // 4. Quick-nav count tiles.
-          Row(
-            children: [
-              Expanded(
-                child: _CountTile(
-                  icon: LucideIcons.cpu,
-                  count: data.value?.deviceCount,
-                  label: 'devices',
-                  loading: data.isLoading,
-                  onTap: onOpenDevices,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _CountTile(
-                  icon: LucideIcons.building2,
-                  count: data.value?.siteCount,
-                  label: 'sites',
-                  loading: data.isLoading,
-                  onTap: onOpenSites,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _CountTile(
-                  icon: LucideIcons.layoutGrid,
-                  count: data.value?.templateCount,
-                  label: 'types',
-                  loading: data.isLoading,
-                  onTap: onOpenTemplates,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // 5. Recent.
-          const SectionLabel('Recent'),
-          data.when(
-            loading: () => const _RecentSkeleton(),
-            error: (e, _) => _RecentMessage('Couldn\'t load recent devices.'),
-            data: (d) => d.recent.isEmpty
-                ? const _RecentMessage('No devices provisioned yet.')
-                : Column(
-                    children: [
-                      for (final r in d.recent) ...[
-                        _RecentRow(recent: r, onTap: () => onOpenDevice(r.device)),
-                        if (r != d.recent.last) const SizedBox(height: 8),
-                      ],
-                    ],
+            // 4. Quick-nav count tiles.
+            Row(
+              children: [
+                Expanded(
+                  child: _CountTile(
+                    icon: LucideIcons.cpu,
+                    count: data.value?.deviceCount,
+                    label: 'devices',
+                    loading: data.isLoading,
+                    onTap: onOpenDevices,
                   ),
-          ),
-        ],
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CountTile(
+                    icon: LucideIcons.building2,
+                    count: data.value?.siteCount,
+                    label: 'sites',
+                    loading: data.isLoading,
+                    onTap: onOpenSites,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CountTile(
+                    icon: LucideIcons.layoutGrid,
+                    count: data.value?.templateCount,
+                    label: 'types',
+                    loading: data.isLoading,
+                    onTap: onOpenTemplates,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // 5. Recent.
+            const SectionLabel('Recent'),
+            data.when(
+              loading: () => const _RecentSkeleton(),
+              error: (e, _) => _RecentMessage('Couldn\'t load recent devices.'),
+              data: (d) => d.recent.isEmpty
+                  ? const _RecentMessage('No devices provisioned yet.')
+                  : Column(
+                      children: [
+                        for (final r in d.recent) ...[
+                          _RecentRow(
+                            recent: r,
+                            onTap: () => onOpenDevice(r.device),
+                          ),
+                          if (r != d.recent.last) const SizedBox(height: 8),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -168,13 +175,13 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final look = context.look;
     final fill = primary ? look.accent.withValues(alpha: 0.10) : Glass.fill;
-    final border =
-        primary ? look.accent.withValues(alpha: 0.45) : Glass.border;
+    final border = primary ? look.accent.withValues(alpha: 0.45) : Glass.border;
     final tileFill = primary
         ? look.accent.withValues(alpha: 0.18)
         : Colors.white.withValues(alpha: 0.06);
-    final tileBorder =
-        primary ? look.accent.withValues(alpha: 0.40) : Colors.transparent;
+    final tileBorder = primary
+        ? look.accent.withValues(alpha: 0.40)
+        : Colors.transparent;
     final iconColor = primary ? look.accent : look.inkSoft;
     final titleColor = primary ? look.accent : look.ink;
 
@@ -305,7 +312,9 @@ class _RecentRow extends StatelessWidget {
     return GlassCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      borderRadius: const BorderRadius.all(Radius.circular(RubixTokens.radiusMd)),
+      borderRadius: const BorderRadius.all(
+        Radius.circular(RubixTokens.radiusMd),
+      ),
       child: Row(
         children: [
           Container(

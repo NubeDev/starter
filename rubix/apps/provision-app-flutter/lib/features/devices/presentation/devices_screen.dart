@@ -14,6 +14,7 @@ import 'package:provision_app/shared/widgets/glass.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
+import 'package:provision_app/shared/widgets/refreshable.dart';
 
 /// Device list with search; tap a row to drill into points + per-point toggles.
 /// Ported from the React `Devices`. Filters client-side by id/name/template and
@@ -91,66 +92,67 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     final look = context.look;
     final filtered = _filtered;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const PageHeader(eyebrow: 'Inventory', title: 'Devices'),
-          GlassSurface(
-            borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Icon(LucideIcons.search,
-                    size: 16, color: look.inkMuted),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _search,
-                    onChanged: (v) => setState(() => _q = v),
-                    style: TextStyle(
-                        color: look.ink, fontSize: 16),
-                    cursorColor: look.accent,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: 'Search devices',
-                      hintStyle: TextStyle(color: look.inkMuted),
-                      border: InputBorder.none,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 12),
+    return Refreshable(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const PageHeader(eyebrow: 'Inventory', title: 'Devices'),
+            GlassSurface(
+              borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.search, size: 16, color: look.inkMuted),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _search,
+                      onChanged: (v) => setState(() => _q = v),
+                      style: TextStyle(color: look.ink, fontSize: 16),
+                      cursorColor: look.accent,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Search devices',
+                        hintStyle: TextStyle(color: look.inkMuted),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          AsyncListView(
-            phase: _phase,
-            error: _error,
-            emptyText: 'No devices yet. Scan one to get started.',
-            onRetry: _reload,
-            child: Column(
-              children: [
-                for (final d in filtered) ...[
-                  _DeviceCard(device: d),
-                  const SizedBox(height: 8),
                 ],
-                // All loaded but the search filtered everything out.
-                if (filtered.isEmpty && _rows.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      'No matches.',
-                      style: TextStyle(
-                          color: look.inkMuted, fontSize: 14),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            AsyncListView(
+              phase: _phase,
+              error: _error,
+              emptyText: 'No devices yet. Scan one to get started.',
+              onRetry: _reload,
+              child: Column(
+                children: [
+                  for (final d in filtered) ...[
+                    _DeviceCard(device: d),
+                    const SizedBox(height: 8),
+                  ],
+                  // All loaded but the search filtered everything out.
+                  if (filtered.isEmpty && _rows.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No matches.',
+                        style: TextStyle(color: look.inkMuted, fontSize: 14),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -181,8 +183,7 @@ class _DeviceCard extends ConsumerWidget {
               color: const Color(0x0FFFFFFF),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(LucideIcons.cpu,
-                size: 18, color: look.inkSoft),
+            child: Icon(LucideIcons.cpu, size: 18, color: look.inkSoft),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -205,8 +206,7 @@ class _DeviceCard extends ConsumerWidget {
                       : device.template,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: look.inkMuted, fontSize: 12),
+                  style: TextStyle(color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -218,8 +218,7 @@ class _DeviceCard extends ConsumerWidget {
           else
             _StatusChip(device: device),
           const SizedBox(width: 10),
-          Icon(LucideIcons.chevronRight,
-              size: 16, color: look.inkMuted),
+          Icon(LucideIcons.chevronRight, size: 16, color: look.inkMuted),
         ],
       ),
     );
@@ -280,4 +279,3 @@ class _StatusChip extends StatelessWidget {
     );
   }
 }
-

@@ -10,6 +10,7 @@ import 'package:provision_app/features/templates/presentation/template_edit_shee
 import 'package:provision_app/features/templates/presentation/template_qr_sheet.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
+import 'package:provision_app/shared/widgets/refreshable.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
 
 /// List YAML templates; tap to view/edit the YAML and upsert, or tap the QR
@@ -29,7 +30,9 @@ class _TemplatesScreenState extends ConsumerState<TemplatesScreen> {
     try {
       final list = await ref.read(bcApiProvider).templatesList();
       if (mounted) setState(() => _rows = list);
-    } catch (_) {/* ignore */}
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   @override
@@ -40,17 +43,20 @@ class _TemplatesScreenState extends ConsumerState<TemplatesScreen> {
       _load();
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const PageHeader(eyebrow: 'Catalog', title: 'Templates'),
-          for (final t in _rows) ...[
-            _TemplateCard(template: t),
-            const SizedBox(height: 8),
+    return Refreshable(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const PageHeader(eyebrow: 'Catalog', title: 'Templates'),
+            for (final t in _rows) ...[
+              _TemplateCard(template: t),
+              const SizedBox(height: 8),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -76,8 +82,7 @@ class _TemplateCard extends ConsumerWidget {
               color: const Color(0x0FFFFFFF),
               borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
             ),
-            child: Icon(LucideIcons.fileCode2,
-                size: 20, color: look.inkSoft),
+            child: Icon(LucideIcons.fileCode2, size: 20, color: look.inkSoft),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -97,8 +102,7 @@ class _TemplateCard extends ConsumerWidget {
                   '${t.category} · ${t.network} · v${t.version}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: look.inkMuted, fontSize: 12),
+                  style: TextStyle(color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -119,8 +123,7 @@ class _TemplateCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Icon(LucideIcons.chevronRight,
-              size: 20, color: look.inkMuted),
+          Icon(LucideIcons.chevronRight, size: 20, color: look.inkMuted),
         ],
       ),
     );

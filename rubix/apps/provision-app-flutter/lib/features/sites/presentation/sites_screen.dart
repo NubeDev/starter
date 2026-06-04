@@ -12,6 +12,7 @@ import 'package:provision_app/shared/widgets/glass.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
+import 'package:provision_app/shared/widgets/refreshable.dart';
 import 'package:provision_app/shared/widgets/toast.dart';
 
 /// Site + location tree with inline create at both levels. Ported from the
@@ -91,66 +92,67 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
       _load();
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const PageHeader(eyebrow: 'Topology', title: 'Sites'),
-          GlassSurface(
-            borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
-            padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
-            child: Row(
-              children: [
-                Icon(LucideIcons.building2,
-                    size: 16, color: look.inkMuted),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _newSite,
-                    onChanged: (_) => setState(() {}),
-                    onSubmitted: (_) => _addSite(),
-                    style: TextStyle(
-                        color: look.ink, fontSize: 16),
-                    cursorColor: look.accent,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: 'New site name',
-                      hintStyle: TextStyle(color: look.inkMuted),
-                      border: InputBorder.none,
+    return Refreshable(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const PageHeader(eyebrow: 'Topology', title: 'Sites'),
+            GlassSurface(
+              borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
+              padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.building2, size: 16, color: look.inkMuted),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _newSite,
+                      onChanged: (_) => setState(() {}),
+                      onSubmitted: (_) => _addSite(),
+                      style: TextStyle(color: look.ink, fontSize: 16),
+                      cursorColor: look.accent,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'New site name',
+                        hintStyle: TextStyle(color: look.inkMuted),
+                        border: InputBorder.none,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                _IconButton(
-                  icon: _creating ? null : LucideIcons.plus,
-                  loading: _creating,
-                  background: look.accent,
-                  foreground: look.accentOn,
-                  enabled: _newSite.text.trim().isNotEmpty && !_creating,
-                  semanticLabel: 'Create site',
-                  onTap: _addSite,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          AsyncListView(
-            phase: _phase,
-            error: _error,
-            emptyText: 'No sites yet. Add one above to get started.',
-            emptyIcon: LucideIcons.building2,
-            onRetry: _reload,
-            child: Column(
-              children: [
-                for (final s in _sites) ...[
-                  _SiteNode(site: s),
-                  const SizedBox(height: 12),
+                  const SizedBox(width: 8),
+                  _IconButton(
+                    icon: _creating ? null : LucideIcons.plus,
+                    loading: _creating,
+                    background: look.accent,
+                    foreground: look.accentOn,
+                    enabled: _newSite.text.trim().isNotEmpty && !_creating,
+                    semanticLabel: 'Create site',
+                    onTap: _addSite,
+                  ),
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            AsyncListView(
+              phase: _phase,
+              error: _error,
+              emptyText: 'No sites yet. Add one above to get started.',
+              emptyIcon: LucideIcons.building2,
+              onRetry: _reload,
+              child: Column(
+                children: [
+                  for (final s in _sites) ...[
+                    _SiteNode(site: s),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -175,7 +177,9 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
           .read(bcApiProvider)
           .locationsList(siteId: widget.site.siteId);
       if (mounted) setState(() => _locations = list);
-    } catch (_) {/* ignore */}
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   @override
@@ -190,7 +194,9 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
     final look = ref.read(lookProvider);
     final toast = ref.read(toastProvider.notifier);
     try {
-      await ref.read(bcApiProvider).locationCreate(
+      await ref
+          .read(bcApiProvider)
+          .locationCreate(
             locationId: mintId('loc'),
             siteId: widget.site.siteId,
             name: nm,
@@ -235,22 +241,22 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
             Padding(
               padding: const EdgeInsets.only(left: 8, bottom: 6),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0x0AFFFFFF),
                   borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
                 ),
                 child: Row(
                   children: [
-                    Icon(LucideIcons.mapPin,
-                        size: 16, color: look.inkMuted),
+                    Icon(LucideIcons.mapPin, size: 16, color: look.inkMuted),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         l.name,
-                        style: TextStyle(
-                            color: look.ink, fontSize: 14),
+                        style: TextStyle(color: look.ink, fontSize: 14),
                       ),
                     ),
                   ],
@@ -266,8 +272,7 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
                     controller: _newLoc,
                     onChanged: (_) => setState(() {}),
                     onSubmitted: (_) => _addLoc(),
-                    style: TextStyle(
-                        color: look.ink, fontSize: 14),
+                    style: TextStyle(color: look.ink, fontSize: 14),
                     cursorColor: look.accent,
                     decoration: InputDecoration(
                       isDense: true,
@@ -333,7 +338,9 @@ class _IconButton extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.all(10),
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: foreground),
+                    strokeWidth: 2,
+                    color: foreground,
+                  ),
                 )
               : Icon(icon, size: 20, color: foreground),
         ),
