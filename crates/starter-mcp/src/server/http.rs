@@ -190,6 +190,7 @@ mod tests {
                 scopes: vec![],
                 tenant_id: None,
                 teams: Vec::new(),
+                tenant_scope: Vec::new(),
                 extra: Value::Null,
             })
         }

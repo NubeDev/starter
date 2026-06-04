@@ -17,6 +17,7 @@ use starter_store_postgres::Pool;
 
 use super::{
     is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
+    MAX_TENANT_DEPTH,
 };
 
 /// SQLSTATE for Postgres `check_violation`, raised by both `CHECK`
@@ -57,8 +58,13 @@ fn map_tenant(row: sqlx::postgres::PgRow) -> TenantRecord {
         slug: row.get(1),
         display_name: row.get(2),
         audit_allow_sample: row.get(3),
+        parent_id: row.get(4),
     }
 }
+
+/// Column list shared by every tenant SELECT so `map_tenant`'s
+/// positional indices stay in lock-step.
+const TENANT_COLS: &str = "id, slug, display_name, audit_allow_sample, parent_id";
 
 fn map_membership(row: sqlx::postgres::PgRow) -> MembershipRecord {
     MembershipRecord {
@@ -74,35 +80,91 @@ impl TenantStore for PgTenantStore {
         if is_reserved_slug(&row.slug) {
             return Err(TenantStoreError::ReservedSlug(row.slug.clone()));
         }
+
+        // Tenant insert + closure maintenance share one transaction
+        // (ADR-tenant-hierarchy).
+        let mut tx = self.pool.sqlx().begin().await.map_err(err)?;
+
+        if let Some(parent) = &row.parent_id {
+            let parent_max: Option<i32> = sqlx::query_scalar(
+                "SELECT MAX(depth) FROM starter_auth_users_tenant_closure \
+                 WHERE descendant_id = $1",
+            )
+            .bind(parent)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(err)?;
+            match parent_max {
+                None => {
+                    tx.rollback().await.map_err(err)?;
+                    return Err(TenantStoreError::ParentNotFound(parent.clone()));
+                }
+                Some(d) if d + 1 >= MAX_TENANT_DEPTH => {
+                    tx.rollback().await.map_err(err)?;
+                    return Err(TenantStoreError::MaxDepthExceeded(row.id.clone()));
+                }
+                Some(_) => {}
+            }
+        }
+
         let res = sqlx::query(
             "INSERT INTO starter_auth_users_tenants \
-             (id, slug, display_name, audit_allow_sample) \
-             VALUES ($1, $2, $3, $4)",
+             (id, slug, display_name, audit_allow_sample, parent_id) \
+             VALUES ($1, $2, $3, $4, $5)",
         )
         .bind(&row.id)
         .bind(&row.slug)
         .bind(&row.display_name)
         .bind(row.audit_allow_sample)
-        .execute(self.pool.sqlx())
+        .bind(&row.parent_id)
+        .execute(&mut *tx)
         .await;
-        match res {
-            Ok(_) => Ok(()),
-            Err(sqlx::Error::Database(e)) if e.is_unique_violation() => {
-                Err(TenantStoreError::SlugConflict(row.slug.clone()))
-            }
-            Err(sqlx::Error::Database(e)) if is_check_violation(e.as_ref()) => {
-                Err(TenantStoreError::ReservedSlug(row.slug.clone()))
-            }
-            Err(e) => Err(err(e)),
+        if let Err(e) = res {
+            tx.rollback().await.ok();
+            return match e {
+                sqlx::Error::Database(e) if e.is_unique_violation() => {
+                    Err(TenantStoreError::SlugConflict(row.slug.clone()))
+                }
+                sqlx::Error::Database(e) if is_check_violation(e.as_ref()) => {
+                    Err(TenantStoreError::ReservedSlug(row.slug.clone()))
+                }
+                e => Err(err(e)),
+            };
         }
+
+        sqlx::query(
+            "INSERT INTO starter_auth_users_tenant_closure \
+             (ancestor_id, descendant_id, depth) VALUES ($1, $1, 0)",
+        )
+        .bind(&row.id)
+        .execute(&mut *tx)
+        .await
+        .map_err(err)?;
+
+        if let Some(parent) = &row.parent_id {
+            sqlx::query(
+                "INSERT INTO starter_auth_users_tenant_closure \
+                 (ancestor_id, descendant_id, depth) \
+                 SELECT ancestor_id, $1, depth + 1 \
+                 FROM starter_auth_users_tenant_closure \
+                 WHERE descendant_id = $2",
+            )
+            .bind(&row.id)
+            .bind(parent)
+            .execute(&mut *tx)
+            .await
+            .map_err(err)?;
+        }
+
+        tx.commit().await.map_err(err)?;
+        Ok(())
     }
 
     async fn list_tenants(&self) -> Result<Vec<TenantRecord>, TenantStoreError> {
-        let rows = sqlx::query(
-            "SELECT id, slug, display_name, audit_allow_sample \
-             FROM starter_auth_users_tenants \
-             ORDER BY created_at ASC, id ASC",
-        )
+        let rows = sqlx::query(&format!(
+            "SELECT {TENANT_COLS} FROM starter_auth_users_tenants \
+             ORDER BY created_at ASC, id ASC"
+        ))
         .fetch_all(self.pool.sqlx())
         .await
         .map_err(err)?;
@@ -110,10 +172,9 @@ impl TenantStore for PgTenantStore {
     }
 
     async fn get_tenant(&self, id: &str) -> Result<Option<TenantRecord>, TenantStoreError> {
-        let row = sqlx::query(
-            "SELECT id, slug, display_name, audit_allow_sample \
-             FROM starter_auth_users_tenants WHERE id = $1 LIMIT 1",
-        )
+        let row = sqlx::query(&format!(
+            "SELECT {TENANT_COLS} FROM starter_auth_users_tenants WHERE id = $1 LIMIT 1"
+        ))
         .bind(id)
         .fetch_optional(self.pool.sqlx())
         .await
@@ -125,10 +186,9 @@ impl TenantStore for PgTenantStore {
         &self,
         slug: &str,
     ) -> Result<Option<TenantRecord>, TenantStoreError> {
-        let row = sqlx::query(
-            "SELECT id, slug, display_name, audit_allow_sample \
-             FROM starter_auth_users_tenants WHERE slug = $1 LIMIT 1",
-        )
+        let row = sqlx::query(&format!(
+            "SELECT {TENANT_COLS} FROM starter_auth_users_tenants WHERE slug = $1 LIMIT 1"
+        ))
         .bind(slug)
         .fetch_optional(self.pool.sqlx())
         .await
@@ -402,5 +462,70 @@ impl TenantStore for PgTenantStore {
         .await
         .map_err(err)?;
         Ok(rows.into_iter().map(|r| r.get::<String, _>(0)).collect())
+    }
+
+    async fn subtree_ids(&self, tenant_id: &str) -> Result<Vec<String>, TenantStoreError> {
+        let rows = sqlx::query(
+            "SELECT descendant_id FROM starter_auth_users_tenant_closure \
+             WHERE ancestor_id = $1 ORDER BY depth ASC, descendant_id ASC",
+        )
+        .bind(tenant_id)
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(err)?;
+        Ok(rows.into_iter().map(|r| r.get::<String, _>(0)).collect())
+    }
+
+    async fn is_ancestor(
+        &self,
+        ancestor: &str,
+        descendant: &str,
+    ) -> Result<bool, TenantStoreError> {
+        let n: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM starter_auth_users_tenant_closure \
+             WHERE ancestor_id = $1 AND descendant_id = $2",
+        )
+        .bind(ancestor)
+        .bind(descendant)
+        .fetch_one(self.pool.sqlx())
+        .await
+        .map_err(err)?;
+        Ok(n > 0)
+    }
+
+    async fn list_children(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<TenantRecord>, TenantStoreError> {
+        let rows = sqlx::query(&format!(
+            "SELECT {TENANT_COLS} FROM starter_auth_users_tenants \
+             WHERE parent_id = $1 ORDER BY created_at ASC, id ASC"
+        ))
+        .bind(tenant_id)
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(err)?;
+        Ok(rows.into_iter().map(map_tenant).collect())
+    }
+
+    async fn list_subtree(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<TenantRecord>, TenantStoreError> {
+        let rows = sqlx::query(&format!(
+            "SELECT {} FROM starter_auth_users_tenants t \
+             INNER JOIN starter_auth_users_tenant_closure c ON c.descendant_id = t.id \
+             WHERE c.ancestor_id = $1 ORDER BY c.depth ASC, t.created_at ASC, t.id ASC",
+            TENANT_COLS
+                .split(", ")
+                .map(|c| format!("t.{c}"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ))
+        .bind(tenant_id)
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(err)?;
+        Ok(rows.into_iter().map(map_tenant).collect())
     }
 }

@@ -399,6 +399,7 @@ mod tests {
             scopes: vec![],
             tenant_id: Some("t1".into()),
             teams: vec![],
+            tenant_scope: Vec::new(),
             extra: serde_json::Value::Null,
         }
     }

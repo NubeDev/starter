@@ -124,6 +124,7 @@ mod tests {
             scopes: Vec::new(),
             tenant_id: Some("t-1".into()),
             teams: Vec::new(),
+            tenant_scope: Vec::new(),
             extra: serde_json::Value::Null,
         };
         let arc = Arc::new(p);

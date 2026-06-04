@@ -63,6 +63,10 @@ where
         scopes: row.scopes,
         tenant_id: Some(row.tenant_id),
         teams: Vec::new(),
+        // Subtree resolved by `verify_with_teams` (which has a
+        // TenantStore handle); empty here → engine falls back to
+        // strict tenant equality (R11).
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     })
 }
@@ -89,6 +93,13 @@ where
         if t != "*" {
             principal.teams = tenants
                 .team_slugs_for_user(&t, &principal.subject)
+                .await
+                .map_err(|e| TokenError::Store(e.to_string()))?;
+            // ADR-tenant-hierarchy — administered subtree (this
+            // tenant + descendants). Errors surface rather than
+            // silently narrowing scope.
+            principal.tenant_scope = tenants
+                .subtree_ids(&t)
                 .await
                 .map_err(|e| TokenError::Store(e.to_string()))?;
         }

@@ -223,12 +223,21 @@ impl PolicyEngine for StaticRbacEngine {
             }
         };
 
-        // SCOPE-EXT.md R11 — cross-tenant predicate runs BEFORE
-        // role / condition evaluation. Tenant-scoped kinds require
-        // `Some(principal.tenant) == Some(object.tenant)`; missing
-        // or mismatch short-circuits with a typed deny reason. The
-        // super-admin sentinel `"*"` on the principal bypasses the
-        // check (used by cross-tenant admin tokens).
+        // SCOPE-EXT.md R11 + ADR-tenant-hierarchy — cross-tenant
+        // predicate runs BEFORE role / condition evaluation. A
+        // tenant-scoped kind requires the principal to ADMINISTER the
+        // object's tenant: either it is the principal's own tenant
+        // (the flat R11 case) or a descendant in the principal's
+        // resolved subtree (`principal.tenant_scope`), which lets a
+        // parent — e.g. a reseller — act on a child's resource.
+        // Missing binding or a tenant outside the subtree short-
+        // circuits with a typed deny reason. The super-admin sentinel
+        // `"*"` bypasses the check entirely (whole-forest admin).
+        //
+        // A principal with an empty `tenant_scope` (pre-hierarchy
+        // wiring) falls back to strict `tenant_id == object.tenant`
+        // equality via `administers_tenant`, preserving R11 byte-for-
+        // byte.
         if spec.tenant_scoped && !principal.is_super_admin() {
             match (&principal.tenant_id, &object.tenant) {
                 (None, _) => {
@@ -243,7 +252,7 @@ impl PolicyEngine for StaticRbacEngine {
                     self.audit(principal, action, object, &decision).await;
                     return decision;
                 }
-                (Some(pt), Some(ot)) if pt == ot => { /* fall through */ }
+                (Some(_), Some(ot)) if principal.administers_tenant(ot) => { /* fall through */ }
                 _ => {
                     tracing::info!(
                         subject = %principal.subject,
@@ -268,13 +277,16 @@ impl PolicyEngine for StaticRbacEngine {
         let mut deny_match: Option<&CompiledRule> = None;
 
         for rule in &self.rules {
-            // Phase 7a — tenant-scoped rules only match when the
-            // principal's tenant binding matches the rule's
-            // tenant. Global (None) rules always evaluate.
+            // Phase 7a + ADR-tenant-hierarchy — tenant-scoped rules
+            // match when the principal administers the rule's tenant:
+            // its own tenant (flat R11 case) or any tenant in its
+            // subtree. A rule written for a parent tenant (e.g.
+            // Daikin) thus applies when that parent's admin acts on a
+            // descendant's resource — the cross-tenant predicate above
+            // already proved the object is in-subtree. Global (None)
+            // rules always evaluate. Super-admin matches every rule.
             if let Some(rule_tenant) = &rule.tenant_id {
-                if !principal.is_super_admin()
-                    && principal.tenant_id.as_deref() != Some(rule_tenant.as_str())
-                {
+                if !principal.is_super_admin() && !principal.administers_tenant(rule_tenant) {
                     continue;
                 }
             }
@@ -427,6 +439,7 @@ mod tests {
             scopes: vec![Scope("reader".into())],
             tenant_id: None,
             teams,
+            tenant_scope: Vec::new(),
             extra: Value::Null,
         }
     }

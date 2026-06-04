@@ -84,6 +84,10 @@ where
         scopes: Vec::new(),
         tenant_id: session.tenant_id,
         teams: Vec::new(),
+        // Subtree resolved by the `_with_teams` variant, which has a
+        // TenantStore handle. The bare path leaves it empty → engine
+        // falls back to strict tenant equality (R11).
+        tenant_scope: Vec::new(),
         extra,
     })
 }
@@ -132,14 +136,22 @@ where
     let mut principal = verify_session_with_extras(sessions, users, extras, cookie_value).await?;
     if let Some(tenant_id) = &principal.tenant_id {
         // Super-admin sentinel "*" intentionally yields no team
-        // memberships — cross-tenant admins are role-driven, not
-        // team-driven.
+        // memberships and no subtree — cross-tenant admins are role-
+        // driven and bypass the tenant predicate via is_super_admin().
         if tenant_id != "*" {
             let teams = tenants
                 .team_slugs_for_user(tenant_id, &principal.subject)
                 .await
                 .map_err(|e| SessionError::Store(e.to_string()))?;
             principal.teams = teams;
+            // ADR-tenant-hierarchy — resolve the administered subtree
+            // (this tenant + every descendant). A store hiccup must
+            // not silently shrink the scope (that would *narrow*
+            // access, the conservative direction), so errors surface.
+            principal.tenant_scope = tenants
+                .subtree_ids(tenant_id)
+                .await
+                .map_err(|e| SessionError::Store(e.to_string()))?;
         }
     }
     Ok(principal)

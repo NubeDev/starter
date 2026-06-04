@@ -359,6 +359,7 @@ fn principal_from_caller(caller: &CallerIdentity) -> Option<Principal> {
         scopes: Vec::new(),
         tenant_id: caller.tenant_id.clone(),
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     })
 }
@@ -573,6 +574,7 @@ mod tests {
             scopes: vec![starter_spi::auth::Scope::new("dashboard:write")],
             tenant_id: Some("t-1".into()),
             teams: vec!["hvac-ops".into()],
+            tenant_scope: Vec::new(),
             extra: serde_json::json!({"k": "v"}),
         };
         let backend = RubixAuthzBackend::with_principal(engine, p.clone(), None);

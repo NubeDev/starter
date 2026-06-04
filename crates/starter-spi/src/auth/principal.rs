@@ -52,6 +52,24 @@ pub struct Principal {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub teams: Vec<String>,
 
+    /// Tenant ids this principal administers — the subtree rooted at
+    /// `tenant_id`, inclusive (ADR-tenant-hierarchy). Resolved at
+    /// session-mint / token-verify time from the tenant closure
+    /// table. For a leaf tenant this is just `[tenant_id]`; for a
+    /// parent (e.g. a reseller) it also contains every descendant
+    /// tenant id so the engine's cross-tenant predicate admits the
+    /// whole subtree.
+    ///
+    /// Empty (`[]`) for any principal that pre-dates the hierarchy
+    /// work or whose authenticator did not look the subtree up — the
+    /// engine then falls back to strict `tenant_id == object.tenant`
+    /// equality, preserving the flat-tenant behaviour (SCOPE-EXT.md
+    /// R11) byte-for-byte. The `"*"` super-admin sentinel leaves this
+    /// empty and short-circuits via [`Principal::is_super_admin`]
+    /// instead (the whole-forest case).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tenant_scope: Vec<String>,
+
     /// Consumer-defined extra claims. Keep this small — heavy
     /// per-request lookups belong elsewhere.
     #[serde(default)]
@@ -64,5 +82,16 @@ impl Principal {
     /// predicate.
     pub fn is_super_admin(&self) -> bool {
         matches!(self.tenant_id.as_deref(), Some("*"))
+    }
+
+    /// Does this principal administer `tenant`? True when `tenant`
+    /// is the principal's own tenant (depth-0) or any tenant in its
+    /// resolved subtree (`tenant_scope`). The cross-tenant predicate
+    /// uses this to admit a parent acting on a descendant's resource
+    /// (ADR-tenant-hierarchy). Does **not** consider the `"*"`
+    /// sentinel — callers check [`Principal::is_super_admin`] first.
+    pub fn administers_tenant(&self, tenant: &str) -> bool {
+        self.tenant_id.as_deref() == Some(tenant)
+            || self.tenant_scope.iter().any(|t| t == tenant)
     }
 }

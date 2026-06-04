@@ -51,6 +51,7 @@ async fn default_engine_has_null_selector_and_no_ai_runner_registry() {
         scopes: Vec::new(),
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     };
     let selection = engine
@@ -99,6 +100,7 @@ async fn custom_skill_selector_is_reachable_via_engine_accessor() {
         scopes: Vec::new(),
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     };
     let selection = engine

@@ -51,6 +51,7 @@ async fn inject_principal(mut req: Request<Body>, next: Next) -> Response {
         scopes: Vec::<Scope>::new(),
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: json!({ "active_workspace": "ws1" }),
     });
     next.run(req).await

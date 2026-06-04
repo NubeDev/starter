@@ -43,6 +43,7 @@ where
                 scopes: vec![],
                 tenant_id: None,
                 teams: vec![],
+                tenant_scope: Vec::new(),
                 extra: serde_json::Value::Null,
             });
             next.run(req).await

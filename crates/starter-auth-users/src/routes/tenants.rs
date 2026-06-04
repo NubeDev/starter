@@ -27,8 +27,9 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, patch, post};
-use axum::{Json, Router};
+use axum::{Extension, Json, Router};
 use serde::{Deserialize, Serialize};
+use starter_spi::auth::Principal;
 
 use crate::store::{
     is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
@@ -41,6 +42,13 @@ pub struct CreateTenantBody {
     pub slug: String,
     /// Display name (free-form).
     pub display_name: String,
+    /// Parent tenant id (ADR-tenant-hierarchy). Omit / `null` to
+    /// create a root tenant — allowed only for the `"*"` super-admin
+    /// (box operator). When set, the caller must administer the
+    /// parent (be `"*"` or have it in their subtree) or the request
+    /// is `403 forbidden`.
+    #[serde(default)]
+    pub parent_id: Option<String>,
 }
 
 /// Wire shape for patching a tenant. Both fields optional; the
@@ -83,6 +91,9 @@ pub struct TenantView {
     pub display_name: String,
     /// Per-tenant override of the audit-log allow-sample rate.
     pub audit_allow_sample: Option<i32>,
+    /// Parent tenant id (ADR-tenant-hierarchy). `null` for a root.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_id: Option<String>,
 }
 
 impl From<TenantRecord> for TenantView {
@@ -92,6 +103,7 @@ impl From<TenantRecord> for TenantView {
             slug: r.slug,
             display_name: r.display_name,
             audit_allow_sample: r.audit_allow_sample,
+            parent_id: r.parent_id,
         }
     }
 }
@@ -126,6 +138,9 @@ where
     Router::new()
         .route("/v1/tenants", post(create_tenant_h).get(list_tenants_h))
         .route("/v1/tenants/{id}", get(get_tenant_h).patch(patch_tenant_h))
+        // ADR-tenant-hierarchy — tree navigation for admin UIs.
+        .route("/v1/tenants/{id}/children", get(list_children_h))
+        .route("/v1/tenants/{id}/subtree", get(list_subtree_h))
         .route(
             "/v1/tenants/{id}/members",
             post(add_member_h).get(list_members_h),
@@ -156,19 +171,77 @@ where
 
 async fn create_tenant_h(
     State(tenants): State<Arc<dyn TenantStore>>,
+    Extension(principal): Extension<Principal>,
     Json(body): Json<CreateTenantBody>,
 ) -> Response {
     if is_reserved_slug(&body.slug) {
         return reserved_slug(&body.slug);
     }
+
+    // ADR-tenant-hierarchy provisioning gate. The host already gates
+    // this router with `with_role(Admin)`; here we additionally
+    // enforce *where in the tree* this admin may create.
+    match &body.parent_id {
+        // Root tenants (no parent) may only be minted by the box
+        // operator — the `"*"` super-admin sentinel.
+        None => {
+            if !principal.is_super_admin() {
+                return forbidden("root_tenant_requires_super_admin");
+            }
+        }
+        // A child tenant requires the caller to administer the
+        // parent: either super-admin, or the parent is in the
+        // caller's subtree.
+        Some(parent) => {
+            if !principal.is_super_admin() {
+                match tenants
+                    .is_ancestor(
+                        principal.tenant_id.as_deref().unwrap_or_default(),
+                        parent,
+                    )
+                    .await
+                {
+                    Ok(true) => {}
+                    Ok(false) => return forbidden("not_parent_administrator"),
+                    Err(e) => return map_err(e),
+                }
+            }
+        }
+    }
+
     let row = TenantRecord {
         id: uuid::Uuid::new_v4().to_string(),
         slug: body.slug,
         display_name: body.display_name,
         audit_allow_sample: None,
+        parent_id: body.parent_id,
     };
     match tenants.create_tenant(&row).await {
         Ok(()) => (StatusCode::CREATED, Json(TenantView::from(row))).into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn list_children_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path(id): Path<String>,
+) -> Response {
+    match tenants.list_children(&id).await {
+        Ok(rows) => {
+            Json(rows.into_iter().map(TenantView::from).collect::<Vec<_>>()).into_response()
+        }
+        Err(e) => map_err(e),
+    }
+}
+
+async fn list_subtree_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path(id): Path<String>,
+) -> Response {
+    match tenants.list_subtree(&id).await {
+        Ok(rows) => {
+            Json(rows.into_iter().map(TenantView::from).collect::<Vec<_>>()).into_response()
+        }
         Err(e) => map_err(e),
     }
 }
@@ -409,6 +482,14 @@ fn not_found(id: &str) -> Response {
         .into_response()
 }
 
+fn forbidden(reason: &str) -> Response {
+    (
+        StatusCode::FORBIDDEN,
+        Json(serde_json::json!({"error": "forbidden", "reason": reason})),
+    )
+        .into_response()
+}
+
 fn map_err(e: TenantStoreError) -> Response {
     match e {
         TenantStoreError::NotFound(id) => not_found(&id),
@@ -418,6 +499,16 @@ fn map_err(e: TenantStoreError) -> Response {
         )
             .into_response(),
         TenantStoreError::ReservedSlug(s) => reserved_slug(&s),
+        TenantStoreError::ParentNotFound(id) => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "parent_not_found", "id": id})),
+        )
+            .into_response(),
+        TenantStoreError::MaxDepthExceeded(id) => (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "max_depth_exceeded", "id": id})),
+        )
+            .into_response(),
         TenantStoreError::Backend(msg) => {
             tracing::error!(target: "starter_auth_users", error = %msg, "tenant store backend error");
             (
