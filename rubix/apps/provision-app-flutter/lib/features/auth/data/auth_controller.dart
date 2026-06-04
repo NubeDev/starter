@@ -70,16 +70,6 @@ class AuthController extends Notifier<AuthState> {
     );
   }
 
-  /// TEMPORARY: open the gate with a fake principal for the `DNA_DEMO` build.
-  /// Remove with the rest of the demo wiring before merging.
-  void seedDemo() {
-    _status(StatusKey.online);
-    state = const AuthState(
-      user: AuthUser(email: 'op@example.com'),
-      ready: true,
-    );
-  }
-
   /// Pre-login reachability check; never throws, the result is the verdict.
   Future<PingResult> ping(String baseUrl) {
     state = state.copyWith(clearError: true);
