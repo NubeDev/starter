@@ -207,28 +207,24 @@ class _DeviceCard extends ConsumerWidget {
               ],
             ),
           ),
-          if (isPlaceable(device)) ...[
-            const SizedBox(width: 8),
-            _PlacePill(device: device),
-          ],
-          const SizedBox(width: 8),
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: statusColor(device.status, look),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
+          // Right column: a teal "place" action for un-placed devices, else a
+          // labelled status chip (dot + word) — the DNA Devices treatment.
+          if (isPlaceable(device))
+            _PlacePill(device: device)
+          else
+            _StatusChip(device: device),
+          const SizedBox(width: 10),
           Icon(LucideIcons.chevronRight,
-              size: 20, color: look.inkMuted),
+              size: 16, color: look.inkMuted),
         ],
       ),
     );
   }
 }
 
+/// The teal "place on page" action pill — DNA spec: teal map-pin in a
+/// teal-tinted, teal-bordered round chip (icon only). Replaces the status chip
+/// for devices that still need placing.
 class _PlacePill extends ConsumerWidget {
   const _PlacePill({required this.device});
   final DeviceRow device;
@@ -236,33 +232,47 @@ class _PlacePill extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final look = context.look;
-    final pending = statusColor('pending', look);
     return Pressable(
       scale: 0.94,
       semanticLabel: 'Place on page',
       onTap: () => showPlaceOnPageSheet(context, ref, device),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
-          color: pending.withValues(alpha: 0.133),
+          color: look.accent.withValues(alpha: 0.16),
+          border: Border.all(color: look.accent.withValues(alpha: 0.55)),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.mapPin, size: 14, color: pending),
-            const SizedBox(width: 4),
-            Text(
-              'Place',
-              style: TextStyle(
-                color: pending,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        child: Icon(LucideIcons.mapPin, size: 13, color: look.accent),
       ),
+    );
+  }
+}
+
+/// A status dot + word (e.g. green ● "placed") — the DNA labelled status the
+/// Figma Devices rows show for already-placed devices.
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.device});
+  final DeviceRow device;
+
+  @override
+  Widget build(BuildContext context) {
+    final look = context.look;
+    final color = statusColor(device.status, look);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          device.pageId != null ? 'placed' : device.status,
+          style: TextStyle(color: look.inkMuted, fontSize: 12),
+        ),
+      ],
     );
   }
 }

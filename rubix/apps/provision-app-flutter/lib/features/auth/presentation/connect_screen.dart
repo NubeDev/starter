@@ -149,23 +149,40 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              // ── brand ──────────────────────────────────────────────────
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: look.themeAccent,
-                  borderRadius: BorderRadius.circular(RubixTokens.radiusLg),
-                  boxShadow: GlassShadow.glow(look.themeAccent),
-                ),
-                child: Icon(
-                  LucideIcons.scanLine,
-                  size: 32,
-                  color: look.accentOn,
+              // ── brand ── frosted glass tile with a soft teal wash + teal
+              // scan glyph (the Figma Connect treatment).
+              GlassSurface(
+                borderRadius: BorderRadius.circular(RubixTokens.radiusLg),
+                boxShadow: GlassShadow.glow(look.themeAccent, alpha: 0.25),
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: look.themeAccent.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(RubixTokens.radiusLg),
+                  ),
+                  child: Icon(
+                    LucideIcons.scanLine,
+                    size: 32,
+                    color: look.accent,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Rubix Provision', style: RubixText.headlineMobile),
+              // Two-tone wordmark — "Rubix" in ink, "Provision" in the DNA teal
+              // heading-accent (the Figma Connect treatment).
+              Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'Rubix'),
+                    TextSpan(
+                      text: ' Provision',
+                      style: TextStyle(color: look.accent),
+                    ),
+                  ],
+                ),
+                style: RubixText.headlineMobile,
+              ),
               const SizedBox(height: 4),
               Text(
                 'Scan a device. Place it. Done.',
@@ -274,8 +291,9 @@ class _PingButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              color: Glass.fill,
+              borderRadius: BorderRadius.circular(RubixTokens.radius),
+              border: Border.all(color: Glass.border),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,

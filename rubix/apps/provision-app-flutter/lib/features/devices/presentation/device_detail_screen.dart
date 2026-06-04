@@ -12,6 +12,7 @@ import 'package:provision_app/features/devices/presentation/place_on_page_sheet.
 import 'package:provision_app/features/scan/presentation/qr_label.dart';
 import 'package:provision_app/shared/widgets/bottom_sheet.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
+import 'package:provision_app/shared/widgets/ghost_button.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
@@ -135,34 +136,39 @@ class _DeviceDetailScreenState extends ConsumerState<DeviceDetailScreen> {
               onSaveName: _saveName,
             ),
             const SizedBox(height: 20),
+            // DNA action row: teal "Place" · neutral "Label" · danger
+            // "Decommission" (red icon + label), each a ghost button.
             Row(
               children: [
                 if (isPlaceable(_device)) ...[
                   Expanded(
-                    child: _Action(
+                    child: GhostButton(
                       icon: LucideIcons.mapPin,
                       label: 'Place on page',
-                      accent: statusColor('pending', look),
-                      onTap: () => showPlaceOnPageSheet(context, ref, _device),
+                      variant: GhostButtonVariant.teal,
+                      expand: true,
+                      onPressed: () =>
+                          showPlaceOnPageSheet(context, ref, _device),
                     ),
                   ),
                   const SizedBox(width: 8),
                 ],
                 Expanded(
-                  child: _Action(
+                  child: GhostButton(
                     icon: LucideIcons.printer,
                     label: 'Label',
-                    accent: look.accent,
-                    onTap: _openLabel,
+                    expand: true,
+                    onPressed: _openLabel,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _Action(
+                  child: GhostButton(
                     icon: LucideIcons.trash2,
                     label: 'Decommission',
-                    accent: look.accent2,
-                    onTap: _decommission,
+                    variant: GhostButtonVariant.danger,
+                    expand: true,
+                    onPressed: _decommission,
                   ),
                 ),
               ],
@@ -284,48 +290,6 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Action extends StatelessWidget {
-  const _Action({
-    required this.icon,
-    required this.label,
-    required this.accent,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color accent;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final look = context.look;
-    return GlassCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: accent),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: look.ink,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

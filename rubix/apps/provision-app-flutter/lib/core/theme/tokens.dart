@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 ///  1. **Invariant tokens** — the radius scale, spacing, glass fills, and the
 ///     fixed status colors (`fault`/`online`/`offline`). These never change
 ///     with the theme; read them directly anywhere.
-///  2. **The static baseline palette** (`primary`/`ink`/`surface`/… — the Grid
-///     default) — used ONLY where a runtime `Look` is unreachable: the Material
+///  2. **The static baseline palette** (`primary`/`ink`/`surface`/… — the DNA
+///     theme) — used ONLY where a runtime `Look` is unreachable: the Material
 ///     [ColorScheme] in `buildRubixTheme`, the `const` [RubixText] styles, and
 ///     a couple of provider-side fallbacks.
 ///
@@ -15,35 +15,36 @@ import 'package:flutter/material.dart';
 /// when the theme or live status changes. Don't reach for these palette
 /// constants in new feature code; reach for `context.look`.
 abstract final class RubixTokens {
-  // ── base ────────────────────────────────────────────────────────────────
-  static const obsidian = Color(0xFF07090B);
+  // ── base ── DNA kit: base #0B0F10, card #121819 ───────────────────────────
+  static const obsidian = Color(0xFF0B0F10);
 
-  static const surface = Color(0xFF0E1113);
-  static const surfaceLowest = Color(0xFF090B0D);
-  static const surfaceLow = Color(0xFF14181B);
-  static const surfaceBase = Color(0xFF181D20);
-  static const surfaceHigh = Color(0xFF222A2E);
+  static const surface = Color(0xFF121819); // "card"
+  static const surfaceLowest = Color(0xFF090C0D);
+  static const surfaceLow = Color(0xFF151B1C);
+  static const surfaceBase = Color(0xFF1A2123);
+  static const surfaceHigh = Color(0xFF232B2D);
 
   // ── ink (on-surface) ──────────────────────────────────────────────────────
   static const ink = Color(0xFFE7F0EF);
   static const inkVariant = Color(0xFFB9C7C6);
-  static const inkMuted = Color(0xFF7C8A8A);
+  static const inkMuted = Color(0xFF7E8888); // kit caption grey
 
-  // ── primary = electric teal (the "power on / live" accent) ────────────────
-  static const primary = Color(0xFF36E2C4);
-  static const primaryContainer = Color(0xFF1F7E6F);
-  static const primaryOn = Color(0xFF002019);
-  static const primaryDim = Color(0xFF2BC7AD);
+  // ── primary = DNA teal (the heading-accent + "live" accent) ───────────────
+  static const primary = Color(0xFF61A3AE); // DNA kit "teal"
+  static const primaryContainer = Color(0xFF2D6971);
+  static const primaryOn = Color(0xFF04181C);
+  static const primaryDim = Color(0xFF4497A2);
 
-  // ── secondary = alert amber (warning / attention) ─────────────────────────
-  static const coral = Color(0xFFFFC24B);
-  static const coralContainer = Color(0xFF7A3C00);
-  static const coralOn = Color(0xFF2A1700);
+  // ── secondary = DNA yellow (callout / underline / small badges) ───────────
+  static const coral = Color(0xFFFBB93E); // DNA kit "yellow"
+  static const coralContainer = Color(0xFF76360F);
+  static const coralOn = Color(0xFF241200);
 
-  // ── status colors — energy apps lean on these for live signalling ─────────
-  static const online = Color(0xFF36E2C4);
-  static const fault = Color(0xFFFF5A52);
-  static const offline = Color(0xFF7C8A8A);
+  // ── status colors — semantic dots (connected/warning/offline/idle) ────────
+  static const online = Color(0xFF5DCAA5); // kit "green" · connected
+  static const fault = Color(0xFFE24B4A); // kit "red" · offline/alarm
+  static const warning = Color(0xFFC9A24A); // kit "amber" · warning
+  static const offline = Color(0xFF7E8888); // kit grey · idle
 
   // ── radii (rem → logical px, 1rem = 16) ──────────────────────────────────
   static const radiusSm = 4.0;
@@ -64,11 +65,12 @@ abstract final class RubixTokens {
 /// bottom sheet/toast share one source of truth (the React `@utility glass`
 /// and `glass-strong`).
 abstract final class Glass {
+  // DNA kit: "Glass surface · 6% fill · 12px blur".
   static const fill = Color(0x0FFFFFFF); // rgba(255,255,255,0.06)
   static const border = Color(0x1FFFFFFF); // rgba(255,255,255,0.12)
-  static const blur = 24.0;
+  static const blur = 12.0;
 
-  static const strongFill = Color(0xB80E1113); // rgba(14,17,19,0.72)
+  static const strongFill = Color(0xB8121819); // card @ 0.72
   static const strongBorder = Color(0x1AFFFFFF); // rgba(255,255,255,0.10)
-  static const strongBlur = 28.0;
+  static const strongBlur = 16.0;
 }

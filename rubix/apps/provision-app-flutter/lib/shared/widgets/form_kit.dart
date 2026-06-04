@@ -187,10 +187,11 @@ class GlassToggle extends StatelessWidget {
         onTap: onToggle,
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
+          // DNA kit spec: track 36×20, 16px thumb, 2px inset.
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 44,
-            height: 24,
+            width: 36,
+            height: 20,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: on ? trackOn : const Color(0x24FFFFFF),
@@ -200,8 +201,8 @@ class GlassToggle extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
-              width: 20,
-              height: 20,
+              width: 16,
+              height: 16,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
