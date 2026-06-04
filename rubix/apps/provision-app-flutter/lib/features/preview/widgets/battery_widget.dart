@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
 /// Battery level — horizontal fill bar + icon. Turns amber when low (≤20%).
 /// Ported from the React `BatteryWidget`.
@@ -20,6 +21,7 @@ class BatteryWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     final pct = value.clamp(0.0, 100.0);
     final low = pct <= 20;
     final color = low ? _amber : accent;
@@ -45,10 +47,10 @@ class BatteryWidget extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 6),
               child: Text(
                 '${pct.round()}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: RubixTokens.ink,
+                  color: look.ink,
                 ),
               ),
             ),

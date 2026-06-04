@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
 
@@ -33,19 +34,20 @@ class AsyncListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     switch (phase) {
       case ListPhase.data:
         return child;
       case ListPhase.loading:
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 48),
           child: Center(
             child: SizedBox(
               width: 22,
               height: 22,
               child: CircularProgressIndicator(
                 strokeWidth: 2.4,
-                color: RubixTokens.primary,
+                color: look.accent,
               ),
             ),
           ),
@@ -53,7 +55,7 @@ class AsyncListView extends StatelessWidget {
       case ListPhase.empty:
         return _Panel(
           icon: emptyIcon,
-          color: RubixTokens.inkMuted,
+          color: look.inkMuted,
           text: emptyText,
         );
       case ListPhase.error:
@@ -82,6 +84,7 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: GlassSurface(
@@ -94,7 +97,7 @@ class _Panel extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: RubixTokens.inkVariant, fontSize: 14),
+              style: TextStyle(color: look.inkSoft, fontSize: 14),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
@@ -109,16 +112,16 @@ class _Panel extends StatelessWidget {
                     border:
                         Border.all(color: Colors.white.withValues(alpha: 0.15)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(LucideIcons.refreshCw,
-                          size: 16, color: RubixTokens.ink),
-                      SizedBox(width: 8),
+                          size: 16, color: look.ink),
+                      const SizedBox(width: 8),
                       Text(
                         'Retry',
                         style: TextStyle(
-                          color: RubixTokens.ink,
+                          color: look.ink,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),

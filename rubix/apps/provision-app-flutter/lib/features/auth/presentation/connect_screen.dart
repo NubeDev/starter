@@ -5,6 +5,7 @@ import 'package:provision_app/core/network/network_providers.dart';
 import 'package:provision_app/core/network/ping_result.dart';
 import 'package:provision_app/core/network/tenant.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/auth/data/auth_controller.dart';
 import 'package:provision_app/shared/widgets/bottom_sheet.dart';
@@ -157,18 +158,18 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                   borderRadius: BorderRadius.circular(RubixTokens.radiusLg),
                   boxShadow: GlassShadow.glow(look.themeAccent),
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.scanLine,
                   size: 32,
-                  color: RubixTokens.primaryOn,
+                  color: look.accentOn,
                 ),
               ),
               const SizedBox(height: 16),
               const Text('Rubix Provision', style: RubixText.headlineMobile),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Scan a device. Place it. Done.',
-                style: TextStyle(color: RubixTokens.inkVariant, fontSize: 14),
+                style: TextStyle(color: look.inkSoft, fontSize: 14),
               ),
               const SizedBox(height: 32),
 
@@ -182,8 +183,8 @@ class _ConnectScreenState extends ConsumerState<ConnectScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(LucideIcons.plug,
-                            size: 16, color: RubixTokens.inkMuted),
+                        Icon(LucideIcons.plug,
+                            size: 16, color: look.inkMuted),
                         const SizedBox(width: 8),
                         Text('BROWSER · DIRECT REST', style: RubixText.label),
                       ],
@@ -263,6 +264,7 @@ class _PingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GestureDetector(
       onTap: pinging ? null : onTap,
       child: MouseRegion(
@@ -279,20 +281,20 @@ class _PingButton extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (pinging)
-                  const SizedBox(
+                  SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: RubixTokens.ink),
+                        strokeWidth: 2, color: look.ink),
                   )
                 else
-                  const Icon(LucideIcons.wifi,
-                      size: 16, color: RubixTokens.ink),
+                  Icon(LucideIcons.wifi,
+                      size: 16, color: look.ink),
                 const SizedBox(width: 8),
                 Text(
                   pinging ? 'Pinging…' : 'Ping agent',
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -353,12 +355,13 @@ class _TenantTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: RubixTokens.primary),
+          Icon(icon, size: 20, color: look.accent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -367,24 +370,24 @@ class _TenantTile extends StatelessWidget {
                 Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   sub,
-                  style: const TextStyle(
-                    color: RubixTokens.inkMuted,
+                  style: TextStyle(
+                    color: look.inkMuted,
                     fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(LucideIcons.chevronRight,
-              size: 18, color: RubixTokens.inkMuted),
+          Icon(LucideIcons.chevronRight,
+              size: 18, color: look.inkMuted),
         ],
       ),
     );

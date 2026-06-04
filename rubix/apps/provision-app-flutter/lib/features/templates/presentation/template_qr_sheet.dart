@@ -126,16 +126,16 @@ class _TemplateQrBodyState extends ConsumerState<_TemplateQrBody> {
             ),
           )
         else
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24),
             child: Row(
               children: [
-                Icon(LucideIcons.qrCode, size: 16, color: RubixTokens.inkMuted),
-                SizedBox(width: 8),
+                Icon(LucideIcons.qrCode, size: 16, color: look.inkMuted),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Enter or mint an ID to generate the QR.',
-                    style: TextStyle(color: RubixTokens.inkMuted, fontSize: 14),
+                    style: TextStyle(color: look.inkMuted, fontSize: 14),
                   ),
                 ),
               ],

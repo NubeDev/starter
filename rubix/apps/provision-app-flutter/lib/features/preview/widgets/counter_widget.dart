@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
 /// Monotonic counter (pulses, kWh ticks, etc.) — monospace numeric readout with
 /// thousands separators. Ported from the React `CounterWidget`.
@@ -32,6 +33,7 @@ class CounterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -49,13 +51,13 @@ class CounterWidget extends StatelessWidget {
           children: [
             Text(
               _grouped(value),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 28,
                 height: 1,
                 fontWeight: FontWeight.w700,
-                fontFeatures: [FontFeature.tabularFigures()],
-                color: RubixTokens.ink,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: look.ink,
               ),
             ),
             if (unit != null)
@@ -63,10 +65,10 @@ class CounterWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 4),
                 child: Text(
                   unit!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: RubixTokens.inkMuted,
+                    color: look.inkMuted,
                   ),
                 ),
               ),

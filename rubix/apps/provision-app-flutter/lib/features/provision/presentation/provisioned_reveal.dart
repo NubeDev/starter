@@ -153,14 +153,14 @@ class _ProvisionedRevealState extends ConsumerState<ProvisionedReveal>
                     ),
                     if (pending) ...[
                       const SizedBox(height: 16),
-                      const SizedBox(
+                      SizedBox(
                         width: 260,
                         child: Text(
                           'Not on a dashboard yet — place it on a page '
                           'anytime from Devices.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: RubixTokens.inkMuted,
+                            color: look.inkMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -173,8 +173,8 @@ class _ProvisionedRevealState extends ConsumerState<ProvisionedReveal>
                         child: Text(
                           result.warnings.join(' · '),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: RubixTokens.coral,
+                          style: TextStyle(
+                            color: look.accent2,
                             fontSize: 12,
                           ),
                         ),

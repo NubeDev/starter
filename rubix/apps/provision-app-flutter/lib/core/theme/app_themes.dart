@@ -18,8 +18,11 @@ class AppTheme {
     required this.base,
     required this.accent,
     required this.accent2,
+    required this.accentOn,
+    required this.accent2On,
     required this.ink,
     required this.inkSoft,
+    required this.inkMuted,
     required this.gradient,
     required this.radius,
     required this.glowAlpha,
@@ -39,11 +42,20 @@ class AppTheme {
   /// secondary accent
   final Color accent2;
 
+  /// foreground on top of [accent] (e.g. dark text on a teal button)
+  final Color accentOn;
+
+  /// foreground on top of [accent2]
+  final Color accent2On;
+
   /// headline text tint
   final Color ink;
 
   /// body text tint
   final Color inkSoft;
+
+  /// muted text tint — labels, captions, inactive icons
+  final Color inkMuted;
 
   /// three radial-gradient stops = the ambient base look
   final List<RadialWash> gradient;
@@ -82,8 +94,11 @@ const themes = <ThemeKey, AppTheme>{
     base: Color(0xFF07090B),
     accent: Color(0xFF36E2C4),
     accent2: Color(0xFFFFC24B),
+    accentOn: Color(0xFF002019),
+    accent2On: Color(0xFF2A1700),
     ink: Color(0xFFE7F0EF),
     inkSoft: Color(0xFFB9C7C6),
+    inkMuted: Color(0xFF7C8A8A),
     gradient: [
       RadialWash(
         color: Color(0x3336E2C4), // rgba(54,226,196,0.20)
@@ -112,8 +127,11 @@ const themes = <ThemeKey, AppTheme>{
     base: Color(0xFF0C0A06),
     accent: Color(0xFFFFC24B),
     accent2: Color(0xFFFF8F5E),
+    accentOn: Color(0xFF2A1700),
+    accent2On: Color(0xFF2A1100),
     ink: Color(0xFFFFF3DA),
     inkSoft: Color(0xFFE7D6B4),
+    inkMuted: Color(0xFF9A8C6E),
     gradient: [
       RadialWash(
         color: Color(0x47FFC24B), // 0.28
@@ -142,8 +160,11 @@ const themes = <ThemeKey, AppTheme>{
     base: Color(0xFF070A10),
     accent: Color(0xFF8FB6FF),
     accent2: Color(0xFF36E2C4),
+    accentOn: Color(0xFF06183A),
+    accent2On: Color(0xFF002019),
     ink: Color(0xFFE3ECFF),
     inkSoft: Color(0xFFBCC8E6),
+    inkMuted: Color(0xFF7E89A8),
     gradient: [
       RadialWash(
         color: Color(0x3D5A82D2), // rgba(90,130,210,0.24)
@@ -172,8 +193,11 @@ const themes = <ThemeKey, AppTheme>{
     base: Color(0xFF0A0B0C),
     accent: Color(0xFF9FB0B8),
     accent2: Color(0xFFFFC24B),
+    accentOn: Color(0xFF11171A),
+    accent2On: Color(0xFF2A1700),
     ink: Color(0xFFE9EEF0),
     inkSoft: Color(0xFFBCC6CA),
+    inkMuted: Color(0xFF7E888C),
     gradient: [
       RadialWash(
         color: Color(0x299FB0B8), // 0.16

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
@@ -163,10 +164,10 @@ class _ScannerState extends ConsumerState<Scanner>
                       children: [
                         Icon(LucideIcons.camera, size: 14, color: look.accent),
                         const SizedBox(width: 6),
-                        const Text(
+                        Text(
                           'Scanning',
                           style: TextStyle(
-                            color: RubixTokens.ink,
+                            color: look.ink,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -188,17 +189,17 @@ class _ScannerState extends ConsumerState<Scanner>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
                     Icon(
                       LucideIcons.keyboard,
                       size: 16,
-                      color: RubixTokens.inkMuted,
+                      color: look.inkMuted,
                     ),
-                    SizedBox(width: 8),
-                    Text('Or paste / scan a code', style: RubixText.label),
+                    const SizedBox(width: 8),
+                    const Text('Or paste / scan a code', style: RubixText.label),
                   ],
                 ),
               ),
@@ -242,27 +243,28 @@ class _CameraError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             LucideIcons.cameraOff,
             size: 32,
-            color: RubixTokens.inkMuted,
+            color: look.inkMuted,
           ),
           const SizedBox(height: 12),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: RubixTokens.inkMuted, fontSize: 14),
+            style: TextStyle(color: look.inkMuted, fontSize: 14),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Use manual entry below.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: RubixTokens.inkMuted, fontSize: 12),
+            style: TextStyle(color: look.inkMuted, fontSize: 12),
           ),
         ],
       ),

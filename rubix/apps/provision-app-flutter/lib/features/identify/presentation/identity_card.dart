@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
 
@@ -46,8 +47,8 @@ class IdentityCard extends ConsumerWidget {
                       t.displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: RubixTokens.ink,
+                      style: TextStyle(
+                        color: look.ink,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -56,8 +57,8 @@ class IdentityCard extends ConsumerWidget {
                       identity.model,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: RubixTokens.inkVariant,
+                      style: TextStyle(
+                        color: look.inkSoft,
                         fontSize: 14,
                       ),
                     ),
@@ -96,8 +97,8 @@ class IdentityCard extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         p.name,
-                        style: const TextStyle(
-                          color: RubixTokens.ink,
+                        style: TextStyle(
+                          color: look.ink,
                           fontSize: 14,
                         ),
                       ),
@@ -120,6 +121,7 @@ class _Meta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -129,12 +131,12 @@ class _Meta extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: RubixTokens.inkVariant),
+          Icon(icon, size: 14, color: look.inkSoft),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              color: RubixTokens.inkVariant,
+            style: TextStyle(
+              color: look.inkSoft,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),

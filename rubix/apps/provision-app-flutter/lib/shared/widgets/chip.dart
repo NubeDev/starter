@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
 
 /// A pill toggle chip — ported from the React `Chip`. Filled with the primary
@@ -18,6 +18,7 @@ class GlassChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Pressable(
       onTap: onTap,
       scale: 0.94,
@@ -26,13 +27,13 @@ class GlassChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? RubixTokens.primary : const Color(0x0FFFFFFF),
+          color: active ? look.accent : const Color(0x0FFFFFFF),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? RubixTokens.primaryOn : RubixTokens.inkVariant,
+            color: active ? look.accentOn : look.inkSoft,
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),

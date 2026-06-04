@@ -102,21 +102,21 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
             padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
             child: Row(
               children: [
-                const Icon(LucideIcons.building2,
-                    size: 16, color: RubixTokens.inkMuted),
+                Icon(LucideIcons.building2,
+                    size: 16, color: look.inkMuted),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _newSite,
                     onChanged: (_) => setState(() {}),
                     onSubmitted: (_) => _addSite(),
-                    style: const TextStyle(
-                        color: RubixTokens.ink, fontSize: 16),
-                    cursorColor: RubixTokens.primary,
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                        color: look.ink, fontSize: 16),
+                    cursorColor: look.accent,
+                    decoration: InputDecoration(
                       isDense: true,
                       hintText: 'New site name',
-                      hintStyle: TextStyle(color: RubixTokens.inkMuted),
+                      hintStyle: TextStyle(color: look.inkMuted),
                       border: InputBorder.none,
                     ),
                   ),
@@ -126,7 +126,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                   icon: _creating ? null : LucideIcons.plus,
                   loading: _creating,
                   background: look.accent,
-                  foreground: RubixTokens.primaryOn,
+                  foreground: look.accentOn,
                   enabled: _newSite.text.trim().isNotEmpty && !_creating,
                   semanticLabel: 'Create site',
                   onTap: _addSite,
@@ -222,8 +222,8 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
               Expanded(
                 child: Text(
                   widget.site.name,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -243,14 +243,14 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.mapPin,
-                        size: 16, color: RubixTokens.inkMuted),
+                    Icon(LucideIcons.mapPin,
+                        size: 16, color: look.inkMuted),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         l.name,
-                        style: const TextStyle(
-                            color: RubixTokens.ink, fontSize: 14),
+                        style: TextStyle(
+                            color: look.ink, fontSize: 14),
                       ),
                     ),
                   ],
@@ -266,13 +266,13 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
                     controller: _newLoc,
                     onChanged: (_) => setState(() {}),
                     onSubmitted: (_) => _addLoc(),
-                    style: const TextStyle(
-                        color: RubixTokens.ink, fontSize: 14),
-                    cursorColor: RubixTokens.primary,
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                        color: look.ink, fontSize: 14),
+                    cursorColor: look.accent,
+                    decoration: InputDecoration(
                       isDense: true,
                       hintText: '+ New location',
-                      hintStyle: TextStyle(color: RubixTokens.inkMuted),
+                      hintStyle: TextStyle(color: look.inkMuted),
                       border: InputBorder.none,
                     ),
                   ),
@@ -281,7 +281,7 @@ class _SiteNodeState extends ConsumerState<_SiteNode> {
                 _IconButton(
                   icon: LucideIcons.plus,
                   background: const Color(0x14FFFFFF),
-                  foreground: RubixTokens.ink,
+                  foreground: look.ink,
                   enabled: _newLoc.text.trim().isNotEmpty,
                   semanticLabel: 'Add location',
                   onTap: _addLoc,

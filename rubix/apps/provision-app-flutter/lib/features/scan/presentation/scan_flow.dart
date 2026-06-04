@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/identify/presentation/identity_card.dart';
 import 'package:provision_app/features/place/domain/placement.dart';
@@ -339,10 +340,10 @@ class _BackButton extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.06),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.arrowLeft,
               size: 20,
-              color: RubixTokens.inkVariant,
+              color: context.look.inkSoft,
             ),
           ),
         ),
@@ -356,20 +357,21 @@ class _DecodingHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    final look = context.look;
+    return Row(
       children: [
         SizedBox(
           width: 16,
           height: 16,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: RubixTokens.inkMuted,
+            color: look.inkMuted,
           ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Text(
           'Decoding…',
-          style: TextStyle(color: RubixTokens.inkMuted, fontSize: 14),
+          style: TextStyle(color: look.inkMuted, fontSize: 14),
         ),
       ],
     );
@@ -381,15 +383,16 @@ class _ScanHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    final look = context.look;
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(LucideIcons.scanLine, size: 14, color: RubixTokens.inkMuted),
-        SizedBox(width: 8),
+        Icon(LucideIcons.scanLine, size: 14, color: look.inkMuted),
+        const SizedBox(width: 8),
         Flexible(
           child: Text(
             'QR or Code128 · or paste a rubix://add URL',
-            style: TextStyle(color: RubixTokens.inkMuted, fontSize: 12),
+            style: TextStyle(color: look.inkMuted, fontSize: 12),
           ),
         ),
       ],
@@ -403,18 +406,19 @@ class _InfoHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(LucideIcons.info, size: 14, color: RubixTokens.inkMuted),
+          Icon(LucideIcons.info, size: 14, color: look.inkMuted),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: RubixTokens.inkMuted,
+              style: TextStyle(
+                color: look.inkMuted,
                 fontSize: 12,
               ),
             ),

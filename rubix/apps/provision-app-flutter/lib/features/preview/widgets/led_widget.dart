@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
 /// Status LED — a glowing dot for a boolean/discrete point (on/off, ok/fault).
 /// Ported from the React `LedWidget`.
@@ -19,6 +20,7 @@ class LedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     final color = on ? accent : _muted;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -45,10 +47,10 @@ class LedWidget extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           on ? 'On' : 'Off',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: RubixTokens.inkVariant,
+            color: look.inkSoft,
           ),
         ),
       ],

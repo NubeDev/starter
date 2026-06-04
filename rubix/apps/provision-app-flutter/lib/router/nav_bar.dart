@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/router/pages.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
@@ -144,6 +144,7 @@ class _NavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Pressable(
       onTap: onTap,
       scale: 0.88,
@@ -157,7 +158,7 @@ class _NavButton extends StatelessWidget {
             Icon(
               page.icon,
               size: 24,
-              color: active ? accent : RubixTokens.inkMuted,
+              color: active ? accent : look.inkMuted,
             ),
             if (active)
               Positioned(

@@ -5,6 +5,7 @@ import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/api/refresh.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/devices/domain/status_dot.dart';
 import 'package:provision_app/features/devices/presentation/place_on_page_sheet.dart';
@@ -79,10 +80,11 @@ class _DeviceDetailScreenState extends ConsumerState<DeviceDetailScreen> {
   }
 
   Future<void> _decommission() async {
+    final look = ref.read(lookProvider);
     final toast = ref.read(toastProvider.notifier);
     try {
       await ref.read(bcApiProvider).decommission([_device.deviceId]);
-      toast.show('Decommissioned', accent: RubixTokens.coral);
+      toast.show('Decommissioned', accent: look.accent2);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       toast.show(e.toString(), accent: RubixTokens.fault);
@@ -140,7 +142,7 @@ class _DeviceDetailScreenState extends ConsumerState<DeviceDetailScreen> {
                     child: _Action(
                       icon: LucideIcons.mapPin,
                       label: 'Place on page',
-                      accent: statusColor('pending'),
+                      accent: statusColor('pending', look),
                       onTap: () => showPlaceOnPageSheet(context, ref, _device),
                     ),
                   ),
@@ -159,7 +161,7 @@ class _DeviceDetailScreenState extends ConsumerState<DeviceDetailScreen> {
                   child: _Action(
                     icon: LucideIcons.trash2,
                     label: 'Decommission',
-                    accent: RubixTokens.coral,
+                    accent: look.accent2,
                     onTap: _decommission,
                   ),
                 ),
@@ -202,6 +204,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -216,8 +219,8 @@ class _Header extends StatelessWidget {
               color: Color(0x0FFFFFFF),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.arrowLeft,
-                size: 20, color: RubixTokens.inkVariant),
+            child: Icon(LucideIcons.arrowLeft,
+                size: 20, color: look.inkSoft),
           ),
         ),
         const SizedBox(width: 12),
@@ -247,8 +250,8 @@ class _Header extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(LucideIcons.pencil,
-                          size: 16, color: RubixTokens.inkMuted),
+                      Icon(LucideIcons.pencil,
+                          size: 16, color: look.inkMuted),
                     ],
                   ),
                 ),
@@ -259,7 +262,7 @@ class _Header extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: statusColor(device.status),
+                      color: statusColor(device.status, look),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -269,8 +272,8 @@ class _Header extends StatelessWidget {
                       '${device.template} · ${device.status}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: RubixTokens.inkVariant,
+                      style: TextStyle(
+                        color: look.inkSoft,
                         fontSize: 14,
                       ),
                     ),
@@ -300,6 +303,7 @@ class _Action extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassCard(
       onTap: onTap,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -313,8 +317,8 @@ class _Action extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: RubixTokens.ink,
+              style: TextStyle(
+                color: look.ink,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -341,6 +345,7 @@ class _PointCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassCard(
       child: Row(
         children: [
@@ -352,8 +357,8 @@ class _PointCard extends StatelessWidget {
                   point.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -361,8 +366,8 @@ class _PointCard extends StatelessWidget {
                   point.unit != null && point.unit!.isNotEmpty
                       ? '${point.widget} · ${point.unit}'
                       : point.widget,
-                  style: const TextStyle(
-                      color: RubixTokens.inkMuted, fontSize: 12),
+                  style: TextStyle(
+                      color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),

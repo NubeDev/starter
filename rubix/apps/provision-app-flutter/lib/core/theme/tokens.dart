@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// Grid Pulse design tokens — ported verbatim from the React app's
-/// `src/index.css` `@theme` block. Obsidian base, electric-teal primary,
-/// alert-amber secondary. These are the static palette constants; the live
-/// accent (which a device/connection status can override) is resolved per
-/// frame by the `look` provider, not here.
+/// Design-system primitives. Two kinds of value live here:
+///
+///  1. **Invariant tokens** — the radius scale, spacing, glass fills, and the
+///     fixed status colors (`fault`/`online`/`offline`). These never change
+///     with the theme; read them directly anywhere.
+///  2. **The static baseline palette** (`primary`/`ink`/`surface`/… — the Grid
+///     default) — used ONLY where a runtime `Look` is unreachable: the Material
+///     [ColorScheme] in `buildRubixTheme`, the `const` [RubixText] styles, and
+///     a couple of provider-side fallbacks.
+///
+/// EVERYTHING in the widget tree should read the *per-theme* palette from the
+/// `look` provider / `context.look` instead — that's the layer that re-skins
+/// when the theme or live status changes. Don't reach for these palette
+/// constants in new feature code; reach for `context.look`.
 abstract final class RubixTokens {
   // ── base ────────────────────────────────────────────────────────────────
   static const obsidian = Color(0xFF07090B);

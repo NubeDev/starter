@@ -6,6 +6,7 @@ import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/api/ids.dart';
 import 'package:provision_app/core/api/refresh.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/place/domain/placement.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
@@ -216,6 +217,7 @@ class _CreateSiteRowState extends State<_CreateSiteRow> {
   @override
   Widget build(BuildContext context) {
     final canCreate = _controller.text.trim().isNotEmpty && !_creating;
+    final look = context.look;
     return Row(
       children: [
         Expanded(
@@ -240,17 +242,17 @@ class _CreateSiteRowState extends State<_CreateSiteRow> {
                 borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
               ),
               child: _creating
-                  ? const Padding(
-                      padding: EdgeInsets.all(14),
+                  ? Padding(
+                      padding: const EdgeInsets.all(14),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: RubixTokens.primaryOn,
+                        color: look.accentOn,
                       ),
                     )
-                  : const Icon(
+                  : Icon(
                       LucideIcons.plus,
                       size: 20,
-                      color: RubixTokens.primaryOn,
+                      color: look.accentOn,
                     ),
             ),
           ),

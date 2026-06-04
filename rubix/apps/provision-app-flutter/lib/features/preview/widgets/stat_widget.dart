@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
 /// Big-number stat tile with a corner glow puddle — the GlanceTile pattern
 /// repurposed for a device reading. Ported from the React `StatWidget`.
@@ -21,6 +22,7 @@ class StatWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return ClipRect(
       child: Stack(
         children: [
@@ -48,20 +50,20 @@ class StatWidget extends StatelessWidget {
               Text.rich(
                 TextSpan(
                   text: '$value',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 30,
                     height: 1,
                     fontWeight: FontWeight.w800,
-                    color: RubixTokens.ink,
+                    color: look.ink,
                   ),
                   children: [
                     if (unit != null)
                       TextSpan(
                         text: ' $unit',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: RubixTokens.inkMuted,
+                          color: look.inkMuted,
                         ),
                       ),
                   ],

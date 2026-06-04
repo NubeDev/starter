@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
 
 /// Writable boolean point rendered as a switch (e.g. a relay/output).
@@ -26,6 +27,7 @@ class _ToggleWidgetState extends State<ToggleWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -36,10 +38,10 @@ class _ToggleWidgetState extends State<ToggleWidget> {
           children: [
             Text(
               _on ? 'On' : 'Off',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: RubixTokens.inkVariant,
+                color: look.inkSoft,
               ),
             ),
             GlassToggle(

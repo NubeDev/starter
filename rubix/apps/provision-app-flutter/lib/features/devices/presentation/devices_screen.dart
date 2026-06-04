@@ -5,6 +5,7 @@ import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/api/refresh.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/features/devices/domain/status_dot.dart';
 import 'package:provision_app/features/devices/presentation/device_detail_screen.dart';
 import 'package:provision_app/features/devices/presentation/place_on_page_sheet.dart';
@@ -87,6 +88,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       _load();
     }
 
+    final look = context.look;
     final filtered = _filtered;
 
     return SingleChildScrollView(
@@ -100,22 +102,23 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                const Icon(LucideIcons.search,
-                    size: 16, color: RubixTokens.inkMuted),
+                Icon(LucideIcons.search,
+                    size: 16, color: look.inkMuted),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _search,
                     onChanged: (v) => setState(() => _q = v),
-                    style: const TextStyle(
-                        color: RubixTokens.ink, fontSize: 16),
-                    cursorColor: RubixTokens.primary,
-                    decoration: const InputDecoration(
+                    style: TextStyle(
+                        color: look.ink, fontSize: 16),
+                    cursorColor: look.accent,
+                    decoration: InputDecoration(
                       isDense: true,
                       hintText: 'Search devices',
-                      hintStyle: TextStyle(color: RubixTokens.inkMuted),
+                      hintStyle: TextStyle(color: look.inkMuted),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
@@ -136,12 +139,12 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
                 ],
                 // All loaded but the search filtered everything out.
                 if (filtered.isEmpty && _rows.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'No matches.',
                       style: TextStyle(
-                          color: RubixTokens.inkMuted, fontSize: 14),
+                          color: look.inkMuted, fontSize: 14),
                     ),
                   ),
               ],
@@ -159,6 +162,7 @@ class _DeviceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final look = context.look;
     return GlassCard(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -174,8 +178,8 @@ class _DeviceCard extends ConsumerWidget {
               color: const Color(0x0FFFFFFF),
               borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
             ),
-            child: const Icon(LucideIcons.cpu,
-                size: 20, color: RubixTokens.inkVariant),
+            child: Icon(LucideIcons.cpu,
+                size: 20, color: look.inkSoft),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -186,8 +190,8 @@ class _DeviceCard extends ConsumerWidget {
                   device.name ?? device.deviceId,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -197,8 +201,8 @@ class _DeviceCard extends ConsumerWidget {
                       : device.template,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: RubixTokens.inkMuted, fontSize: 12),
+                  style: TextStyle(
+                      color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -212,13 +216,13 @@ class _DeviceCard extends ConsumerWidget {
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: statusColor(device.status),
+              color: statusColor(device.status, look),
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(LucideIcons.chevronRight,
-              size: 20, color: RubixTokens.inkMuted),
+          Icon(LucideIcons.chevronRight,
+              size: 20, color: look.inkMuted),
         ],
       ),
     );
@@ -231,7 +235,8 @@ class _PlacePill extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pending = statusColor('pending');
+    final look = context.look;
+    final pending = statusColor('pending', look);
     return Pressable(
       scale: 0.94,
       semanticLabel: 'Place on page',

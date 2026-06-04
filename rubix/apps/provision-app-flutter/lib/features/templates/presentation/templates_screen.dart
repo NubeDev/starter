@@ -76,8 +76,8 @@ class _TemplateCard extends ConsumerWidget {
               color: const Color(0x0FFFFFFF),
               borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
             ),
-            child: const Icon(LucideIcons.fileCode2,
-                size: 20, color: RubixTokens.inkVariant),
+            child: Icon(LucideIcons.fileCode2,
+                size: 20, color: look.inkSoft),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -88,8 +88,8 @@ class _TemplateCard extends ConsumerWidget {
                   t.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -97,8 +97,8 @@ class _TemplateCard extends ConsumerWidget {
                   '${t.category} · ${t.network} · v${t.version}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: RubixTokens.inkMuted, fontSize: 12),
+                  style: TextStyle(
+                      color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -119,8 +119,8 @@ class _TemplateCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Icon(LucideIcons.chevronRight,
-              size: 20, color: RubixTokens.inkMuted),
+          Icon(LucideIcons.chevronRight,
+              size: 20, color: look.inkMuted),
         ],
       ),
     );

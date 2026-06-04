@@ -5,6 +5,7 @@ import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/api/refresh.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/preview/widgets/widget_tile.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
@@ -275,21 +276,22 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassSurface(
       borderRadius: BorderRadius.circular(RubixTokens.radius2xl),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       child: Column(
         children: [
-          Icon(icon, size: 32, color: RubixTokens.inkMuted),
+          Icon(icon, size: 32, color: look.inkMuted),
           const SizedBox(height: 12),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 240),
             child: Text(
               text,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: RubixTokens.inkMuted,
+                color: look.inkMuted,
               ),
             ),
           ),
