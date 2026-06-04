@@ -96,26 +96,26 @@ const themes = <ThemeKey, AppTheme>{
     blurb: 'Teal · provision',
     icon: LucideIcons.activity,
     base: Color(0xFF0B0F10), // dark obsidian DNA base
-    accent: Color(0xFF4497A2), // Nube iO brand teal
-    accent2: Color(0xFFFBBD41), // Nube yellow callout
-    accentOn: Color(0xFF021416),
+    accent: Color(0xFF61A3AE), // DNA brand teal (muted)
+    accent2: Color(0xFFFBBD41), // yellow callout
+    accentOn: Color(0xFF04181C),
     accent2On: Color(0xFF241200),
     ink: Color(0xFFE7F0EF),
     inkSoft: Color(0xFFB9C7C6),
     inkMuted: Color(0xFF7E8888),
     gradient: [
       RadialWash(
-        color: Color(0x2E4497A2), // Nube-teal glow, top-right · ~0.18
+        color: Color(0x2E61A3AE), // teal glow, top-right · ~0.18
         alignment: Alignment(0.9, -1.0),
         radius: 0.95,
       ),
       RadialWash(
-        color: Color(0x244497A2), // Nube-teal glow, mid-right · ~0.14
+        color: Color(0x2461A3AE), // teal glow, mid-right · ~0.14
         alignment: Alignment(1.0, 0.3),
         radius: 0.8,
       ),
       RadialWash(
-        color: Color(0x2A2D6971), // deep-teal glow, bottom-left · ~0.16
+        color: Color(0x2A4497A2), // deep-teal glow, bottom-left · ~0.16
         alignment: Alignment(-1.1, 1.1),
         radius: 1.0,
       ),

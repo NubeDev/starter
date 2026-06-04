@@ -29,11 +29,12 @@ abstract final class RubixTokens {
   static const inkVariant = Color(0xFFB9C7C6);
   static const inkMuted = Color(0xFF7E8888); // kit caption grey
 
-  // ── primary = Nube iO brand teal (#4497A2 leaf), lifted for the dark base ──
-  static const primary = Color(0xFF4497A2); // Nube teal-500 ⭐ brand
-  static const primaryContainer = Color(0xFF295A61); // teal-800
-  static const primaryOn = Color(0xFF021416);
-  static const primaryDim = Color(0xFF61A3AE); // teal-400, lifted for dark bg
+  // ── primary = DNA brand teal — the MUTED #61A3AE (CLAUDE.md is the source of
+  //    truth for colour; #36E2C4 / #4497A2 were placeholders) ────────────────
+  static const primary = Color(0xFF61A3AE); // DNA brand teal ⭐
+  static const primaryContainer = Color(0xFF2D6971); // teal-700, deeper fill
+  static const primaryOn = Color(0xFF04181C);
+  static const primaryDim = Color(0xFF4497A2); // teal-500, dimmer pressed tint
 
   // ── secondary = Nube yellow callout (#FBBD41) ─────────────────────────────
   static const coral = Color(0xFFFBBD41); // Nube yellow-400
