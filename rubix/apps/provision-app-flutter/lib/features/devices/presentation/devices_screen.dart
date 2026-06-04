@@ -164,6 +164,9 @@ class _DeviceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final look = context.look;
     return GlassCard(
+      // Figma row proportions: 14px corner, 12/14/12 padding (left/right/v).
+      borderRadius: const BorderRadius.all(Radius.circular(14)),
+      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => DeviceDetailScreen(device: device),
@@ -176,10 +179,10 @@ class _DeviceCard extends ConsumerWidget {
             height: 40,
             decoration: BoxDecoration(
               color: const Color(0x0FFFFFFF),
-              borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
+              borderRadius: BorderRadius.circular(11),
             ),
             child: Icon(LucideIcons.cpu,
-                size: 20, color: look.inkSoft),
+                size: 18, color: look.inkSoft),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -192,6 +195,7 @@ class _DeviceCard extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: look.ink,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
