@@ -35,9 +35,9 @@ class _NavBarState extends State<NavBar> {
     final primary = primaryPages;
     final secondary = secondaryPages;
 
-    // Split the icons evenly around the center FAB so it stays centered.
-    final rightSlots = secondary.isNotEmpty ? 1 : 0;
-    final leftCount = ((primary.length + rightSlots) / 2).round();
+    // Split the primary icons evenly around the center FAB so it stays visually
+    // centered — independent of how many secondary (overflow) items exist.
+    final leftCount = primary.length ~/ 2;
     final left = primary.take(leftCount).toList();
     final right = primary.skip(leftCount).toList();
 
@@ -188,7 +188,7 @@ class _Fab extends StatelessWidget {
       child: Pressable(
         onTap: onTap,
         scale: 0.9,
-        semanticLabel: 'Scan a device',
+        semanticLabel: 'Add a device',
         child: Container(
           width: 56,
           height: 56,

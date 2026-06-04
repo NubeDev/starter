@@ -5,7 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 /// React `pages/registry.tsx`. The NavBar renders by mapping over [navPages];
 /// `secondary` pages live in the overflow rail. The branch order here MUST
 /// match the `StatefulShellBranch` order in the router.
-enum NavGroup { primary, secondary }
+enum NavGroup { primary, secondary, branchOnly }
 
 @immutable
 class NavPage {
@@ -23,9 +23,11 @@ class NavPage {
 }
 
 // Order MUST match the StatefulShellBranch order in app_router.dart and the
-// `_branchKeys` order. Home is the landing branch (index 0); Scan no longer
-// holds a dock slot — the center FAB is its fast action — so it lives in the
-// secondary/overflow group while staying a real branch.
+// `_branchKeys` order. Home is the landing branch (index 0). Scan is
+// `branchOnly`: a real router branch (so the center FAB and the Home cards can
+// navigate to it) but rendered in NEITHER the dock NOR the overflow rail — the
+// FAB is the single "add a device" affordance, so a separate Scan nav item
+// would just duplicate it.
 const navPages = <NavPage>[
   NavPage(
     route: '/home',
@@ -55,7 +57,7 @@ const navPages = <NavPage>[
     route: '/scan',
     label: 'Scan',
     icon: LucideIcons.scanLine,
-    group: NavGroup.secondary,
+    group: NavGroup.branchOnly,
   ),
   NavPage(
     route: '/templates',

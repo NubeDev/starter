@@ -44,7 +44,7 @@ class AppShell extends ConsumerWidget {
             activeRoute: activeRoute,
             accent: look.accent,
             onSelect: _goRoute,
-            onFab: () => _goRoute('/scan'), // Scan is the FAB action
+            onFab: () => _goRoute('/scan'), // FAB = add a device (opens scan)
           ),
           const ToastHost(),
         ],
