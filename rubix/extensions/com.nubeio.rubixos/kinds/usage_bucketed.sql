@@ -8,48 +8,34 @@
 --
 -- `point_uuids` is a comma-separated string — the warehouse
 -- template bridge binds JSON arrays as TEXT, so we split with
--- `string_to_array`. Requires the histories hypertable created by
--- `scripts/load-dump.sh` for `time_bucket()` to use chunk pruning.
+-- `string_to_array`.
 --
--- Fast path: when bucket='1 day' the query reads the
--- `com_nubeio_rubixos__usage_daily_cagg` continuous aggregate
--- instead of the 164M-row raw hypertable. The host's average is
--- reconstructed as a sample-count-weighted mean of the per-point
--- per-day averages, which is mathematically identical to
--- `AVG(h.value) GROUP BY day, host_uuid` on the raw table.
--- Install the CAGG via `scripts/install-caggs.sh` (see DB.md §5.1).
--- Sub-day buckets ('15 minutes' / '1 hour' / '6 hours') keep the
--- raw path — the UNION ALL guard `$bucket = '1 day'` lets PG prune
--- the dead branch at plan time (Result with One-Time Filter).
-SELECT bucket, host_uuid, avg_value, sample_count
-FROM (
-    -- Fast path: bucket = '1 day' → CAGG
-    SELECT c.bucket,
-           c.host_uuid,
-           (SUM(c.avg_value * c.sample_count)
-              / NULLIF(SUM(c.sample_count), 0))::float8 AS avg_value,
-           SUM(c.sample_count)::int8                    AS sample_count
-    FROM   com_nubeio_rubixos__usage_daily_cagg c
-    WHERE  $bucket = '1 day'
-      AND  c.tenant_id  = $caller_tenant_id
-      AND  c.point_uuid = ANY (string_to_array($point_uuids, ','))
-      AND  c.bucket >= $from::timestamptz
-      AND  c.bucket <  $to::timestamptz
-    GROUP  BY c.bucket, c.host_uuid
-
-    UNION ALL
-
-    -- Slow path: sub-day buckets → raw hypertable
-    SELECT time_bucket($bucket::interval, h."timestamp") AS bucket,
-           h.host_uuid,
-           AVG(h.value)::float8 AS avg_value,
-           COUNT(*)             AS sample_count
-    FROM   com_nubeio_rubixos__histories h
-    WHERE  $bucket <> '1 day'
-      AND  h.tenant_id  = $caller_tenant_id
-      AND  h.point_uuid = ANY (string_to_array($point_uuids, ','))
-      AND  h."timestamp" >= $from::timestamptz
-      AND  h."timestamp" <  $to::timestamptz
-    GROUP  BY time_bucket($bucket::interval, h."timestamp"), h.host_uuid
-) x
+-- Reads the `com_nubeio_rubixos__histories_1m` continuous aggregate
+-- (1-minute pre-rollup) and re-buckets it to `$bucket`, instead of
+-- scanning the raw ~955M-row hypertable. The cagg's
+-- `(tenant_id, point_uuid, bucket)` index turns the point-set +
+-- window filter into a real index seek; measured ~5x faster + ~4x
+-- less planning than the raw path for a 5000-point / 7-day window
+-- on the adopted DB (see PRODUCTION.md). The host's per-bucket
+-- average is reconstructed as a sample-count-weighted mean of the
+-- per-point per-minute averages — mathematically identical to
+-- `AVG(value)` over the raw rows in that bucket.
+--
+-- All dashboard bucket widths (15 minutes / 1 hour / 6 hours /
+-- 1 day) are ≥ the cagg's 1-minute grain, so re-bucketing is exact.
+-- The cagg is installed + refreshed by `scripts/post-load.sql`
+-- (or, no-`psql`, `examples/refresh_histories_1m.rs`); if it is
+-- missing the template errors with "relation does not exist" rather
+-- than silently scanning raw — the correct, visible failure mode.
+SELECT time_bucket($bucket::interval, c.bucket) AS bucket,
+       c.host_uuid,
+       (SUM(c.avg_value * c.sample_count)
+          / NULLIF(SUM(c.sample_count), 0))::float8 AS avg_value,
+       SUM(c.sample_count)::int8                    AS sample_count
+FROM   com_nubeio_rubixos__histories_1m c
+WHERE  c.tenant_id  = $caller_tenant_id
+  AND  c.point_uuid = ANY (string_to_array($point_uuids, ','))
+  AND  c.bucket >= $from::timestamptz
+  AND  c.bucket <  $to::timestamptz
+GROUP  BY time_bucket($bucket::interval, c.bucket), c.host_uuid
 ORDER  BY bucket, host_uuid;

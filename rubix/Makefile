@@ -27,13 +27,36 @@ RUBIX_CONFIG   ?= rubix/dev/agent.toml
 RUBIX_CH_URL   ?= http://127.0.0.1:8124
 CH_EXPLORER_URL ?= http://127.0.0.1:8124
 
+# Set REMOTE=1 to run the LOCAL agent against the REMOTE database
+# (rubix/dev/agent.remote.toml) instead of the local docker Postgres.
+# The agent process still runs on this machine — only its database is
+# remote. The DB password is read from the age secrets store via
+# `database_password_secret` in that config, so nothing secret is
+# passed on the command line. Store it once:
+#   cargo run -p rubix-agent --bin rubix-admin -- \
+#       secrets set db:password '<pwd>' --path ~/.config/rubix/secrets
+#
+# With REMOTE=1, `make start` / `make restart` skip `deps-up` +
+# `bootstrap` (no local Postgres) and free port 8088 first, so the
+# remote-DB agent replaces any local one. Works the same on a plain
+# `make agent`. Combine with CONSOLE=1 as usual.
+REMOTE ?= 0
+ifeq ($(REMOTE),1)
+RUBIX_CONFIG  := rubix/dev/agent.remote.toml
+RUBIX_DSN     :=
+START_PREREQS := stop agent wait-agent frontend
+else
+START_PREREQS := bootstrap agent wait-agent frontend
+endif
+
 .PHONY: build start restart clean stop deps-up deps-down bootstrap agent wait-agent frontend help warehouse-seed warehouse-explorer
 
 help:
 	@echo "rubix make targets:"
 	@echo "  make build    — build backend + frontend, pull docker images"
 	@echo "  make start    — bring up Postgres + ClickHouse, bootstrap, run agent + frontend"
-	@echo "  make restart  — stop + start"
+	@echo "  make start REMOTE=1 — run the local agent against the REMOTE DB (no local Postgres)"
+	@echo "  make restart  — stop + start  (add REMOTE=1 for the remote DB)"
 	@echo "  make restart-console — restart with tokio-console layer (port 6669)"
 	@echo "  make watchdog — run external liveness supervisor (foreground)"
 	@echo "  make watchdog-bg / watchdog-stop — daemonised variants"
@@ -144,7 +167,7 @@ frontend:
 	    echo "    pid=$$!"; \
 	fi
 
-start: bootstrap agent wait-agent frontend
+start: $(START_PREREQS)
 	@WIFI_IP=$$(ip -4 addr show scope global | awk '/inet /{print $$2}' | grep -v '172\.' | head -1 | cut -d/ -f1); \
 	echo ""; \
 	echo "rubix is starting:"; \

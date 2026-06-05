@@ -246,11 +246,79 @@ fn compile(spec: &TemplateSpec, body: &str) -> Result<Plan, String> {
             binds.push(slot.clone());
             binds.len()
         });
-        out.push('$');
-        out.push_str(&pos.to_string());
+        match slot {
+            // Honor the super-admin tenant sentinel `'*'`. Sessions for
+            // Admin users bind `caller_tenant_id = '*'` (see
+            // `starter-authz` instances.rs and `bootstrap_user`), which
+            // is meant to surface *all* tenants' resources to them. The
+            // contributed-template SQL uniformly filters
+            // `WHERE tenant_id = $caller_tenant_id`, so a literal `'*'`
+            // bind would match no rows (data is stamped with concrete
+            // tenant ids like `'system'`). Expand the placeholder to a
+            // wildcard-aware expression so `tenant_id = <expr>` is:
+            //   * super-admin (`$pos = '*'`) → `tenant_id = tenant_id`
+            //     (always true: every tenant's rows are visible), else
+            //   * a normal caller → `tenant_id = $pos` (scoped as before).
+            // `$pos` is bound once and referenced twice — same value.
+            //
+            // The THEN branch must equal the *left-hand column* of the
+            // `<col> = $caller_tenant_id` comparison so the row always
+            // matches — but `<col>` may be alias-qualified (`p.tenant_id`)
+            // and a bare `tenant_id` would be ambiguous across JOINs.
+            // So recover the LHS column we just emitted into `out`
+            // (the token immediately before the trailing `=`) and reuse
+            // it. If the placeholder isn't used in that canonical
+            // comparison shape, fall back to the bare positional bind
+            // (scopes a concrete tenant; a `'*'` caller then simply sees
+            // nothing for that odd site rather than erroring).
+            BindSlot::CallerTenantId => match lhs_column_before_eq(&out) {
+                Some(col) => out.push_str(&format!(
+                    "(CASE WHEN ${pos} = '*' THEN {col} ELSE ${pos} END)"
+                )),
+                None => {
+                    out.push('$');
+                    out.push_str(&pos.to_string());
+                }
+            },
+            BindSlot::Param(_) => {
+                out.push('$');
+                out.push_str(&pos.to_string());
+            }
+        }
         i = j;
     }
     Ok(Plan { sql: out, binds })
+}
+
+/// Given the SQL emitted so far, if it ends with `<column> =`
+/// (optionally alias-qualified, e.g. `p.tenant_id =`), return that
+/// `<column>` token. Used to expand `$caller_tenant_id` into a
+/// wildcard-aware `CASE` whose match-all branch reuses the *exact*
+/// left-hand column — avoiding an ambiguous bare `tenant_id` when the
+/// query JOINs several tables that each have a `tenant_id`.
+///
+/// Returns `None` for any other shape, so the caller falls back to a
+/// plain positional bind.
+fn lhs_column_before_eq(emitted: &str) -> Option<&str> {
+    let s = emitted.trim_end();
+    let s = s.strip_suffix('=')?;
+    // Reject `<=`, `>=`, `!=`, `<>` — only a plain equality binds the
+    // caller tenant in the templates we accept.
+    if s.ends_with(['<', '>', '!']) {
+        return None;
+    }
+    let s = s.trim_end();
+    // The column token: trailing run of [A-Za-z0-9_.] (dotted-qualified
+    // identifier). Must start at a word boundary and be non-empty.
+    let col_start = s
+        .rfind(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '.'))
+        .map(|idx| idx + 1)
+        .unwrap_or(0);
+    let col = &s[col_start..];
+    if col.is_empty() || !col.ends_with("tenant_id") {
+        return None;
+    }
+    Some(col)
 }
 
 /// Pull the top-level `properties` key names out of a JSON-Schema
@@ -425,11 +493,58 @@ mod tests {
         );
         let p = compile(&s, s.sql.as_deref().unwrap()).unwrap();
         // `$a` first → $1, `$b` second → $2, `$a` reused → $1,
-        // `$caller_tenant_id` last → $3.
+        // `$caller_tenant_id` last → $3. Not in a `<col> = ` comparison
+        // here, so it falls back to a plain positional bind.
         assert_eq!(p.sql, "SELECT $1, $2, $1, $3");
         assert!(matches!(&p.binds[0], BindSlot::Param(s) if s == "a"));
         assert!(matches!(&p.binds[1], BindSlot::Param(s) if s == "b"));
         assert!(matches!(p.binds[2], BindSlot::CallerTenantId));
+    }
+
+    #[test]
+    fn compile_expands_caller_tenant_to_wildcard_aware_case() {
+        // A super-admin session binds `caller_tenant_id = '*'`; the
+        // compiled SQL must let `tenant_id = <expr>` match every row in
+        // that case while still scoping a concrete-tenant caller.
+        let s = spec("SELECT * FROM t WHERE tenant_id = $caller_tenant_id", json!({}));
+        let p = compile(&s, s.sql.as_deref().unwrap()).unwrap();
+        assert_eq!(
+            p.sql,
+            "SELECT * FROM t WHERE tenant_id = (CASE WHEN $1 = '*' THEN tenant_id ELSE $1 END)"
+        );
+        assert!(matches!(p.binds[0], BindSlot::CallerTenantId));
+    }
+
+    #[test]
+    fn compile_reuses_qualified_lhs_column_for_wildcard() {
+        // Alias-qualified `p.tenant_id = $caller_tenant_id` (as in the
+        // JOIN-heavy `meters_list`) must expand the match-all branch to
+        // `p.tenant_id`, NOT a bare `tenant_id` (which is ambiguous
+        // across the joined tables and errors at the DB).
+        let s = spec(
+            "SELECT 1 FROM a p JOIN b t ON t.x=p.x WHERE p.tenant_id = $caller_tenant_id",
+            json!({}),
+        );
+        let p = compile(&s, s.sql.as_deref().unwrap()).unwrap();
+        assert!(
+            p.sql
+                .contains("p.tenant_id = (CASE WHEN $1 = '*' THEN p.tenant_id ELSE $1 END)"),
+            "sql={}",
+            p.sql
+        );
+    }
+
+    #[test]
+    fn lhs_column_before_eq_matches_only_tenant_id_equality() {
+        assert_eq!(lhs_column_before_eq("WHERE p.tenant_id ="), Some("p.tenant_id"));
+        assert_eq!(lhs_column_before_eq("WHERE tenant_id ="), Some("tenant_id"));
+        // Not a tenant column → no wildcard expansion.
+        assert_eq!(lhs_column_before_eq("WHERE x ="), None);
+        // Comparison operators other than plain `=` are rejected.
+        assert_eq!(lhs_column_before_eq("WHERE a.tenant_id >="), None);
+        assert_eq!(lhs_column_before_eq("WHERE a.tenant_id !="), None);
+        // No comparison at all.
+        assert_eq!(lhs_column_before_eq("SELECT"), None);
     }
 
     #[test]
@@ -459,8 +574,14 @@ mod tests {
                     SELECT * FROM t WHERE tenant_id = $caller_tenant_id LIMIT $limit";
         let s = spec(body, json!({ "limit": { "type": "integer" } }));
         let p = compile(&s, body).unwrap();
-        // The real WHERE clause must use a numbered placeholder.
-        assert!(p.sql.contains("tenant_id = $1"), "sql={}", p.sql);
+        // The real WHERE clause must use the wildcard-aware caller-tenant
+        // expansion at position $1, and $limit as $2.
+        assert!(
+            p.sql
+                .contains("tenant_id = (CASE WHEN $1 = '*' THEN tenant_id ELSE $1 END)"),
+            "sql={}",
+            p.sql
+        );
         assert!(p.sql.contains("LIMIT $2"), "sql={}", p.sql);
         // Comment text preserved verbatim (still contains $limit).
         assert!(p.sql.contains("-- The host's note"));
@@ -472,6 +593,7 @@ mod tests {
         let s = spec(body, json!({}));
         let p = compile(&s, body).unwrap();
         assert!(p.sql.contains("/* note: $limit is a placeholder */"));
+        // Not a `<col> = ` comparison → plain positional bind.
         assert!(p.sql.ends_with("$1"));
     }
 

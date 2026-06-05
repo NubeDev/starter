@@ -161,6 +161,29 @@ struct StoredEntry {
 
 type TenantCache = MokaCache<String, StoredEntry>;
 
+/// Leadership claim for the single-flight gate. The first caller to
+/// miss on a cold key holds one of these for the duration of its load;
+/// its `Drop` removes the key from the in-flight registry and wakes
+/// every waiter — whether the load succeeded, returned empty, or
+/// errored (in which case waiters re-read, find nothing, and one of
+/// them becomes the next leader). Tying cleanup to `Drop` rather than
+/// an explicit call means a `?` early-return or panic in the loader
+/// can never strand waiters on a key that will never be notified.
+struct FlightGuard {
+    layer: CacheLayer,
+    key: String,
+}
+
+impl Drop for FlightGuard {
+    fn drop(&mut self) {
+        if let Ok(mut flights) = self.layer.inner.inflight.lock() {
+            if let Some(notify) = flights.remove(&self.key) {
+                notify.notify_waiters();
+            }
+        }
+    }
+}
+
 /// The cache layer. Cheap to clone — internally `Arc`-shared.
 #[derive(Clone)]
 pub struct CacheLayer {
@@ -177,6 +200,16 @@ struct Inner {
     tenants: Mutex<HashMap<String, TenantCache>>,
     stats: Arc<CacheStats>,
     per_spec: PerSpecStats,
+    /// Single-flight registry. Keyed by the **full** cache key, the
+    /// value is a `Notify` the leader (the first caller to miss on a
+    /// cold key) fires once its load has stored the value. Concurrent
+    /// callers for the same key find an existing entry, await the
+    /// `Notify`, then re-read the cache — collapsing an N-way
+    /// thundering herd into a single backing load. Without this, N
+    /// simultaneous identical dashboard queries each ran the loader
+    /// (each a full DB round-trip), which is exactly what overran the
+    /// supervisor health timeout under burst load.
+    inflight: Mutex<HashMap<String, Arc<tokio::sync::Notify>>>,
 }
 
 impl CacheLayer {
@@ -204,6 +237,7 @@ impl CacheLayer {
                 tenants: Mutex::new(HashMap::new()),
                 stats: Arc::new(CacheStats::new()),
                 per_spec: PerSpecStats::new(),
+                inflight: Mutex::new(HashMap::new()),
             }),
         }
     }
@@ -439,6 +473,13 @@ impl CacheLayer {
         let key = Self::full_key(spec.scope, caller, base_key);
         let per_spec = spec_id.map(|id| self.inner.per_spec.get_or_create(id));
 
+        // Set when this caller is the SWR refresher (served stale to
+        // someone else, now driving the background refresh). Such a
+        // caller must NOT be coalesced behind another in-flight load —
+        // its whole job is to refresh — so it skips the single-flight
+        // gate below and always runs its own load.
+        let mut is_swr_refresher = false;
+
         // Read path.
         if let Some(entry) = cache.get(&key).await {
             if self.inner.invalidator.tokens_match(&entry.snapshot) {
@@ -467,6 +508,15 @@ impl CacheLayer {
                     if let Some(s) = &per_spec {
                         s.record_hit();
                     }
+                    tracing::debug!(
+                        target: "starter_cache::access",
+                        decision = "hit",
+                        spec = spec_id.unwrap_or("-"),
+                        key = %key,
+                        age_ms = age.as_millis() as u64,
+                        empty = entry.is_empty,
+                        "cache hit (fresh)"
+                    );
                     return Ok(self.outcome_from(&entry));
                 } else if age < stale_limit {
                     // Inside SWR window or past TTL but inside
@@ -482,22 +532,140 @@ impl CacheLayer {
                             s.record_hit();
                         }
                         tracing::debug!(
-                            "starter-cache: SWR stale-serve for {key:?} (age={:?})",
-                            age
+                            target: "starter_cache::access",
+                            decision = "stale_serve",
+                            spec = spec_id.unwrap_or("-"),
+                            key = %key,
+                            age_ms = age.as_millis() as u64,
+                            "cache hit (SWR stale-serve; refresh deferred to next caller)"
                         );
                         return Ok(self.outcome_from(&entry));
                     }
                     // Marker already set — fall through to miss
                     // path. The current caller becomes the
                     // refresher.
+                    tracing::debug!(
+                        target: "starter_cache::access",
+                        decision = "swr_refresh",
+                        spec = spec_id.unwrap_or("-"),
+                        key = %key,
+                        age_ms = age.as_millis() as u64,
+                        "cache stale + already marked — this caller refreshes"
+                    );
+                    is_swr_refresher = true;
                     cache.invalidate(&key).await;
                 } else {
                     // Past max_stale — hard miss.
+                    tracing::debug!(
+                        target: "starter_cache::access",
+                        decision = "expired",
+                        spec = spec_id.unwrap_or("-"),
+                        key = %key,
+                        age_ms = age.as_millis() as u64,
+                        "cache miss (past max_stale)"
+                    );
                     cache.invalidate(&key).await;
                 }
             } else {
-                tracing::debug!("starter-cache: serving miss for {key:?} — stored snapshot stale");
+                tracing::debug!(
+                    target: "starter_cache::access",
+                    decision = "invalidated",
+                    spec = spec_id.unwrap_or("-"),
+                    key = %key,
+                    "cache miss (invalidation token moved — entry dropped)"
+                );
                 cache.invalidate(&key).await;
+            }
+        }
+
+        // ---- Single-flight gate ----
+        //
+        // A hard miss on a cold key. If another caller is already
+        // loading this exact key, don't pile on a second identical DB
+        // round-trip — wait for the leader to finish, then re-read the
+        // cache it just populated. This collapses an N-way thundering
+        // herd (e.g. the dashboard firing the same `histories_summary`
+        // four times at once) into a single backing load. SWR
+        // refreshers skip the gate (they exist to refresh).
+        //
+        // `flight_guard` is the leader's claim: held until this
+        // function returns (load + store done, or errored), at which
+        // point its Drop removes the flight entry and notifies waiters.
+        let mut _flight_guard: Option<FlightGuard> = None;
+        if !is_swr_refresher {
+            loop {
+                // Try to claim leadership for this key. Either return
+                // the existing in-flight `Notify` (someone else leads)
+                // or atomically install our own and lead.
+                let existing = match self.inner.inflight.lock() {
+                    Ok(mut flights) => match flights.get(&key) {
+                        Some(n) => Some(n.clone()),
+                        None => {
+                            flights.insert(key.clone(), Arc::new(tokio::sync::Notify::new()));
+                            None
+                        }
+                    },
+                    // Poisoned lock: degrade to no-coalescing (lead).
+                    Err(_) => None,
+                };
+                match existing {
+                    None => {
+                        // We are the leader. Install the guard and fall
+                        // through to the load below.
+                        _flight_guard = Some(FlightGuard {
+                            layer: self.clone(),
+                            key: key.clone(),
+                        });
+                        break;
+                    }
+                    Some(notify) => {
+                        // Someone else is loading. Wait for them, then
+                        // re-read the cache. If the leader populated it,
+                        // we serve their result with zero extra DB work.
+                        tracing::debug!(
+                            target: "starter_cache::access",
+                            decision = "coalesced_wait",
+                            spec = spec_id.unwrap_or("-"),
+                            key = %key,
+                            "waiting on in-flight load (single-flight)"
+                        );
+                        notify.notified().await;
+                        if let Some(entry) = cache.get(&key).await {
+                            if self.inner.invalidator.tokens_match(&entry.snapshot) {
+                                let age = self
+                                    .inner
+                                    .clock
+                                    .now()
+                                    .saturating_duration_since(entry.loaded_at);
+                                let fresh_until = if entry.is_empty {
+                                    spec.empty_ttl
+                                } else {
+                                    spec.ttl
+                                };
+                                if age < fresh_until {
+                                    self.inner.stats.record_hit();
+                                    if let Some(s) = &per_spec {
+                                        s.record_hit();
+                                    }
+                                    tracing::debug!(
+                                        target: "starter_cache::access",
+                                        decision = "coalesced_hit",
+                                        spec = spec_id.unwrap_or("-"),
+                                        key = %key,
+                                        age_ms = age.as_millis() as u64,
+                                        "served by leader's load (single-flight)"
+                                    );
+                                    return Ok(self.outcome_from(&entry));
+                                }
+                            }
+                        }
+                        // Leader finished but left nothing usable (load
+                        // errored, non-cached empty, or invalidated
+                        // mid-flight). Retry the claim loop; we may now
+                        // become the leader ourselves.
+                        continue;
+                    }
+                }
             }
         }
 
@@ -525,6 +693,9 @@ impl CacheLayer {
             }
         };
 
+        // `key` is consumed by `cache.insert` below; keep a copy for
+        // the access logs on both the store-dropped and miss paths.
+        let log_key = key.clone();
         if let Some(value) = store_bytes {
             // Race check.
             if self.inner.invalidator.tokens_match(&snap_before) {
@@ -542,8 +713,11 @@ impl CacheLayer {
                     .await;
             } else {
                 tracing::debug!(
-                    "starter-cache: dropping store — \
-                     invalidation token moved during load"
+                    target: "starter_cache::access",
+                    decision = "store_dropped",
+                    spec = spec_id.unwrap_or("-"),
+                    key = %log_key,
+                    "store dropped — invalidation token moved during load"
                 );
             }
         }
@@ -552,6 +726,15 @@ impl CacheLayer {
         if let Some(s) = &per_spec {
             s.record_miss(load_duration);
         }
+        tracing::debug!(
+            target: "starter_cache::access",
+            decision = "miss",
+            spec = spec_id.unwrap_or("-"),
+            key = %log_key,
+            load_ms = load_duration.as_millis() as u64,
+            empty = is_empty,
+            "cache miss — loaded from source"
+        );
         Ok(outcome)
     }
 
@@ -610,6 +793,15 @@ impl CacheLayer {
                 let age = now.saturating_duration_since(entry.loaded_at);
                 if age < spec.ttl {
                     self.inner.stats.record_hit();
+                    tracing::debug!(
+                        target: "starter_cache::access",
+                        decision = "hit",
+                        layer = "outer",
+                        spec = spec_id.unwrap_or("-"),
+                        key = %outer_key,
+                        age_ms = age.as_millis() as u64,
+                        "cache hit (two-layer outer/rendered)"
+                    );
                     return Ok(entry.value.clone());
                 }
                 outer_cache.invalidate(&outer_key).await;
@@ -766,6 +958,14 @@ impl CacheLayer {
                 if let Some(s) = &per_spec {
                     s.record_hit();
                 }
+                tracing::debug!(
+                    target: "starter_cache::access",
+                    decision = "hit",
+                    layer = "windowed",
+                    spec = spec_id.unwrap_or("-"),
+                    bucket = %full_key,
+                    "cache hit (time-series bucket)"
+                );
                 parts.push(v);
                 continue;
             }
@@ -782,6 +982,7 @@ impl CacheLayer {
             let bytes = serde_json::to_vec(&value).map_err(|e| {
                 starter_windowed::FetchError::Other(format!("serialize bucket: {e}"))
             })?;
+            let log_key = full_key.clone();
             if self.inner.invalidator.tokens_match(&snap_before) {
                 cache
                     .insert(
@@ -800,6 +1001,15 @@ impl CacheLayer {
             if let Some(s) = &per_spec {
                 s.record_miss(load_duration);
             }
+            tracing::debug!(
+                target: "starter_cache::access",
+                decision = "miss",
+                layer = "windowed",
+                spec = spec_id.unwrap_or("-"),
+                bucket = %log_key,
+                load_ms = load_duration.as_millis() as u64,
+                "cache miss (time-series bucket loaded)"
+            );
             parts.push(value);
         }
         Ok(T::stitch(parts))
@@ -847,6 +1057,60 @@ mod tests {
         assert_eq!(calls.load(Ordering::SeqCst), 1);
         assert!(layer.stats().hits() >= 2);
         assert!(layer.stats().misses() >= 1);
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn concurrent_identical_misses_single_flight() {
+        // The regression this guards: the dashboard fires the same
+        // query (e.g. `histories_summary`) N times at once on a cold
+        // cache. Without single-flight every call ran the loader — N
+        // simultaneous DB round-trips — which overran the supervisor
+        // health timeout under burst load. With the gate, exactly one
+        // load runs and the rest are served from it.
+        let layer = CacheLayer::new(LayerConfig::default());
+        let spec = CacheSpec::ttl(Duration::from_secs(60))
+            .scope(CacheScope::Tenant)
+            .invalidate_on_table("readings");
+        let calls = Arc::new(AtomicU32::new(0));
+
+        let mut handles = Vec::new();
+        for _ in 0..16 {
+            let layer = layer.clone();
+            let spec = spec.clone();
+            let calls = calls.clone();
+            handles.push(tokio::spawn(async move {
+                let caller = CallerScope::new("tA", "uX");
+                layer
+                    .get_or_load(&spec, &caller, "hot_key", || async move {
+                        // Hold the in-flight slot long enough that all
+                        // 16 callers are guaranteed to arrive while the
+                        // leader is still loading.
+                        calls.fetch_add(1, Ordering::SeqCst);
+                        tokio::time::sleep(Duration::from_millis(50)).await;
+                        Ok::<_, std::convert::Infallible>(b("v"))
+                    })
+                    .await
+                    .unwrap()
+            }));
+        }
+        let mut results = Vec::new();
+        for h in handles {
+            results.push(h.await.unwrap());
+        }
+
+        // Exactly one backing load despite 16 concurrent identical
+        // callers; every caller got the same value.
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            1,
+            "single-flight must collapse N concurrent identical misses into one load"
+        );
+        for r in results {
+            assert_eq!(&**r, b"v");
+        }
+        // 1 leader miss + 15 coalesced hits.
+        assert_eq!(layer.stats().misses(), 1);
+        assert!(layer.stats().hits() >= 15);
     }
 
     #[tokio::test]

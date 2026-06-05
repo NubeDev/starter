@@ -33,7 +33,17 @@ pub(crate) struct BootedServices {
 }
 
 pub(crate) async fn boot_services() -> Result<BootedServices> {
-    let cfg = AgentConfig::load()?;
+    let mut cfg = AgentConfig::load()?;
+
+    // Splice the DB password from the secrets store into the DSN
+    // before any pool is opened. No-op (DSN passed through verbatim)
+    // unless `database_password_secret` is set, so the `RUBIX_DSN`
+    // path is untouched. A missing secret is a hard boot error.
+    if cfg.database_password_secret.is_some() {
+        let store = boot::build_secrets_store(&cfg);
+        cfg.database_url = boot::resolve_database_url(&cfg, store.as_ref())
+            .map_err(|e| anyhow::anyhow!("resolve database password from secrets store: {e}"))?;
+    }
 
     let bundle = Arc::new(rubix_spi::i18n::rubix_bundle()?);
     let catalogue_size: usize = bundle

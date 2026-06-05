@@ -74,12 +74,25 @@ export async function fetchTemplate<R>(
   template: string,
   params: Record<string, unknown> = {},
 ): Promise<ReadonlyArray<R>> {
-  // Always fresh: list views must reflect current data after a mutation
-  // or navigation, not a coalesced/stale in-flight read.
+  // Coalesce concurrent identical reads (default, NOT `fresh`). One
+  // dashboard render fires the same template from several independent
+  // components at once — `histories_summary` ~4×, `meters_list` ~5×
+  // per load. Without coalescing each becomes its own POST, and on the
+  // adopted memory-starved TimescaleDB those duplicate reads stack into
+  // concurrent DB load (the burst that used to overrun the supervisor
+  // health timeout). Joining them onto one in-flight promise removes the
+  // duplicates before they ever reach the network.
+  //
+  // Post-mutation correctness is handled by `invalidateReads()`, which
+  // bumps the read epoch (changing the dedup key) and clears the
+  // in-flight map — so a read issued after a write can never join a
+  // pre-write request. That epoch guard is exactly why coalescing is
+  // safe here without the blanket `fresh: true` that previously defeated
+  // it. (The backend `starter-cache` single-flight is the second line of
+  // defence for genuinely concurrent cross-client reads.)
   const res = await callTool<WarehouseQueryResponse<R>>(
     `${EXTENSION_ID}.warehouse_query`,
     { template, params },
-    { fresh: true },
   );
   return res.rows;
 }

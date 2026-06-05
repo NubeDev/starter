@@ -96,7 +96,16 @@ base64                = { workspace = true }
 # Concrete `SecretStore` impl wired at boot for the
 # `secrets.get` host method.
 starter-secrets-keyring = { workspace = true }
+# age-encrypted single-file `SecretStore`, wired by
+# `boot::secrets::build_secrets_store` when `secrets_path` is set so
+# operators on headless hosts (no OS keyring) can store the DB
+# password out-of-band. See `boot/secrets.rs`.
+starter-secrets-file    = { workspace = true }
 thiserror             = { workspace = true }
+# DSN password splicing in `boot::secrets::resolve_database_url` —
+# parse the plain DSN, set the password from the secret store,
+# re-serialize. See `boot/secrets.rs`.
+url                   = "2"
 # `sqlite` feature stays on for two reasons: (a) dev-dependencies
 # below still pull `starter-store-sqlite` for hermetic SPI-contract
 # tests, and (b) `boot/flow_runtime.rs` opens the legacy

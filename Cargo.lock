@@ -6328,6 +6328,7 @@ dependencies = [
  "starter-observability",
  "starter-paths",
  "starter-sdui-routes",
+ "starter-secrets-file",
  "starter-secrets-keyring",
  "starter-server",
  "starter-skills",
@@ -6346,6 +6347,7 @@ dependencies = [
  "tower 0.5.3",
  "tower-http",
  "tracing",
+ "url",
  "utoipa",
  "uuid",
 ]

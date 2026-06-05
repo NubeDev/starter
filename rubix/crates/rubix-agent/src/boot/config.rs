@@ -63,9 +63,27 @@ pub struct AgentConfig {
     /// Honors the `RUBIX_WAREHOUSE_URL` env var as a fallback.
     pub warehouse_url: Option<String>,
 
-    /// Path to the on-disk secrets directory. Reserved for the
-    /// upcoming JWT signing key / OAuth client secret material.
+    /// Path to the age-encrypted secrets directory holding
+    /// `secrets.age`. When set,
+    /// [`crate::boot::secrets::build_secrets_store`] backs the host's
+    /// [`starter_spi::secrets::SecretStore`] with a
+    /// [`starter_secrets_file::FileSecretStore`] rooted here instead
+    /// of the keyring → env-var chain. The matching identity key
+    /// lives next to it at `<secrets_path>/identity.age-key` — back
+    /// that file up, since losing it makes `secrets.age`
+    /// unrecoverable.
     pub secrets_path: Option<PathBuf>,
+
+    /// Name of the secret key holding the **database password**
+    /// (e.g. `"db:password"`). When set, the boot path looks the
+    /// value up via [`crate::boot::secrets::build_secrets_store`] and
+    /// splices it into [`Self::database_url`] before any pool is
+    /// opened — so the plain config can carry a password-less DSN
+    /// (`postgres://rubix@host:5432/rubix`) and the secret stays out
+    /// of the config file. A missing secret is a hard boot error
+    /// rather than a silent connect-with-no-password. When `None`
+    /// the DSN is used verbatim, preserving the `RUBIX_DSN` path.
+    pub database_password_secret: Option<String>,
 
     /// Explicit path to the config file. When `None` the loader
     /// falls back to `$XDG_CONFIG_HOME/rubix/agent.toml` then
@@ -291,6 +309,7 @@ impl Default for AgentConfig {
             clickhouse_pg_url: None,
             warehouse_url: None,
             secrets_path: None,
+            database_password_secret: None,
             config_path: None,
             ai_provider: None,
             insights: InsightsConfig::default(),
