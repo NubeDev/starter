@@ -167,16 +167,24 @@ fn worked_example_resolves_against_phase2_fixture() {
     let (tree_a, plan_a) = resolve_against(&graph, "b1");
     let (tree_b, plan_b) = resolve_against(&graph, "b2");
 
-    // The page title carries a binding template the renderer will
-    // substitute in Phase 4 — Phase 2's substitute_tree walks only
-    // Text/Heading content, so the title stays untouched on the
-    // wire. Pin the wire-shape expectation so a future widening of
-    // substitute_tree's coverage flips this assertion intentionally.
+    // The page title carries a binding template that substitute_tree
+    // now resolves: `visit_bindings` visits `Page.title` (a bindable
+    // string field), so `{{$target.name}} Overview` resolves to the
+    // target's name per resolve. This is the intentional widening the
+    // original Phase-2 comment anticipated — the assertion was flipped
+    // when `Page.title` joined the visited set.
     let title_a = match &tree_a.root {
         Component::Page { title, .. } => title.clone().unwrap(),
         other => panic!("expected Page root, got {other:?}"),
     };
-    assert_eq!(title_a, "{{$target.name}} Overview");
+    assert_eq!(title_a, "Building One Overview");
+
+    // And it resolves per-target — `tree_b` carries the other name.
+    let title_b = match &tree_b.root {
+        Component::Page { title, .. } => title.clone().unwrap(),
+        other => panic!("expected Page root, got {other:?}"),
+    };
+    assert_eq!(title_b, "Building Two Overview");
 
     // The bound text and heading widgets resolve the child-walk
     // grammar — distinct literals per target, as the Phase 2
