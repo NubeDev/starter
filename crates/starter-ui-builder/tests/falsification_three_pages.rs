@@ -102,6 +102,9 @@ fn review_card() -> ComponentTree {
                 fields: serde_json::json!({ "disabled": true, "label": "Approved" }),
             }),
         }),
+        href: None,
+        variant: None,
+        size: None,
         style: None,
     };
 
@@ -118,6 +121,9 @@ fn review_card() -> ComponentTree {
                 fields: serde_json::json!({ "disabled": true }),
             }),
         }),
+        href: None,
+        variant: None,
+        size: None,
         style: None,
     };
 

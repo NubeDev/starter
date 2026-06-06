@@ -22,6 +22,7 @@ import {
   type PaletteCategory,
 } from "./curation/palette-taxonomy.js";
 import { SLOTS, type SlotTuple } from "./curation/slots.js";
+import { STYLE_FIELD } from "./curation/style-field.js";
 import { makeDataSourceField } from "./data-source-field.js";
 import { makePlaceholderRenderer } from "./placeholder-renderer.js";
 import type {
@@ -57,7 +58,8 @@ export interface BuildPuckConfigOpts {
 /** Property keys we drop wholesale from every variant in v1. */
 const SKIPPED_PROPERTIES: ReadonlySet<string> = new Set([
   "type", // discriminator — Puck supplies it from the component key.
-  "style", // NodeStyle skipped in v1 per scope §B1 / Q2.
+  // `style` is no longer skipped wholesale — it is replaced by the
+  // curated decoration-token field (STYLE_FIELD), spliced in below.
 ]);
 
 /**
@@ -162,6 +164,14 @@ function armToComponentConfig(ctx: ArmCtx): PuckComponentConfigStub {
 
   for (const [propName, propSchema] of Object.entries(properties)) {
     if (SKIPPED_PROPERTIES.has(propName)) continue;
+    // `style` is curated, not auto-derived: expose only the visual
+    // decoration tokens (background/gradient/surface/radius/spacing/
+    // shadow/typography) as dropdowns, hiding the non-visual NodeStyle
+    // machinery (show_when, flex, min_width, …) from author editing.
+    if (propName === "style") {
+      fields[propName] = STYLE_FIELD;
+      continue;
+    }
     const field = propertyToField({
       ctx,
       propName,

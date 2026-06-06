@@ -1,0 +1,121 @@
+/* NodeStyle token stylesheet.
+ *
+ * Paints the `data-sdui-*` attributes emitted by
+ * `renderer/node-style.ts`. Every rule resolves to a theme variable from
+ * `@nube/starter-ui-kit` so light/dark stay consistent and no raw hex or
+ * pixel value ever lands in authored content.
+ *
+ * This is a STATIC stylesheet on purpose: Tailwind v4 tree-shakes unused
+ * utilities, which previously meant any token the renderer emitted as a
+ * dynamic class string got dropped. Static rules can never be shaken out.
+ *
+ * Import once, after the kit + renderer scan-source imports:
+ *
+ *   @import "tailwindcss";
+ *   @import "@nube/starter-ui-kit/scan-source.css";
+ *   @import "@nube/starter-ui-sdui-react/scan-source.css";
+ *   @import "@nube/starter-ui-sdui-react/node-style.css";
+ */
+
+/* ---- surface (elevation) ------------------------------------------- */
+[data-sdui-surface="raised"] {
+  background: color-mix(in oklab, var(--color-surface-2) 92%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+}
+[data-sdui-surface="subtle"] {
+  background: color-mix(in oklab, var(--color-muted) 45%, transparent);
+}
+[data-sdui-surface="transparent"] {
+  background: transparent;
+  border: 0;
+}
+
+/* ---- background (solid token fills) -------------------------------- */
+[data-sdui-background="surface"] { background: var(--color-surface-2); }
+[data-sdui-background="muted"]   { background: var(--color-muted); }
+[data-sdui-background="subtle"]  { background: color-mix(in oklab, var(--color-subtle) 18%, transparent); }
+[data-sdui-background="ink"]     { background: var(--color-text); color: var(--color-background); }
+[data-sdui-background="leaf"]    { background: color-mix(in oklab, var(--color-leaf) 16%, transparent); }
+[data-sdui-background="aqua"]    { background: color-mix(in oklab, var(--color-aqua) 16%, transparent); }
+[data-sdui-background="sun"]     { background: color-mix(in oklab, var(--color-sun) 18%, transparent); }
+[data-sdui-background="sky"]     { background: color-mix(in oklab, var(--color-sky) 16%, transparent); }
+[data-sdui-background="warn"]    { background: color-mix(in oklab, var(--color-warn) 16%, transparent); }
+
+/* ---- gradient (hero / feature backgrounds) ------------------------- */
+[data-sdui-gradient="leaf"] {
+  background-image: linear-gradient(135deg,
+    color-mix(in oklab, var(--color-leaf) 28%, transparent),
+    color-mix(in oklab, var(--color-aqua) 14%, transparent));
+}
+[data-sdui-gradient="aqua"] {
+  background-image: linear-gradient(135deg,
+    color-mix(in oklab, var(--color-aqua) 30%, transparent),
+    color-mix(in oklab, var(--color-sky) 14%, transparent));
+}
+[data-sdui-gradient="sun"] {
+  background-image: linear-gradient(135deg,
+    color-mix(in oklab, var(--color-sun) 30%, transparent),
+    color-mix(in oklab, var(--color-warn) 16%, transparent));
+}
+[data-sdui-gradient="sky"] {
+  background-image: linear-gradient(135deg,
+    color-mix(in oklab, var(--color-sky) 30%, transparent),
+    color-mix(in oklab, var(--color-leaf) 12%, transparent));
+}
+[data-sdui-gradient="dusk"] {
+  background-image: linear-gradient(135deg,
+    color-mix(in oklab, var(--color-sky) 26%, transparent),
+    color-mix(in oklab, var(--color-warn) 20%, transparent));
+}
+[data-sdui-gradient="ink"] {
+  background-image: linear-gradient(135deg,
+    var(--color-text),
+    color-mix(in oklab, var(--color-text) 70%, var(--color-sky)));
+  color: var(--color-background);
+}
+
+/* ---- radius -------------------------------------------------------- */
+[data-sdui-radius="none"] { border-radius: 0; }
+[data-sdui-radius="sm"]   { border-radius: var(--radius-sm); }
+[data-sdui-radius="md"]   { border-radius: var(--radius-md); }
+[data-sdui-radius="lg"]   { border-radius: var(--radius-lg); }
+[data-sdui-radius="xl"]   { border-radius: var(--radius-xl); }
+[data-sdui-radius="full"] { border-radius: 9999px; }
+
+/* ---- spacing (inner padding) --------------------------------------- */
+[data-sdui-spacing="none"] { padding: 0; }
+[data-sdui-spacing="xs"]   { padding: 0.5rem; }
+[data-sdui-spacing="sm"]   { padding: 0.75rem; }
+[data-sdui-spacing="md"]   { padding: 1.25rem; }
+[data-sdui-spacing="lg"]   { padding: 2rem; }
+[data-sdui-spacing="xl"]   { padding: 3rem; }
+[data-sdui-spacing="2xl"]  { padding: 4.5rem; }
+
+/* ---- shadow -------------------------------------------------------- */
+[data-sdui-shadow="sm"] { box-shadow: 0 1px 2px color-mix(in oklab, var(--color-text) 8%, transparent); }
+[data-sdui-shadow="md"] { box-shadow: 0 4px 12px color-mix(in oklab, var(--color-text) 10%, transparent); }
+[data-sdui-shadow="lg"] { box-shadow: 0 12px 28px color-mix(in oklab, var(--color-text) 14%, transparent); }
+[data-sdui-shadow="xl"] { box-shadow: 0 24px 56px color-mix(in oklab, var(--color-text) 18%, transparent); }
+[data-sdui-shadow="glow"] {
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-leaf) 30%, transparent),
+              0 8px 32px color-mix(in oklab, var(--color-leaf) 22%, transparent);
+}
+
+/* ---- typography ---------------------------------------------------- */
+[data-sdui-text-align="start"]  { text-align: start; }
+[data-sdui-text-align="center"] { text-align: center; }
+[data-sdui-text-align="end"]    { text-align: end; }
+
+[data-sdui-font-size="xs"]  { font-size: 0.75rem; line-height: 1.4; }
+[data-sdui-font-size="sm"]  { font-size: 0.875rem; line-height: 1.5; }
+[data-sdui-font-size="md"]  { font-size: 1rem; line-height: 1.6; }
+[data-sdui-font-size="lg"]  { font-size: 1.25rem; line-height: 1.5; }
+[data-sdui-font-size="xl"]  { font-size: 1.5rem; line-height: 1.35; }
+[data-sdui-font-size="2xl"] { font-size: 2rem; line-height: 1.2; letter-spacing: -0.01em; }
+[data-sdui-font-size="3xl"] { font-size: 2.75rem; line-height: 1.1; letter-spacing: -0.02em; }
+[data-sdui-font-size="4xl"] { font-size: 3.75rem; line-height: 1.05; letter-spacing: -0.03em; }
+
+[data-sdui-font-weight="normal"]   { font-weight: 400; }
+[data-sdui-font-weight="medium"]   { font-weight: 500; }
+[data-sdui-font-weight="semibold"] { font-weight: 600; }
+[data-sdui-font-weight="bold"]     { font-weight: 700; }

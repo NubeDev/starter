@@ -100,11 +100,33 @@ impl<'a> CapabilityFilter<'a> {
             Component::Page { children, .. }
             | Component::Row { children, .. }
             | Component::Col { children, .. }
-            | Component::Grid { children, .. } => {
+            | Component::Grid { children, .. }
+            | Component::Section { children, .. }
+            | Component::Card { children, .. }
+            | Component::Hero { children, .. }
+            | Component::Dialog { children, .. }
+            | Component::Drawer { children, .. } => {
                 for c in children {
                     self.rewrite_unknown_custom(c);
                 }
             }
+            Component::Tabs { tabs, .. } => {
+                for t in tabs {
+                    for c in &mut t.children {
+                        self.rewrite_unknown_custom(c);
+                    }
+                }
+            }
+            Component::Wizard { steps, .. } => {
+                for step in steps {
+                    for c in &mut step.children {
+                        self.rewrite_unknown_custom(c);
+                    }
+                }
+            }
+            Component::Repeat { template, .. } => self.rewrite_unknown_custom(template),
+            Component::FieldGroup { control, .. } => self.rewrite_unknown_custom(control),
+            Component::List { item, .. } => self.rewrite_unknown_custom(item),
             _ => {}
         }
     }

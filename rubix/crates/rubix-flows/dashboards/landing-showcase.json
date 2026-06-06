@@ -1,0 +1,201 @@
+{
+  "ir_version": 5,
+  "title": "Energy Platform — Landing",
+  "root": {
+    "type": "page",
+    "id": "page",
+    "title": null,
+    "default_row_gap": "1.5rem",
+    "default_column_gap": "1.5rem",
+    "default_page_padding": "0",
+    "default_max_width": "72rem",
+    "children": [
+      {
+        "type": "hero",
+        "id": "hero",
+        "eyebrow": "RUBIX OS",
+        "title": "Your buildings, in one living dashboard",
+        "subtitle": "Energy, water, and HVAC telemetry — from sensor to insight — on pages you build yourself, no code required.",
+        "style": { "gradient": "dusk", "radius": "xl", "shadow": "lg", "spacing": "2xl" },
+        "children": [
+          {
+            "type": "button",
+            "id": "cta-primary",
+            "label": "Start building",
+            "href": "/builder/new",
+            "variant": "solid",
+            "size": "lg",
+            "style": { "shadow": "md" }
+          },
+          {
+            "type": "button",
+            "id": "cta-secondary",
+            "label": "View a live demo",
+            "href": "/demo",
+            "variant": "outline",
+            "size": "lg"
+          }
+        ]
+      },
+
+      {
+        "type": "section",
+        "id": "kpis",
+        "title": "At a glance",
+        "subtitle": "Live across every connected site",
+        "level": 2,
+        "style": { "background": "subtle", "radius": "xl", "spacing": "lg" },
+        "children": [
+          {
+            "type": "row",
+            "id": "kpi-row",
+            "children": [
+              {
+                "type": "col",
+                "span": 3,
+                "children": [
+                  {
+                    "type": "kpi",
+                    "id": "kpi-power",
+                    "label": "Total load",
+                    "format": "number",
+                    "unit_symbol": "kW",
+                    "source": { "type": "static", "points": [[0, 1284.0]] }
+                  }
+                ]
+              },
+              {
+                "type": "col",
+                "span": 3,
+                "children": [
+                  {
+                    "type": "kpi",
+                    "id": "kpi-water",
+                    "label": "Water flow",
+                    "format": "number",
+                    "unit_symbol": "L/s",
+                    "source": { "type": "static", "points": [[0, 47.3]] }
+                  }
+                ]
+              },
+              {
+                "type": "col",
+                "span": 3,
+                "children": [
+                  {
+                    "type": "kpi",
+                    "id": "kpi-temp",
+                    "label": "Avg indoor",
+                    "format": "number",
+                    "unit_symbol": "°C",
+                    "source": { "type": "static", "points": [[0, 21.6]] }
+                  }
+                ]
+              },
+              {
+                "type": "col",
+                "span": 3,
+                "children": [
+                  {
+                    "type": "kpi",
+                    "id": "kpi-sites",
+                    "label": "Sites online",
+                    "format": "number",
+                    "source": { "type": "static", "points": [[0, 38.0]] }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "section",
+        "id": "trend",
+        "title": "Demand over the week",
+        "level": 2,
+        "style": { "surface": "raised", "radius": "xl", "spacing": "lg", "shadow": "sm" },
+        "children": [
+          {
+            "type": "chart",
+            "id": "demand-chart",
+            "title": "Site A — total load",
+            "kind": "area",
+            "sources": [],
+            "series": [
+              {
+                "label": "kW",
+                "points": [
+                  [0, 920.0], [1, 1010.0], [2, 1180.0], [3, 1320.0],
+                  [4, 1240.0], [5, 1090.0], [6, 980.0]
+                ]
+              }
+            ]
+          }
+        ]
+      },
+
+      {
+        "type": "row",
+        "id": "feature-row",
+        "children": [
+          {
+            "type": "col",
+            "span": 7,
+            "children": [
+              {
+                "type": "card",
+                "id": "story-card",
+                "style": { "radius": "xl", "spacing": "lg", "shadow": "sm" },
+                "children": [
+                  {
+                    "type": "rich_text",
+                    "id": "story",
+                    "value": "## Build pages, not just charts\n\nDrop a **hero**, stack **sections**, add an **image**, and wire **KPIs** to live telemetry — all in the same canvas. Style every block with theme tokens so light and dark stay consistent.\n\n- Gradient and surface backgrounds\n- Editorial typography and spacing\n- Call-to-action buttons that link anywhere\n\nRead the [builder guide](/docs/builder) to go further."
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 5,
+            "children": [
+              {
+                "type": "image",
+                "id": "feature-img",
+                "src": "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=900&q=80",
+                "alt": "Solar panels at dusk",
+                "aspect": "video",
+                "fit": "cover",
+                "caption": "Site A · rooftop array",
+                "style": { "radius": "xl", "shadow": "md" }
+              }
+            ]
+          }
+        ]
+      },
+
+      { "type": "spacer", "id": "gap-1", "size": "lg" },
+
+      {
+        "type": "hero",
+        "id": "cta-band",
+        "title": "Ready to see your sites this way?",
+        "subtitle": "Spin up a page in minutes.",
+        "style": { "background": "leaf", "radius": "xl", "spacing": "xl" },
+        "children": [
+          {
+            "type": "button",
+            "id": "cta-final",
+            "label": "Create your first page",
+            "href": "/builder/new",
+            "variant": "solid",
+            "size": "lg"
+          }
+        ]
+      }
+    ]
+  }
+}

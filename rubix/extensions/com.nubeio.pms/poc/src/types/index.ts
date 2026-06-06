@@ -22,26 +22,39 @@ export type NetworkType =
 // colour used to tint the bus on the canvas. The cap encodes the
 // physical limit of the field bus (e.g. a Modbus RTU segment tops out at
 // 32 unit loads, BACnet MS/TP at 127 MAC addresses).
+/** Physical wiring topology of a network segment.
+ *  - `bus`  — multi-drop serial trunk; devices daisy-chain in series and
+ *             the far end is terminated (RS-485, Modbus RTU, BACnet MS/TP, M-Bus).
+ *  - `star` — point-to-multipoint; devices hang off the head-end
+ *             independently (Ethernet/IP, Wi-Fi, LoRaWAN). */
+export type Topology = "bus" | "star";
+
+// Per-network metadata: a human label, a default bus device cap, and a
+// colour used to tint the bus on the canvas. The cap encodes the
+// physical limit of the field bus (e.g. a Modbus RTU segment tops out at
+// 32 unit loads, BACnet MS/TP at 127 MAC addresses).
 export interface NetworkMeta {
   label: string;
   /** Default max devices per bus of this network. */
   maxDevices: number;
   /** Whether the network is address-based (Modbus/BACnet) vs id-based (LoRa). */
   addressed: boolean;
+  /** Physical wiring — drives daisy-chain vs star rendering on the canvas. */
+  topology: Topology;
   color: string; // hex, for the canvas
   short: string; // compact bus label
 }
 
 export const NETWORK_META: Record<NetworkType, NetworkMeta> = {
-  ethernet: { label: "Ethernet", maxDevices: 254, addressed: false, color: "#64748b", short: "ETH" },
-  wifi: { label: "Wi-Fi", maxDevices: 254, addressed: false, color: "#0ea5e9", short: "WIFI" },
-  lora: { label: "LoRaWAN", maxDevices: 1000, addressed: false, color: "#22c55e", short: "LORA" },
-  rs485: { label: "RS-485", maxDevices: 32, addressed: true, color: "#f59e0b", short: "485" },
-  modbus_rtu: { label: "Modbus RTU", maxDevices: 32, addressed: true, color: "#f97316", short: "MB-RTU" },
-  modbus_tcp: { label: "Modbus TCP", maxDevices: 247, addressed: true, color: "#fb7185", short: "MB-TCP" },
-  bacnet_mstp: { label: "BACnet MS/TP", maxDevices: 127, addressed: true, color: "#a855f7", short: "BAC-MSTP" },
-  bacnet_ip: { label: "BACnet/IP", maxDevices: 1000, addressed: true, color: "#8b5cf6", short: "BAC-IP" },
-  mbus: { label: "M-Bus", maxDevices: 250, addressed: true, color: "#14b8a6", short: "MBUS" },
+  ethernet: { label: "Ethernet", maxDevices: 254, addressed: false, topology: "star", color: "#64748b", short: "ETH" },
+  wifi: { label: "Wi-Fi", maxDevices: 254, addressed: false, topology: "star", color: "#0ea5e9", short: "WIFI" },
+  lora: { label: "LoRaWAN", maxDevices: 1000, addressed: false, topology: "star", color: "#22c55e", short: "LORA" },
+  rs485: { label: "RS-485", maxDevices: 32, addressed: true, topology: "bus", color: "#f59e0b", short: "485" },
+  modbus_rtu: { label: "Modbus RTU", maxDevices: 32, addressed: true, topology: "bus", color: "#f97316", short: "MB-RTU" },
+  modbus_tcp: { label: "Modbus TCP", maxDevices: 247, addressed: true, topology: "star", color: "#fb7185", short: "MB-TCP" },
+  bacnet_mstp: { label: "BACnet MS/TP", maxDevices: 127, addressed: true, topology: "bus", color: "#a855f7", short: "BAC-MSTP" },
+  bacnet_ip: { label: "BACnet/IP", maxDevices: 1000, addressed: true, topology: "star", color: "#8b5cf6", short: "BAC-IP" },
+  mbus: { label: "M-Bus", maxDevices: 250, addressed: true, topology: "bus", color: "#14b8a6", short: "MBUS" },
 };
 
 export type PointKind = "analog" | "digital" | "counter" | "string";

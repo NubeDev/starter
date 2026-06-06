@@ -232,6 +232,17 @@
           "description": "Author-declared constants, referenced from bindings via `{{$vars.<key>}}`. Scoped to the whole tree; resolved once per resolve call, before any other binding substitution. Values are any JSON — strings, numbers, arrays, nested objects. Vars cannot reference other vars in v1 (no recursion).",
           "type": "object",
           "additionalProperties": true
+        },
+        "cache": {
+          "description": "v3 — opt-in cache config (§Layer 1A). Additive root field — older IR readers ignore it; no IR version bump per §\"What changed in this revision\". When `Some`, the SDUI resolver wraps `/ui/resolve` work in `cache_layer.get_or_load` using the spec's TTL / scope / invalidation tags.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PageCacheBlock"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -2031,6 +2042,154 @@
           }
         },
         {
+          "description": "V2.0 page-builder content block — a standalone image. Source is a URL (asset reference or absolute); the renderer owns sizing via the `fit`/`aspect` tokens so authored content never embeds pixel dimensions. Decorative images should leave `alt` empty.",
+          "type": "object",
+          "required": [
+            "src",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "image"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "src": {
+              "description": "Image source URL.",
+              "type": "string"
+            },
+            "alt": {
+              "description": "Accessible alt text. Empty string = decorative (renders `alt=\"\"` so screen readers skip it).",
+              "default": "",
+              "type": "string"
+            },
+            "fit": {
+              "description": "Object-fit token: `\"cover\"` (default) | `\"contain\"` | `\"fill\"`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "aspect": {
+              "description": "Aspect-ratio token: `\"auto\" | \"square\" | \"video\" (16:9) | \"wide\" (21:9) | \"portrait\" (3:4)`. Closed set; no raw ratios.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "caption": {
+              "description": "Optional caption rendered below the image in muted text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "V2.0 page-builder content block — a hero / feature band. A full-width banner with an optional eyebrow, large title, subtitle, and a body subtree (typically CTA buttons). The visual background comes from the node's `style` (`gradient`/`background`/ `shadow`), so a hero is a Section with editorial defaults: centred text, generous padding, large heading.",
+          "type": "object",
+          "required": [
+            "title",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "hero"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "eyebrow": {
+              "description": "Small uppercase label above the title (e.g. \"NEW\").",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "description": "Hero headline. Required — a hero without a title is a `col`.",
+              "type": "string"
+            },
+            "subtitle": {
+              "description": "Optional supporting line below the title.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "description": "Body content — CTAs, badges, anything. Rendered below the subtitle.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "V2.0 page-builder layout block — vertical breathing room. A pure spacer with a `size` token (`\"xs\"..\"2xl\"`); no content. Lets authors separate bands without abusing empty sections.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "spacer"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "size": {
+              "description": "Height token: `\"xs\" | \"sm\" | \"md\" (default) | \"lg\" | \"xl\" | \"2xl\"`. Closed set; no pixel values.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
           "description": "Time-range picker with preset buttons. Writes `{from, to}` (Unix ms) into `$page[page_state_key]` on every click. `to` is \"now\" at click time for presets; `null/null` means \"all time\". Any component reading the same `page_state_key` (typically a `chart`) automatically retunes.\n\nA preset with `duration_ms: null` is \"all\" / unbounded — the component writes `null` for `from` (and `to`) so the consumer understands \"no window clamp.\"",
           "type": "object",
           "required": [
@@ -2190,6 +2349,27 @@
                 {
                   "type": "null"
                 }
+              ]
+            },
+            "href": {
+              "description": "V2.0 page-builder — link target. When set, the button renders as an anchor (`<a href>`) navigating to this URL or in-app route, turning it into a call-to-action. `action` and `href` are mutually exclusive at author time; if both are present the renderer prefers `href`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "variant": {
+              "description": "V2.0 page-builder — visual variant: `\"solid\"` (default) | `\"outline\"` | `\"ghost\"` | `\"link\"`. Closed set. Combine with `intent` for the accent colour.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "size": {
+              "description": "V2.0 page-builder — size token: `\"sm\" | \"md\" (default) | \"lg\"`. Lets a hero CTA be visually prominent.",
+              "type": [
+                "string",
+                "null"
               ]
             },
             "style": {
@@ -3168,6 +3348,48 @@
         },
         "spacing": {
           "description": "V1.6 spacing token — `\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\"`. Applies as the node's outer breathing room (padding on cards/sections, margin on standalone primitives). Closed set.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "background": {
+          "description": "V2.0 page-builder decoration — solid background fill token: `\"none\" | \"surface\" | \"muted\" | \"subtle\" | \"ink\" | \"leaf\" | \"aqua\" | \"sun\" | \"sky\" | \"warn\"`. Resolves to a theme variable in the renderer; raw hex must not appear here. Lets a `section`/`card` stand out as a coloured band without leaving the token system.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gradient": {
+          "description": "V2.0 page-builder decoration — gradient background token for hero / feature bands: `\"none\" | \"leaf\" | \"aqua\" | \"sun\" | \"sky\" | \"dusk\" | \"ink\"`. Closed set; resolves to a theme-derived `linear-gradient` in the renderer.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shadow": {
+          "description": "V2.0 page-builder decoration — drop-shadow elevation token: `\"none\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"glow\"`. Closed set.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "text_align": {
+          "description": "V2.0 typography — text alignment token: `\"start\" | \"center\" | \"end\"`. Applies to the node's own text flow.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "font_size": {
+          "description": "V2.0 typography — font-size token: `\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"2xl\" | \"3xl\" | \"4xl\"`. Closed set; pixel sizes must not appear here. Enables editorial / hero headings beyond the fixed component defaults.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "font_weight": {
+          "description": "V2.0 typography — font-weight token: `\"normal\" | \"medium\" | \"semibold\" | \"bold\"`. Closed set.",
           "type": [
             "string",
             "null"
@@ -4799,6 +5021,49 @@
           ],
           "format": "uint32",
           "minimum": 0.0
+        }
+      }
+    },
+    "PageCacheBlock": {
+      "description": "v3 — page-level cache block carried by [`ComponentTree`]. Wire shape mirrors §Layer 1A of the proposal.",
+      "type": "object",
+      "required": [
+        "ttl_seconds"
+      ],
+      "properties": {
+        "ttl_seconds": {
+          "description": "TTL in seconds.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "scope": {
+          "description": "`\"user\" | \"tenant\" | \"global\"`. Defaults to `\"tenant\"`.",
+          "default": "tenant",
+          "type": "string"
+        },
+        "stale_while_revalidate_seconds": {
+          "description": "SWR window in seconds.",
+          "default": 0,
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "invalidate_on_tables": {
+          "description": "Tables this page subscribes to for invalidation.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "description": "Optional author tag set for grouping (free-form).",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

@@ -27,6 +27,7 @@ export const SLOTS: readonly SlotTuple[] = [
   { variant: "grid", propertyPath: "children" },
   { variant: "card", propertyPath: "children" },
   { variant: "section", propertyPath: "children" },
+  { variant: "hero", propertyPath: "children" },
   // Nested: `Tabs.tabs: Vec<Tab>` where each Tab has its own
   // `children: Vec<Component>`. PR1's generator recognises this
   // tuple for the assertion in B2 but still renders `tabs` as an

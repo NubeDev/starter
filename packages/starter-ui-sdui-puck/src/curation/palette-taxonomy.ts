@@ -31,10 +31,13 @@ export const PALETTE_TAXONOMY: Readonly<Record<string, PaletteCategory>> = {
   wizard: "layout",
   card: "layout",
   field_group: "layout",
+  hero: "layout",
+  spacer: "layout",
   // ---- display --------------------------------------------------
   text: "display",
   heading: "display",
   badge: "display",
+  image: "display",
   markdown: "display",
   rich_text: "display",
   kpi: "display",

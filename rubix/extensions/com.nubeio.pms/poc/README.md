@@ -50,11 +50,27 @@ Admin                                   Client
 
 ## Visual builder ([src/pages/NetworkCanvas.tsx](src/pages/NetworkCanvas.tsx))
 
-The **Canvas** view (React Flow) shows the topology as
-`gateway → bus → devices`, edges tinted per network. A left palette lists
-device templates you **drag onto a bus** — incompatible or full buses reject
-the drop and flash a reason. Each bus shows a `used/max` meter that turns red
-at capacity. Selecting a bus opens its **bulk-add** panel.
+The **Canvas** view (React Flow) is a CAD-style schematic of
+`gateway → bus → devices`, color-coded per network, on a dark engineering
+grid with a network **legend**. A left palette lists device templates you
+**drag onto a bus** — incompatible or full buses reject the drop and flash a
+reason. Each bus head shows a `used/max` meter that turns red at capacity.
+Selecting a bus opens its **bulk-add** panel.
+
+### Wiring topology (daisy-chain vs star)
+
+Each network has a physical `topology` ([NETWORK_META](src/types/index.ts))
+that drives how its bus is drawn ([src/lib/canvasLayout.ts](src/lib/canvasLayout.ts)):
+
+- **`bus` (daisy-chain)** — RS-485, Modbus RTU, BACnet MS/TP, M-Bus. Devices
+  are laid out **left → right in series** along a single colored trunk rail
+  (`head → dev1 → dev2 → …`), and the run ends in a **120 Ω terminator**
+  symbol — the way a real multidrop serial segment is wired.
+- **`star`** — Ethernet/IP, Wi-Fi, LoRaWAN, Modbus TCP, BACnet/IP. Devices
+  **fan out** from the head independently, each on its own branch.
+
+Addresses render on each node (`addr N` for addressed buses, the `idTag` /
+DevEUI for id-based ones), with a `#seq` position index.
 
 The **Form** view is the same project as nested cards (gateway → bus → device
 table) for keyboard-driven editing. Toggle between them in the header; both

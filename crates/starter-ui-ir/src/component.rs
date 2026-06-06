@@ -1061,6 +1061,70 @@ pub enum Component {
         style: Option<NodeStyle>,
     },
 
+    /// V2.0 page-builder content block — a standalone image. Source is a
+    /// URL (asset reference or absolute); the renderer owns sizing via
+    /// the `fit`/`aspect` tokens so authored content never embeds pixel
+    /// dimensions. Decorative images should leave `alt` empty.
+    Image {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        id: Option<String>,
+        /// Image source URL.
+        src: String,
+        /// Accessible alt text. Empty string = decorative (renders
+        /// `alt=""` so screen readers skip it).
+        #[serde(default)]
+        alt: String,
+        /// Object-fit token: `"cover"` (default) | `"contain"` | `"fill"`.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        fit: Option<String>,
+        /// Aspect-ratio token: `"auto" | "square" | "video" (16:9) |
+        /// "wide" (21:9) | "portrait" (3:4)`. Closed set; no raw ratios.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        aspect: Option<String>,
+        /// Optional caption rendered below the image in muted text.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        caption: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        style: Option<NodeStyle>,
+    },
+
+    /// V2.0 page-builder content block — a hero / feature band. A
+    /// full-width banner with an optional eyebrow, large title,
+    /// subtitle, and a body subtree (typically CTA buttons). The visual
+    /// background comes from the node's `style` (`gradient`/`background`/
+    /// `shadow`), so a hero is a Section with editorial defaults:
+    /// centred text, generous padding, large heading.
+    Hero {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        id: Option<String>,
+        /// Small uppercase label above the title (e.g. "NEW").
+        #[serde(skip_serializing_if = "Option::is_none")]
+        eyebrow: Option<String>,
+        /// Hero headline. Required — a hero without a title is a `col`.
+        title: String,
+        /// Optional supporting line below the title.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        subtitle: Option<String>,
+        /// Body content — CTAs, badges, anything. Rendered below the
+        /// subtitle.
+        #[serde(default)]
+        children: Vec<Component>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        style: Option<NodeStyle>,
+    },
+
+    /// V2.0 page-builder layout block — vertical breathing room. A pure
+    /// spacer with a `size` token (`"xs".."2xl"`); no content. Lets
+    /// authors separate bands without abusing empty sections.
+    Spacer {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        id: Option<String>,
+        /// Height token: `"xs" | "sm" | "md" (default) | "lg" | "xl" |
+        /// "2xl"`. Closed set; no pixel values.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        size: Option<String>,
+    },
+
     /// Time-range picker with preset buttons. Writes
     /// `{from, to}` (Unix ms) into `$page[page_state_key]` on every
     /// click. `to` is "now" at click time for presets; `null/null`
@@ -1121,6 +1185,22 @@ pub enum Component {
         disabled: Option<bool>,
         #[serde(skip_serializing_if = "Option::is_none")]
         action: Option<Action>,
+        /// V2.0 page-builder — link target. When set, the button renders
+        /// as an anchor (`<a href>`) navigating to this URL or in-app
+        /// route, turning it into a call-to-action. `action` and `href`
+        /// are mutually exclusive at author time; if both are present the
+        /// renderer prefers `href`.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        href: Option<String>,
+        /// V2.0 page-builder — visual variant: `"solid"` (default) |
+        /// `"outline"` | `"ghost"` | `"link"`. Closed set. Combine with
+        /// `intent` for the accent colour.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        variant: Option<String>,
+        /// V2.0 page-builder — size token: `"sm" | "md" (default) |
+        /// "lg"`. Lets a hero CTA be visually prominent.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        size: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         style: Option<NodeStyle>,
     },
@@ -1851,6 +1931,37 @@ pub struct NodeStyle {
     /// margin on standalone primitives). Closed set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spacing: Option<String>,
+    /// V2.0 page-builder decoration — solid background fill token:
+    /// `"none" | "surface" | "muted" | "subtle" | "ink" | "leaf" |
+    /// "aqua" | "sun" | "sky" | "warn"`. Resolves to a theme variable in
+    /// the renderer; raw hex must not appear here. Lets a `section`/`card`
+    /// stand out as a coloured band without leaving the token system.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background: Option<String>,
+    /// V2.0 page-builder decoration — gradient background token for hero
+    /// / feature bands: `"none" | "leaf" | "aqua" | "sun" | "sky" |
+    /// "dusk" | "ink"`. Closed set; resolves to a theme-derived
+    /// `linear-gradient` in the renderer.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gradient: Option<String>,
+    /// V2.0 page-builder decoration — drop-shadow elevation token:
+    /// `"none" | "sm" | "md" | "lg" | "xl" | "glow"`. Closed set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub shadow: Option<String>,
+    /// V2.0 typography — text alignment token: `"start" | "center" |
+    /// "end"`. Applies to the node's own text flow.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_align: Option<String>,
+    /// V2.0 typography — font-size token:
+    /// `"xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl"`. Closed
+    /// set; pixel sizes must not appear here. Enables editorial / hero
+    /// headings beyond the fixed component defaults.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_size: Option<String>,
+    /// V2.0 typography — font-weight token: `"normal" | "medium" |
+    /// "semibold" | "bold"`. Closed set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_weight: Option<String>,
     /// V1.8 a11y — accessible label for interactive nodes (button,
     /// toggle, slider, select, ref_picker, date_range). Renders as the
     /// element's `aria-label`. Optional in V1; planned to become a
@@ -2137,6 +2248,9 @@ impl Component {
             | Component::KpiGrid { id, .. }
             | Component::Detail { id, .. }
             | Component::Card { id, .. }
+            | Component::Image { id, .. }
+            | Component::Hero { id, .. }
+            | Component::Spacer { id, .. }
             | Component::DateRange { id, .. }
             | Component::Wizard { id, .. }
             | Component::Drawer { id, .. }
@@ -2237,6 +2351,9 @@ impl crate::Bindable for Component {
             | Component::KpiGrid { id, .. }
             | Component::Detail { id, .. }
             | Component::Card { id, .. }
+            | Component::Image { id, .. }
+            | Component::Hero { id, .. }
+            | Component::Spacer { id, .. }
             | Component::DateRange { id, .. }
             | Component::Wizard { id, .. }
             | Component::Drawer { id, .. }
@@ -2696,7 +2813,12 @@ impl crate::Bindable for Component {
                     }
                 }
             }
-            Component::Button { label, .. } => visit(label),
+            Component::Button { label, href, .. } => {
+                visit(label);
+                if let Some(h) = href {
+                    visit(h);
+                }
+            }
             Component::Toggle { label, .. } | Component::Slider { label, .. } => {
                 if let Some(l) = label {
                     visit(l);
@@ -2828,7 +2950,31 @@ impl crate::Bindable for Component {
                     visit(&mut n.label);
                 }
             }
-            Component::Menu { .. }
+            Component::Image {
+                src, alt, caption, ..
+            } => {
+                visit(src);
+                visit(alt);
+                if let Some(c) = caption {
+                    visit(c);
+                }
+            }
+            Component::Hero {
+                eyebrow,
+                title,
+                subtitle,
+                ..
+            } => {
+                if let Some(e) = eyebrow {
+                    visit(e);
+                }
+                visit(title);
+                if let Some(s) = subtitle {
+                    visit(s);
+                }
+            }
+            Component::Spacer { .. }
+            | Component::Menu { .. }
             | Component::Diff { .. }
             | Component::Divider { .. }
             | Component::Row { .. }

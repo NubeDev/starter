@@ -3,6 +3,7 @@
 import { cn } from "@nube/starter-ui-kit";
 import { RenderChildren } from "../headless/render.js";
 import { registerRenderer } from "../headless/registry.js";
+import { nodeStyleAttrs } from "./node-style.js";
 
 // Static Tailwind class map so the JIT picks the classes up at build
 // time — a dynamic `col-span-${n}` string would be tree-shaken away.
@@ -26,6 +27,7 @@ export function RenderCol({ node }: { node: import("@nube/starter-ui-ir").UiComp
   const span = Math.min(12, Math.max(1, Math.round(raw)));
   return (
     <div
+      {...nodeStyleAttrs(node.style)}
       className={cn(
         "sdui-col flex flex-col gap-4",
         SPAN_CLASSES[span],

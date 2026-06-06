@@ -112,6 +112,7 @@ fn walk<G: EntityGraph + ?Sized>(
         | Component::Grid { children, .. }
         | Component::Section { children, .. }
         | Component::Card { children, .. }
+        | Component::Hero { children, .. }
         | Component::Dialog { children, .. }
         | Component::Drawer { children, .. } => {
             for c in children {

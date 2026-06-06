@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @import '@nube/starter-ui-kit/scan-source.css';
 @import '@nube/starter-ui-sdui-react/scan-source.css';
+/* Static stylesheet for the SDUI `data-sdui-*` decoration tokens
+ * (background/gradient/shadow/typography). Must be a real import, not a
+ * scan-source shim — these rules are static and would otherwise be
+ * tree-shaken. See `starter-ui-sdui-react/src/styles/node-style.css`. */
+@import '@nube/starter-ui-sdui-react/node-style.css';
 @import '@nube/starter-ui-warehouse-explorer/scan-source.css';
 @import '@nube/starter-ui-authz/scan-source.css';
 @import '@nube/starter-ui-flow/scan-source.css';
