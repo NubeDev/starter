@@ -91,3 +91,11 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   tests/routes/alerts/alert_e2e_test.rs (+1), a cross-lane nudge into WS-07's area; flagging as a
   possible commit-conflict risk for WS-07. NO action (WS-07 alive, lock kernel-held). NEXT WAKE:
   if WS-07 still 🔵 with no commit (~23+ min) → approaching stall, inspect harder. Real WS commits: 5.
+- 2026-06-09 13:28 — WS-07 ✅ DONE & committed clean (f52d6b38, 3041 lines: multi-condition rules,
+  no-data/error policy, Slack+Email/lettre, templating, retry; migration 1001; 36 alerting tests +
+  pnpm 134 all GREEN). My earlier `git log -4` just didn't reach it — wider search confirmed the
+  commit. Both 13:23 watch-items cleared: NOT a stall (it was committing), and the cross-lane
+  alert_e2e_test.rs touch caused NO conflict (WS-07 committed cleanly over it). WS-07 even fixed a
+  real UI↔backend operator-name bug, and correctly DEFERRED C6 audit/undo (WS-12 substrate not run)
+  + left the other session's `pub mod agents;` hunk untouched. Wake PID 136336 (23min) in tail,
+  about to spawn WS-10 (next pending). NO action. Real WS commits: 5→6 (WS-03,04,07 done). All healthy.
