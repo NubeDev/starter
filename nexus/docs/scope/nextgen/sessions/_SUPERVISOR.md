@@ -210,3 +210,10 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   then MQTT; Modbus DROPPED; rumqttc gated OFF" — confirms the autonomous-with-human-decision flow
   works end-to-end (session read the decision from TODOs/STATUS). Lock kernel-held, no STOP, no real
   blockers. 11/12 ✅ + WS-08b building = the LAST item. After this commits, the entire queue is done.
+- 2026-06-10 01:09 — All healthy, NO action. Cron firing (00:55, 01:00/05). WS-08b 🔵 (final item)
+  wake PID 344587/child 344599 ALIVE 9min, PROGRESSED format→MQTT exactly per human decision:
+  datasource_kinds/validate.rs (format) + datasource/mqtt/probe.rs + mqtt/mod.rs + datasource-kinds/
+  mqtt_config.json (MQTT kind manifest) + Cargo.toml (gated rumqttc) + main/state/openapi wiring.
+  NO Modbus files anywhere — correctly dropped. Lock kernel-held, no STOP, no real blockers. Only
+  incomplete row is WS-08b 🔵 (WS-08 ⛔ is the superseded original). 11/12 ✅; WS-08b in mid/late
+  build. After it commits → ENTIRE QUEUE DONE.
