@@ -189,7 +189,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_datasource"];
-        put?: never;
+        put: operations["update_datasource"];
         post?: never;
         delete: operations["delete_datasource"];
         options?: never;
@@ -207,6 +207,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["query_datasource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/datasources/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["test_datasource"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1409,6 +1425,47 @@ export interface operations {
             };
         };
     };
+    update_datasource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Datasource id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDatasourceRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasourceDetail"];
+                };
+            };
+            /** @description Not authorized to edit this datasource */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     delete_datasource: {
         parameters: {
             query?: never;
@@ -1468,6 +1525,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not authorized to view this datasource */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    test_datasource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Datasource id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Probe outcome (ok=false on a failed probe) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDatasourceResponse"];
+                };
             };
             /** @description Not authorized to view this datasource */
             403: {

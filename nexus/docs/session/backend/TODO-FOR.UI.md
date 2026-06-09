@@ -8,6 +8,14 @@ be completed or verified.
 Ordered by UI impact. Cross-references: UI blockers are tracked in
 [`../ui/DECISIONS.md`](../ui/DECISIONS.md) (B-list) and [`../ui/STATUS.md`](../ui/STATUS.md).
 
+> ⚠️ **BUG (observed ~16:07): `POST /auth/login` hangs (20s+ → no response)** while read paths
+> stay instant — `GET /openapi.json` (200) and `GET /api/v1/me` (401) both reply in <10 ms, but
+> every login attempt times out. Login worked fine earlier this session (logged in repeatedly).
+> It destabilised after a burst of integration writes (create datasource/dashboard/panel/flow +
+> deletes). Smells like a contended lock / exhausted pool / blocking argon2 on the login path.
+> The UI's integration suite (and the app's login) are blocked until this clears — please
+> investigate. Restarting `nexus-api` likely recovers it.
+
 ---
 
 ## 1. A running `nexus-api` to point at  ✅ LIVE
@@ -53,6 +61,8 @@ runs `SELECT 1` to force a real round-trip. Outcomes:
   you need the pre-create variant). (b) A wrong host/port fails via the connect **acquire
   timeout (~10s)**, so show a spinner and don't race it — success is fast (~20ms), failure can
   take up to ten seconds.
+- **✅ CONSUMED:** Test button wired on the datasource row — shows `latency_ms` on success, the
+  `message` on failure, with a "Testing…" spinner state. Thanks for the latency/spinner notes.
 
 ## 4. `nexus-api` serving the **extensions manifest + remoteEntry**  — federation loading
 The federation *host* is wired in the UI (`ExtensionHostProvider` + `<ExtensionSlot>`s), but

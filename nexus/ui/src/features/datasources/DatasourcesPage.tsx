@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Database, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import { useDatasources } from "@/features/datasources/useDatasources";
 import { useRemoveDatasource } from "@/features/datasources/useDatasourceMutations";
 import { DatasourceFormDialog } from "@/features/datasources/DatasourceFormDialog";
+import { DatasourceRow } from "@/features/datasources/DatasourceRow";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -40,30 +41,12 @@ export function DatasourcesPage() {
         ) : (
           <ul className="flex flex-col gap-2">
             {data.map((ds) => (
-              <li
+              <DatasourceRow
                 key={ds.id}
-                className="glass flex items-center gap-3 rounded-lg px-4 py-3"
-              >
-                <span className="grid size-9 place-items-center rounded-lg bg-primary/15 text-primary">
-                  <Database className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {ds.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{ds.kind}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={`Delete ${ds.name}`}
-                  disabled={remove.isPending}
-                  onClick={() => remove.mutate(ds.id)}
-                  className="text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </li>
+                datasource={ds}
+                onRemove={() => remove.mutate(ds.id)}
+                removing={remove.isPending}
+              />
             ))}
           </ul>
         )}

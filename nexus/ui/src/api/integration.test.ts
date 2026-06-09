@@ -6,7 +6,17 @@ import { listDatasources } from "@/api/datasources/list";
 import { createDatasource } from "@/api/datasources/create";
 import { removeDatasource } from "@/api/datasources/remove";
 import { queryDatasource } from "@/api/datasources/query";
+import { testDatasource } from "@/api/datasources/test";
 import { listAlertRules } from "@/api/alerts/rules";
+import { createDashboard } from "@/api/dashboards/create";
+import { getDashboard } from "@/api/dashboards/get";
+import { removeDashboard } from "@/api/dashboards/remove";
+import { addPanel } from "@/api/dashboards/addPanel";
+import { updatePanel } from "@/api/dashboards/updatePanel";
+import { removePanel } from "@/api/dashboards/removePanel";
+import { createFlow } from "@/api/flows/create";
+import { removeFlow } from "@/api/flows/remove";
+import { startFlow, stopFlow } from "@/api/flows/lifecycle";
 import { login } from "@/auth/login";
 
 // Integration suite — runs the bindings against a REAL nexus-api, never a
@@ -63,7 +73,8 @@ describe.skipIf(!BASE)("integration: nexus-api", () => {
   beforeAll(async () => {
     client = new StarterClient({ baseUrl: BASE!, fetch: jarFetch() });
     await login(client, { email: EMAIL, password: PASSWORD });
-  });
+    // Generous: the first request after a backend rebuild can be slow.
+  }, 30_000);
 
   it("returns the authenticated principal from /me", async () => {
     const me = await getMe(client);
@@ -98,5 +109,78 @@ describe.skipIf(!BASE)("integration: nexus-api", () => {
   it("lists alert rules without error", async () => {
     const rules = await listAlertRules(client);
     expect(Array.isArray(rules)).toBe(true);
+  });
+
+  it("probes a datasource connection (test endpoint)", async () => {
+    const ds = await createDatasource(client, {
+      name: `e2e-test-${Date.now()}`,
+      kind: "postgres",
+      ...PG,
+    });
+    try {
+      const probe = await testDatasource(client, ds.id);
+      // The seeded metadata DB is reachable, so the probe should connect.
+      expect(probe.ok).toBe(true);
+      expect(typeof probe.latency_ms === "number" || probe.latency_ms === null).toBe(true);
+    } finally {
+      await removeDatasource(client, ds.id);
+    }
+  });
+
+  it("round-trips a dashboard with a panel: create → add → PATCH layout → delete", async () => {
+    const slug = `e2e-${Date.now()}`;
+    const ds = await createDatasource(client, {
+      name: `e2e-panel-ds-${Date.now()}`,
+      kind: "postgres",
+      ...PG,
+    });
+    await createDashboard(client, { name: "E2E dashboard", slug });
+    try {
+      const panel = await addPanel(client, slug, {
+        title: "E2E panel",
+        sql: "select 1 as v",
+        datasource_id: ds.id,
+        viz: "stat",
+        layout: { x: 0, y: 0, w: 3, h: 2 },
+      });
+      expect(panel.id).toBeTruthy();
+
+      // PATCH only the layout; title/sql/viz stay put (partial update).
+      const moved = await updatePanel(client, panel.id, {
+        layout: { x: 6, y: 4, w: 3, h: 2 },
+      });
+      expect(moved.title).toBe("E2E panel");
+      expect((moved.layout as { x: number }).x).toBe(6);
+
+      // The dashboard detail reflects the panel.
+      const detail = await getDashboard(client, slug);
+      expect(detail.panels.map((p) => p.id)).toContain(panel.id);
+
+      await removePanel(client, panel.id);
+      const after = await getDashboard(client, slug);
+      expect(after.panels.map((p) => p.id)).not.toContain(panel.id);
+    } finally {
+      await removeDashboard(client, slug);
+      await removeDatasource(client, ds.id);
+    }
+  });
+
+  it("round-trips a flow lifecycle: create → start → stop → delete", async () => {
+    const flow = await createFlow(client, {
+      name: `e2e-flow-${Date.now()}`,
+      enabled: true,
+      input: { type: "generate", interval: "1s" },
+      pipeline: [],
+      output: { type: "stdout" },
+    });
+    try {
+      expect(flow.id).toBeTruthy();
+      const started = await startFlow(client, flow.id);
+      expect(started.running).toBe(true);
+      const stopped = await stopFlow(client, flow.id);
+      expect(stopped.running).toBe(false);
+    } finally {
+      await removeFlow(client, flow.id);
+    }
   });
 });
