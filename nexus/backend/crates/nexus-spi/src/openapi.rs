@@ -7,11 +7,15 @@
 
 use utoipa::OpenApi;
 
+use crate::dto::dashboard::{
+    CreateDashboardRequest, DashboardDetail, DashboardSummary, UpdateDashboardRequest,
+};
 use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceSummary,
     RedactedConnection, TestDatasourceResponse, UpdateDatasourceRequest,
 };
 use crate::dto::me::MeResponse;
+use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{ColumnSchema, QueryRequest, QueryResponse, QueryStats, ResultColumnType};
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::Problem;
@@ -36,5 +40,12 @@ use crate::Problem;
     CreateStreamRequest,
     CreateStreamResponse,
     StreamEvent,
+    DashboardSummary,
+    DashboardDetail,
+    CreateDashboardRequest,
+    UpdateDashboardRequest,
+    PanelDetail,
+    CreatePanelRequest,
+    UpdatePanelRequest,
 )))]
 pub struct Schemas;
