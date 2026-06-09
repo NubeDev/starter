@@ -6,10 +6,11 @@ import {
 } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
 
+import { createFlow } from "@/api/flows/create";
 import { listFlows } from "@/api/flows/list";
 import { removeFlow } from "@/api/flows/remove";
 import { startFlow, stopFlow } from "@/api/flows/lifecycle";
-import type { FlowDetail, FlowSummary } from "@/api/types";
+import type { CreateFlowRequest, FlowDetail, FlowSummary } from "@/api/types";
 
 const FLOWS_KEY = ["nexus", "flows"] as const;
 
@@ -47,4 +48,15 @@ export function useFlowActions() {
   });
 
   return { start, stop, remove };
+}
+
+// Create a flow from an assembled request, then refresh the list.
+export function useCreateFlow() {
+  const client = useStarterClient();
+  const queryClient = useQueryClient();
+  return useMutation<FlowDetail, Error, CreateFlowRequest>({
+    mutationFn: (body) => createFlow(client, body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FLOWS_KEY }),
+  });
 }

@@ -174,7 +174,10 @@ exists and becomes a real screen the moment `/alerts` is published. See B6.
   nav route (D11) renders an honest "coming soon" state — no mock rules (F0). Becomes a real
   list/create/acknowledge screen once the contract surfaces alerts.
 
-- **B7 — flow config editor.** `/flows` CRUD is wired and the management screen runs/stops/
-  deletes flows, but *authoring* a flow's ArkFlow `input`/`pipeline`/`output` (opaque JSON)
-  needs a dedicated config editor (connector pickers + a pipeline builder). Deferred to its own
-  work-unit; not blocked on the backend (the endpoints exist), just a larger UI than this pass.
+- **B7 — flow config editor.** *Resolved (first pass).* `FlowFormDialog` authors a flow's name,
+  enabled flag, and the three ArkFlow config sections (`input`/`pipeline`/`output`) as tabbed
+  JSON editors, validated client-side (`flowDraft` — parse + object/array check, tested) with the
+  failing section's tab flagged. The config is free-form JSON in the contract, so this is the
+  honest editor; a richer **visual** builder (connector pickers, a node-graph pipeline) is a
+  later enhancement, not a blocker. Edit of an existing flow uses the same draft shape over
+  `PUT /flows/{id}` (binding wired) when an edit entry point is added.

@@ -1,45 +1,57 @@
-import { Pause, Play, Trash2, Workflow } from "lucide-react";
+import { useState } from "react";
+import { Pause, Play, Plus, Trash2, Workflow } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import type { FlowSummary } from "@/api/types";
 import { useFlowActions, useFlows } from "@/features/flows/useFlows";
+import { FlowFormDialog } from "@/features/flows/FlowFormDialog";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
 
 // Flow management: list the tenant's saved ingestion flows with their
-// running state and start/stop + delete actions, over the real endpoints.
-// Authoring a flow's ArkFlow config (input/pipeline/output) is a richer
-// editor deferred to its own work-unit; this screen runs and manages
-// flows that already exist. Loading/empty/error throughout (F0).
+// running state and start/stop + delete actions, plus a config editor to
+// author new ones — all over the real endpoints. Loading/empty/error
+// throughout (F0).
 export function FlowsPage() {
   const { data, isPending, isError, error } = useFlows();
   const actions = useFlowActions();
-
-  if (isPending) return <Loading label="Loading flows…" />;
-  if (isError) {
-    return (
-      <ErrorState message={error instanceof Error ? error.message : undefined} />
-    );
-  }
-  if (data.length === 0) {
-    return (
-      <Empty
-        title="No flows"
-        description="Flows are long-running ingestion pipelines. None are configured yet."
-      />
-    );
-  }
+  const [creating, setCreating] = useState(false);
 
   const busy =
     actions.start.isPending || actions.stop.isPending || actions.remove.isPending;
 
   return (
-    <ul className="flex flex-col gap-2">
-      {data.map((flow) => (
-        <FlowRow key={flow.id} flow={flow} busy={busy} actions={actions} />
-      ))}
-    </ul>
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold tracking-tight">Flows</h2>
+        <Button size="sm" className="gap-2" onClick={() => setCreating(true)}>
+          <Plus className="size-4" />
+          New flow
+        </Button>
+      </div>
+
+      <div className="min-h-0 flex-1">
+        {isPending ? (
+          <Loading label="Loading flows…" />
+        ) : isError ? (
+          <ErrorState message={error instanceof Error ? error.message : undefined} />
+        ) : data.length === 0 ? (
+          <Empty
+            title="No flows"
+            description="Flows are long-running ingestion pipelines. Create one to begin."
+          />
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {data.map((flow) => (
+              <FlowRow key={flow.id} flow={flow} busy={busy} actions={actions} />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <FlowFormDialog open={creating} onOpenChange={setCreating} />
+    </div>
   );
 }
 

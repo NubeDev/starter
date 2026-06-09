@@ -18,7 +18,7 @@ loading/empty/error states (F0).
 | **Dashboards** | list / get / create / delete | sidebar list, create dialog, DashboardPage |
 | **Panels** | add / delete | AddWidgetDialog + per-panel remove (edit mode) |
 | **Streams** | `POST /streams` + SSE | live panels (token-URL EventSource, windowed) |
-| **Flows** | list / get / create / **PUT** / delete / start / stop | Flows page (run state + start/stop + delete) |
+| **Flows** | list / get / create / **PUT** / delete / start / stop | Flows page (run state + start/stop + delete) + config editor (name/enabled/input/pipeline/output) |
 
 **Engine & shell:** react-grid-layout canvas mounting live panels; 6-type ECharts widget
 library (line/area/gauge/stat/status/table, theme-resolved colours); floating shadcn sidebar
@@ -35,7 +35,7 @@ placement, reshape — per F10); `pnpm typecheck` + `build` clean; F0/F1/F2 smok
 | B4 | Load extensions | `/extensions` route in nexus-api | host + slots wired; one base-path change |
 | B5 | Persist canvas layout | `PATCH /panels` (or layout PUT) | `applyGridLayout` diff already computed |
 | B6 | Alerts | `/alerts` in the contract | placeholder page + route in place |
-| B7 | Flow config editor | (none — UI work) | CRUD wired; needs a pipeline-builder UI |
+| B7 | Flow config editor | ✅ done (JSON editor); visual builder later | name/enabled/input/pipeline/output, validated |
 | — | Test datasource connection | the test endpoint (`TestDatasourceResponse` exists, no route) | one binding + a button |
 | — | Live verification + integration tests (F10) | a **running** nexus-api on a port | screens render honest states until then |
 
