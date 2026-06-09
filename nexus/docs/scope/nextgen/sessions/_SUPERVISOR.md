@@ -128,3 +128,12 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   `pnpm --filter`+esbuild running = final frontend build/codegen phase. kinds/ backend module
   present uncommitted (?? ). Lock kernel-held, no STOP. WS-10.md still missing — watch unchanged
   (escalate only if it commits ✅ without the doc). Real WS commits: 6 done (03,04,07).
+- 2026-06-09 13:56 — WS-10 ✅ DONE & committed clean (dd4687ae + hash row 7a442053). BUILD GREEN —
+  first lock-FREE wake, `cargo check --workspace` finished clean in 21s with WS-10 at HEAD (real
+  compile confirmation, not a mid-edit snapshot). Declarative query-kinds: registry/loader/lints/
+  core pack (meters_list, meter_get, usage_bucketed, top_sites_by_usage) + kind-mode dispatch +
+  GET /query/kinds + KindPicker UI, reusing the WS-03 binder (no 2nd engine). 19 kinds unit tests +
+  pnpm green. FALSE-ALARM CLOSED: the "WS-10.md missing" watch (carried 4 wakes) was a GREP artifact
+  — the doc EXISTS (7009 bytes, committed in 7a442053) but uses `**Status:**` (bold) so my
+  `^Status:` grep missed it. NO real DoD miss. FIX: future wakes grep `[Ss]tatus.*Done` format-
+  agnostic. Wake exited clean, lock FREE, no STOP. 4/12 done (03,04,07,10). Next: WS-08.
