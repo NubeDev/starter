@@ -52,7 +52,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // on its own cadence. Single-node for v1.
     nexus_api::alerting::schedule::spawn(state.clone());
 
-    let router = serve::assemble(state, identity.auth, identity.authz, identity.authenticator);
+    let router = serve::assemble(
+        state,
+        identity.auth,
+        identity.authz,
+        identity.tenants,
+        identity.authenticator,
+    );
     tracing::info!(bind = %cfg.bind, "nexus-api listening");
     starter_server::builder::bind(router, cfg.bind).await?;
     Ok(())

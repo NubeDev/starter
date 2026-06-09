@@ -1,127 +1,98 @@
-// Access management — the top-level "who can see what" surface.
+// Access management — the "who can do what" surface, in three tabs:
+//   • Dashboards — per-dashboard sharing (share scope + grants)
+//   • Teams      — create/delete teams, add members (reused authz panel)
+//   • Members    — add/remove tenant members, change their role
 //
-// Lists every dashboard in the tenant with its current share scope and a short
-// access summary, and a Manage button that opens the same permissions drawer the
-// dashboard toolbar's Share button uses. This is the Grafana "Administration →
-// Permissions" entry point: one place to review and change dashboard access.
-//
-// Data comes from the authz instances endpoint (effective ACL per dashboard),
-// which lives outside `/api/v1`, so it uses the StarterClient authz methods.
+// Teams and Members reuse the ready-made CRUD panels from
+// `@nube/starter-ui-authz` (the same ones the standalone authz admin uses),
+// wired to this tenant. New *user accounts* are created via sign-up/CLI — these
+// panels manage who belongs to the tenant and its teams, by user id.
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Shield } from "lucide-react";
-import { useStarterClient } from "@nube/starter-client-react";
-import type { ResourceInstance, ShareScope } from "@nube/starter-client-ts";
-import { Badge } from "@nube/starter-ui-kit/components/badge";
-import { Button } from "@nube/starter-ui-kit/components/button";
-import { PageDetailDrawer } from "@nube/starter-ui-authz";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@nube/starter-ui-kit/components/tabs";
+import {
+  MembersPanel,
+  TeamsPanel,
+  useTenantMembers,
+} from "@nube/starter-ui-authz";
 
 import { usePrincipal } from "@/auth/usePrincipal";
-import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
-
-const DASHBOARD_KIND = "nexus.dashboard";
-
-const SCOPE_LABEL: Record<ShareScope, string> = {
-  private: "Private",
-  tenant: "Anyone in tenant",
-  specific: "Specific people",
-};
+import { DashboardAccessTab } from "@/features/access/DashboardAccessTab";
 
 export function AccessPage() {
-  const client = useStarterClient();
   const principal = usePrincipal();
+
+  if (principal.isPending) return <Loading label="Loading…" />;
+  if (principal.isError) {
+    return (
+      <ErrorState
+        message={
+          principal.error instanceof Error ? principal.error.message : undefined
+        }
+      />
+    );
+  }
+
   const tenantId = principal.data?.tenant_id ?? null;
-  const tenantParam = tenantId && tenantId !== "*" ? tenantId : undefined;
-
-  const [selected, setSelected] = useState<ResourceInstance | null>(null);
-
-  const instances = useQuery({
-    queryKey: ["nexus", "access", "dashboards", tenantParam],
-    queryFn: () =>
-      client.listResourceInstances(DASHBOARD_KIND, { tenant: tenantParam }),
-  });
+  // The team/member panels are tenant-scoped; a super-admin (`*`) has no single
+  // tenant to manage here, so we tell them to pick one rather than silently fail.
+  const scopedTenant = tenantId && tenantId !== "*" ? tenantId : null;
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold tracking-tight">
-          Dashboard access
-        </h2>
+    <Tabs defaultValue="dashboards" className="flex h-full flex-col">
+      <TabsList>
+        <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
+        <TabsTrigger value="teams">Teams</TabsTrigger>
+        <TabsTrigger value="members">Members</TabsTrigger>
+      </TabsList>
+      <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+        <TabsContent value="dashboards" className="h-full">
+          <DashboardAccessTab tenantId={scopedTenant} />
+        </TabsContent>
+        <TabsContent value="teams" className="h-full">
+          {scopedTenant ? (
+            <TeamsPanel tenantId={scopedTenant} />
+          ) : (
+            <SuperAdminHint />
+          )}
+        </TabsContent>
+        <TabsContent value="members" className="h-full">
+          {scopedTenant ? (
+            <MembersTab tenantId={scopedTenant} />
+          ) : (
+            <SuperAdminHint />
+          )}
+        </TabsContent>
       </div>
-
-      <div className="min-h-0 flex-1">
-        {instances.isPending ? (
-          <Loading label="Loading dashboards…" />
-        ) : instances.isError ? (
-          <ErrorState
-            message={
-              instances.error instanceof Error
-                ? instances.error.message
-                : undefined
-            }
-          />
-        ) : instances.data.items.length === 0 ? (
-          <Empty
-            title="No dashboards"
-            description="Create a dashboard to manage who can access it."
-          />
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {instances.data.items.map((d) => (
-              <AccessRow
-                key={d.id}
-                instance={d}
-                onManage={() => setSelected(d)}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <PageDetailDrawer
-        page={selected}
-        kind={DASHBOARD_KIND}
-        tenantId={tenantParam ?? tenantId ?? ""}
-        onClose={() => setSelected(null)}
-      />
-    </div>
+    </Tabs>
   );
 }
 
-function AccessRow({
-  instance,
-  onManage,
-}: {
-  instance: ResourceInstance;
-  onManage: () => void;
-}) {
-  const acl = instance.effective_acl;
-  const count = acl.grants.length;
+// Members panel in controlled mode: it has no list endpoint of its own, so the
+// host fetches the membership list and passes it in for the row display.
+function MembersTab({ tenantId }: { tenantId: string }) {
+  const members = useTenantMembers(tenantId);
   return (
-    <li className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-          <Shield className="size-4" />
-        </span>
-        <div className="grid">
-          <span className="text-sm font-medium">{instance.label}</span>
-          <span className="text-xs text-muted-foreground">
-            {SCOPE_LABEL[acl.share_scope]}
-            {count > 0
-              ? ` · ${count} grant${count === 1 ? "" : "s"}`
-              : ""}
-          </span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Badge variant="secondary">{SCOPE_LABEL[acl.share_scope]}</Badge>
-        <Button variant="outline" size="sm" onClick={onManage}>
-          Manage
-        </Button>
-      </div>
-    </li>
+    <MembersPanel
+      tenantId={tenantId}
+      members={members.data}
+      membersLoading={members.isLoading}
+      membersError={members.error}
+    />
+  );
+}
+
+function SuperAdminHint() {
+  return (
+    <p className="text-sm text-muted-foreground">
+      You are signed in as a global admin. Team and member management is
+      per-tenant — sign in as a member of a single tenant to manage it.
+    </p>
   );
 }

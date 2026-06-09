@@ -44,7 +44,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         stream_token_ttl: Duration::from_secs(60),
         engine: id.engine.clone(),
     };
-    let router = serve::assemble(state, id.auth, id.authz, id.authenticator);
+    let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
     TestApp::spawn(router).await
 }
 

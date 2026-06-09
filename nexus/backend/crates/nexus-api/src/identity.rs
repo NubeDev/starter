@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use starter_auth_users::routes::{auth_router, AuthState};
+use starter_auth_users::routes::{auth_router, tenants_router, AuthState};
 use starter_auth_users::store::{PgSessionStore, PgTenantStore, PgTokenStore, PgUserStore};
 use starter_auth_users::AuthAuthenticator;
 use starter_authz::instances::InstancesRegistry;
@@ -28,6 +28,9 @@ use crate::state::AppState;
 pub struct Identity {
     pub auth: Router<AppState>,
     pub authz: Router<AppState>,
+    /// Tenant / member / team CRUD (`/v1/tenants/*`). Protected admin routes —
+    /// mounted behind the principal layer like `authz`.
+    pub tenants: Router<AppState>,
     pub authenticator: Arc<dyn Authenticator>,
     /// The same engine instance the `/v1/authz/*` router writes to. Handlers
     /// hold this to check grants; a grant written through the router reloads
@@ -49,6 +52,10 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
         AuthAuthenticator::new(users.clone(), sessions.clone(), tokens.clone())
             .with_tenants(tenants.clone()),
     );
+
+    // The team/member/tenant CRUD router shares the tenant store; build it before
+    // moving the store into the auth state.
+    let tenants_routes = tenants_router::<AppState>(tenants.clone());
 
     let auth_state = AuthState::new(users, sessions, tokens).with_tenants(tenants);
     let auth = auth_router::<AppState>(auth_state);
@@ -88,6 +95,7 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
     Ok(Identity {
         auth,
         authz,
+        tenants: tenants_routes,
         authenticator,
         engine,
     })

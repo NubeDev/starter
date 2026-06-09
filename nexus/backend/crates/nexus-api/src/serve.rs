@@ -34,20 +34,24 @@ pub fn assemble<A>(
     state: AppState,
     auth: Router<AppState>,
     authz: Router<AppState>,
+    tenants: Router<AppState>,
     authenticator: Arc<A>,
 ) -> Router
 where
     A: Authenticator + ?Sized,
 {
-    // The authz admin routes read `Principal` (role gate, tenant scoping, the
-    // per-resource Manage check), so they need the principal layer just like the
-    // product routes. The auth routes (`/auth/*`) mint the session and must stay
-    // unwrapped. Each `with_principal` call adds its own layer over its routes.
+    // The authz + tenant CRUD routes read `Principal` (role gate, tenant scoping,
+    // the per-resource Manage check), so they need the principal layer just like
+    // the product routes. The auth routes (`/auth/*`) mint the session and must
+    // stay unwrapped. Each `with_principal` call adds its own layer over its
+    // routes.
     let protected = with_principal(product_router(), authenticator.clone());
-    let authz = with_principal(authz, authenticator);
+    let authz = with_principal(authz, authenticator.clone());
+    let tenants = with_principal(tenants, authenticator);
     ServerBuilder::<AppState>::new(state)
         .merge_router(auth)
         .merge_router(authz)
+        .merge_router(tenants)
         .merge_router(protected)
         .with_openapi(document())
         .build()
