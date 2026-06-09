@@ -192,3 +192,22 @@ predates this session (no alert source was touched by WS-05). It blocks compilin
 updated only to add the `NewDashboard` fields this WS introduced (`folder_id`; `dashboard_crud`/
 `tag_crud` also needed the pre-existing-missing `icon`/`accent` to make the same literal compile).
 **To unblock the `alert_crud` target:** the alerts WS (or a human) updates that `NewRule` literal.
+
+---
+
+## WS-06 (Flows Visual Builder) — follow-ups
+
+- **Open an existing flow for visual edit.** The builder currently authors *new* flows. `parseGraph`
+  (`features/flows/builder/parse.ts`) already turns a saved flow's `{input, pipeline, output}` back
+  into a graph and round-trips cleanly (tested), so the remaining work is an entry point: an "Edit"
+  action on a flow row that loads its detail, seeds `useBuilderGraph` with `parseGraph(...)`, and
+  saves via an update mutation (`UpdateFlowRequest` + `PATCH /flows/{id}` already exist) instead of
+  create.
+- **Flow throughput metrics.** `FlowMetrics` deliberately omits rows/batches throughput: the
+  `FlowManager` hands the stream to the engine but does not instrument the real output sink, so any
+  count would be fabricated (F0). Surfacing true throughput needs an observed/wrapped sink (or an
+  engine-level counter) — a backend change in the flow-runtime lane.
+- **Dead authoring path.** `features/flows/FlowFormDialog.tsx` + `flowDraft.ts` (+ `flowDraft.test.ts`)
+  are now unreferenced (the builder's "Raw JSON" tab supersedes them). Left in place — authored by an
+  earlier flows slice, not WS-06's to delete. A cleanup pass can remove them once nothing else imports
+  them.
