@@ -29,6 +29,7 @@ tokio-util.workspace = true
 tokio-stream.workspace = true
 futures.workspace = true
 
+sqlx.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
@@ -44,6 +45,12 @@ hmac.workspace = true
 sha2.workspace = true
 base64.workspace = true
 
+[features]
+# Pulls in the starter-server test harness (TestApp) and the testcontainers
+# Postgres helper for HTTP integration tests. Off by default so production
+# builds stay lean.
+testing = ["starter-server/testing", "starter-store-postgres/testing"]
+
 [[bin]]
 name = "nexus-api"
 path = "src/main.rs"
@@ -56,4 +63,10 @@ path = "src/bin/openapi.rs"
 
 [dev-dependencies]
 reqwest.workspace = true
+sqlx.workspace = true
 tokio = { workspace = true, features = ["test-util"] }
+starter-store-postgres.workspace = true
+
+[[test]]
+name = "routes_query_run"
+path = "tests/routes/query/run_test.rs"

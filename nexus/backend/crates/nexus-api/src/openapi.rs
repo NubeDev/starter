@@ -8,10 +8,13 @@
 use utoipa::openapi::{InfoBuilder, OpenApi as OpenApiDoc};
 use utoipa::OpenApi;
 
-/// Route paths declared by nexus-api handlers. Empty until the first
-/// `#[utoipa::path]` handler is merged in (M0 adds `/query`).
+/// Route paths declared by nexus-api handlers. Each `#[utoipa::path]` handler is
+/// listed here so it appears in the published document.
 #[derive(OpenApi)]
-#[openapi(info(title = "Nexus API", version = "0.1.0"))]
+#[openapi(
+    info(title = "Nexus API", version = "0.1.0"),
+    paths(crate::routes::query::run::run_query)
+)]
 pub struct Paths;
 
 /// The published document: nexus-api paths plus nexus-spi schemas.

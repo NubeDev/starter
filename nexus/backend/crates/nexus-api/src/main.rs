@@ -1,9 +1,47 @@
 //! Nexus control-plane server entrypoint.
 //!
-//! Composes the auth/authz routers from the starter crates with nexus's product
-//! routers over the engine and store, then serves. Fleshed out as the route
-//! work-units land; M0 wires the query path.
+//! Connects the datasource pool, assembles the router, and serves. Identity,
+//! the metadata store, and the engine handles join `AppState` as their
+//! milestones land; M0 serves the one-shot query path.
 
-fn main() {
-    eprintln!("nexus-api: server wiring lands with the M0 route work-units");
+use std::net::SocketAddr;
+use std::time::Duration;
+
+use nexus_api::serve;
+use nexus_api::state::AppState;
+use nexus_store::QueryGuards;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
+        )
+        .init();
+
+    let datasource_url = std::env::var("NEXUS_DATASOURCE_URL")
+        .map_err(|_| "NEXUS_DATASOURCE_URL must be set (the datasource Postgres DSN)")?;
+    let bind: SocketAddr = std::env::var("NEXUS_BIND")
+        .unwrap_or_else(|_| "127.0.0.1:8080".into())
+        .parse()?;
+
+    let datasource = sqlx::PgPool::connect(&datasource_url).await?;
+    let state = AppState {
+        datasource,
+        guards: default_guards(),
+    };
+
+    tracing::info!(%bind, "nexus-api listening");
+    starter_server::builder::bind(serve::router(state), bind).await?;
+    Ok(())
+}
+
+/// The server-enforced query bounds. Conservative defaults; per-datasource
+/// overrides arrive with datasource CRUD.
+fn default_guards() -> QueryGuards {
+    QueryGuards {
+        statement_timeout: Duration::from_secs(30),
+        max_rows: 10_000,
+        max_bytes: 16 * 1024 * 1024,
+    }
 }

@@ -5,7 +5,49 @@
     "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, and panels.",
     "version": "0.1.0"
   },
-  "paths": {},
+  "paths": {
+    "/api/v1/query": {
+      "post": {
+        "tags": [
+          "query"
+        ],
+        "summary": "Extract the SQL, run it under the server guards, return the rows. The guards\n(read-only, timeout, caps) live in the store; this handler only wires.",
+        "operationId": "run_query",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or rejected query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "components": {
     "schemas": {
       "ColumnSchema": {
