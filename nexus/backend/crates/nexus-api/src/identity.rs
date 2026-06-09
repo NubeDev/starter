@@ -12,14 +12,15 @@ use axum::Router;
 use starter_auth_users::routes::{auth_router, AuthState};
 use starter_auth_users::store::{PgSessionStore, PgTenantStore, PgTokenStore, PgUserStore};
 use starter_auth_users::AuthAuthenticator;
+use starter_authz::instances::InstancesRegistry;
 use starter_authz::routes::AuthzRoutesState;
-use starter_authz::store::PostgresPolicyStore;
+use starter_authz::store::{PolicyStore, PostgresPolicyStore};
 use starter_authz::{authz_router, DbPolicyEngine, StaticRegistry};
 use starter_spi::auth::Authenticator;
 use starter_spi::authz::ResourceRegistry;
 use starter_store_postgres::Pool;
 
-use crate::authz::register_nexus_resources;
+use crate::authz::{register_nexus_resources, DashboardInstancesProvider, KIND_DASHBOARD};
 use crate::state::AppState;
 
 /// The mounted identity surface plus the authenticator that protects the product
@@ -54,19 +55,35 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
 
     let registry: Arc<dyn ResourceRegistry> = Arc::new(StaticRegistry::new());
     register_nexus_resources(registry.as_ref());
-    let policy_store = Arc::new(PostgresPolicyStore::new(pool));
+    let policy_store = Arc::new(PostgresPolicyStore::new(pool.clone()));
     // default_policy = true keeps the built-in role ladder: a tenant admin
     // (role = admin) is allowed every action on every kind, so admins reach
     // their own tenant's resources without an explicit grant. Non-admins match
     // no built-in rule on the nexus action vocabulary (view/edit/manage), so
     // their access comes solely from per-resource grants — which is the sharing
     // model the product wants. The tenant-scoping predicate isolates either way.
+    let policy_store_dyn: Arc<dyn PolicyStore> = policy_store.clone();
     let engine = Arc::new(
         DbPolicyEngine::new(policy_store, registry.clone(), true)
             .await
             .map_err(|e| format!("policy engine: {e}"))?,
     );
-    let authz = authz_router::<AppState>(AuthzRoutesState::new(engine.clone(), registry));
+
+    // The instances registry powers the authz admin surface's per-dashboard share
+    // view: `GET /v1/authz/resources/nexus.dashboard/instances` lists the tenant's
+    // dashboards with their effective ACL. Only dashboards opt in for now; other
+    // kinds simply 404 on that route until they register a provider.
+    let instances = InstancesRegistry::new();
+    instances.register(
+        KIND_DASHBOARD,
+        Arc::new(DashboardInstancesProvider::new(
+            pool.sqlx().clone(),
+            policy_store_dyn,
+        )),
+    );
+    let authz = authz_router::<AppState>(
+        AuthzRoutesState::new(engine.clone(), registry).with_instances(Arc::new(instances)),
+    );
 
     Ok(Identity {
         auth,

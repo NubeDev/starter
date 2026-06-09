@@ -9,7 +9,8 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::Deserialize;
-use starter_spi::auth::Principal;
+use starter_spi::auth::{Principal, Role};
+use starter_spi::authz::{PolicyEngine, ResourceRef};
 
 use crate::grants::{GrantError, GrantFilter, GrantStore, NewGrant};
 use crate::instances::{PermissionTier, ShareScope};
@@ -20,6 +21,37 @@ use super::state::AuthzRoutesState;
 
 fn grant_store(state: &AuthzRoutesState) -> GrantStore {
     GrantStore::new(state.engine.store().clone())
+}
+
+/// May `principal` manage who has access to `(kind, resource_id)` in `tenant`?
+///
+/// A tenant admin always may. A non-admin may only if they hold the **Manage**
+/// tier on that specific resource — modelled as the `delete` action, the top of
+/// the view⊂edit⊂delete ladder (`acl::actions_for_tier(Manage)`). This is the
+/// Grafana model: a dashboard's manager can share it without being a tenant
+/// admin. Returns a ready `403` otherwise. `resource_id` is `None` for a
+/// tenant-wide (kind-level) grant, which only an admin may write.
+async fn require_manage(
+    state: &AuthzRoutesState,
+    principal: &Principal,
+    kind: &str,
+    resource_id: Option<&str>,
+    tenant: &str,
+) -> Result<(), Response> {
+    if principal.role == Role::Admin {
+        return Ok(());
+    }
+    // Only a concrete instance can be delegated to a non-admin; a kind-wide grant
+    // (no resource_id) is an admin-only operation.
+    let Some(id) = resource_id else {
+        return Err(StatusCode::FORBIDDEN.into_response());
+    };
+    let object = ResourceRef::row(kind, id).with_tenant(tenant);
+    if state.engine.check(principal, "delete", &object).await.is_allow() {
+        Ok(())
+    } else {
+        Err(StatusCode::FORBIDDEN.into_response())
+    }
 }
 
 fn grant_err(e: GrantError) -> Response {
@@ -36,6 +68,38 @@ fn grant_err(e: GrantError) -> Response {
     }
 }
 
+/// Gate a patch/delete that names a grant by id: resolve the grant's
+/// `(kind, resource_id, tenant)` from the store, then apply [`require_manage`].
+/// A missing grant id is treated as forbidden (not found is not disclosed to a
+/// non-admin); admins skip the lookup.
+async fn require_manage_for_grant(
+    state: &AuthzRoutesState,
+    principal: &Principal,
+    grant_id: &str,
+) -> Result<(), Response> {
+    if principal.role == Role::Admin {
+        return Ok(());
+    }
+    let rules = state
+        .engine
+        .store()
+        .list_rules()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())?;
+    let Some(rule) = rules.into_iter().find(|r| r.id == grant_id) else {
+        return Err(StatusCode::FORBIDDEN.into_response());
+    };
+    let tenant = rule.tenant_id.as_deref().unwrap_or_default();
+    require_manage(
+        state,
+        principal,
+        &rule.resource,
+        rule.resource_id.as_deref(),
+        tenant,
+    )
+    .await
+}
+
 pub(super) async fn create_grant(
     Extension(state): Extension<Arc<AuthzRoutesState>>,
     Extension(principal): Extension<Principal>,
@@ -43,6 +107,17 @@ pub(super) async fn create_grant(
     Json(body): Json<NewGrant>,
 ) -> Response {
     if let Err(r) = check_csrf(&headers) {
+        return r;
+    }
+    if let Err(r) = require_manage(
+        &state,
+        &principal,
+        &body.resource_kind,
+        body.resource_id.as_deref(),
+        &body.tenant_id,
+    )
+    .await
+    {
         return r;
     }
     let gs = grant_store(&state);
@@ -61,10 +136,14 @@ pub(super) async fn create_grant(
 
 pub(super) async fn delete_grant(
     Extension(state): Extension<Arc<AuthzRoutesState>>,
+    Extension(principal): Extension<Principal>,
     Path(id): Path<String>,
     headers: HeaderMap,
 ) -> Response {
     if let Err(r) = check_csrf(&headers) {
+        return r;
+    }
+    if let Err(r) = require_manage_for_grant(&state, &principal, &id).await {
         return r;
     }
     let gs = grant_store(&state);
@@ -131,6 +210,9 @@ pub(super) async fn patch_grant(
     if let Err(r) = check_csrf(&headers) {
         return r;
     }
+    if let Err(r) = require_manage_for_grant(&state, &principal, &id).await {
+        return r;
+    }
     let gs = grant_store(&state);
     match gs.patch_tier(&id, body.tier, &principal.subject).await {
         Ok(g) => match state.engine.reload().await {
@@ -180,6 +262,11 @@ pub(super) async fn set_share_scope(
             None => return StatusCode::FORBIDDEN.into_response(),
         }
     };
+    if let Err(r) =
+        require_manage(&state, &principal, &kind, Some(&resource_id), &tenant_id).await
+    {
+        return r;
+    }
     let gs = grant_store(&state);
     match gs
         .set_share_scope(&kind, &resource_id, &tenant_id, body.scope, &principal.subject)
@@ -288,5 +375,64 @@ mod tests {
         assert!(matches!(d_member, Decision::Allow { .. }), "got {d_member:?}");
         let d_outsider = engine.check(&outsider, "edit", &page_ref()).await;
         assert!(matches!(d_outsider, Decision::Deny { .. }), "got {d_outsider:?}");
+    }
+
+    /// The Manage-gate: who may share a resource. A tenant admin always may; a
+    /// non-admin may only if they hold the Manage tier (delete action) on the
+    /// specific resource; a non-admin without it is forbidden. This is the
+    /// "tenant admins + resource Manage" delegation model.
+    #[tokio::test]
+    async fn require_manage_admits_admin_and_resource_manager_only() {
+        use super::require_manage;
+        use crate::routes::state::AuthzRoutesState;
+
+        let (engine, gs) = setup().await;
+        // Grant the Manage tier (view+edit+delete) on dash_x to team:hvac-ops.
+        gs.create(
+            NewGrant {
+                subject: crate::grants::GrantSubject::Team {
+                    slug: "hvac-ops".into(),
+                },
+                resource_kind: "rubix.dashboard.page".into(),
+                resource_id: Some("dash_x".into()),
+                tier: PermissionTier::Manage,
+                tenant_id: "t1".into(),
+            },
+            "admin",
+        )
+        .await
+        .unwrap();
+        engine.reload().await.unwrap();
+
+        let registry = Arc::new(StaticRegistry::new());
+        let state = AuthzRoutesState::new(engine, registry);
+
+        let mut admin = p("an-admin", vec![]);
+        admin.role = Role::Admin;
+        let manager = p("u-manager", vec!["hvac-ops".into()]);
+        let bystander = p("u-bystander", vec![]);
+
+        // Admin: allowed regardless of grants.
+        assert!(require_manage(&state, &admin, "rubix.dashboard.page", Some("dash_x"), "t1")
+            .await
+            .is_ok());
+        // Non-admin holding Manage on the resource: allowed.
+        assert!(
+            require_manage(&state, &manager, "rubix.dashboard.page", Some("dash_x"), "t1")
+                .await
+                .is_ok()
+        );
+        // Non-admin without Manage: forbidden.
+        assert!(
+            require_manage(&state, &bystander, "rubix.dashboard.page", Some("dash_x"), "t1")
+                .await
+                .is_err()
+        );
+        // Even a manager cannot write a kind-wide (no resource_id) grant.
+        assert!(
+            require_manage(&state, &manager, "rubix.dashboard.page", None, "t1")
+                .await
+                .is_err()
+        );
     }
 }

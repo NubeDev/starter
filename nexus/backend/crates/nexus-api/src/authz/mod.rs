@@ -12,6 +12,10 @@
 //! cross-tenant predicate fires before any rule — the `tenant` on the
 //! [`ResourceRef`] must be set for the check to pass.
 
+mod dashboard_instances;
+
+pub use dashboard_instances::DashboardInstancesProvider;
+
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use starter_spi::auth::Principal;

@@ -30,7 +30,10 @@ where
 {
     let state = Arc::new(state);
 
-    Router::<S>::new()
+    // Admin-only: raw policy editing (rules/assignments), the resource catalogue,
+    // and the decision audit. A misconfigured rule must never lock the admin out
+    // of fixing the very table that produced it, so these stay role-gated.
+    let admin = Router::<S>::new()
         .route("/v1/authz/rules", get(list_rules).post(create_rule))
         .route("/v1/authz/rules/{id}", put(update_rule).delete(delete_rule))
         .route(
@@ -39,14 +42,21 @@ where
         )
         .route("/v1/authz/assignments/{id}", delete(delete_assignment))
         .route("/v1/authz/resources", get(list_resources))
+        .route("/v1/authz/check", post(check_handler))
+        .route("/v1/authz/decisions", get(list_decisions))
+        .layer(from_fn(admin_gate));
+
+    // Grant + instance routes are NOT blanket admin-gated: a non-admin who holds
+    // the Manage tier on a specific resource may share it and read its ACL
+    // (Grafana's per-dashboard permissions model). Each write handler enforces
+    // `require_manage` itself (admin OR Manage-on-resource); the reads are
+    // tenant-scoped. Admins pass both paths unchanged.
+    let shared = Router::<S>::new()
         .route(
             "/v1/authz/resources/{kind}/instances",
             get(list_instances),
         )
-        .route(
-            "/v1/authz/grants",
-            get(list_grants).post(create_grant),
-        )
+        .route("/v1/authz/grants", get(list_grants).post(create_grant))
         .route(
             "/v1/authz/grants/{id}",
             delete(delete_grant).patch(patch_grant),
@@ -54,11 +64,9 @@ where
         .route(
             "/v1/authz/grants/share-scope/{kind}/{resource_id}",
             put(set_share_scope),
-        )
-        .route("/v1/authz/check", post(check_handler))
-        .route("/v1/authz/decisions", get(list_decisions))
-        .layer(Extension(state))
-        .layer(from_fn(admin_gate))
+        );
+
+    admin.merge(shared).layer(Extension(state))
 }
 
 /// Inline copy of the role-rank guard from

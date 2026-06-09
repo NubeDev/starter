@@ -39,7 +39,12 @@ pub fn assemble<A>(
 where
     A: Authenticator + ?Sized,
 {
-    let protected = with_principal(product_router(), authenticator);
+    // The authz admin routes read `Principal` (role gate, tenant scoping, the
+    // per-resource Manage check), so they need the principal layer just like the
+    // product routes. The auth routes (`/auth/*`) mint the session and must stay
+    // unwrapped. Each `with_principal` call adds its own layer over its routes.
+    let protected = with_principal(product_router(), authenticator.clone());
+    let authz = with_principal(authz, authenticator);
     ServerBuilder::<AppState>::new(state)
         .merge_router(auth)
         .merge_router(authz)
