@@ -38,6 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState {
         metadata,
         datasource,
+        datasource_pools: Default::default(),
         envelope: Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?,
         guards: default_guards(),
         live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,

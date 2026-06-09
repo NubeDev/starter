@@ -51,6 +51,10 @@ name = "datasource_crud"
 path = "tests/datasource/crud_test.rs"
 
 [[test]]
+name = "datasource_postgres_connect"
+path = "tests/datasource/postgres/connect_test.rs"
+
+[[test]]
 name = "dashboard_crud"
 path = "tests/dashboard/crud_test.rs"
 

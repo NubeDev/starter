@@ -8,6 +8,7 @@
 pub mod alerting;
 pub mod authz;
 pub mod bootstrap;
+pub mod datasource_pools;
 pub mod identity;
 pub mod middleware;
 pub mod openapi;

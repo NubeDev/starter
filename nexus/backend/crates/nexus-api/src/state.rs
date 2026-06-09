@@ -15,6 +15,7 @@ use nexus_store::QueryGuards;
 use sqlx::PgPool;
 use starter_spi::authz::PolicyEngine;
 
+use crate::datasource_pools::DatasourcePools;
 use crate::middleware::StreamTokenSigner;
 
 /// Cloneable handle bundle for the control plane.
@@ -24,8 +25,12 @@ pub struct AppState {
     /// the non-BYPASSRLS runtime role. All tenant-scoped tables live here.
     pub metadata: PgPool,
     /// Pool against the datasource Postgres that `POST /query` runs against.
-    /// Becomes a per-datasource lookup once multiple datasources are wired.
+    /// The dev single-datasource shortcut; `POST /datasources/:id/query` uses the
+    /// per-datasource cache below instead.
     pub datasource: PgPool,
+    /// Per-datasource connection pools, built on first query and reused after.
+    /// Keyed on the immutable datasource id within its tenant (R5).
+    pub datasource_pools: DatasourcePools,
     /// Envelope used to seal/open datasource connection secrets.
     pub envelope: Envelope,
     /// Server-enforced query bounds (read-only is applied per transaction).

@@ -53,7 +53,11 @@ pub async fn delete_datasource(
         return resp;
     }
     match datasource::delete(&state.metadata, &tenant, id).await {
-        Ok(true) => StatusCode::NO_CONTENT.into_response(),
+        Ok(true) => {
+            // Drop any cached pool so a recreated id never reuses a stale one.
+            state.datasource_pools.evict(&tenant, id).await;
+            StatusCode::NO_CONTENT.into_response()
+        }
         Ok(false) => (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => IntoResponse(e).into_response(),
     }

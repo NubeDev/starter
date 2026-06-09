@@ -83,6 +83,10 @@ name = "routes_query_run"
 path = "tests/routes/query/run_test.rs"
 
 [[test]]
+name = "routes_datasources_query_e2e"
+path = "tests/routes/datasources/query_e2e_test.rs"
+
+[[test]]
 name = "routes_streams_subscribe"
 path = "tests/routes/streams/subscribe_test.rs"
 

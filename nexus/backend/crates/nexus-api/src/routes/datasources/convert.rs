@@ -9,9 +9,25 @@ use nexus_spi::dto::datasource::{
 };
 use nexus_store::datasource::DatasourceRecord;
 
-/// Coarse kind mapping. Unknown stored kinds surface as `postgres` for now —
-/// the enum grows as connectors land.
-fn kind_of(_stored: &str) -> DatasourceKind {
+/// The stored string for a wire kind. The store column is the connector
+/// selector the engine builders key on, so the mapping is explicit, not a
+/// `Debug` of the enum. A new connector is one new arm here and in [`kind_of`].
+pub fn kind_to_stored(kind: DatasourceKind) -> &'static str {
+    match kind {
+        DatasourceKind::Postgres => "postgres",
+    }
+}
+
+/// The wire kind for a stored string. An unrecognized value (e.g. a kind written
+/// by a newer server, then downgraded) surfaces as `postgres` rather than
+/// failing the read — the redacted view stays available even if the kind is
+/// ahead of this binary.
+fn kind_of(stored: &str) -> DatasourceKind {
+    // Only `postgres` is wired today, so every stored value maps to it. When a
+    // second connector lands this becomes a real `match stored { "mqtt" => …,
+    // _ => Postgres }` — the fallback keeps a read from failing on an unknown
+    // kind written by a newer server.
+    let _ = stored;
     DatasourceKind::Postgres
 }
 

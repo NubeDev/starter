@@ -31,6 +31,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
     let state = AppState {
         metadata: admin.clone(),
         datasource: admin.clone(),
+        datasource_pools: Default::default(),
         envelope: Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
         guards: QueryGuards {
             statement_timeout: Duration::from_secs(5),

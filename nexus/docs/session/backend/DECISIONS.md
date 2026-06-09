@@ -3,6 +3,42 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D10 — M4 extensibility = postgres as a real queryable datasource + folder-per-connector, not a speculative file source
+
+The SCOPE names M4's deliverable a "DataFusion file/federation source", but the
+actual product gap was narrower and more valuable: a user-registered **postgres**
+datasource could be *created* but not *queried* — `POST /query` ran against a single
+hardcoded dev pool (`state.datasource`), there was no `POST /datasources/:id/query`,
+and `DatasourceKind`/create/convert were hardcoded to `Postgres`. So M4 makes the
+existing connector genuinely work end-to-end and proves the extension seam by making
+the *next* connector purely additive — rather than building a CSV/S3 source nobody
+has asked for. The load-bearing decisions:
+
+- **`POST /api/v1/datasources/:id/query` is the real query path.** It resolves the
+  caller's own datasource, gates on the `view` grant (D6, keyed on the immutable id,
+  404-before-403), opens a pool to that datasource through the audited decrypt
+  boundary, and runs the SQL under the *same* R4 guards (`run_query`: read-only tx,
+  statement timeout, row/byte caps) the one-shot path uses. The dev `POST /query`
+  stays as-is; this is the per-datasource path the product actually needs.
+- **Per-datasource pool cache resolves the D5/D7 deferred follow-up.** A
+  `DatasourcePools` map (in `nexus-api`) keyed on `tenant/id` builds a small bounded
+  pool on first query and reuses it after, so a dashboard refreshing its panels does
+  not reconnect each time; a delete evicts (and closes) the cached pool so a recreated
+  id never reuses a stale one. Single-node for v1 like live fan-out (R7) — one cache
+  per node, which is correct.
+- **Folder-per-connector layout (R1).** Connector-specific code lives under
+  `nexus-store/src/datasource/<kind>/` — `postgres/connect.rs` is how nexus connects
+  to a Postgres datasource. A new kind (`mqtt/`, a file source) is a *sibling folder*
+  plus one arm in `DatasourcePools::build` and the `kind_to_stored`/`kind_of` maps —
+  no edit to the postgres connector, no core change, no fork. This is the M4 exit
+  criterion ("a new connector ships as a registered input with no core change") made
+  real in the store's shape, not just asserted.
+
+Deferred (unchanged from D5): per-tenant predicate for a datasource DB shared across
+tenants (needs a tenant-column mapping in datasource config, no consumer yet); and the
+file/federation source itself, which is now a clean drop-in (`datasource/<kind>/` +
+one match arm) whenever a consumer appears.
+
 ## D9 — Alerting is a scheduler + state machine + notifiers, designed in ALERTING.md before any code
 
 The alerting subsystem follows its own sub-design ([ALERTING.md](ALERTING.md)), written before

@@ -8,7 +8,7 @@ use nexus_store::datasource::{self, NewDatasource};
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 
-use super::convert::to_detail;
+use super::convert::{kind_to_stored, to_detail};
 use crate::middleware::tenant::tenant_of;
 use crate::state::AppState;
 
@@ -32,7 +32,7 @@ pub async fn create_datasource(
     };
     let new = NewDatasource {
         name: req.name,
-        kind: "postgres".into(),
+        kind: kind_to_stored(req.kind).into(),
         host: req.host,
         port: req.port as i32,
         database: req.database,
