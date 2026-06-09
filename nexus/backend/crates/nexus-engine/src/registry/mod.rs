@@ -5,8 +5,11 @@
 //! so constructing several runners (or running many tests in one binary) is
 //! safe.
 
+pub mod descriptor;
 pub mod inputs;
 pub mod outputs;
+
+pub use descriptor::{describe, NodeCategory, NodeDescriptor};
 
 use std::sync::OnceLock;
 

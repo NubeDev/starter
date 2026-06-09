@@ -11,6 +11,7 @@ pub mod authz;
 pub mod bootstrap;
 pub mod changelog;
 pub mod datasource_pools;
+pub mod flows;
 pub mod identity;
 pub mod kinds;
 pub mod middleware;

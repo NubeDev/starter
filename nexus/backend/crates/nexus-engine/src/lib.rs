@@ -17,8 +17,8 @@ pub mod source;
 pub mod stream_registry;
 pub mod time;
 
-pub use flow::FlowManager;
-pub use registry::register_all;
+pub use flow::{FlowManager, FlowStats};
+pub use registry::{describe, register_all, NodeCategory, NodeDescriptor};
 pub use runner::{LiveRunner, QueryOutcome, QueryRunner};
 pub use sink::cap::Caps;
 pub use stream_registry::{attach, register, Attach, StreamKey, Subscription};

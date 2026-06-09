@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Pause, Play, Plus, Trash2, Workflow } from "lucide-react";
+import { AlertTriangle, Pause, Play, Plus, Trash2, Workflow } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import type { FlowSummary } from "@/api/types";
 import { useFlowActions, useFlows } from "@/features/flows/useFlows";
-import { FlowFormDialog } from "@/features/flows/FlowFormDialog";
+import { FlowBuilder } from "@/features/flows/builder/FlowBuilder";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -50,7 +50,7 @@ export function FlowsPage() {
         )}
       </div>
 
-      <FlowFormDialog open={creating} onOpenChange={setCreating} />
+      <FlowBuilder open={creating} onOpenChange={setCreating} />
     </div>
   );
 }
@@ -83,7 +83,21 @@ function FlowRow({
             aria-hidden
           />
           {flow.running ? "Running" : flow.enabled ? "Stopped" : "Disabled"}
+          {flow.metrics.last_started_at && !flow.metrics.last_error ? (
+            <span className="text-muted-foreground/70">
+              · since {flow.metrics.last_started_at}
+            </span>
+          ) : null}
         </p>
+        {flow.metrics.last_error ? (
+          <p
+            className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-destructive"
+            title={flow.metrics.last_error}
+          >
+            <AlertTriangle className="size-3 shrink-0" aria-hidden />
+            <span className="truncate">{flow.metrics.last_error}</span>
+          </p>
+        ) : null}
       </div>
       <Button
         variant="outline"

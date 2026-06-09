@@ -1671,6 +1671,61 @@
         }
       }
     },
+    "/api/v1/flows/dry-run": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Run the supplied input + pipeline against the bounded collector and return\nthe sample (or an inline build/runtime error). Principal-gated: a dry run\nexecutes a flow against real connectors, so it sits behind the same auth\nboundary as a saved flow. The pipeline defaults to empty when omitted.",
+        "operationId": "dry_run_flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DryRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dry-run sample or inline error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DryRunResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Engine failed to initialise"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/node-types": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Return every registered node, described. A static catalogue sourced from the\nengine registry's self-description — no datasource work, no per-tenant state.",
+        "operationId": "list_node_types",
+        "responses": {
+          "200": {
+            "description": "Registered flow node types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeTypeList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/flows/{id}": {
       "get": {
         "tags": [
@@ -3758,6 +3813,64 @@
           "MM/DD/YYYY"
         ]
       },
+      "DryRunRequest": {
+        "type": "object",
+        "description": "Test a flow's `input` + `pipeline` without persisting it or running its real\noutput. The engine swaps in the bounded collector sink, runs the stream to\nthe first breached cap (or a short wall-clock deadline), and returns the\nsample rows. `output` is intentionally absent — a dry run never writes to a\nreal sink. Optional `max_rows` lets the editor narrow the sample further\nthan the server default.",
+        "required": [
+          "input"
+        ],
+        "properties": {
+          "input": {
+            "description": "The flow's input config blob (`{type, ...}`)."
+          },
+          "max_rows": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Cap on sample rows; clamped to the server's hard maximum.",
+            "minimum": 0
+          },
+          "pipeline": {
+            "description": "The pipeline processors, in order. Defaults to an empty pipeline."
+          }
+        }
+      },
+      "DryRunResponse": {
+        "type": "object",
+        "description": "A dry run's outcome. On a build/runtime failure `error` carries the message\nand `rows` is empty; otherwise `rows`/`columns`/`stats` describe the bounded\nsample (with `stats.truncated` set when a cap stopped the stream early).",
+        "required": [
+          "columns",
+          "rows",
+          "stats"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSchema"
+            },
+            "description": "Column schema of the sample, derived from the result's Arrow schema."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A build or runtime error, surfaced before save. `None` on success."
+          },
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "The sample rows, JSON-encoded."
+          },
+          "stats": {
+            "$ref": "#/components/schemas/QueryStats",
+            "description": "Row/byte/time counters and the truncation flag for the sample."
+          }
+        }
+      },
       "FlowDetail": {
         "type": "object",
         "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
@@ -3768,7 +3881,8 @@
           "pipeline",
           "output",
           "enabled",
-          "running"
+          "running",
+          "metrics"
         ],
         "properties": {
           "enabled": {
@@ -3780,6 +3894,10 @@
             "format": "uuid"
           },
           "input": {},
+          "metrics": {
+            "$ref": "#/components/schemas/FlowMetrics",
+            "description": "Live run counters for this flow."
+          },
           "name": {
             "type": "string"
           },
@@ -3791,6 +3909,33 @@
           }
         }
       },
+      "FlowMetrics": {
+        "type": "object",
+        "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, and the error that ended the last run (if\nany). All fields reflect this node's in-process\n[`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and\nare absent once the process restarts (single-node v1). Throughput counters\nwould require instrumenting every output sink, so they are intentionally\nomitted rather than reported as zero.",
+        "required": [
+          "running"
+        ],
+        "properties": {
+          "last_error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The error that ended the most recent run, or `None` if it ended cleanly\n(or is still running)."
+          },
+          "last_started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "RFC-3339 timestamp of when the current or most recent run started, or\n`None` if the flow has never run this process."
+          },
+          "running": {
+            "type": "boolean",
+            "description": "Whether the manager currently has the flow running on this node."
+          }
+        }
+      },
       "FlowSummary": {
         "type": "object",
         "description": "A flow as it appears in the list: identity and run state, without the config\nblobs (those come from the detail endpoint).",
@@ -3798,7 +3943,8 @@
           "id",
           "name",
           "enabled",
-          "running"
+          "running",
+          "metrics"
         ],
         "properties": {
           "enabled": {
@@ -3807,6 +3953,10 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/FlowMetrics",
+            "description": "Live run counters for this flow."
           },
           "name": {
             "type": "string"
@@ -3911,6 +4061,62 @@
               "null"
             ],
             "description": "Tenant the session is bound to. `None` for an unbound principal; `\"*\"`\nmarks a super-admin that bypasses the cross-tenant predicate."
+          }
+        }
+      },
+      "NodeCategory": {
+        "type": "string",
+        "description": "Which palette group a node belongs to. The visual builder groups the palette\nby this and constrains edges (input → processor* → output).",
+        "enum": [
+          "input",
+          "processor",
+          "output"
+        ]
+      },
+      "NodeType": {
+        "type": "object",
+        "description": "A node type the engine can build, described for the editor: its ArkFlow\n`type` discriminant, palette grouping, labels, and a JSON Schema for its\nconfig so the editor can render a schema-driven form instead of raw JSON.",
+        "required": [
+          "kind",
+          "category",
+          "label",
+          "description",
+          "config_schema"
+        ],
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/NodeCategory",
+            "description": "Palette group."
+          },
+          "config_schema": {
+            "description": "JSON Schema (draft 2020-12) for the node's config object."
+          },
+          "description": {
+            "type": "string",
+            "description": "One-line description."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The ArkFlow `type` value the serialised graph node carries."
+          },
+          "label": {
+            "type": "string",
+            "description": "Human label for the palette."
+          }
+        }
+      },
+      "NodeTypeList": {
+        "type": "object",
+        "description": "The full palette: every registered node, in palette order (inputs,\nprocessors, outputs).",
+        "required": [
+          "node_types"
+        ],
+        "properties": {
+          "node_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeType"
+            }
           }
         }
       },

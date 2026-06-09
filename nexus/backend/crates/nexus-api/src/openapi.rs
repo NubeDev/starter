@@ -49,6 +49,8 @@ use utoipa::OpenApi;
         crate::routes::folders::delete::delete_folder,
         crate::routes::flows::list::list_flows,
         crate::routes::flows::create::create_flow,
+        crate::routes::flows::nodes::list_node_types,
+        crate::routes::flows::dryrun::dry_run_flow,
         crate::routes::flows::get::get_flow,
         crate::routes::flows::update::update_flow,
         crate::routes::flows::delete::delete_flow,

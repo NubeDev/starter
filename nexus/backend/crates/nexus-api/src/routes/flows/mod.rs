@@ -3,8 +3,10 @@
 pub mod convert;
 pub mod create;
 pub mod delete;
+pub mod dryrun;
 pub mod get;
 pub mod list;
+pub mod nodes;
 pub mod start;
 pub mod stop;
 pub mod update;
@@ -14,9 +16,12 @@ use axum::Router;
 
 use crate::state::AppState;
 
-/// The `/api/v1/flows` surface.
+/// The `/api/v1/flows` surface. The static `node-types` and `dry-run` routes are
+/// declared before `/{id}` so they are not captured by the id path segment.
 pub fn router() -> Router<AppState> {
     Router::new()
+        .route("/api/v1/flows/node-types", http_get(nodes::list_node_types))
+        .route("/api/v1/flows/dry-run", post(dryrun::dry_run_flow))
         .route(
             "/api/v1/flows",
             http_get(list::list_flows).post(create::create_flow),

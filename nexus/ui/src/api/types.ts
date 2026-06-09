@@ -56,7 +56,14 @@ export type UpdateFolderRequest = S["UpdateFolderRequest"];
 
 export type FlowSummary = S["FlowSummary"];
 export type FlowDetail = S["FlowDetail"];
+export type FlowMetrics = S["FlowMetrics"];
 export type CreateFlowRequest = S["CreateFlowRequest"];
+// Flow visual builder (WS-06): node palette + bounded dry-run.
+export type NodeType = S["NodeType"];
+export type NodeTypeList = S["NodeTypeList"];
+export type NodeCategory = S["NodeCategory"];
+export type DryRunRequest = S["DryRunRequest"];
+export type DryRunResponse = S["DryRunResponse"];
 export type UpdateFlowRequest = S["UpdateFlowRequest"];
 
 export type AlertRuleDetail = S["AlertRuleDetail"];

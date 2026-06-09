@@ -469,6 +469,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run the supplied input + pipeline against the bounded collector and return
+         *     the sample (or an inline build/runtime error). Principal-gated: a dry run
+         *     executes a flow against real connectors, so it sits behind the same auth
+         *     boundary as a saved flow. The pipeline defaults to empty when omitted.
+         */
+        post: operations["dry_run_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/node-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return every registered node, described. A static catalogue sourced from the
+         *     engine registry's self-description — no datasource work, no per-tenant state.
+         */
+        get: operations["list_node_types"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows/{id}": {
         parameters: {
             query?: never;
@@ -1338,6 +1380,40 @@ export interface components {
          */
         DateFormat: "auto" | "YYYY-MM-DD" | "DD/MM/YYYY" | "MM/DD/YYYY";
         /**
+         * @description Test a flow's `input` + `pipeline` without persisting it or running its real
+         *     output. The engine swaps in the bounded collector sink, runs the stream to
+         *     the first breached cap (or a short wall-clock deadline), and returns the
+         *     sample rows. `output` is intentionally absent — a dry run never writes to a
+         *     real sink. Optional `max_rows` lets the editor narrow the sample further
+         *     than the server default.
+         */
+        DryRunRequest: {
+            /** @description The flow's input config blob (`{type, ...}`). */
+            input: unknown;
+            /**
+             * Format: int64
+             * @description Cap on sample rows; clamped to the server's hard maximum.
+             */
+            max_rows?: number | null;
+            /** @description The pipeline processors, in order. Defaults to an empty pipeline. */
+            pipeline?: unknown;
+        };
+        /**
+         * @description A dry run's outcome. On a build/runtime failure `error` carries the message
+         *     and `rows` is empty; otherwise `rows`/`columns`/`stats` describe the bounded
+         *     sample (with `stats.truncated` set when a cap stopped the stream early).
+         */
+        DryRunResponse: {
+            /** @description Column schema of the sample, derived from the result's Arrow schema. */
+            columns: components["schemas"]["ColumnSchema"][];
+            /** @description A build or runtime error, surfaced before save. `None` on success. */
+            error?: string | null;
+            /** @description The sample rows, JSON-encoded. */
+            rows: unknown[];
+            /** @description Row/byte/time counters and the truncation flag for the sample. */
+            stats: components["schemas"]["QueryStats"];
+        };
+        /**
          * @description A saved ingestion flow in full. The three config blobs are opaque JSON on the
          *     wire — the input connector, the processor pipeline, and the output sink the
          *     FlowManager hands to the engine.
@@ -1348,10 +1424,36 @@ export interface components {
             /** Format: uuid */
             id: string;
             input: unknown;
+            /** @description Live run counters for this flow. */
+            metrics: components["schemas"]["FlowMetrics"];
             name: string;
             output: unknown;
             pipeline: unknown;
             /** @description Whether the FlowManager currently has it running on this node. */
+            running: boolean;
+        };
+        /**
+         * @description Live run state surfaced on the flows list and detail so an admin sees a
+         *     flow's health without opening it: whether it is running, when its current
+         *     (or most recent) run started, and the error that ended the last run (if
+         *     any). All fields reflect this node's in-process
+         *     [`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and
+         *     are absent once the process restarts (single-node v1). Throughput counters
+         *     would require instrumenting every output sink, so they are intentionally
+         *     omitted rather than reported as zero.
+         */
+        FlowMetrics: {
+            /**
+             * @description The error that ended the most recent run, or `None` if it ended cleanly
+             *     (or is still running).
+             */
+            last_error?: string | null;
+            /**
+             * @description RFC-3339 timestamp of when the current or most recent run started, or
+             *     `None` if the flow has never run this process.
+             */
+            last_started_at?: string | null;
+            /** @description Whether the manager currently has the flow running on this node. */
             running: boolean;
         };
         /**
@@ -1362,6 +1464,8 @@ export interface components {
             enabled: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Live run counters for this flow. */
+            metrics: components["schemas"]["FlowMetrics"];
             name: string;
             running: boolean;
         };
@@ -1421,6 +1525,36 @@ export interface components {
              *     marks a super-admin that bypasses the cross-tenant predicate.
              */
             tenant_id?: string | null;
+        };
+        /**
+         * @description Which palette group a node belongs to. The visual builder groups the palette
+         *     by this and constrains edges (input → processor* → output).
+         * @enum {string}
+         */
+        NodeCategory: "input" | "processor" | "output";
+        /**
+         * @description A node type the engine can build, described for the editor: its ArkFlow
+         *     `type` discriminant, palette grouping, labels, and a JSON Schema for its
+         *     config so the editor can render a schema-driven form instead of raw JSON.
+         */
+        NodeType: {
+            /** @description Palette group. */
+            category: components["schemas"]["NodeCategory"];
+            /** @description JSON Schema (draft 2020-12) for the node's config object. */
+            config_schema: unknown;
+            /** @description One-line description. */
+            description: string;
+            /** @description The ArkFlow `type` value the serialised graph node carries. */
+            kind: string;
+            /** @description Human label for the palette. */
+            label: string;
+        };
+        /**
+         * @description The full palette: every registered node, in palette order (inputs,
+         *     processors, outputs).
+         */
+        NodeTypeList: {
+            node_types: components["schemas"]["NodeType"][];
         };
         /**
          * @description Closed enum of number-format choices. Variants locked in stage 1.
@@ -3622,6 +3756,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+        };
+    };
+    dry_run_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Dry-run sample or inline error */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DryRunResponse"];
+                };
+            };
+            /** @description Engine failed to initialise */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_node_types: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registered flow node types */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NodeTypeList"];
                 };
             };
         };
