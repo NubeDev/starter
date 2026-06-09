@@ -49,6 +49,38 @@ before any extension `import()`, because the rubix remotes' importmap shims read
 mount `com.nubeio.ce` unchanged we must replicate that publishing step and the `index.html`
 importmap. (W11.)
 
+### D6 — Visual identity is `nexus-ui`, not the starter-kit default look
+**Components from `@nube/starter-ui-kit` (shadcn primitives — keeps federation + a11y);
+appearance from `nexus-ui`'s `index.css` (OLED palette, emerald accent, glass, aurora,
+type, density), ported faithfully and then elevated with the `ui-ux-pro` skill.**
+
+Why: F11 says reuse the kit's *primitives* — that stands (Button/Card/Dialog must be the
+shared shadcn components so federation and accessibility work). But the kit's default
+*token values* are a generic look; the product's identity is the `nexus-ui` mock. So we
+keep the kit's component layer and override every visual token (`--background`,
+`--primary`, radius, fonts, the glass/aurora utilities) with the `nexus-ui` design. The
+kit reads CSS vars, so overriding the vars re-skins every primitive without forking them.
+This supersedes the earlier "keep Nexus accents on top of kit oklch" framing — the
+`nexus-ui` look is the source of truth for appearance, not an accent layer.
+
+### D7 — Extensions are generic; no `com.nubeio.ce` coupling in v1
+Product owner: Nexus needs a **generic** extension host (any extension can contribute to
+named slots), **not** the rubix devices/wiresheet/nav-tree remote mounted specifically.
+So the federation host runtime + `<ExtensionSlot>`s stay (W11), but nexus/ui does not
+depend on or hard-wire `com.nubeio.ce`. The shared-TanStack-Query-singleton requirement
+(and therefore "no Refine", F2) still holds — *generic* extensions need the shared cache
+too. The importmap shims keep the `__rubix*` global names only because that's the SDK's
+published contract; renaming is a separate SDK change, out of scope here.
+
+### D8 — Authz admin route deferred (dependency type error)
+Reusing `@nube/starter-ui-authz`'s `<AuthzAdmin />` is still the plan for the teams/pages
+admin, but mounting it pulls that package's source into nexus/ui's `tsc` graph, which
+currently fails `noUnusedLocals` on an unused `TenantRail` import in
+`starter-ui-authz/src/panels/authz-admin.tsx`. Rather than relax our lint or patch another
+session's package mid-flight, the admin route is deferred. Re-add `<AuthzAdmin />` once
+that package's unused import is cleaned up (one-line fix, owned by the authz package), or
+gate dependency types out of our build. Tracked, not dropped.
+
 ## Backend blockers (build what we can; wire when unblocked)
 
 > Per the session lead: do what's possible now, record blockers here rather than stalling.

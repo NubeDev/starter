@@ -33,10 +33,12 @@ let cached: ExtensionHostManager | null = null;
 export function getExtensionHost(): ExtensionHostManager {
   if (cached) return cached;
   publishReactGlobals();
-  const reactQueryVersion =
-    (ReactQuery as unknown as { version?: string }).version ?? "5";
-  const zustandVersion =
-    (Zustand as unknown as { version?: string }).version ?? "5";
+  // Neither `@tanstack/react-query` nor `zustand` exports a runtime
+  // version constant, and the host's negotiation only compares majors.
+  // We declare the majors this host is built against; bumping the dep
+  // major is a deliberate change that must be reflected here.
+  const reactQueryVersion = "5";
+  const zustandVersion = "5";
   const opts: ExtensionHostManagerOptions = {
     client: getNexusClient(),
     singletons: {
