@@ -27,10 +27,14 @@ CREATE TABLE nexus_datasources (
     port          integer NOT NULL,
     database      text NOT NULL,
     db_user       text NOT NULL,
-    secret_cipher bytea NOT NULL,
-    secret_nonce  bytea NOT NULL,
-    key_version   integer NOT NULL DEFAULT 1,
-    created_at    timestamptz NOT NULL DEFAULT now()
+    -- Envelope-encrypted secret: the password ciphertext under a per-secret data
+    -- key, and that data key wrapped by the master key. Plaintext never lands.
+    secret_cipher    bytea NOT NULL,
+    secret_nonce     bytea NOT NULL,
+    wrapped_data_key bytea NOT NULL,
+    data_key_nonce   bytea NOT NULL,
+    key_version      integer NOT NULL DEFAULT 1,
+    created_at       timestamptz NOT NULL DEFAULT now()
 );
 
 -- Enable RLS and FORCE it so even the table owner is subject to the policy —

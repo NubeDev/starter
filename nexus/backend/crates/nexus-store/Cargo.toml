@@ -45,3 +45,7 @@ path = "tests/query/run_test.rs"
 [[test]]
 name = "tenant_pool_leak"
 path = "tests/tenant/pool_leak_test.rs"
+
+[[test]]
+name = "datasource_crud"
+path = "tests/datasource/crud_test.rs"

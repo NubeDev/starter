@@ -8,8 +8,13 @@
 //! rather than engine config; tenancy is RLS bound per transaction via
 //! [`tenant_tx`].
 
+pub mod datasource;
 pub mod migrate;
 pub mod query;
 pub mod tenant_tx;
 
+#[cfg(feature = "testing")]
+pub mod testing;
+
+pub use datasource::{Envelope, NewDatasource};
 pub use query::{run_query, QueryGuards};

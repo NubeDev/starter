@@ -9,51 +9,18 @@
 
 #![cfg(feature = "testing")]
 
-use nexus_store::{migrate, tenant_tx};
-use sqlx::postgres::PgPoolOptions;
+use nexus_store::tenant_tx;
+use nexus_store::testing::runtime_pool;
 use sqlx::{PgPool, Row};
 use starter_store_postgres::testing::with_database;
-
-/// Stand up the schema, give the runtime role a login, seed one datasource per
-/// tenant (as the superuser admin, which bypasses RLS for setup), and return a
-/// pool connected **as the runtime role** with a single connection — so every
-/// query reuses the same backend, the condition a leak would need.
-async fn runtime_pool(admin: &PgPool) -> PgPool {
-    migrate::run(admin).await.expect("migrations apply");
-
-    sqlx::query("ALTER ROLE nexus_runtime LOGIN PASSWORD 'runtimepw'")
-        .execute(admin)
-        .await
-        .expect("runtime login");
-    sqlx::query("GRANT USAGE ON SCHEMA public TO nexus_runtime")
-        .execute(admin)
-        .await
-        .expect("grant schema usage");
-
-    seed(admin, "acme", "acme-ds").await;
-    seed(admin, "globex", "globex-ds").await;
-
-    // Reuse the admin pool's connection target (host/port from the container),
-    // overriding only the credentials — so the runtime pool reaches the same
-    // database without re-deriving the mapped port.
-    let opts = admin
-        .connect_options()
-        .as_ref()
-        .clone()
-        .username("nexus_runtime")
-        .password("runtimepw");
-    PgPoolOptions::new()
-        .max_connections(1)
-        .connect_with(opts)
-        .await
-        .expect("connect as runtime role")
-}
 
 async fn seed(admin: &PgPool, tenant: &str, name: &str) {
     sqlx::query(
         "INSERT INTO nexus_datasources \
-         (tenant_id, name, kind, host, port, database, db_user, secret_cipher, secret_nonce) \
-         VALUES ($1, $2, 'postgres', 'h', 5432, 'd', 'u', '\\x00', '\\x00')",
+         (tenant_id, name, kind, host, port, database, db_user, \
+          secret_cipher, secret_nonce, wrapped_data_key, data_key_nonce) \
+         VALUES ($1, $2, 'postgres', 'h', 5432, 'd', 'u', \
+                 '\\x00', '\\x00', '\\x00', '\\x00')",
     )
     .bind(tenant)
     .bind(name)
@@ -81,6 +48,9 @@ async fn names_for(pool: &PgPool, tenant: &str) -> Vec<String> {
 async fn tenant_cannot_read_across_a_pooled_connection() {
     let (pool, _guard) = with_database().await;
     let runtime = runtime_pool(pool.sqlx()).await;
+    // Seed as the admin (bypasses RLS for setup); the test reads as the runtime.
+    seed(pool.sqlx(), "acme", "acme-ds").await;
+    seed(pool.sqlx(), "globex", "globex-ds").await;
 
     // Serve acme, then globex, then acme again — all on the one pooled
     // connection. Each tenant sees only its own row; the previous tenant's GUC
