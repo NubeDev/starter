@@ -43,6 +43,10 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         engine: Arc::new(AllowAll),
         kinds: Arc::new(nexus_api::kinds::Registry::empty()),
         prefs: nexus_api::prefs::prefs_store(pool.clone()),
+        changelog: nexus_api::changelog::ChangelogHandles::new(
+            pool.clone(),
+            Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
+        ),
     }
 }
 

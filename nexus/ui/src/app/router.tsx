@@ -8,6 +8,7 @@ import { DatasourcesPage } from "@/features/datasources/DatasourcesPage";
 import { FlowsPage } from "@/features/flows/FlowsPage";
 import { Explore } from "@/features/query-editor/Explore";
 import { AccessPage } from "@/features/access/AccessPage";
+import { AuditPage } from "@/features/audit/AuditPage";
 
 // Routing is a host-only concern (F4): extensions contribute to named
 // slots, never routes. React Router — not TanStack Router — owns the
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: "flows", element: <FlowsPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "access", element: <AccessPage /> },
+      { path: "audit", element: <AuditPage /> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },

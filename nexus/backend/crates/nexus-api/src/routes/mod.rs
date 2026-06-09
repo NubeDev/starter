@@ -3,6 +3,7 @@
 
 pub mod agents;
 pub mod alerts;
+pub mod audit;
 pub mod dashboards;
 pub mod datasources;
 pub mod flows;
@@ -10,6 +11,7 @@ pub mod me;
 pub mod query;
 pub mod streams;
 pub mod tags;
+pub mod undo;
 pub mod variables;
 
 use axum::Router;
@@ -31,4 +33,6 @@ pub fn product_router() -> Router<AppState> {
         .merge(tags::router())
         .merge(agents::router())
         .merge(variables::router())
+        .merge(audit::router())
+        .merge(undo::router())
 }

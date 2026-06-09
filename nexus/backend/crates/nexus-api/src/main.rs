@@ -43,11 +43,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!(count = kinds.len(), dir = %cfg.kinds_dir.display(), "loaded query-kinds");
 
     let prefs = nexus_api::prefs::prefs_store(metadata.clone());
+    let envelope = Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?;
+    // WS-12 audit/undo: build the reversible registry + redo cursor once at boot.
+    // Reversibles for secret-bearing kinds close over the same envelope so undo
+    // can re-seal a rotated secret through the store.
+    let changelog = nexus_api::changelog::ChangelogHandles::new(metadata.clone(), envelope.clone());
     let state = AppState {
         metadata,
         datasource,
         datasource_pools: Default::default(),
-        envelope: Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?,
+        envelope,
         guards: default_guards(),
         live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,
         flows: FlowManager::new().map_err(|e| format!("flow manager init: {e}"))?,
@@ -60,11 +65,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
         kinds: std::sync::Arc::new(kinds),
         prefs,
+        changelog,
     };
 
     // The alert scheduler runs for the process's lifetime, evaluating due rules
     // on its own cadence. Single-node for v1.
     nexus_api::alerting::schedule::spawn(state.clone());
+
+    // The audit-retention sweep prunes ledger rows past the retention horizon so
+    // the append-only log stays bounded. Runs for the process's lifetime.
+    nexus_api::changelog::prune::spawn(
+        state.clone(),
+        nexus_api::changelog::RetentionPolicy::from_env(),
+    );
 
     let router = serve::assemble(
         state,

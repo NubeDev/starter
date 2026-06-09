@@ -8,6 +8,7 @@ import { AppSidebar } from "@/app/AppSidebar";
 import { Header } from "@/app/Header";
 import { LayoutProvider } from "@/app/LayoutProvider";
 import { getCookie } from "@/lib/cookie";
+import { useUndoRedoShortcuts } from "@/features/audit/useUndoRedoShortcuts";
 
 // App frame on the canonical shadcn sidebar: a floating, minimisable
 // sidebar beside a `SidebarInset` content region with a glass header and
@@ -22,12 +23,15 @@ const TITLES: Record<string, string> = {
   "/flows": "Flows",
   "/alerts": "Alerts",
   "/access": "Access",
+  "/audit": "Audit",
 };
 
 export function AppShell() {
   const { pathname } = useLocation();
   const title = TITLES[pathname] ?? "Dashboards";
   const defaultOpen = getCookie("sidebar_state") !== "false";
+  // Cmd/Ctrl+Z / +Shift+Z drive undo/redo across the app (WS-12).
+  useUndoRedoShortcuts();
   return (
     <LayoutProvider>
       <SidebarProvider defaultOpen={defaultOpen}>

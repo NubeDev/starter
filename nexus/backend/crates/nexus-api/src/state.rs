@@ -15,6 +15,7 @@ use nexus_store::QueryGuards;
 use sqlx::PgPool;
 use starter_spi::authz::PolicyEngine;
 
+use crate::changelog::ChangelogHandles;
 use crate::datasource_pools::DatasourcePools;
 use crate::kinds::Registry as KindRegistry;
 use crate::middleware::StreamTokenSigner;
@@ -63,4 +64,8 @@ pub struct AppState {
     /// middleware. `workspace_id` is the caller's tenant; storage is route-pinned
     /// to it for isolation.
     pub prefs: NexusPrefs,
+    /// Audit/undo substrate (WS-12): the boot-built reversible registry and redo
+    /// cursor. Per-request tenant-pinned logs/recorders are built from these plus
+    /// the metadata pool; the audit and undo routes go through them.
+    pub changelog: ChangelogHandles,
 }

@@ -11,6 +11,7 @@ use crate::dto::agent::{
     AgentDetail, AgentSummary, CreateAgentRequest, CreateSessionRequest, CreateSessionResponse,
     SessionDetail, UpdateAgentRequest,
 };
+use crate::dto::audit::{ForgetRequest, ForgetResponse, UndoResponse};
 use crate::dto::dashboard::{
     CreateDashboardRequest, DashboardDetail, DashboardSummary, UpdateDashboardRequest,
 };
@@ -104,5 +105,8 @@ use crate::Problem;
     VariableKind,
     CreateVariableRequest,
     UpdateVariableRequest,
+    UndoResponse,
+    ForgetRequest,
+    ForgetResponse,
 )))]
 pub struct Schemas;

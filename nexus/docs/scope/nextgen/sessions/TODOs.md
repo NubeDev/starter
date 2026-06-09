@@ -27,6 +27,39 @@
 
 <!-- newest first -->
 
+### [2026-06-09 23:25] WS-12 — delete-inverse id-stable restore deferred (follow-up, NOT a blocker)
+- **What I was doing:** the reference `Reversible` impls (dashboard, datasource) — `apply_inverse` /
+  `apply_forward` so undo/redo round-trips through the store.
+- **The situation (not a hard blocker):** Update and Create inverses are implemented fully and verified
+  end-to-end (the audit e2e suite proves record → audit → undo-restores-before-snapshot). The **Delete**
+  inverse (resurrecting a deleted row) and `clone_with` (duplicate) return an honest `Error::Invalid`
+  because `dashboard::insert`/`datasource::insert` mint a **new** id, which would orphan the panel/grant/
+  pool-cache references keyed to the old id. A faithful resurrect needs an id-preserving insert path —
+  a small change to the WS-05 dashboard store and the WS-08 datasource store (each owns its insert),
+  out of WS-12's lane.
+- **Options I see:** (a) add an `insert_with_id` to the dashboard + datasource stores (owned by WS-05 /
+  WS-08) so the inverse re-creates with the original id; (b) leave delete-resurrection unsupported until
+  a kind genuinely needs undo-of-delete. 
+- **My recommendation:** (a), as a small WS-05/WS-08 follow-up; the registry/recording/Update+Create
+  undo already work, so this only adds delete-resurrection.
+- **What I did instead:** shipped the substrate + registry + recording + Update/Create undo/redo +
+  coverage guard + audit query + retention + GDPR forget, all green; the Delete/`clone_with` paths
+  return a clear "unsupported, needs id-stable insert" error rather than a fake success. WS-12 row ✅.
+- **To unblock me:** add `insert_with_id` to the dashboard (WS-05) and datasource (WS-08) stores, then a
+  WS-12 follow-up swaps the `resurrect_unsupported` stubs for it.
+
+### [2026-06-09 23:25] WS-12 — pre-existing `grant_gate_test.rs` `NewDashboard` drift (out of lane)
+- **What I was doing:** building the WS-12 crate; `tests/routes/authz/grant_gate_test.rs` is one of the
+  test files I had to touch (the 4-line `changelog:` field add to its `AppState` literal).
+- **The situation:** that test's `NewDashboard { .. }` literal is missing the `icon` / `accent` fields
+  added by migration `0006_dashboard_appearance.sql` (a WS-02/WS-05 change). Verified via `git stash`
+  that this `E0063` exists on a clean base **independent of WS-12** — it is pre-existing drift, not my
+  change. Per stay-in-your-lane I did **not** edit its logic (my only diff to the file is the
+  `changelog:` field).
+- **My recommendation:** the WS-02/WS-05 owner adds `icon`/`accent` to that test's `NewDashboard`.
+- **What I did instead:** left it; flagged here so it doesn't read as a WS-12 regression.
+- **To unblock:** add the two fields to the `NewDashboard` literal in `grant_gate_test.rs`.
+
 ### [2026-06-09 22:40] WS-11 — series quantity-tagging + query-edge conversion deferred (follow-up, NOT a blocker)
 - **What I was doing:** WS-11's "bulk of the effort" per the spec §2 — tag query/stream series with a
   `quantity` so the `SeriesEnvelope` + `UnitsCtx::convert` can render values in the caller's units at

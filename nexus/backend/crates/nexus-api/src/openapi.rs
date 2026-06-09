@@ -76,6 +76,11 @@ use utoipa::OpenApi;
         crate::routes::variables::create::create_variable,
         crate::routes::variables::update::update_variable,
         crate::routes::variables::delete::delete_variable,
+        crate::routes::audit::list::list_audit,
+        crate::routes::audit::resource::resource_history,
+        crate::routes::audit::forget::forget_subject,
+        crate::routes::undo::apply::undo,
+        crate::routes::undo::apply::redo,
     ),
     components(schemas(
         // Preferences (WS-11) — starter-spi types referenced by the
@@ -83,6 +88,14 @@ use utoipa::OpenApi;
         // `$ref`s resolve without nexus-spi re-exporting starter types.
         starter_spi::preferences::ResolvedPreferences,
         starter_spi::preferences::PreferencesPatch,
+        // Audit/undo (WS-12) — the changelog read model the `/api/v1/audit`
+        // routes return. Registered here because these are starter-changelog /
+        // starter-spi types, so nexus-spi need not re-export them for the
+        // document's `$ref`s to resolve.
+        starter_changelog::ChangePage,
+        starter_spi::changelog::Change,
+        starter_spi::changelog::Actor,
+        starter_spi::changelog::Op,
     )),
 )]
 pub struct Paths;

@@ -16,8 +16,14 @@ nexus-skills.workspace = true
 
 # `preferences` (which pulls `units`) is enabled so handlers can name the
 # `ResolvedPreferences` / `Quantity` / `Unit` types for WS-11 units conversion.
-starter-spi = { workspace = true, features = ["preferences"] }
+# `changelog` gates the `Change`/`Actor`/`Reversible` types WS-12 records with.
+starter-spi = { workspace = true, features = ["preferences", "changelog"] }
 starter-server.workspace = true
+# WS-12 audit/undo: the read-side query API + the undo service, registry,
+# `record_if_reversible` helper, undo router, and Postgres redo cursor. The
+# tenant-aware recorder/changelog live in nexus-store; these are reused as-is.
+starter-changelog.workspace = true
+starter-undo = { workspace = true, features = ["postgres"] }
 # WS-11: reuse the platform preference store (PG) + three-layer resolver rather
 # than reinventing them. `postgres` enables `PgPrefsStore`. The nexus routes pin
 # the workspace to the caller's tenant (so isolation is not the spoofable starter
@@ -138,3 +144,7 @@ path = "tests/routes/alerts/alert_e2e_test.rs"
 [[test]]
 name = "routes_agents_e2e"
 path = "tests/routes/agents/agent_e2e_test.rs"
+
+[[test]]
+name = "routes_audit_e2e"
+path = "tests/routes/audit/audit_e2e_test.rs"

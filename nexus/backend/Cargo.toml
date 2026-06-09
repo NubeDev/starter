@@ -37,6 +37,13 @@ starter-authz          = { path = "../../crates/starter-authz" }
 starter-store-postgres = { path = "../../crates/starter-store-postgres" }
 starter-config         = { path = "../../crates/starter-config" }
 starter-observability  = { path = "../../crates/starter-observability" }
+# WS-12 audit/undo: reuse the platform changelog read-side query API and the
+# per-actor undo service + Reversible registry. nexus ships its own tenant-aware
+# recorder/changelog over a tenant-scoped `nexus_changes` table (RLS), but the
+# `Change`/`ChangeFilter`/`ReversibleRegistry`/`UndoService`/`PgUndoCursor` types
+# are consumed unchanged.
+starter-changelog      = { path = "../../crates/starter-changelog" }
+starter-undo           = { path = "../../crates/starter-undo" }
 
 # ArkFlow — the only external dependency, pinned to an exact rev (R3). The same
 # rev the POC proved the Collector seam against.

@@ -666,6 +666,250 @@
         }
       }
     },
+    "/api/v1/audit": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "list_audit",
+        "parameters": [
+          {
+            "name": "actor_kind",
+            "in": "query",
+            "description": "Filter by actor kind (`\"user\"`, `\"agent\"`, `\"system\"`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "description": "Filter by actor id (principal subject or agent run id).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor_model",
+            "in": "query",
+            "description": "Filter agent actors by model.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resource_kind",
+            "in": "query",
+            "description": "Filter by `resource.kind`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "description": "Filter by `resource.id` (requires `resource_kind`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "description": "Filter by group id (load a whole transaction).",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GroupId"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Inclusive lower bound on `at`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "Exclusive upper bound on `at`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Backends MUST cap this.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by a previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit page (newest first)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Not an admin / no tenant binding"
+          }
+        }
+      }
+    },
+    "/api/v1/audit/forget": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "forget_subject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Rows tombstoned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Not an admin / no tenant binding"
+          }
+        }
+      }
+    },
+    "/api/v1/audit/resources/{kind}/{id}": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "resource_history",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Resource kind, e.g. nexus.dashboard",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Inclusive lower bound on `at` (RFC 3339).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "Exclusive upper bound on `at` (RFC 3339).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size (backend-capped).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor from a previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource history (newest first)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Not an admin / no tenant binding"
+          }
+        }
+      }
+    },
     "/api/v1/dashboards": {
       "get": {
         "tags": [
@@ -1782,6 +2026,38 @@
         }
       }
     },
+    "/api/v1/redo": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "redo",
+        "responses": {
+          "200": {
+            "description": "Group that was redone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "No tenant binding"
+          },
+          "404": {
+            "description": "Redo stack empty"
+          },
+          "409": {
+            "description": "Stale resource version — refused"
+          }
+        }
+      }
+    },
     "/api/v1/streams": {
       "post": {
         "tags": [
@@ -2017,6 +2293,38 @@
         }
       }
     },
+    "/api/v1/undo": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "undo",
+        "responses": {
+          "200": {
+            "description": "Group that was undone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "No tenant binding"
+          },
+          "404": {
+            "description": "No undoable group for this actor"
+          },
+          "409": {
+            "description": "Stale resource version — refused"
+          }
+        }
+      }
+    },
     "/api/v1/variables/{id}": {
       "delete": {
         "tags": [
@@ -2094,6 +2402,71 @@
   },
   "components": {
     "schemas": {
+      "Actor": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A signed-in user. `subject` matches `Principal::subject`.",
+            "required": [
+              "subject",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user"
+                ]
+              },
+              "subject": {
+                "type": "string",
+                "description": "Subject id of the acting principal."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "An AI agent run. `run_id` is opaque to the changelog; consumers\nwith `starter-ai` join it themselves.",
+            "required": [
+              "run_id",
+              "model",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "agent"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "description": "Model identifier (e.g. `\"claude-...\"`)."
+              },
+              "run_id": {
+                "type": "string",
+                "description": "Identifier of the agent run."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A starter-internal / background actor (cron, migration).",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "system"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "Origin of a recorded change."
+      },
       "AgentDetail": {
         "type": "object",
         "description": "A configured agent in full. `config` is opaque JSON on the wire — the\nprovider/agent-specific knobs the nexus-ai facade interprets at run time.",
@@ -2314,6 +2687,113 @@
           "threshold": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "Change": {
+        "type": "object",
+        "description": "A typed, append-only record of a single domain mutation.\n\nFive product features collapse onto this primitive: user audit log,\nAI-agent log, undo/redo, duplicate, and copy/paste. See\n`DOCS/backend/undo-redo/SCOPE.md`.",
+        "required": [
+          "id",
+          "at",
+          "actor",
+          "resource",
+          "op",
+          "group_id"
+        ],
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/Actor",
+            "description": "Who caused the change."
+          },
+          "after": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Snapshot of the row *after* the mutation. Used for redo,\nduplicate, and paste."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the change was committed."
+          },
+          "before": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Snapshot of the row *before* the mutation. Used for undo."
+          },
+          "correlation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TraceId",
+                "description": "Optional external trace id (HTTP request id, agent run id, …)."
+              }
+            ]
+          },
+          "group_id": {
+            "$ref": "#/components/schemas/GroupId",
+            "description": "Every change belongs to a group. Single-row mutations get a\nfresh `GroupId`; multi-row transactions share one. Undo\noperates on whole groups, so this is never `Option`."
+          },
+          "id": {
+            "$ref": "#/components/schemas/ChangeId",
+            "description": "ULID, monotonic per recorder."
+          },
+          "op": {
+            "$ref": "#/components/schemas/Op",
+            "description": "What kind of mutation occurred."
+          },
+          "patch": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional RFC 6902 patch document, as raw JSON. Kept as\n[`serde_json::Value`] so this crate does not depend on a\npatch-library crate — the backend picks one."
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ResourceRef",
+            "description": "Resource that was mutated. Kind + id (+ optional owner)."
+          },
+          "resource_version": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optimistic-concurrency token taken at read time.\n[`super::Reversible::apply_inverse`] uses it as the `WHERE`\npredicate and returns [`crate::Error::Conflict`] if the row\nhas moved on. `None` for resources without versioning (caller\naccepts last-write-wins).",
+            "minimum": 0
+          }
+        }
+      },
+      "ChangeId": {
+        "type": "string",
+        "description": "Identifier of a single row in `starter_changes`. ULID, monotonic\nper recorder."
+      },
+      "ChangePage": {
+        "type": "object",
+        "description": "One page of changes plus the cursor for the next page.",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "Rows in descending `at` order."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor to pass into the next [`ChangeFilter`]. `None` at end."
           }
         }
       },
@@ -3003,6 +3483,38 @@
           }
         }
       },
+      "ForgetRequest": {
+        "type": "object",
+        "description": "Which user to erase from the audit ledger. Erasure tombstones the *content*\n(`before`/`after`/`patch`) of every change the subject authored, within the\ncaller's tenant; the audit fact (who/when/what op) is preserved, as a\nregulator still needs to see that an action occurred.",
+        "required": [
+          "subject"
+        ],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "The principal subject (stable user id) whose authored changes to scrub."
+          }
+        }
+      },
+      "ForgetResponse": {
+        "type": "object",
+        "description": "Result of a forget request: how many ledger rows were tombstoned.",
+        "required": [
+          "tombstoned"
+        ],
+        "properties": {
+          "tombstoned": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of ledger rows whose payloads were nulled.",
+            "minimum": 0
+          }
+        }
+      },
+      "GroupId": {
+        "type": "string",
+        "description": "Identifier shared by every [`super::Change`] recorded inside a\nsingle [`super::ChangeRecorder::transaction`] call. Undo operates\non whole groups."
+      },
       "MeResponse": {
         "type": "object",
         "description": "The authenticated caller's full context.",
@@ -3053,6 +3565,45 @@
           "1.234,56",
           "1 234,56"
         ]
+      },
+      "Op": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "New row created.",
+            "enum": [
+              "create"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "Existing row updated.",
+            "enum": [
+              "update"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "Row deleted.",
+            "enum": [
+              "delete"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Domain-specific operation. `String` (not `&'static str`)\nbecause values are read back from `jsonb`.",
+            "required": [
+              "custom"
+            ],
+            "properties": {
+              "custom": {
+                "type": "string",
+                "description": "Domain-specific operation. `String` (not `&'static str`)\nbecause values are read back from `jsonb`."
+              }
+            }
+          }
+        ],
+        "description": "The operation a [`super::Change`] represents."
       },
       "PanelDetail": {
         "type": "object",
@@ -3663,6 +4214,40 @@
           }
         }
       },
+      "ResourceRef": {
+        "type": "object",
+        "description": "Reference to the object an authorization check is being made\nagainst. `id == None` is a collection-level / route-level check\n(\"may this user list flows at all?\"); `id == Some(_)` is a\nrow-level check (\"may this user update flow 42?\").\n\n`owner` is populated by the handler for row-level checks where\nownership matters — the engine can match\n`principal.subject == object.owner` without a DB round-trip from\ninside the engine. See SCOPE.md R5.",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Resource id for row-level checks. `None` for collection /\nroute-level checks."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Resource kind. Must be registered in the\n[`super::ResourceRegistry`] (e.g. `\"flows\"`, `\"users\"`,\n`\"secrets\"`)."
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Subject id of the resource owner, if any."
+          },
+          "tenant": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tenant the resource row belongs to (Phase 7a — R11). For\nkinds declared as `tenant_scoped = true` in the registry,\nthe engine requires\n`Some(principal.tenant_id) == Some(object.tenant)` (with\nthe super-admin sentinel `\"*\"` bypassing the predicate).\n`None` on a tenant-scoped kind is a `cross_tenant` deny —\nthe row is missing its tenancy column."
+          }
+        }
+      },
       "ResultColumnType": {
         "type": "string",
         "description": "The column's logical type, derived from the Arrow schema of the result.\nKept deliberately coarse — the frontend renders cells, it does not need the\nfull Arrow type lattice. Anything not in this set arrives as [`Self::Other`]\nwith the rows already JSON-encoded.",
@@ -3955,6 +4540,23 @@
           "24h",
           "12h"
         ]
+      },
+      "TraceId": {
+        "type": "string",
+        "description": "Correlation id linking a change to an external trace (HTTP request\nid, agent run id, etc.). Opaque to the changelog."
+      },
+      "UndoResponse": {
+        "type": "object",
+        "description": "The changelog group that an undo/redo applied. The client refreshes the\nresources touched by this group (it can fetch the group's rows via the audit\nAPI if it needs the per-resource detail).",
+        "required": [
+          "group_id"
+        ],
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "description": "The `group_id` that was undone or redone."
+          }
+        }
       },
       "Unit": {
         "type": "string",

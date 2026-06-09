@@ -9,6 +9,7 @@
 
 pub mod agent;
 pub mod alert;
+pub mod audit;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;

@@ -10,6 +10,7 @@
 
 pub mod agent;
 pub mod alert;
+pub mod changelog;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;

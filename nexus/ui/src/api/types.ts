@@ -69,3 +69,12 @@ export type VariableDetail = S["VariableDetail"];
 export type VariableKind = S["VariableKind"];
 export type CreateVariableRequest = S["CreateVariableRequest"];
 export type UpdateVariableRequest = S["UpdateVariableRequest"];
+
+// Audit + undo/redo (WS-12).
+export type Change = S["Change"];
+export type ChangePage = S["ChangePage"];
+export type Actor = S["Actor"];
+export type Op = S["Op"];
+export type UndoResponse = S["UndoResponse"];
+export type ForgetRequest = S["ForgetRequest"];
+export type ForgetResponse = S["ForgetResponse"];

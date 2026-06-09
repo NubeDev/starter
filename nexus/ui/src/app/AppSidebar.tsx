@@ -2,6 +2,7 @@ import {
   Bell,
   Compass,
   Database,
+  History,
   LayoutDashboard,
   LayoutGrid,
   Shield,
@@ -134,6 +135,16 @@ export function AppSidebar() {
                   <SidebarMenuButton isActive={isActive} tooltip="Access">
                     <Shield />
                     <span>Access</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <NavLink to="/audit">
+                {({ isActive }) => (
+                  <SidebarMenuButton isActive={isActive} tooltip="Audit">
+                    <History />
+                    <span>Audit</span>
                   </SidebarMenuButton>
                 )}
               </NavLink>

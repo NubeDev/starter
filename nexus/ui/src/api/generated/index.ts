@@ -196,6 +196,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/forget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["forget_subject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/resources/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["resource_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboards": {
         parameters: {
             query?: never;
@@ -557,6 +605,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/redo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["redo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/streams": {
         parameters: {
             query?: never;
@@ -641,6 +705,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["undo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/variables/{id}": {
         parameters: {
             query?: never;
@@ -661,6 +741,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Origin of a recorded change. */
+        Actor: {
+            /** @enum {string} */
+            kind: "user";
+            /** @description Subject id of the acting principal. */
+            subject: string;
+        } | {
+            /** @enum {string} */
+            kind: "agent";
+            /** @description Model identifier (e.g. `"claude-..."`). */
+            model: string;
+            /** @description Identifier of the agent run. */
+            run_id: string;
+        } | {
+            /** @enum {string} */
+            kind: "system";
+        };
         /**
          * @description A configured agent in full. `config` is opaque JSON on the wire — the
          *     provider/agent-specific knobs the nexus-ai facade interprets at run time.
@@ -743,6 +840,69 @@ export interface components {
             query: string;
             /** Format: double */
             threshold: number;
+        };
+        /**
+         * @description A typed, append-only record of a single domain mutation.
+         *
+         *     Five product features collapse onto this primitive: user audit log,
+         *     AI-agent log, undo/redo, duplicate, and copy/paste. See
+         *     `DOCS/backend/undo-redo/SCOPE.md`.
+         */
+        Change: {
+            /** @description Who caused the change. */
+            actor: components["schemas"]["Actor"];
+            /**
+             * @description Snapshot of the row *after* the mutation. Used for redo,
+             *     duplicate, and paste.
+             */
+            after?: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @description When the change was committed.
+             */
+            at: string;
+            /** @description Snapshot of the row *before* the mutation. Used for undo. */
+            before?: Record<string, never> | null;
+            correlation?: null | components["schemas"]["TraceId"];
+            /**
+             * @description Every change belongs to a group. Single-row mutations get a
+             *     fresh `GroupId`; multi-row transactions share one. Undo
+             *     operates on whole groups, so this is never `Option`.
+             */
+            group_id: components["schemas"]["GroupId"];
+            /** @description ULID, monotonic per recorder. */
+            id: components["schemas"]["ChangeId"];
+            /** @description What kind of mutation occurred. */
+            op: components["schemas"]["Op"];
+            /**
+             * @description Optional RFC 6902 patch document, as raw JSON. Kept as
+             *     [`serde_json::Value`] so this crate does not depend on a
+             *     patch-library crate — the backend picks one.
+             */
+            patch?: Record<string, never> | null;
+            /** @description Resource that was mutated. Kind + id (+ optional owner). */
+            resource: components["schemas"]["ResourceRef"];
+            /**
+             * Format: int64
+             * @description Optimistic-concurrency token taken at read time.
+             *     [`super::Reversible::apply_inverse`] uses it as the `WHERE`
+             *     predicate and returns [`crate::Error::Conflict`] if the row
+             *     has moved on. `None` for resources without versioning (caller
+             *     accepts last-write-wins).
+             */
+            resource_version?: number | null;
+        };
+        /**
+         * @description Identifier of a single row in `starter_changes`. ULID, monotonic
+         *     per recorder.
+         */
+        ChangeId: string;
+        /** @description One page of changes plus the cursor for the next page. */
+        ChangePage: {
+            /** @description Rows in descending `at` order. */
+            items: components["schemas"]["Change"][];
+            /** @description Cursor to pass into the next [`ChangeFilter`]. `None` at end. */
+            next_cursor?: string | null;
         };
         /** @description A notification channel. */
         ChannelDetail: {
@@ -1075,6 +1235,30 @@ export interface components {
             name: string;
             running: boolean;
         };
+        /**
+         * @description Which user to erase from the audit ledger. Erasure tombstones the *content*
+         *     (`before`/`after`/`patch`) of every change the subject authored, within the
+         *     caller's tenant; the audit fact (who/when/what op) is preserved, as a
+         *     regulator still needs to see that an action occurred.
+         */
+        ForgetRequest: {
+            /** @description The principal subject (stable user id) whose authored changes to scrub. */
+            subject: string;
+        };
+        /** @description Result of a forget request: how many ledger rows were tombstoned. */
+        ForgetResponse: {
+            /**
+             * Format: int64
+             * @description Number of ledger rows whose payloads were nulled.
+             */
+            tombstoned: number;
+        };
+        /**
+         * @description Identifier shared by every [`super::Change`] recorded inside a
+         *     single [`super::ChangeRecorder::transaction`] call. Undo operates
+         *     on whole groups.
+         */
+        GroupId: string;
         /** @description The authenticated caller's full context. */
         MeResponse: {
             /** @description Coarse role: `reader` | `writer` | `admin`. */
@@ -1101,6 +1285,14 @@ export interface components {
          * @enum {string}
          */
         NumberFormat: "auto" | "1,234.56" | "1.234,56" | "1 234,56";
+        /** @description The operation a [`super::Change`] represents. */
+        Op: "create" | "update" | "delete" | {
+            /**
+             * @description Domain-specific operation. `String` (not `&'static str`)
+             *     because values are read back from `jsonb`.
+             */
+            custom: string;
+        };
         /**
          * @description A panel as the canvas renders it: which datasource + query feed it, how it is
          *     drawn, and where it sits on the grid.
@@ -1419,6 +1611,42 @@ export interface components {
             week_start: components["schemas"]["WeekStart"];
         };
         /**
+         * @description Reference to the object an authorization check is being made
+         *     against. `id == None` is a collection-level / route-level check
+         *     ("may this user list flows at all?"); `id == Some(_)` is a
+         *     row-level check ("may this user update flow 42?").
+         *
+         *     `owner` is populated by the handler for row-level checks where
+         *     ownership matters — the engine can match
+         *     `principal.subject == object.owner` without a DB round-trip from
+         *     inside the engine. See SCOPE.md R5.
+         */
+        ResourceRef: {
+            /**
+             * @description Resource id for row-level checks. `None` for collection /
+             *     route-level checks.
+             */
+            id?: string | null;
+            /**
+             * @description Resource kind. Must be registered in the
+             *     [`super::ResourceRegistry`] (e.g. `"flows"`, `"users"`,
+             *     `"secrets"`).
+             */
+            kind: string;
+            /** @description Subject id of the resource owner, if any. */
+            owner?: string | null;
+            /**
+             * @description Tenant the resource row belongs to (Phase 7a — R11). For
+             *     kinds declared as `tenant_scoped = true` in the registry,
+             *     the engine requires
+             *     `Some(principal.tenant_id) == Some(object.tenant)` (with
+             *     the super-admin sentinel `"*"` bypassing the predicate).
+             *     `None` on a tenant-scoped kind is a `cross_tenant` deny —
+             *     the row is missing its tenancy column.
+             */
+            tenant?: string | null;
+        };
+        /**
          * @description The column's logical type, derived from the Arrow schema of the result.
          *     Kept deliberately coarse — the frontend renders cells, it does not need the
          *     full Arrow type lattice. Anything not in this set arrives as [`Self::Other`]
@@ -1558,6 +1786,20 @@ export interface components {
          * @enum {string}
          */
         TimeFormat: "auto" | "24h" | "12h";
+        /**
+         * @description Correlation id linking a change to an external trace (HTTP request
+         *     id, agent run id, etc.). Opaque to the changelog.
+         */
+        TraceId: string;
+        /**
+         * @description The changelog group that an undo/redo applied. The client refreshes the
+         *     resources touched by this group (it can fetch the group's rows via the audit
+         *     API if it needs the per-resource detail).
+         */
+        UndoResponse: {
+            /** @description The `group_id` that was undone or redone. */
+            group_id: string;
+        };
         /**
          * @description Closed enum of unit codes for the v1 surface. Variants are locked
          *     in stage 1 of the Phase 0 plan.
@@ -2332,6 +2574,147 @@ export interface operations {
             };
             /** @description Not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_audit: {
+        parameters: {
+            query?: {
+                /** @description Filter by actor kind (`"user"`, `"agent"`, `"system"`). */
+                actor_kind?: string;
+                /** @description Filter by actor id (principal subject or agent run id). */
+                actor_id?: string;
+                /** @description Filter agent actors by model. */
+                actor_model?: string;
+                /** @description Filter by `resource.kind`. */
+                resource_kind?: string;
+                /** @description Filter by `resource.id` (requires `resource_kind`). */
+                resource_id?: string;
+                /** @description Filter by group id (load a whole transaction). */
+                group_id?: components["schemas"]["GroupId"];
+                /** @description Inclusive lower bound on `at`. */
+                since?: string;
+                /** @description Exclusive upper bound on `at`. */
+                until?: string;
+                /** @description Page size. Backends MUST cap this. */
+                limit?: number;
+                /** @description Opaque cursor returned by a previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Audit page (newest first) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangePage"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an admin / no tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    forget_subject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgetRequest"];
+            };
+        };
+        responses: {
+            /** @description Rows tombstoned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgetResponse"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an admin / no tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resource_history: {
+        parameters: {
+            query?: {
+                /** @description Inclusive lower bound on `at` (RFC 3339). */
+                since?: string;
+                /** @description Exclusive upper bound on `at` (RFC 3339). */
+                until?: string;
+                /** @description Page size (backend-capped). */
+                limit?: number;
+                /** @description Opaque cursor from a previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Resource kind, e.g. nexus.dashboard */
+                kind: string;
+                /** @description Resource id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resource history (newest first) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangePage"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an admin / no tenant binding */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3392,6 +3775,54 @@ export interface operations {
             };
         };
     };
+    redo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group that was redone */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoResponse"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Redo stack empty */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Stale resource version — refused */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     create_stream: {
         parameters: {
             query?: never;
@@ -3556,6 +3987,54 @@ export interface operations {
         responses: {
             /** @description Tags replaced */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    undo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group that was undone */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoResponse"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No undoable group for this actor */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Stale resource version — refused */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

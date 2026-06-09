@@ -8,7 +8,12 @@ description = "Nexus persistence — sqlx/Postgres with RLS, tenant transactions
 
 [dependencies]
 nexus-spi.workspace = true
-starter-spi.workspace = true
+# WS-12: the `changelog` feature gates the `Change`/`Actor`/`Op`/`ChangeRecorder`
+# types the tenant-aware recorder/changelog implement.
+starter-spi = { workspace = true, features = ["changelog"] }
+# WS-12: read-side query API (`ChangeFilter`/`ChangeLog`/`ChangePage`) consumed by
+# the tenant-scoped `NexusChangeLog`.
+starter-changelog.workspace = true
 starter-store-postgres.workspace = true
 
 sqlx.workspace = true

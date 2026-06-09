@@ -3792,12 +3792,14 @@ dependencies = [
  "sqlx",
  "starter-auth-users",
  "starter-authz",
+ "starter-changelog",
  "starter-config",
  "starter-observability",
  "starter-prefs",
  "starter-server",
  "starter-spi",
  "starter-store-postgres",
+ "starter-undo",
  "thiserror 1.0.69",
  "tokio",
  "tokio-stream",
@@ -3870,6 +3872,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "starter-changelog",
  "starter-spi",
  "starter-store-postgres",
  "testcontainers",
@@ -5905,6 +5908,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-changelog"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "utoipa",
+]
+
+[[package]]
 name = "starter-config"
 version = "0.1.0"
 dependencies = [
@@ -6031,6 +6049,26 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "starter-undo"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "chrono",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "starter-changelog",
+ "starter-server",
+ "starter-spi",
+ "starter-store-postgres",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "utoipa",
 ]
 
 [[package]]

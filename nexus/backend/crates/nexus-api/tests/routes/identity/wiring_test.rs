@@ -46,6 +46,10 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         engine: id.engine.clone(),
         kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
         prefs: nexus_api::prefs::prefs_store(admin.clone()),
+        changelog: nexus_api::changelog::ChangelogHandles::new(
+            admin.clone(),
+            Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
+        ),
     };
     let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
     TestApp::spawn(router).await
