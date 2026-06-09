@@ -85,6 +85,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_flows"];
+        put?: never;
+        post: operations["create_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_flow"];
+        put: operations["update_flow"];
+        post?: never;
+        delete: operations["delete_flow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["stop_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -215,6 +279,19 @@ export interface components {
             user: string;
         };
         /**
+         * @description Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the
+         *     FlowManager validates them when it builds the stream, so a malformed config
+         *     surfaces on start, not here. `enabled` defaults to false so a flow can be
+         *     created and reviewed before it runs.
+         */
+        CreateFlowRequest: {
+            enabled?: boolean | null;
+            input: unknown;
+            name: string;
+            output: unknown;
+            pipeline?: unknown;
+        };
+        /**
          * @description Create a panel under the dashboard named in the path. The dashboard is keyed
          *     by its immutable id (resolved from the path slug at the request edge).
          */
@@ -320,6 +397,34 @@ export interface components {
             id: string;
             kind: components["schemas"]["DatasourceKind"];
             name: string;
+        };
+        /**
+         * @description A saved ingestion flow in full. The three config blobs are opaque JSON on the
+         *     wire — the input connector, the processor pipeline, and the output sink the
+         *     FlowManager hands to the engine.
+         */
+        FlowDetail: {
+            /** @description Whether the flow is configured to run. */
+            enabled: boolean;
+            /** Format: uuid */
+            id: string;
+            input: unknown;
+            name: string;
+            output: unknown;
+            pipeline: unknown;
+            /** @description Whether the FlowManager currently has it running on this node. */
+            running: boolean;
+        };
+        /**
+         * @description A flow as it appears in the list: identity and run state, without the config
+         *     blobs (those come from the detail endpoint).
+         */
+        FlowSummary: {
+            enabled: boolean;
+            /** Format: uuid */
+            id: string;
+            name: string;
+            running: boolean;
         };
         /** @description The authenticated caller's full context. */
         MeResponse: {
@@ -510,6 +615,19 @@ export interface components {
             /** Format: int32 */
             port?: number | null;
             user?: string | null;
+        };
+        /**
+         * @description Partially update a flow; omitted fields are left unchanged. Toggling
+         *     `enabled` here does not by itself start/stop the flow — the dedicated
+         *     `start`/`stop` routes do that and also flip this flag — so a plain update is
+         *     for editing the config or name.
+         */
+        UpdateFlowRequest: {
+            enabled?: boolean | null;
+            input?: unknown;
+            name?: string | null;
+            output?: unknown;
+            pipeline?: unknown;
         };
         /** @description Partial update of a panel. `None` fields are left unchanged. */
         UpdatePanelRequest: {
@@ -760,6 +878,242 @@ export interface operations {
         responses: {
             /** @description Deleted */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_flows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Flows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowSummary"][];
+                };
+            };
+        };
+    };
+    create_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFlowRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+        };
+    };
+    get_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Flow */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+            /** @description Not allowed to view this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFlowRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    start_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Running */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+            /** @description Flow config is invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to run this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    stop_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stopped */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+            /** @description Not allowed to stop this flow */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

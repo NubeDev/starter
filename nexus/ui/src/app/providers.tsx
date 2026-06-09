@@ -11,25 +11,30 @@ import { getExtensionHost } from "@/extensions/host";
 import { createNexusQueryClient } from "@/app/queryClient";
 import { LoginRoute } from "@/auth/LoginRoute";
 import { ExtensionAutoLoader } from "@/extensions/AutoLoader";
+import { ThemeProvider } from "@/theme";
 
 // Provider nesting mirrors the canonical starter host (rubix/frontend):
-// QueryClient (shared singleton) → StarterClient (data ingress) →
-// ExtensionHost (federation runtime) → AuthProvider (one app-root guard
-// that swaps the whole tree for the login slot on 401). The auth guard
-// lives here so routed screens stay guard-free (F4).
+// ThemeProvider (live OS dark/light sync) → QueryClient (shared
+// singleton) → StarterClient (data ingress) → ExtensionHost (federation
+// runtime) → AuthProvider (one app-root guard that swaps the whole tree
+// for the login slot on 401). ThemeProvider is outermost so the theme
+// follows the OS even on the login screen; the auth guard lives here so
+// routed screens stay guard-free (F4).
 const queryClient = createNexusQueryClient();
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <StarterClientProvider client={getNexusClient()}>
-        <ExtensionHostProvider host={getExtensionHost()}>
-          <AuthProvider unauthenticatedSlot={<LoginRoute />}>
-            <ExtensionAutoLoader />
-            {children}
-          </AuthProvider>
-        </ExtensionHostProvider>
-      </StarterClientProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <StarterClientProvider client={getNexusClient()}>
+          <ExtensionHostProvider host={getExtensionHost()}>
+            <AuthProvider unauthenticatedSlot={<LoginRoute />}>
+              <ExtensionAutoLoader />
+              {children}
+            </AuthProvider>
+          </ExtensionHostProvider>
+        </StarterClientProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

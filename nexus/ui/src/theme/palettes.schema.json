@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nexus colour palettes",
+  "description": "The user-switchable colour systems. Each palette is a full light + dark token map; the user picks one at runtime (header swatch menu) independently of light/dark mode. Add or edit a palette here — no code changes. Token values are CSS colours (any space) except `radius` (a CSS length); omitted tokens fall back to the kit defaults.",
+  "type": "object",
+  "required": ["palettes"],
+  "additionalProperties": true,
+  "properties": {
+    "palettes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "light", "dark"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "description": "Stable key persisted to localStorage and written to <html data-palette>." },
+          "name": { "type": "string", "description": "Human label shown in the switcher." },
+          "description": { "type": "string" },
+          "light": { "$ref": "#/$defs/tokenMap" },
+          "dark": { "$ref": "#/$defs/tokenMap" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "tokenMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Partial token map for one mode. All values are CSS colours except `radius`.",
+      "properties": {
+        "background": { "type": "string" },
+        "foreground": { "type": "string" },
+        "card": { "type": "string" },
+        "card-foreground": { "type": "string" },
+        "popover": { "type": "string" },
+        "popover-foreground": { "type": "string" },
+        "primary": { "type": "string" },
+        "primary-foreground": { "type": "string" },
+        "secondary": { "type": "string" },
+        "secondary-foreground": { "type": "string" },
+        "muted": { "type": "string" },
+        "muted-foreground": { "type": "string" },
+        "accent": { "type": "string" },
+        "accent-foreground": { "type": "string" },
+        "destructive": { "type": "string" },
+        "destructive-foreground": { "type": "string" },
+        "border": { "type": "string" },
+        "input": { "type": "string" },
+        "ring": { "type": "string" },
+        "chart-1": { "type": "string" },
+        "chart-2": { "type": "string" },
+        "chart-3": { "type": "string" },
+        "chart-4": { "type": "string" },
+        "chart-5": { "type": "string" },
+        "sidebar": { "type": "string" },
+        "sidebar-foreground": { "type": "string" },
+        "sidebar-primary": { "type": "string" },
+        "sidebar-primary-foreground": { "type": "string" },
+        "sidebar-accent": { "type": "string" },
+        "sidebar-accent-foreground": { "type": "string" },
+        "sidebar-border": { "type": "string" },
+        "sidebar-ring": { "type": "string" },
+        "radius": { "type": "string", "description": "CSS length, e.g. 0.5rem." }
+      }
+    }
+  }
+}

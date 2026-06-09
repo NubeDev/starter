@@ -116,6 +116,20 @@ changes are not saved** until the backend adds `PATCH /panels/{id}` (or a bulk
 endpoints). When the update route lands, `DashboardGrid.onLayoutChange` persists via it —
 the pure `applyGridLayout` diff is already there. See B5.
 
+### D11 — Flows are a full CRUD + lifecycle surface; alerts are a placeholder
+The backend shipped `/flows` (list/get/create/**PUT update**/delete + **start/stop**) — saved
+ArkFlow ingestion pipelines (NEXUS §13). Built the full bindings + a **Flows management
+screen** (list with running/enabled state, start/stop toggle, delete) on the real endpoints.
+Authoring a flow's `input`/`pipeline`/`output` (opaque ArkFlow config) is a richer editor
+deferred to its own work-unit; the screen runs and manages flows that already exist. Note
+flows *do* have `PUT` (unlike panels — B5), so flow editing is fully supported when the
+config editor lands.
+
+`nexus-store::alert` (rules/channels/events) is under construction but **not in the OpenAPI
+contract yet**, so there are no bindings. Added a clearly-marked **placeholder Alerts page**
+(an honest "coming soon" empty state, no mock rules — F0) wired into the nav, so the route
+exists and becomes a real screen the moment `/alerts` is published. See B6.
+
 ## Backend blockers (build what we can; wire when unblocked)
 
 > Per the session lead: do what's possible now, record blockers here rather than stalling.
@@ -154,3 +168,13 @@ the pure `applyGridLayout` diff is already there. See B5.
   so persistence is a one-call addition when the route lands. The `viz`/`sql`/`datasource`/
   `title` of an existing panel are likewise non-editable until update exists — edits today are
   remove + re-add (acceptable for those fields; not for layout, which moves constantly).
+
+- **B6 — alerts not in the contract.** `nexus-store::alert` exists server-side (rules/channels/
+  events) but no `/alerts` paths are published. *Done instead:* a placeholder Alerts page +
+  nav route (D11) renders an honest "coming soon" state — no mock rules (F0). Becomes a real
+  list/create/acknowledge screen once the contract surfaces alerts.
+
+- **B7 — flow config editor.** `/flows` CRUD is wired and the management screen runs/stops/
+  deletes flows, but *authoring* a flow's ArkFlow `input`/`pipeline`/`output` (opaque JSON)
+  needs a dedicated config editor (connector pickers + a pipeline builder). Deferred to its own
+  work-unit; not blocked on the backend (the endpoints exist), just a larger UI than this pass.

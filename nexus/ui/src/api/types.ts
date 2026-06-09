@@ -33,3 +33,8 @@ export type UpdateDashboardRequest = S["UpdateDashboardRequest"];
 export type PanelDetail = S["PanelDetail"];
 export type CreatePanelRequest = S["CreatePanelRequest"];
 export type UpdatePanelRequest = S["UpdatePanelRequest"];
+
+export type FlowSummary = S["FlowSummary"];
+export type FlowDetail = S["FlowDetail"];
+export type CreateFlowRequest = S["CreateFlowRequest"];
+export type UpdateFlowRequest = S["UpdateFlowRequest"];

@@ -42,6 +42,11 @@ export interface SeriesField {
   unit?: string;
   /** hsl string, e.g. "152 76% 44%"; defaults to the chart palette. */
   color?: string;
+  /** How a *table* should render this column's cells. `"time"` routes
+   *  the raw value through the region/preference date formatter
+   *  (`useDateTime`); `"number"` / `"text"` (default) render as-is.
+   *  Charts ignore this — series values are always numeric. */
+  kind?: "time" | "number" | "text";
 }
 
 /** Maps query-result columns onto chart roles. The `x` column is the
@@ -50,6 +55,12 @@ export interface SeriesField {
 export interface FieldMapping {
   x?: string;
   series: ReadonlyArray<SeriesField>;
+  /** How the `x` column is interpreted for display. `"time"` formats
+   *  axis labels + tooltip headers through the active region/preference
+   *  date formatter; `"category"` (default) prints the raw value. The
+   *  axis values themselves stay raw either way — only the rendered
+   *  label is formatted, so ordering and spacing are unaffected. */
+  xKind?: "time" | "category";
 }
 
 /** Gauge/stat threshold bounds. `crit < warn` encodes a descending

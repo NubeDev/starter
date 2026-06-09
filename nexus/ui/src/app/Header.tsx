@@ -2,11 +2,12 @@ import { Search } from "lucide-react";
 import { Separator } from "@nube/starter-ui-kit/components/separator";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LayoutSwitcher } from "@/app/LayoutSwitcher";
+import { SettingsMenu } from "@/app/SettingsMenu";
 
 // Content header: the sidebar minimise trigger, the page title, a
-// search field, and the layout switcher. Sticky and glassy so the aurora
-// backdrop reads through as the content scrolls beneath it.
+// search field, and a single settings menu (theme, palette, region,
+// layout). Sticky and glassy so the aurora backdrop reads through as the
+// content scrolls beneath it.
 export function Header({ title }: { title: string }) {
   return (
     <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/40 px-4 backdrop-blur-xl">
@@ -25,7 +26,7 @@ export function Header({ title }: { title: string }) {
             className="w-full bg-transparent outline-none placeholder:text-muted-foreground/70"
           />
         </label>
-        <LayoutSwitcher />
+        <SettingsMenu />
       </div>
     </header>
   );
