@@ -168,3 +168,12 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   problem to handle. NO supervisor action taken (can't commit WS-08's lane, can't rm the lock).
   HUMAN DECISION NEEDED: approve "run WS-10 datasource-kinds first + gate rumqttc/tokio-modbus off
   by default", or pick another path. 4/12 done; WS-08 partial+blocked.
+- 2026-06-09 17:48 — HUMAN DECISION recorded + queue extended. While escalating WS-08, the loop had
+  already raced ahead: 10/12 ✅ (WS-01/02/05/06/11/12 all done since the blocker), WS-09 (last) now
+  🔵 (PID 330356), WS-08 correctly skipped+honored. Human (ap, away from PC, "no questions") decided
+  WS-08 connectors: run WS-10 datasource-kind FORMAT first then MQTT against it; **Modbus DROPPED**;
+  rumqttc gated OFF by default. Actioned: added STATUS queue row 13 "WS-08b" (⬜) so the loop picks
+  it up after WS-09; wrote the decision + relaxed acceptance into the WS-08 TODO. Did NOT touch
+  WS-09's lane (committed only my docs). Blockers list = healthy: mostly "deferred follow-up NOT a
+  blocker" + 2 pre-existing out-of-lane. NO further questions per human instruction — pure autonomous
+  from here. 10/12 done, WS-09 building, WS-08b queued.

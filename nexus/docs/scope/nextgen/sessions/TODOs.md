@@ -102,7 +102,19 @@
   logged this so the two remaining items aren't silently dropped. Recorded in WS-01.md "Follow-ups".
 - **To unblock:** no human decision needed — just schedule the (a) follow-up; route (7) through WS-05.
 
-### [2026-06-09 21:20] WS-08 — connector breadth blocked on the WS-10 datasource-kind format + a gated-deps decision
+### ✅ HUMAN-DECIDED [2026-06-09 ~17:48] WS-08 connectors → re-run as WS-08b (STATUS queue row 13)
+- **Decision (ap, away from PC — proceed autonomously, do NOT ask follow-ups):**
+  1. Build the **WS-10 datasource-kind declaration format FIRST** (config-schema / secret-fields /
+     test-query / dialect), then author the **MQTT** connector against it.
+  2. **Modbus is DROPPED — not needed.** Do NOT add `tokio-modbus`. MQTT only.
+  3. `rumqttc` (MQTT client) **feature-gated OFF by default** per HOW-TO-CODE §9.
+  4. The pre-save `/datasources/test` work WS-08 already landed (00e40609) stays as-is.
+- **WS-08b acceptance (relaxed for unattended run):** datasource-kind format exists + an MQTT
+  datasource can be declared and connection-tested via a unit/mock test; the "ingests end-to-end
+  from a live broker" criterion is a documented MANUAL follow-up (no broker in an unattended run).
+  The blocker analysis below remains the accurate problem statement; this resolves its options 1+2.
+
+### [2026-06-09 21:20] WS-08 — connector breadth blocked on the WS-10 datasource-kind format + a gated-deps decision (RESOLVED above → WS-08b)
 - **What I was doing:** wiring the actual non-Postgres connectors (MQTT/Modbus first, per the WS-08
   priority order) so a live panel/flow ingests from a device source.
 - **The blocker (three coupled, genuinely undecidable-here problems):**
