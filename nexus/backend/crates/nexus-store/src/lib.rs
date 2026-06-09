@@ -8,6 +8,7 @@
 //! rather than engine config; tenancy is RLS bound per transaction via
 //! [`tenant_tx`].
 
+pub mod alert;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;
