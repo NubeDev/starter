@@ -14,7 +14,7 @@ session always finds its dependencies already committed in the working tree.
 | Order | WS | Title | Status | Started | Finished | Commit | Notes |
 |------:|----|-------|:------:|---------|----------|--------|-------|
 | 1 | WS-03 | Query Authoring + Macro Engine (C2 binder) | ✅ | 2026-06-09 11:58 | 2026-06-09 12:21 | ac76c1de | binder+history; B/C pre-shipped; unblocks 01/02/10 |
-| 2 | WS-04 | Panel Editor & Viz Config | ✅ | 2026-06-09 12:40 | 2026-06-09 20:05 | (this commit) | full editor + transforms + field config |
+| 2 | WS-04 | Panel Editor & Viz Config | ✅ | 2026-06-09 12:40 | 2026-06-09 20:05 | d27f293f | full editor + transforms + field config |
 | 3 | WS-07 | Alerting depth | ⬜ | | | | mostly independent |
 | 4 | WS-10 | Kinds — declarative extensibility | ⬜ | | | | reuses WS-03 binder |
 | 5 | WS-08 | Connector breadth (MQTT/Modbus/…) | ⬜ | | | | feeds WS-06 palette |
