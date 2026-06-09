@@ -36,6 +36,7 @@ pub fn built_in_rules() -> Vec<Rule> {
         effect: Effect::Allow,
         priority: 0,
         tenant_id: None,
+        resource_id: None,
     });
 
     // Reader: read everything.
@@ -48,6 +49,7 @@ pub fn built_in_rules() -> Vec<Rule> {
         effect: Effect::Allow,
         priority: 0,
         tenant_id: None,
+        resource_id: None,
     });
 
     // Writer: read everything.
@@ -60,6 +62,7 @@ pub fn built_in_rules() -> Vec<Rule> {
         effect: Effect::Allow,
         priority: 0,
         tenant_id: None,
+        resource_id: None,
     });
 
     // Writer: create / update on non-sensitive resources.
@@ -73,6 +76,7 @@ pub fn built_in_rules() -> Vec<Rule> {
             effect: Effect::Allow,
             priority: 0,
             tenant_id: None,
+            resource_id: None,
         });
     }
 
@@ -88,6 +92,7 @@ pub fn built_in_rules() -> Vec<Rule> {
             effect: Effect::Allow,
             priority: 0,
             tenant_id: None,
+            resource_id: None,
         });
         // The writer-cu-* allow above covers `update` on every
         // kind; we need to take it back for sensitive rows the
@@ -101,6 +106,7 @@ pub fn built_in_rules() -> Vec<Rule> {
             effect: Effect::Deny,
             priority: 0,
             tenant_id: None,
+            resource_id: None,
         });
         rules.push(Rule {
             id: Some(format!("default-writer-deny-{kind}")),
@@ -111,6 +117,7 @@ pub fn built_in_rules() -> Vec<Rule> {
             effect: Effect::Deny,
             priority: 0,
             tenant_id: None,
+            resource_id: None,
         });
     }
 
