@@ -149,3 +149,8 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   on-scope connector probing. Lock kernel-held, no STOP. WS-08.md not yet at 6min (normal; sessions
   write it near commit — NOT re-opening a multi-wake watch, just confirm with commit). Only blocker
   is the ✅RESOLVED WS-03 note. 4/12 done (03,04,07,10); WS-08 building.
+- 2026-06-09 14:10 — All healthy, NO action. Cron firing (21:00/05/10). WS-08 🔵 wake PID 187071
+  ALIVE 11min, PROGRESSING into later phase: openapi.json + UI datasource forms
+  (DatasourceFormDialog.tsx, test-connection.ts, useDatasourceMutations.ts) touched <3min = DTO
+  codegen + per-kind connector UI (WS-08-owned per §4). Lock kernel-held, no STOP. Only blocker is
+  ✅RESOLVED WS-03 note. 4/12 done (03,04,07,10); WS-08 in mid/late build.
