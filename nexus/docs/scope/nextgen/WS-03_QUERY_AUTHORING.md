@@ -28,11 +28,20 @@ query builder for non-SQL users.
 
 ## Scope
 ### A. Macro / interpolation engine (C2 — the keystone, do first)
-A single server-side entry point, e.g. `nexus-store/src/query/macro.rs` or
-`nexus-engine/src/macro/`:
+A single server-side entry point, e.g. `nexus-store/src/query/macro.rs`. **CRITICAL: it does NOT
+return a finished SQL string** — returning `String` would force string-substitution at the project's
+injection + tenant-isolation boundary. It returns **rewritten SQL with placeholders + the bound
+argument vector + the set of identifiers it validated**, and the runner executes them as a
+**prepared statement**:
 ```
-fn interpolate(sql: &str, ctx: &MacroCtx) -> Result<String, MacroError>
-struct MacroCtx {
+fn bind(sql: &str, ctx: &BindCtx) -> Result<BoundQuery, BindError>
+
+struct BoundQuery {
+    sql:  String,              // rewritten with $1,$2,… placeholders — NO interpolated values
+    args: Vec<SqlValue>,       // every value (time bounds, vars, kind params, host tokens) — BOUND, never inlined
+    validated_identifiers: Vec<String>,  // the only strings ever inserted as text — each vetted (see below)
+}
+struct BindCtx {
     time_range: Option<TimeRange>,
     interval:   Option<Duration>,
     variables:  BTreeMap<String, VarValue>,   // WS-02 dashboard variables
@@ -40,8 +49,14 @@ struct MacroCtx {
     host_tokens: HostTokens,                  // WS-10 host-bound: caller_tenant_id, caller_user_id
 }
 ```
+**The runner must change to accept the arg channel.** Today `nexus-store/src/query/run.rs:44` does
+`sqlx::query(sql)` with **no arguments** — that's incompatible with binding. WS-03 updates the runner
+to `sqlx::query_with(&bound.sql, bound.args)` (or `.bind()` each arg) so values are bound by the
+driver, not concatenated. **This runner change is part of WS-03's scope, not an afterthought.**
+
 This is the **single binder shared with [WS-10](./WS-10_KINDS_EXTENSIBILITY.md)** (C2). It serves
-*both* raw-SQL macros and kind named-param binding — **do not build a second engine.**
+*both* raw-SQL macros and kind named-param binding — **do not build a second engine, and do not build
+a string-substitution engine.**
 
 Supported macros (Grafana-aligned):
 - `$__timeFilter(col)` → `col >= '<from>' AND col < '<to>'`
@@ -49,17 +64,29 @@ Supported macros (Grafana-aligned):
 - `$__timeFrom` / `$__timeTo` → literal timestamps
 - `$__interval` → auto bucket (from WS-01's max_data_points) or the chosen interval var
 - `$var`, `${var}`, `${var:csv}`, `${var:singlequote}`, `$__sqlIn(var)` → variable expansion
-- `$<param>` → WS-10 kind named param (bound positionally where possible, else safely quoted)
+- `$<param>` → WS-10 kind named param → **always emitted as a bound `$N` arg** (never inlined)
 - `$caller_tenant_id`, `$caller_user_id` → **host-bound tokens** (WS-10). Bound from `Principal`;
   **rejected if present in caller input.** This is the structural-isolation primitive.
-**Security:** this is *the* injection boundary. All substituted values are quoted/escaped (or, better,
-bound as real query parameters) for the target dialect; identifiers (column names in macros)
-validated against an allowlist pattern. The engine never string-concatenates an untrusted value
-unquoted. Host tokens can never be overridden by the caller. Unit-test the quoting + token-rejection hard.
+**Security (this is *the* injection + tenant-isolation boundary — the contract above enforces it by
+construction):**
+- **Values are ALWAYS bound, never inlined.** Time bounds, `$var` values, `$__sqlIn` list elements,
+  kind params, and host tokens (`$caller_tenant_id`) all go into `args` as `$N` placeholders. String
+  quoting/escaping is **not** the primary defense and must never be the *only* one — prepared binding
+  is mandatory. ("Safely quoted" language elsewhere in this doc means *bound*, not hand-escaped.)
+- **The only text ever inserted into SQL is a *validated identifier/fragment*** — e.g. the column name
+  in `$__timeFilter(col)` or a `$__timeGroup` bucket literal. Each is checked against a strict
+  allowlist (identifier regex / enum of permitted fragments) and recorded in `validated_identifiers`.
+  Values can't be bound as identifiers in SQL, so identifiers are the one unavoidable text path —
+  keep it tiny and vetted.
+- **Host tokens can never be overridden by the caller** (rejected if present in input).
+- Unit-test: a `$var`/param containing `'); DROP …` lands as a bound arg and is inert; an identifier
+  failing the allowlist is rejected; a caller-supplied `$caller_tenant_id` is rejected.
 **Freeze the signature in Wave 0** (incl. `params` + `host_tokens` for WS-10) so WS-01/02/10 can call it.
 
-Wire `interpolate()` into the query path (`routes/query/run.rs` → store), driven by the new
-`time_range` + variables fields on `QueryRequest`. Raw SQL with no macros passes through unchanged.
+Wire `bind()` into the query path (`routes/query/run.rs` → store), driven by the new `time_range` +
+variables fields on `QueryRequest`, and **update the runner to execute `BoundQuery` as a prepared
+statement** (replace `sqlx::query(sql)` at `run.rs:44` with arg-bound execution). Raw SQL with no
+macros/params yields a `BoundQuery` with empty `args` and passes through unchanged.
 
 ### B. Schema introspection
 - `GET /api/v1/datasources/:id/schema` → `{ tables: [{ schema, name, columns: [{name, type}] }] }`
@@ -90,7 +117,9 @@ Wire `interpolate()` into the query path (`routes/query/run.rs` → store), driv
 - DTO-first: extend `QueryRequest` in `nexus-spi`; regenerate OpenAPI + codegen.
 
 ## Acceptance criteria
-- [ ] `interpolate()` handles every macro above with correct quoting; injection tests pass.
+- [ ] `bind()` returns `{sql, args, validated_identifiers}`; every value is a bound `$N` arg (none
+  inlined); the runner executes it as a prepared statement; injection tests pass (malicious value →
+  inert bound arg; bad identifier → rejected).
 - [ ] A panel SQL with `$__timeFilter`/`$__timeGroup` runs correctly when WS-01 feeds a range.
 - [ ] `$__sqlIn($region)` with a multi-value variable expands to a safe `IN (...)`.
 - [ ] Schema endpoint returns tables/columns; the browser inserts identifiers into the editor.

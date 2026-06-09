@@ -145,7 +145,7 @@ export interface paths {
         delete: operations["delete_dashboard"];
         options?: never;
         head?: never;
-        patch?: never;
+        patch: operations["update_dashboard"];
         trace?: never;
     };
     "/api/v1/dashboards/{slug}/panels": {
@@ -1425,6 +1425,47 @@ export interface operations {
             };
             /** @description Not found in this tenant */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description Dashboard updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description New slug already used in this tenant */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

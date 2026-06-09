@@ -10,8 +10,12 @@ mod fetch;
 mod insert;
 pub mod panel;
 mod record;
+mod update;
 
 pub use delete::delete;
 pub use fetch::{by_slug, list};
 pub use insert::insert;
-pub use record::{DashboardRecord, NewDashboard, NewPanel, PanelPatch, PanelRecord};
+pub use record::{
+    DashboardPatch, DashboardRecord, NewDashboard, NewPanel, PanelPatch, PanelRecord,
+};
+pub use update::update;

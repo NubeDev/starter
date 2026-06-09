@@ -198,31 +198,33 @@ The serialised dashboard shape that WS-01/02/04/05 all read/write. Extend
 in `nexus-spi` DTOs. **This is the contract WS-05's import/export validates against.** Owner:
 Wave-0 session. → detailed in [WS-05](./WS-05_DASHBOARD_STRUCTURE.md) §"JSON model".
 
-### C2 — Macro / param-binder engine — **VERSIONED** (serves raw-SQL macros AND kinds)
-A single server-side function `interpolate(sql, ctx) -> sql`. **One engine, two front doors**
-(raw-SQL panels and kinds) — do NOT let WS-10 spawn a second binder. Because the full `ctx` can't be
-finalized until WS-10's param model and WS-11's units/locale needs are designed, **C2 ships
-versioned, with reserved fields** so later additions are additive, not a breaking re-freeze:
+### C2 — Macro / param-binder engine — **VERSIONED, returns BOUND query (not a SQL string)**
+**One engine, two front doors** (raw-SQL panels and kinds) — do NOT let WS-10 spawn a second binder,
+and do NOT build a string-substitution engine. **The signature returns a bound query, never a finished
+SQL string** — this is the project's injection + tenant-isolation boundary and must enforce it by
+construction:
 ```
-struct MacroCtx {
+fn bind(sql: &str, ctx: &BindCtx) -> Result<BoundQuery, BindError>
+struct BoundQuery { sql: String /* with $N placeholders */, args: Vec<SqlValue>, validated_identifiers: Vec<String> }
+struct BindCtx {
     // --- v1 (ships first; unblocks WS-01/02) ---
-    time_range: Option<TimeRange>,
-    interval:   Option<Duration>,
-    variables:  BTreeMap<String, VarValue>,
+    time_range: Option<TimeRange>, interval: Option<Duration>, variables: BTreeMap<String, VarValue>,
     // --- RESERVED, designed in Wave 0 w/ WS-10, populated when WS-10 lands ---
-    params:      BTreeMap<String, ParamValue>,  // WS-10 kind named params (schema-validated upstream)
-    host_tokens: HostTokens,                    // WS-10 host-bound: caller_tenant_id, caller_user_id
-    // --- RESERVED for WS-11 (units affect rendering, not SQL — may live in the convert layer
-    //     rather than here; Wave 0 decides whether it's a ctx field or a separate UnitsCtx) ---
+    params: BTreeMap<String, ParamValue>,  // kind named params (schema-validated upstream)
+    host_tokens: HostTokens,               // host-bound: caller_tenant_id, caller_user_id
+    // --- RESERVED for WS-11 (units affect rendering, not SQL — likely a separate UnitsCtx at the
+    //     convert layer, NOT this binder; Wave 0 confirms it does not belong here) ---
 }
 ```
-Handles `$__timeFilter(col)`, `$__timeGroup(col, '5m')`, `$__interval`, `$__timeFrom/$__timeTo`,
-`$var`/`${var:csv}`/`$__sqlIn(var)`; later, kind named-param binding + **host-bound tokens** like
-`$caller_tenant_id` the caller can never supply. All with **safe quoting** — *the* injection boundary
-(WS-03 §security, WS-10 §4.2). **Wave 0 freezes the v1 signature AND the shape of the reserved
-fields** (with WS-10/WS-11 design input) so WS-01/02 build now and WS-10/WS-11 slot in without a
-re-freeze. Owner: **WS-03** (co-designed with WS-10/WS-11). → [WS-03](./WS-03_QUERY_AUTHORING.md)
-§"Macro engine", [WS-10](./WS-10_KINDS_EXTENSIBILITY.md) §4.2.
+**Values are ALWAYS bound `$N` args; the only text inserted is a vetted identifier/fragment** (the
+`col` in `$__timeFilter(col)`, a `$__timeGroup` bucket literal), recorded in `validated_identifiers`.
+**The runner changes too:** `nexus-store/src/query/run.rs:44` is `sqlx::query(sql)` with no arg
+channel today — WS-03 updates it to execute `BoundQuery` as a prepared statement. Handles
+`$__timeFilter/$__timeGroup/$__interval/$__timeFrom/$__timeTo`, `$var`/`${var:csv}`/`$__sqlIn`; later
+kind params + host tokens. **Wave 0 freezes the v1 signature AND the reserved-field shapes** (with
+WS-10/WS-11 input) so WS-01/02 build now and WS-10/WS-11 slot in without a re-freeze. Owner: **WS-03**
+(co-designed with WS-10/WS-11). → [WS-03](./WS-03_QUERY_AUTHORING.md) §"Macro engine",
+[WS-10](./WS-10_KINDS_EXTENSIBILITY.md) §4.2.
 
 ### C3 — URL + **cache-key tuple** (the most-coupled artifact — design the full shape in Wave 0)
 Time range + variables live in the URL query string (`?from=now-6h&to=now&var-region=Site-A`) for

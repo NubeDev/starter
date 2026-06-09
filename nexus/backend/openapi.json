@@ -446,6 +446,51 @@
             "description": "Not found in this tenant"
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "update_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dashboard updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          },
+          "409": {
+            "description": "New slug already used in this tenant"
+          }
+        }
       }
     },
     "/api/v1/dashboards/{slug}/panels": {

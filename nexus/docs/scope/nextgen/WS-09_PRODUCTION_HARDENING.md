@@ -1,6 +1,8 @@
 # WS-09 — Production Hardening (Login Fix · Cache · Quotas · Audit · Rate-Limit · HA · OTel)
 
-> **Status:** Not started · **Wave:** 0 (login fix — NOW) + Wave 1 (cache/audit/limit) + Wave 3 (HA/OTel)
+> **Status:** Not started · **Wave:** 0 (login fix — NOW) + Wave 1 (cache/rate-limit/quotas) + Wave 3 (HA/OTel)
+> **NOTE:** WS-09 does **NOT** own audit logging — that is **WS-12** (one changelog substrate). WS-09
+> only *emits* `ChangeDraft`s for its own privileged actions (§P1). No `audit_log` table here.
 > **Owner:** _unassigned_ · **Depends on:** C1+C3 for cache key shape · **Migration:** block `12xx` (e.g. `1201_query_cache_meta.sql`, `1202_quotas.sql`; audit log → WS-12)
 > **Read first:** GAP_ANALYSIS §2.9, ROADMAP §0, `docs/session/backend/TODO-FOR.UI.md`, NEXUS.md §5.3/§11
 > **Verified:** `82a6a19a` on 2026-06-09 — login-hang location re-verified (it's in `starter-auth-users`, not nexus — §P0). Re-grep before building (ROADMAP §0).

@@ -63,7 +63,7 @@ lens for sequencing.
 | **Flow authoring UX** | **10%** | 100% | **large** | **WS-06** |
 | Alerting | 40% | 100% | medium-large | WS-07 |
 | Datasource breadth (connectors) | 15% | 100% | large | WS-08 |
-| Production ops (cache/audit/HA/OTel) | 25% | 100% | large | WS-09 |
+| Production ops (cache/rate-limit/quotas/HA/OTel) | 25% | 100% | large | WS-09 |
 | **Declarative extensibility ("kinds")** | **0%** | n/a* | **strategic** | **WS-10** |
 | **Units & datetime (backend-side, per-user)** | **10%** | 100% | **medium** | **WS-11** |
 | **Audit log + undo/redo (one ledger, all kinds)** | **5%** | 100% | **medium** | **WS-12** |

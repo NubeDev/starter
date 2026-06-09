@@ -25,10 +25,10 @@ Grafana/Power-BI-class dashboarding platform**, built by **multiple AI sessions 
 | [WS-06](./WS-06_FLOWS_BUILDER.md) | **Flows Visual Builder** | large — *user's ArkFlow ask* | 2 | WS-08 (palette) |
 | [WS-07](./WS-07_ALERTING.md) | **Alerting depth** | medium-large | 1 | — (extend engine) |
 | [WS-08](./WS-08_DATASOURCES.md) | **Connector breadth (MQTT/Modbus/…)** | large | 2 | — |
-| [WS-09](./WS-09_PRODUCTION_HARDENING.md) | **Cache/Audit/Rate-limit/HA/OTel** | large | 0+1+3 | C1/C3 (cache key) |
+| [WS-09](./WS-09_PRODUCTION_HARDENING.md) | **Cache/Rate-limit/Quotas/HA/OTel** (audit → WS-12) | large | 0+1+3 | C1/C3 (cache key) |
 | [WS-10](./WS-10_KINDS_EXTENSIBILITY.md) | **"Kinds" — declarative query/datasource extensibility** | strategic — *ports the rubix `kinds/` pattern; reshapes WS-03/08/09* | 0+1+2 | WS-03 binder |
 | [WS-11](./WS-11_UNITS_AND_PREFS.md) | **Units & datetime prefs — backend-side conversion** | medium — *mostly wiring existing `starter-prefs`/`starter-spi/units`* | 1+2 | WS-04, WS-10 |
-| [WS-12](./WS-12_AUDIT_AND_UNDO.md) | **Audit log + undo/redo — one changelog substrate, for everything** | medium — *mostly wiring existing `starter-changelog`/`starter-undo`* | 1+2 | absorbs WS-09 audit |
+| [WS-12](./WS-12_AUDIT_AND_UNDO.md) | **Audit log + undo/redo — one changelog substrate, for everything (SOLE audit owner)** | medium — *mostly wiring existing `starter-changelog`/`starter-undo`* | 1+2 | substrate-only (C6) |
 
 ## The one-paragraph summary
 

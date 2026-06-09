@@ -31,6 +31,15 @@ pub struct NewDashboard {
     pub name: String,
 }
 
+/// Partial update of a dashboard. Every field is optional — `None` leaves the
+/// current value untouched (COALESCE in the store). The immutable id is not
+/// patchable; re-slugging changes only the route alias.
+#[derive(Debug, Clone, Default)]
+pub struct DashboardPatch {
+    pub name: Option<String>,
+    pub slug: Option<String>,
+}
+
 /// Input to create a panel under a dashboard.
 #[derive(Debug, Clone)]
 pub struct NewPanel {

@@ -29,6 +29,7 @@ use utoipa::OpenApi;
         crate::routes::dashboards::create::create_dashboard,
         crate::routes::dashboards::list::list_dashboards,
         crate::routes::dashboards::get::get_dashboard,
+        crate::routes::dashboards::update::update_dashboard,
         crate::routes::dashboards::delete::delete_dashboard,
         crate::routes::dashboards::add_panel::add_panel,
         crate::routes::dashboards::update_panel::update_panel,
