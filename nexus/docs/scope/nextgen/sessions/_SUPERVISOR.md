@@ -203,3 +203,10 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   without spawning next (normal one-action-per-firing); NEXT cron firing (~01:00) picks up WS-08b as
   first pending. Not a stall (lock free, <3 firings). No STOP, no real blockers. 11/12 ✅ + WS-08b
   queued. WATCH: confirm WS-08b spawns next wake.
+- 2026-06-10 01:04 — All healthy, NO action. Cron firing (00:50/55, 01:00). FINAL item WS-08b 🔵 —
+  spawned 18:00 (fresh wake PID 344587/child 344599), 4min in, ACTIVELY building datasource_kinds/
+  manifest.rs + error.rs (the WS-10 datasource-kind FORMAT first, exactly per the human decision).
+  WS-08b.md created (3117b) and explicitly records the human constraints: "build the format FIRST,
+  then MQTT; Modbus DROPPED; rumqttc gated OFF" — confirms the autonomous-with-human-decision flow
+  works end-to-end (session read the decision from TODOs/STATUS). Lock kernel-held, no STOP, no real
+  blockers. 11/12 ✅ + WS-08b building = the LAST item. After this commits, the entire queue is done.
