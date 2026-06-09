@@ -9,7 +9,9 @@
 use std::sync::Arc;
 
 use axum::Router;
-use starter_auth_users::routes::{auth_router, tenants_router, AuthState};
+use starter_auth_users::routes::{
+    auth_router, tenant_users_router, tenants_router, AuthState,
+};
 use starter_auth_users::store::{PgSessionStore, PgTenantStore, PgTokenStore, PgUserStore};
 use starter_auth_users::AuthAuthenticator;
 use starter_authz::instances::InstancesRegistry;
@@ -54,8 +56,10 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
     );
 
     // The team/member/tenant CRUD router shares the tenant store; build it before
-    // moving the store into the auth state.
-    let tenants_routes = tenants_router::<AppState>(tenants.clone());
+    // moving the store into the auth state. The create-user route needs the user
+    // store too, so it is a sibling router merged onto the same mount.
+    let tenants_routes = tenants_router::<AppState>(tenants.clone())
+        .merge(tenant_users_router::<AppState>(tenants.clone(), users.clone()));
 
     let auth_state = AuthState::new(users, sessions, tokens).with_tenants(tenants);
     let auth = auth_router::<AppState>(auth_state);

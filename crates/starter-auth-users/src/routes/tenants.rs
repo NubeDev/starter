@@ -31,8 +31,11 @@ use axum::{Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use starter_spi::auth::Principal;
 
+use crate::admin::{create_admin, AdminError};
+use crate::role::Role;
 use crate::store::{
     is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
+    UserStore,
 };
 
 /// Wire shape for creating a tenant.
@@ -78,6 +81,28 @@ pub struct AddMemberBody {
 pub struct PatchMemberBody {
     /// New role for the membership.
     pub role: String,
+}
+
+/// Wire shape for `POST /v1/tenants/{id}/users` — create a brand-new user
+/// account and add them to the tenant in one step.
+#[derive(Debug, Deserialize)]
+pub struct CreateUserBody {
+    /// The new user's login email. Validated + lower-cased server-side.
+    pub email: String,
+    /// Initial password. Validated against the same strength rules as signup.
+    pub password: String,
+    /// Tenant role for the new member: `"reader" | "writer" | "admin"`.
+    pub role: String,
+}
+
+/// Cloneable state for the create-user endpoint, which needs both the user store
+/// (to create the account) and the tenant store (to add the membership). Kept
+/// separate from the plain `Arc<dyn TenantStore>` the other tenant routes use so
+/// their handlers stay unchanged.
+#[derive(Clone)]
+struct TenantUsersState {
+    tenants: Arc<dyn TenantStore>,
+    users: Arc<dyn UserStore>,
 }
 
 /// JSON view of a tenant returned by the handlers.
@@ -172,6 +197,84 @@ where
             axum::routing::delete(remove_team_member_h),
         )
         .with_state(tenants)
+}
+
+/// Build the create-user route: `POST /v1/tenants/{id}/users`. Mounted alongside
+/// [`tenants_router`]; kept separate because it needs the user store too. Gate it
+/// the same way (admin / tenant-admin) on the host side.
+pub fn tenant_users_router<S>(
+    tenants: Arc<dyn TenantStore>,
+    users: Arc<dyn UserStore>,
+) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    Router::new()
+        .route("/v1/tenants/{id}/users", post(create_user_h))
+        .with_state(TenantUsersState { tenants, users })
+}
+
+/// Create a new user account (validated + argon2-hashed via [`create_admin`],
+/// the same path the CLI and signup use) and add them to the tenant as a member
+/// in one step. Returns the new membership (including the email) on success; a
+/// `409` if the email is already taken, `400` on a weak password / bad email /
+/// invalid role.
+async fn create_user_h(
+    State(state): State<TenantUsersState>,
+    Path(tenant_id): Path<String>,
+    Json(body): Json<CreateUserBody>,
+) -> Response {
+    let Some(role) = parse_role_str(&body.role) else {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "invalid_role"})),
+        )
+            .into_response();
+    };
+    let email = body.email.trim().to_lowercase();
+
+    let user_id = match create_admin(state.users.as_ref(), &email, &body.password, role).await {
+        Ok(id) => id,
+        Err(AdminError::Conflict) => {
+            return (
+                StatusCode::CONFLICT,
+                Json(serde_json::json!({"error": "email_taken"})),
+            )
+                .into_response();
+        }
+        Err(AdminError::Validation(msg)) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": "invalid_input", "detail": msg})),
+            )
+                .into_response();
+        }
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
+
+    // The account exists now; add them to the tenant. The membership read later
+    // joins the email, but we already know it, so return it directly.
+    let row = MembershipRecord {
+        tenant_id,
+        user_id,
+        role: body.role,
+        email: Some(email),
+    };
+    match state.tenants.add_member(&row).await {
+        Ok(()) => (StatusCode::CREATED, Json(MembershipView::from(row))).into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+/// Parse a wire role string into the [`Role`] enum. `None` for anything outside
+/// the `reader | writer | admin` vocabulary.
+fn parse_role_str(s: &str) -> Option<Role> {
+    match s {
+        "reader" => Some(Role::Reader),
+        "writer" => Some(Role::Writer),
+        "admin" => Some(Role::Admin),
+        _ => None,
+    }
 }
 
 async fn create_tenant_h(

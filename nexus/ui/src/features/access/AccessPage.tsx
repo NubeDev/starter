@@ -26,6 +26,7 @@ import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
 import { DashboardAccessTab } from "@/features/access/DashboardAccessTab";
 import { useMemberDirectory } from "@/features/access/useMemberDirectory";
+import { CreateUserForm } from "@/features/access/CreateUserForm";
 
 export function AccessPage() {
   const principal = usePrincipal();
@@ -93,12 +94,15 @@ function AccessTabs({ scopedTenant }: { scopedTenant: string | null }) {
 function MembersTab({ tenantId }: { tenantId: string }) {
   const members = useTenantMembers(tenantId);
   return (
-    <MembersPanel
-      tenantId={tenantId}
-      members={members.data}
-      membersLoading={members.isLoading}
-      membersError={members.error}
-    />
+    <div className="grid gap-6">
+      <CreateUserForm tenantId={tenantId} />
+      <MembersPanel
+        tenantId={tenantId}
+        members={members.data}
+        membersLoading={members.isLoading}
+        membersError={members.error}
+      />
+    </div>
   );
 }
 
