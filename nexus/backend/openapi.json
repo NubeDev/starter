@@ -605,6 +605,95 @@
         }
       }
     },
+    "/api/v1/datasources/{id}/query": {
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "query_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or rejected query"
+          },
+          "403": {
+            "description": "Not authorized to view this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/{id}/test": {
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "test_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Probe outcome (ok=false on a failed probe)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestDatasourceResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/flows": {
       "get": {
         "tags": [
@@ -886,6 +975,49 @@
         "responses": {
           "204": {
             "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "panels"
+        ],
+        "operationId": "update_panel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Panel id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePanelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Panel updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PanelDetail"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not found in this tenant"
