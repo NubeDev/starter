@@ -1,0 +1,13 @@
+//! REST data-transfer objects, one folder per resource noun, one file per verb.
+//!
+//! Every type here derives `serde` + `utoipa::ToSchema` and is part of the
+//! published OpenAPI contract. Ids cross the wire as `uuid::Uuid` because the
+//! internal phantom-typed `Id<T>` does not implement `ToSchema`.
+//!
+//! Dashboards, panels, alerts, and flows arrive with their milestones (M2/M3)
+//! and extend this module add-only.
+
+pub mod datasource;
+pub mod me;
+pub mod query;
+pub mod stream;

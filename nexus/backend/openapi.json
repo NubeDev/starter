@@ -1,0 +1,457 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Nexus API",
+    "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, and panels.",
+    "version": "0.1.0"
+  },
+  "paths": {},
+  "components": {
+    "schemas": {
+      "ColumnSchema": {
+        "type": "object",
+        "description": "One column of a query result.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Column name as it appears in the result set."
+          },
+          "type": {
+            "$ref": "#/components/schemas/ResultColumnType",
+            "description": "Coarse logical type for rendering."
+          }
+        }
+      },
+      "CreateDatasourceRequest": {
+        "type": "object",
+        "description": "Body for creating a datasource. The `password` is write-only: it is accepted\nhere, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
+        "required": [
+          "name",
+          "kind",
+          "host",
+          "port",
+          "database",
+          "user",
+          "password"
+        ],
+        "properties": {
+          "database": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind",
+            "description": "Which connector to use."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name shown in the datasource picker."
+          },
+          "password": {
+            "type": "string",
+            "description": "Write-only secret. Stored as ciphertext; absent from every response."
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "user": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateStreamRequest": {
+        "type": "object",
+        "description": "Body for creating a live stream: the datasource to read and the SQL shaping\napplied to each batch before it is pushed to subscribers.",
+        "required": [
+          "datasource_id",
+          "sql"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Datasource whose live input feeds this stream."
+          },
+          "sql": {
+            "type": "string",
+            "description": "SQL applied per batch (DataFusion pipeline) to shape the live rows."
+          }
+        }
+      },
+      "CreateStreamResponse": {
+        "type": "object",
+        "description": "Result of creating a stream. The token is single-use-per-connection,\nshort-lived, and scoped to exactly this stream — it authorizes the SSE\nsubscription and nothing else.",
+        "required": [
+          "id",
+          "token",
+          "subscribe_url",
+          "expires_in_secs"
+        ],
+        "properties": {
+          "expires_in_secs": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Token lifetime in seconds; the client must connect before it expires.",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable stream id."
+          },
+          "subscribe_url": {
+            "type": "string",
+            "description": "Relative URL to connect an `EventSource` to, with the token embedded."
+          },
+          "token": {
+            "type": "string",
+            "description": "Signed token to pass as `?token=` when opening the SSE connection."
+          }
+        }
+      },
+      "DatasourceDetail": {
+        "type": "object",
+        "description": "Full datasource view. The connection is redacted — host/port/database/user\nonly, never the secret.",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "connection"
+        ],
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/RedactedConnection"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable datasource id."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "DatasourceKind": {
+        "type": "string",
+        "description": "The kind of datasource, which selects the ArkFlow input builder. v1 ships\nSQL-over-Postgres as the first connector; the enum is the extension point as\nmore `register_input_builder` connectors land.",
+        "enum": [
+          "postgres"
+        ]
+      },
+      "DatasourceSummary": {
+        "type": "object",
+        "description": "A datasource as it appears in a list — identity and kind only, no connection\ndetail. Use `GET /datasources/:id` for the redacted connection view.",
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable datasource id (grants and panel refs key on this)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "description": "The authenticated caller's full context.",
+        "required": [
+          "subject",
+          "role",
+          "teams",
+          "scopes"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Coarse role: `reader` | `writer` | `admin`."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Fine-grained scope strings attached to the credential."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Stable subject id (the user id)."
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Team slugs the caller belongs to in the current tenant. Grants reference\nteams by slug, so the SPA matches against these."
+          },
+          "tenant_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tenant the session is bound to. `None` for an unbound principal; `\"*\"`\nmarks a super-admin that bypasses the cross-tenant predicate."
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "description": "Machine-readable error body.\n\nMirrors RFC 7807 loosely. The `type` field is a stable string\nidentifier (`not_found`, `invalid_input`, …) that callers can\nswitch on; the HTTP status is set by the transport.",
+        "required": [
+          "type",
+          "title"
+        ],
+        "properties": {
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional detailed explanation."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short human title for the problem."
+          },
+          "type": {
+            "type": "string",
+            "description": "Stable identifier for the error class. Matches lower-case\nsnake-case of [`crate::error::Error`] variants."
+          }
+        }
+      },
+      "QueryRequest": {
+        "type": "object",
+        "description": "Body of a one-shot query. The caller supplies only the SQL; every safety\nbound (read-only role, statement timeout, forced `LIMIT`, row/byte caps) is\napplied server-side and is deliberately *not* expressible here — a client\ncannot raise its own limits.",
+        "required": [
+          "sql"
+        ],
+        "properties": {
+          "sql": {
+            "type": "string",
+            "description": "The SQL to run against the datasource. Pushed down to the source database\nso `WHERE`/`LIMIT` execute there, not in memory."
+          }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "description": "A completed query result: column schema, rows as JSON objects keyed by\ncolumn name, and execution stats. Rows are an array of objects rather than a\ncolumn-major frame because panels consume row records directly.",
+        "required": [
+          "columns",
+          "rows",
+          "stats"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSchema"
+            },
+            "description": "Ordered column schema for the result set."
+          },
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "One JSON object per row, keyed by column name."
+          },
+          "stats": {
+            "$ref": "#/components/schemas/QueryStats",
+            "description": "Execution metadata, including the `truncated` cap signal."
+          }
+        }
+      },
+      "QueryStats": {
+        "type": "object",
+        "description": "Execution metadata returned alongside the rows. `truncated` is the signal a\ncaller needs: when `true` the result hit a server-enforced row/byte cap and\nis incomplete — the caller must narrow the query rather than assume it saw\neverything.",
+        "required": [
+          "row_count",
+          "byte_count",
+          "elapsed_ms",
+          "truncated"
+        ],
+        "properties": {
+          "byte_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Approximate serialized byte size of the returned rows.",
+            "minimum": 0
+          },
+          "elapsed_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Wall-clock execution time in milliseconds.",
+            "minimum": 0
+          },
+          "row_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of rows actually returned (after any cap).",
+            "minimum": 0
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "`true` if a row/byte cap stopped the stream before it completed."
+          }
+        }
+      },
+      "RedactedConnection": {
+        "type": "object",
+        "description": "Connection details safe to return over the API: everything *except* the\nsecret. The password lives only as ciphertext in the store and is never\nserialized here — `GET /datasources/:id` returns this redacted view.",
+        "required": [
+          "host",
+          "port",
+          "database",
+          "user",
+          "has_secret"
+        ],
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "Database name."
+          },
+          "has_secret": {
+            "type": "boolean",
+            "description": "Always `true` — present so the UI can show a \"secret set\" affordance\nwithout ever receiving the secret itself."
+          },
+          "host": {
+            "type": "string",
+            "description": "Database host."
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Database port.",
+            "minimum": 0
+          },
+          "user": {
+            "type": "string",
+            "description": "Connecting user."
+          }
+        }
+      },
+      "ResultColumnType": {
+        "type": "string",
+        "description": "The column's logical type, derived from the Arrow schema of the result.\nKept deliberately coarse — the frontend renders cells, it does not need the\nfull Arrow type lattice. Anything not in this set arrives as [`Self::Other`]\nwith the rows already JSON-encoded.",
+        "enum": [
+          "bool",
+          "int",
+          "float",
+          "string",
+          "timestamp",
+          "other"
+        ]
+      },
+      "StreamEvent": {
+        "type": "object",
+        "description": "One `data:` frame on a live stream. `seq` is the monotonic per-stream event\nid echoed in the SSE `id:` field so a reconnecting client can send\n`Last-Event-ID` to resume; `rows` is the batch shaped by the stream's SQL.",
+        "required": [
+          "seq",
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "The rows in this batch, one JSON object per row."
+          },
+          "seq": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Monotonic event sequence number within this stream.",
+            "minimum": 0
+          }
+        }
+      },
+      "TestDatasourceResponse": {
+        "type": "object",
+        "description": "Outcome of a connection probe. `ok` is the headline; on failure `message`\ncarries the redacted reason (driver errors are sanitized so they never leak\nthe connection secret).",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "latency_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Round-trip latency of the probe in milliseconds, when it connected.",
+            "minimum": 0
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateDatasourceRequest": {
+        "type": "object",
+        "description": "Partial update. Every field is optional; `None` leaves the stored value\nuntouched. `password` follows the write-only rule — supplying it rotates the\nsecret, omitting it keeps the existing ciphertext.",
+        "properties": {
+          "database": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "host": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "password": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Supplying a new secret rotates it; omitting it keeps the current one."
+          },
+          "port": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "user": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
