@@ -3,6 +3,73 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D7 — Live SQL panels are a poll loop over the guarded query, not an ArkFlow streaming input
+
+A live panel watches a SQL datasource, but the engine has no streaming way to do
+that: the connector trim (D3) removed ArkFlow's `sql` input (it pulled DuckDB), and
+D4 already moved the one-shot SQL path onto sqlx-direct for enforceable R4 guards.
+There is no push source for "rows changed in Postgres" to subscribe to. So a live SQL
+panel is modelled as a **poll loop**: a new `PollRunner` in `nexus-engine` re-runs a
+caller-supplied producer on an interval and publishes each result to the run id's
+broadcast channel — the same channel the SSE sink and subscribers already use. The
+producer is injected by `nexus-api` (it calls `nexus_store::run_query`, so the live
+path inherits the *exact* read-only/timeout/row-cap guards the one-shot path has), so
+`nexus-engine` keeps no DB dependency and owns only cadence + publish.
+
+The ArkFlow `generate`/SSE seam is **not** removed — it remains the path for genuine
+push sources (a future restored MQTT/Kafka input drives the SSE sink directly via
+`LiveRunner`). Poll covers SQL; push covers brokers; both share the broadcast +
+stream-registry + signed-token machinery.
+
+Wiring: `POST /streams` is now Bearer-authed (it runs behind the principal layer),
+checks the datasource is visible to the tenant and the caller may `view` it (the same
+grant gate as the REST handlers, D6), parks the vetted SQL in an in-process registry
+keyed by the new stream id, and mints a token bound to the caller's **real** tenant +
+permission (no more hardcoded `"dev"`/`"view"`). `GET /streams/:id` verifies the
+token, and on the first subscriber consumes the parked spec to start the poll;
+later subscribers of the same id share the running loop; the last to leave tears it
+down (refcount → cancel, unchanged). The parked spec is in-process because live
+fan-out is single-node for v1 (R7) — a subscription only lands on the node that
+minted its token — and it expires on the token's own TTL so an abandoned create
+cannot leak. Per-datasource connection (vs the single dev `state.datasource` pool)
+remains the same noted follow-up the one-shot `/query` path carries; it is not unique
+to live and is deferred with it, not introduced half-done here.
+
+## D6 — Authz: per-instance grants enforced in handlers; engine fixed upstream; admins pass by role
+
+The M2+ follow-up — "per-resource view/edit/manage grants on immutable ids, RLS as
+defense-in-depth" — is now enforced in the dashboard/datasource handlers. Three sub-decisions:
+
+- **The policy engine had to learn per-instance scoping.** `starter-authz` already wrote a
+  `resource_id` to each grant row, but the *engine ignored it* — `config::Rule` carried no
+  `resource_id`, so every rule matched its whole kind and a grant on one dashboard authorized
+  all of them. Per the SCOPE rule "fix it upstream and consume it, don't grow a parallel crate
+  in nexus", the fix lands in `starter-authz`: thread `resource_id` through `config::Rule` →
+  `CompiledRule` and add an instance match in `check()` (`None`/`"*"` stays kind-wide, a
+  concrete id must equal `object.id`). Strictly additive — every existing rule has no
+  `resource_id` and keeps its kind-wide behaviour. This makes per-immutable-id grants real for
+  the whole platform (rubix included), not just nexus.
+
+- **`default_policy` stays `true` (built-in role ladder kept), not flipped to default-deny.**
+  Flipping to default-deny would force even a tenant admin to hold an explicit grant for every
+  resource. Instead the built-in `admin → */*` rule lets a tenant admin reach their tenant's
+  resources by role, while non-admins match no built-in rule on the nexus action vocabulary
+  (`view`/`edit`/`delete`) and so get access *only* from explicit per-resource grants — which is
+  exactly the sharing model the product wants. The engine composes the two layers natively
+  (allow-if-any-allow, deny-overrides); the tenant-scoping predicate isolates either way.
+
+- **The shared engine is one instance, not two.** `identity::build` constructs the
+  `DbPolicyEngine` once and hands the same `Arc` to both the `/v1/authz/*` router (which calls
+  `reload()` after a grant write) and `AppState` (which calls `check()` in handlers, via a
+  `dyn PolicyEngine` upcast). A grant created over the API is therefore visible to the next
+  handler check with no second handle to keep in sync. Tests swap an `AllowAll`/`DenyAll`
+  engine into `AppState` to assert a route is gated independent of any seeded policy.
+
+Grant checks key on the resource's immutable id (a dashboard slug is resolved to its id first),
+run *after* the existence check so a hidden row is a 404 and a forbidden one a 403, and sit on
+top of RLS — RLS hides other tenants' rows, the grant gates what the tenant's own members may do
+to a row they can see.
+
 ## D5 — R4 query-guard scope: read-only enforced server-side; shared-DB predicate deferred with config
 
 The R4 guards split into what the control plane *enforces* and what the datasource *owner

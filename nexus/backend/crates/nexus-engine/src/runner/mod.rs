@@ -3,6 +3,7 @@
 
 pub mod cancel;
 pub mod live;
+pub mod poll;
 pub mod query;
 
 pub use live::LiveRunner;

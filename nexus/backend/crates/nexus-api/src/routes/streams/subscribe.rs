@@ -3,22 +3,24 @@
 //! Authenticated by the signed stream token in the query string, never a Bearer
 //! (a browser `EventSource` cannot set headers). On a valid token the handler
 //! attaches to the running stream for the token's exact (spec + datasource +
-//! tenant + permission) key — starting it if none is running — and streams its
-//! broadcast events as SSE. The subscription handle lives for the duration of
-//! the response; when the client disconnects it drops, decrementing the
-//! stream's refcount and tearing it down on the last subscriber.
+//! tenant + permission) key — starting a poll loop over the parked SQL if none
+//! is running — and streams its broadcast events as SSE. The subscription handle
+//! lives for the duration of the response; when the client disconnects it drops,
+//! decrementing the stream's refcount and tearing it down on the last
+//! subscriber.
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use axum::extract::{Path, Query, State};
 use axum::response::{IntoResponse as _, Response};
 use nexus_engine::stream_registry::{attach, register, Attach};
 use nexus_engine::StreamKey;
+use nexus_store::{run_query, QueryGuards};
 use serde::Deserialize;
-use serde_json::json;
 use starter_server::sse;
 use tokio_util::sync::CancellationToken;
 
+use super::pending;
 use crate::middleware::StreamClaims;
 use crate::state::AppState;
 
@@ -53,7 +55,12 @@ pub async fn subscribe_stream(
         Err(resp) => return resp,
     };
 
-    let subscription = open_subscription(&state, &claims);
+    let subscription = match open_subscription(&state, &claims) {
+        Some(sub) => sub,
+        // Token is valid but its one-shot spec was already consumed and no stream
+        // is running — the subscription window has passed; re-create to resume.
+        None => return (axum::http::StatusCode::GONE, "stream no longer available").into_response(),
+    };
     let events = futures::stream::unfold(subscription, |mut sub| async move {
         // Lagged subscribers skip ahead rather than stall the producer; a closed
         // channel ends the SSE stream.
@@ -90,40 +97,49 @@ fn verify(state: &AppState, token: &str, path_id: &str) -> Result<StreamClaims, 
     Ok(claims)
 }
 
-/// Attach to the stream for `claims`' key, starting a fresh `generate`-driven
-/// stream if none is running. The generate source is the M0.5 live demo; real
-/// connectors (Kafka/MQTT/Modbus) attach here once restored.
-fn open_subscription(state: &AppState, claims: &StreamClaims) -> nexus_engine::Subscription {
+/// Attach to the stream for `claims`' key, starting a poll loop over the parked
+/// SQL if none is running. Returns `None` when there is no running stream and no
+/// spec left to start one (the subscription window has closed).
+fn open_subscription(state: &AppState, claims: &StreamClaims) -> Option<nexus_engine::Subscription> {
+    // The stream id is the canonical spec: each create mints a fresh id for one
+    // (sql, datasource, tenant) tuple, so subscribers of the same id share one
+    // poll loop while different panels never collide.
     let key = StreamKey {
-        spec: format!("generate:{}", claims.stream_id),
+        spec: format!("poll:{}", claims.stream_id),
         datasource_id: claims.datasource_id.clone(),
         tenant_id: claims.tenant_id.clone(),
         permission: claims.permission.clone(),
     };
     let run_id = claims.stream_id.clone();
     match attach(&key, &run_id) {
-        Attach::Existing(sub) => sub,
+        Attach::Existing(sub) => Some(sub),
         Attach::StartNew { run_id } => {
+            // First subscriber: consume the parked spec and start the poll. If
+            // the spec is gone, abandon the channel attach reserved and report
+            // the window closed.
+            let spec = pending::take(&run_id, Instant::now())?;
             let token = CancellationToken::new();
-            let (input, processors) = demo_source();
-            // A spawn failure leaves no stream; the subscriber then sees an empty
-            // closed channel and the SSE stream ends cleanly.
-            let _ = state.live.spawn(input, processors, &run_id, token.clone());
-            register(key, run_id, token)
+            let pool = state.datasource.clone();
+            let guards = state.guards;
+            let sql = spec.sql.clone();
+            nexus_engine::runner::poll::spawn(&run_id, spec.interval, token.clone(), move || {
+                let pool = pool.clone();
+                let sql = sql.clone();
+                async move { run_one(&pool, &sql, guards).await }
+            });
+            Some(register(key, run_id, token))
         }
     }
 }
 
-fn demo_source() -> (serde_json::Value, Vec<serde_json::Value>) {
-    let input = json!({
-        "type": "generate",
-        "context": "{ \"value\": 1 }",
-        "interval": "1s",
-        "batch_size": 1,
-    });
-    let processors = vec![
-        json!({ "type": "json_to_arrow" }),
-        json!({ "type": "sql", "query": "SELECT value, now() AS ts FROM flow" }),
-    ];
-    (input, processors)
+/// One poll: run the guarded query and hand back just its rows for the event.
+async fn run_one(
+    pool: &sqlx::PgPool,
+    sql: &str,
+    guards: QueryGuards,
+) -> Result<Vec<serde_json::Value>, String> {
+    run_query(pool, sql, guards)
+        .await
+        .map(|r| r.rows)
+        .map_err(|e| e.to_string())
 }

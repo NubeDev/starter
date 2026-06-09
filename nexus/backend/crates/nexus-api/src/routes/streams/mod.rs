@@ -1,6 +1,7 @@
 //! Live-stream routes: create a subscription, then connect its SSE feed.
 
 pub mod create;
+pub mod pending;
 pub mod subscribe;
 
 use axum::routing::{get, post};
