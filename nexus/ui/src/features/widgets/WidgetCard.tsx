@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+
 import type { Widget, WidgetData } from "@/data/types";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -14,13 +16,19 @@ export type WidgetState =
   | { status: "ready"; data: WidgetData };
 
 // Frame around a single panel: glass card, title, and the body that
-// switches on the query outcome.
+// switches on the query outcome. In edit mode it shows a remove control;
+// `onRemove` is wired only on the canvas (the dashboard owns deletion), so
+// a panel rendered elsewhere has no destructive affordance.
 export function WidgetCard({
   widget,
   state,
+  editing = false,
+  onRemove,
 }: {
   widget: Widget;
   state: WidgetState;
+  editing?: boolean;
+  onRemove?: () => void;
 }) {
   return (
     <div className="glass card-hover flex h-full flex-col rounded-xl p-3">
@@ -31,11 +39,25 @@ export function WidgetCard({
         <h3 className="truncate text-sm font-medium text-foreground">
           {widget.title}
         </h3>
-        {widget.subtitle ? (
-          <span className="truncate text-xs text-muted-foreground">
-            {widget.subtitle}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {widget.subtitle ? (
+            <span className="truncate text-xs text-muted-foreground">
+              {widget.subtitle}
+            </span>
+          ) : null}
+          {editing && onRemove ? (
+            <button
+              type="button"
+              aria-label={`Remove ${widget.title}`}
+              // Stop the click reaching react-grid-layout's drag start.
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={onRemove}
+              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
       </header>
       <div className="min-h-0 flex-1">
         {state.status === "loading" ? (

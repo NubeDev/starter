@@ -20,10 +20,12 @@ export function DashboardGrid({
   dashboard,
   editing,
   onLayoutChange,
+  onRemovePanel,
 }: {
   dashboard: Dashboard;
   editing: boolean;
   onLayoutChange?: (widgets: Widget[]) => void;
+  onRemovePanel?: (panelId: string) => void;
 }) {
   const layout = useMemo(
     () => toGridLayout(dashboard.widgets),
@@ -53,7 +55,13 @@ export function DashboardGrid({
     >
       {dashboard.widgets.map((widget) => (
         <div key={widget.id}>
-          <PanelHost widget={widget} />
+          <PanelHost
+            widget={widget}
+            editing={editing}
+            onRemove={
+              onRemovePanel ? () => onRemovePanel(widget.id) : undefined
+            }
+          />
         </div>
       ))}
     </ResponsiveGrid>

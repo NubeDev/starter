@@ -4,6 +4,7 @@ import { useUiStore } from "@/store/ui";
 import { DashboardGrid } from "@/features/canvas/DashboardGrid";
 import { DashboardToolbar } from "@/features/dashboards/DashboardToolbar";
 import { useDashboard } from "@/features/dashboards/useDashboard";
+import { useRemovePanel } from "@/features/dashboards/useRemovePanel";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -16,6 +17,7 @@ export function DashboardPage() {
   const { slug } = useParams();
   const { data: dashboard, isPending, isError, error } = useDashboard(slug);
   const editing = useUiStore((s) => s.editMode);
+  const removePanel = useRemovePanel(slug ?? "");
 
   if (isPending) return <Loading label="Loading dashboard…" />;
   if (isError) {
@@ -37,7 +39,11 @@ export function DashboardPage() {
         />
       ) : (
         <div className="min-h-0 flex-1">
-          <DashboardGrid dashboard={dashboard} editing={editing} />
+          <DashboardGrid
+            dashboard={dashboard}
+            editing={editing}
+            onRemovePanel={(id) => removePanel.mutate(id)}
+          />
         </div>
       )}
     </div>

@@ -91,3 +91,12 @@ export function chromeColor(token: keyof typeof CHROME_FALLBACK): string {
   }
   return cachedChrome[token];
 }
+
+/** Drop the cached chart ramp + chrome colours so the next read re-pulls
+ *  them from the document root. The theme store calls this on every
+ *  dark/light switch, so canvas-painted ECharts series re-tint to the new
+ *  palette instead of keeping the colours captured at first render. */
+export function invalidateThemeCache(): void {
+  cachedRamp = null;
+  cachedChrome = null;
+}

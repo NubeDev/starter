@@ -7,17 +7,41 @@ import { useWidgetQuery } from "@/features/widgets/useWidgetQuery";
 // live stream routes through `LivePanel` (SSE); otherwise it runs a
 // one-shot query. Either way the card contract is identical, so the widget
 // components never know which feed they're on and stay pure (F6). This is
-// the only place a panel's data is fetched.
-export function PanelHost({ widget }: { widget: Widget }) {
+// the only place a panel's data is fetched. Edit affordances
+// (`editing`/`onRemove`) pass straight through to the card.
+export function PanelHost({
+  widget,
+  editing,
+  onRemove,
+}: {
+  widget: Widget;
+  editing?: boolean;
+  onRemove?: () => void;
+}) {
   if (widget.config.live?.streamId) {
-    return <LivePanel widget={widget} />;
+    return <LivePanel widget={widget} editing={editing} onRemove={onRemove} />;
   }
-  return <QueryPanel widget={widget} />;
+  return <QueryPanel widget={widget} editing={editing} onRemove={onRemove} />;
 }
 
 // Split out so the live/query hooks each live behind their own component
 // (a hook can't be called conditionally).
-function QueryPanel({ widget }: { widget: Widget }) {
+function QueryPanel({
+  widget,
+  editing,
+  onRemove,
+}: {
+  widget: Widget;
+  editing?: boolean;
+  onRemove?: () => void;
+}) {
   const state = useWidgetQuery(widget);
-  return <WidgetCard widget={widget} state={state} />;
+  return (
+    <WidgetCard
+      widget={widget}
+      state={state}
+      editing={editing}
+      onRemove={onRemove}
+    />
+  );
 }

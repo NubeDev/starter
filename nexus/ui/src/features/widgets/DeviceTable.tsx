@@ -1,10 +1,13 @@
 import type { Widget, WidgetData } from "@/data/types";
 import { Empty } from "@/features/state/Empty";
+import { useDateTime } from "@/datetime";
 
 // Device / row table. Columns come from the field mapping: the `x`
 // column (if any) is the leading key column, followed by each mapped
 // series. Renders the raw query rows — no client-side aggregation, no
-// fabricated rows (F0/F6). Numeric series use tabular figures.
+// fabricated rows (F0/F6). Numeric series use tabular figures; columns
+// declared `kind: "time"` render through the active region/preference
+// date formatter.
 export function DeviceTable({
   widget,
   data,
@@ -12,17 +15,19 @@ export function DeviceTable({
   widget: Widget;
   data: WidgetData;
 }) {
-  const { x, series } = widget.config.fields;
+  const { x, xKind, series } = widget.config.fields;
+  const { dateTime } = useDateTime();
   if (data.points.length === 0) {
     return <Empty title={widget.title} description="No rows" />;
   }
 
   const columns = [
-    ...(x ? [{ key: x, label: x, numeric: false }] : []),
+    ...(x ? [{ key: x, label: x, numeric: false, time: xKind === "time" }] : []),
     ...series.map((s) => ({
       key: s.value,
       label: s.label ?? s.value,
-      numeric: true,
+      numeric: s.kind !== "time",
+      time: s.kind === "time",
     })),
   ];
 
@@ -46,7 +51,7 @@ export function DeviceTable({
                   key={c.key}
                   className={`px-2 py-1.5 ${c.numeric ? "tabular text-right" : "text-foreground"}`}
                 >
-                  {formatCell(row[c.key])}
+                  {formatCell(row[c.key], c.time ? dateTime : undefined)}
                 </td>
               ))}
             </tr>
@@ -57,7 +62,20 @@ export function DeviceTable({
   );
 }
 
-function formatCell(v: string | number | null | undefined): string {
+function formatCell(
+  v: string | number | null | undefined,
+  formatTime?: (input: string | number | Date) => string,
+): string {
   if (v == null) return "—";
+  // Time columns route through the region/preference formatter; a
+  // value that won't parse falls back to its raw string rather than
+  // throwing or showing "Invalid Date".
+  if (formatTime && (typeof v === "string" || typeof v === "number")) {
+    try {
+      return formatTime(v);
+    } catch {
+      return String(v);
+    }
+  }
   return String(v);
 }

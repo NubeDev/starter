@@ -100,6 +100,22 @@ mirroring shadcn-admin's config drawer. The sidebar reads its own `--sidebar-*` 
 family, pinned to the Nexus OLED palette so it matches the shell; the floating panel gets
 a soft elevation shadow so it reads as detached against the near-black background.
 
+### D10 — Panel layout-save is deferred: no panel/dashboard UPDATE endpoint
+The contract ships `POST /dashboards`, `POST /dashboards/{slug}/panels`, `DELETE
+/panels/{id}`, `DELETE /dashboards/{slug}` — create + delete, **no update**. (The
+`UpdatePanelRequest`/`UpdateDashboardRequest` schemas are defined but no route consumes
+them.) So a drag/resize on the canvas cannot be *persisted*: there's no `PATCH /panels/{id}`.
+
+Rejected: "update via add-then-remove" — it would mint a new panel id on every move,
+breaking live-stream subscriptions, selection, and React keys; racy and churny. Not worth
+the correctness cost for a layout tweak.
+
+Decision: **edit-mode drag/resize works in-session (the canvas state updates), but layout
+changes are not saved** until the backend adds `PATCH /panels/{id}` (or a bulk
+`PUT /dashboards/{slug}/layout`). Add-panel and remove-panel *are* wired (they have
+endpoints). When the update route lands, `DashboardGrid.onLayoutChange` persists via it —
+the pure `applyGridLayout` diff is already there. See B5.
+
 ## Backend blockers (build what we can; wire when unblocked)
 
 > Per the session lead: do what's possible now, record blockers here rather than stalling.
@@ -130,3 +146,11 @@ a soft elevation shadow so it reads as detached against the near-black backgroun
   `com.nubeio.ce/ui/remoteEntry.js` artifact (as `rubix` does). Until nexus-api serves that route,
   `bootstrapExtensions` has nothing to load. *Done instead:* the host runtime + `<ExtensionSlot>`s
   are wired so a single env/base-path change activates loading once the route exists.
+
+- **B5 — no panel/dashboard UPDATE endpoint** (see D10). Canvas drag/resize can't persist
+  without `PATCH /panels/{id}` (or a bulk dashboard-layout PUT). *Done instead:* add-panel and
+  remove-panel UI are fully wired (those endpoints exist); edit-mode drag works in-session;
+  `DashboardGrid.onLayoutChange` already computes the changed-widgets diff (`applyGridLayout`)
+  so persistence is a one-call addition when the route lands. The `viz`/`sql`/`datasource`/
+  `title` of an existing panel are likewise non-editable until update exists — edits today are
+  remove + re-add (acceptable for those fields; not for layout, which moves constantly).
