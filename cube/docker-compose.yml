@@ -1,0 +1,26 @@
+# Cube.js (cube-js/cube) wired to the rubix TimescaleDB.
+#
+# The TimescaleDB lives in `rubix/docker/docker-compose.dev.yaml` as the
+# `postgres` service (container `docker-postgres-1`) on the external
+# `docker_default` bridge network. Cube joins that same network and talks
+# to Postgres over the internal port 5432 — NOT the host-mapped 5433.
+#
+# Start:  docker compose -f cube/docker-compose.yml up -d
+# UI:     http://localhost:4000   (Playground, dev mode)
+# API:    http://localhost:4000/cubejs-api/v1
+services:
+  cube:
+    image: cubejs/cube:latest
+    ports:
+      - "4000:4000"   # REST/GraphQL API + Playground
+      - "15432:15432" # Cube SQL API (Postgres wire protocol)
+    env_file: .env
+    volumes:
+      - ./model:/cube/conf/model
+    networks:
+      - rubix
+
+networks:
+  rubix:
+    external: true
+    name: docker_default
