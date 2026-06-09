@@ -1,4 +1,4 @@
-import { Compass, LayoutDashboard, Plus } from "lucide-react";
+import { Compass, LayoutDashboard } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -14,6 +14,8 @@ import {
 
 import { useLayout } from "@/app/LayoutProvider";
 import { ExtensionSlot } from "@/extensions/ExtensionSlot";
+import { NewDashboardButton } from "@/features/dashboards/NewDashboardButton";
+import { SidebarDashboards } from "@/features/dashboards/SidebarDashboards";
 
 // App navigation on the canonical shadcn `Sidebar`. Its variant
 // (floating/inset/sidebar) and collapse mode are driven by the layout
@@ -47,22 +49,10 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
+          <SidebarDashboards />
           <SidebarMenu>
             <SidebarMenuItem>
-              <NavLink to="/" end>
-                {({ isActive }) => (
-                  <SidebarMenuButton isActive={isActive} tooltip="Overview">
-                    <LayoutDashboard />
-                    <span>Overview</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="New dashboard" className="text-muted-foreground">
-                <Plus />
-                <span>New dashboard</span>
-              </SidebarMenuButton>
+              <NewDashboardButton />
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>

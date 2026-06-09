@@ -25,3 +25,11 @@ export type ResultColumnType = S["ResultColumnType"];
 export type CreateStreamRequest = S["CreateStreamRequest"];
 export type CreateStreamResponse = S["CreateStreamResponse"];
 export type StreamEvent = S["StreamEvent"];
+
+export type DashboardSummary = S["DashboardSummary"];
+export type DashboardDetail = S["DashboardDetail"];
+export type CreateDashboardRequest = S["CreateDashboardRequest"];
+export type UpdateDashboardRequest = S["UpdateDashboardRequest"];
+export type PanelDetail = S["PanelDetail"];
+export type CreatePanelRequest = S["CreatePanelRequest"];
+export type UpdatePanelRequest = S["UpdatePanelRequest"];

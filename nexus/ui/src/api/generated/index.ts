@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/dashboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_dashboards"];
+        put?: never;
+        post: operations["create_dashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_dashboard"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_dashboard"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{slug}/panels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["add_panel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/datasources": {
         parameters: {
             query?: never;
@@ -57,6 +105,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/panels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_panel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/query": {
         parameters: {
             query?: never;
@@ -86,11 +150,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Mint a short-lived token scoped to a new stream id and return the URL the
-         *     browser opens an `EventSource` against. The token — not a Bearer — is what
-         *     authenticates the subscription.
-         */
         post: operations["create_stream"];
         delete?: never;
         options?: never;
@@ -130,6 +189,14 @@ export interface components {
             type: components["schemas"]["ResultColumnType"];
         };
         /**
+         * @description Create a dashboard. The slug must be unique within the tenant; the server
+         *     rejects a duplicate rather than silently aliasing.
+         */
+        CreateDashboardRequest: {
+            name: string;
+            slug: string;
+        };
+        /**
          * @description Body for creating a datasource. The `password` is write-only: it is accepted
          *     here, envelope-encrypted at rest, and never echoed back by any read
          *     endpoint.
@@ -146,6 +213,23 @@ export interface components {
             /** Format: int32 */
             port: number;
             user: string;
+        };
+        /**
+         * @description Create a panel under the dashboard named in the path. The dashboard is keyed
+         *     by its immutable id (resolved from the path slug at the request edge).
+         */
+        CreatePanelRequest: {
+            /**
+             * Format: uuid
+             * @description Datasource this panel queries.
+             */
+            datasource_id: string;
+            /** @description Grid layout; defaults to empty when omitted. */
+            layout?: unknown;
+            sql: string;
+            title: string;
+            /** @description Visualization kind; defaults to `table` when omitted. */
+            viz?: string | null;
         };
         /**
          * @description Body for creating a live stream: the datasource to read and the SQL shaping
@@ -180,6 +264,28 @@ export interface components {
             subscribe_url: string;
             /** @description Signed token to pass as `?token=` when opening the SSE connection. */
             token: string;
+        };
+        /**
+         * @description Full dashboard view: identity plus its ordered panels. The slug resolves to
+         *     the `id` at the request edge; everything below keys on the id.
+         */
+        DashboardDetail: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            panels: components["schemas"]["PanelDetail"][];
+            slug: string;
+        };
+        /** @description A dashboard in a list: identity, route alias, and display name. */
+        DashboardSummary: {
+            /**
+             * Format: uuid
+             * @description Immutable id — grants and panel refs key on this.
+             */
+            id: string;
+            name: string;
+            /** @description Mutable route alias. */
+            slug: string;
         };
         /**
          * @description Full datasource view. The connection is redacted — host/port/database/user
@@ -233,6 +339,26 @@ export interface components {
              *     marks a super-admin that bypasses the cross-tenant predicate.
              */
             tenant_id?: string | null;
+        };
+        /**
+         * @description A panel as the canvas renders it: which datasource + query feed it, how it is
+         *     drawn, and where it sits on the grid.
+         */
+        PanelDetail: {
+            /**
+             * Format: uuid
+             * @description Datasource the panel queries. `None` if its datasource was deleted.
+             */
+            datasource_id?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Opaque grid layout the canvas owns. */
+            layout: unknown;
+            /** @description The panel's SQL, run under the server query guards when refreshed. */
+            sql: string;
+            title: string;
+            /** @description Visualization kind: `line` | `bar` | `table` | `stat` | … */
+            viz: string;
         };
         /**
          * @description Machine-readable error body.
@@ -363,6 +489,14 @@ export interface components {
             ok: boolean;
         };
         /**
+         * @description Partial update. Renaming the slug changes only the route alias — grants and
+         *     panel refs keep pointing at the immutable id, so nothing is orphaned.
+         */
+        UpdateDashboardRequest: {
+            name?: string | null;
+            slug?: string | null;
+        };
+        /**
          * @description Partial update. Every field is optional; `None` leaves the stored value
          *     untouched. `password` follows the write-only rule — supplying it rotates the
          *     secret, omitting it keeps the existing ciphertext.
@@ -377,6 +511,15 @@ export interface components {
             port?: number | null;
             user?: string | null;
         };
+        /** @description Partial update of a panel. `None` fields are left unchanged. */
+        UpdatePanelRequest: {
+            /** Format: uuid */
+            datasource_id?: string | null;
+            layout?: unknown;
+            sql?: string | null;
+            title?: string | null;
+            viz?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -386,6 +529,149 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_dashboards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboards */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"][];
+                };
+            };
+        };
+    };
+    create_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDashboardRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+            /** @description Slug already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug (route alias) */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard with panels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardDetail"];
+                };
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    add_panel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePanelRequest"];
+            };
+        };
+        responses: {
+            /** @description Panel added */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanelDetail"];
+                };
+            };
+            /** @description Dashboard not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_datasources: {
         parameters: {
             query?: never;
@@ -515,6 +801,34 @@ export interface operations {
             };
         };
     };
+    delete_panel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Panel id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     run_query: {
         parameters: {
             query?: never;
@@ -569,6 +883,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CreateStreamResponse"];
                 };
+            };
+            /** @description Not allowed to view the datasource */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Datasource not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
