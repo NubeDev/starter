@@ -1,0 +1,2632 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Nexus API",
+    "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, panels, flows, and alerts.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/alerts/channels": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_channels",
+        "responses": {
+          "200": {
+            "description": "Channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChannelDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "create_channel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/channels/{id}": {
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "delete_channel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Channel id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/events": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_alert_events",
+        "responses": {
+          "200": {
+            "description": "Events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/rules": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_alert_rules",
+        "responses": {
+          "200": {
+            "description": "Rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertRuleDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "create_alert_rule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlertRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRuleDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/rules/{id}": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "get_alert_rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Rule id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRuleDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "update_alert_rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Rule id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlertRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "delete_alert_rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Rule id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/silences": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_silences",
+        "responses": {
+          "200": {
+            "description": "Silences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SilenceDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "create_silence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSilenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SilenceDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/silences/{id}": {
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "delete_silence",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Silence id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards": {
+      "get": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "list_dashboards",
+        "responses": {
+          "200": {
+            "description": "Dashboards",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DashboardSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "create_dashboard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}": {
+      "get": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "get_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug (route alias)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard with panels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "delete_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "update_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dashboard updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          },
+          "409": {
+            "description": "New slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}/panels": {
+      "post": {
+        "tags": [
+          "panels"
+        ],
+        "operationId": "add_panel",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePanelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Panel added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PanelDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dashboard not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/datasources": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "list_datasources",
+        "responses": {
+          "200": {
+            "description": "Datasources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DatasourceSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Seal the secret and insert the datasource under the caller's tenant.",
+        "operationId": "create_datasource",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDatasourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/{id}": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "get_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datasource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "update_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDatasourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to edit this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "delete_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/{id}/query": {
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "query_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or rejected query"
+          },
+          "403": {
+            "description": "Not authorized to view this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/{id}/schema": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "datasource_schema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tables and columns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/{id}/test": {
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "test_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Probe outcome (ok=false on a failed probe)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestDatasourceResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "list_flows",
+        "responses": {
+          "200": {
+            "description": "Flows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlowSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "create_flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "get_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "update_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Updated"
+          },
+          "403": {
+            "description": "Not allowed to edit this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "delete_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/start": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "start_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Flow config is invalid"
+          },
+          "403": {
+            "description": "Not allowed to run this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/stop": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "stop_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stopped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to stop this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Map the authenticated `Principal` to the richer context DTO. 401 when no\nprincipal is present (the request was unauthenticated).",
+        "operationId": "get_me",
+        "responses": {
+          "200": {
+            "description": "Caller context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/panels/{id}": {
+      "delete": {
+        "tags": [
+          "panels"
+        ],
+        "operationId": "delete_panel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Panel id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "panels"
+        ],
+        "operationId": "update_panel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Panel id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePanelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Panel updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PanelDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/query": {
+      "post": {
+        "tags": [
+          "query"
+        ],
+        "summary": "Extract the SQL, run it under the server guards, return the rows. The guards\n(read-only, timeout, caps) live in the store; this handler only wires.",
+        "operationId": "run_query",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or rejected query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/streams": {
+      "post": {
+        "tags": [
+          "streams"
+        ],
+        "operationId": "create_stream",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Stream created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateStreamResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view the datasource"
+          },
+          "404": {
+            "description": "Datasource not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/streams/{id}": {
+      "get": {
+        "tags": [
+          "streams"
+        ],
+        "summary": "SSE subscription. Returns 401 on a missing/expired/forged token, otherwise an\nevent stream.",
+        "operationId": "subscribe_stream",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Stream id from POST /streams",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Signed subscription token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE event stream",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "401": {
+            "description": "Missing/expired/invalid token"
+          }
+        }
+      }
+    },
+    "/api/v1/tags/entities/{kind}": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "list_entities_with_tag",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "The kind of entity to list",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaggableKind"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "description": "The tag key to match",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "description": "Optional exact value; omit to match any",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entities carrying the tag",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaggedEntity"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tags/keys": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "list_tag_keys",
+        "responses": {
+          "200": {
+            "description": "Distinct tag keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tags/{kind}/{id}": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "get_tags",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "The kind of entity",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaggableKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The entity's id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tags on the entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "set_tags",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "The kind of entity being tagged",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaggableKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The entity's id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTagsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Tags replaced"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlertEvent": {
+        "type": "object",
+        "description": "One recorded transition: when a rule fired or resolved, the value that\ntriggered it, and whether it was silenced / actually notified.",
+        "required": [
+          "id",
+          "rule_id",
+          "at",
+          "transition",
+          "silenced",
+          "notified"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notified": {
+            "type": "boolean"
+          },
+          "rule_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "silenced": {
+            "type": "boolean"
+          },
+          "transition": {
+            "type": "string",
+            "description": "firing | resolved."
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "AlertRuleDetail": {
+        "type": "object",
+        "description": "An alert rule in full.",
+        "required": [
+          "id",
+          "name",
+          "query",
+          "op",
+          "threshold",
+          "for_secs",
+          "interval_secs",
+          "enabled",
+          "channel_ids"
+        ],
+        "properties": {
+          "channel_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "for_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ChannelDetail": {
+        "type": "object",
+        "description": "A notification channel.",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "config"
+        ],
+        "properties": {
+          "config": {},
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ColumnSchema": {
+        "type": "object",
+        "description": "One column of a query result.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Column name as it appears in the result set."
+          },
+          "type": {
+            "$ref": "#/components/schemas/ResultColumnType",
+            "description": "Coarse logical type for rendering."
+          }
+        }
+      },
+      "CreateAlertRuleRequest": {
+        "type": "object",
+        "description": "Create an alert rule: a query whose first numeric cell is compared to a\nthreshold on a cadence. `op` is one of gt|gte|lt|lte|eq|ne.",
+        "required": [
+          "name",
+          "query",
+          "op",
+          "threshold"
+        ],
+        "properties": {
+          "channel_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pending dwell in seconds before firing (0 = fire on first breach)."
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Evaluation cadence in seconds."
+          },
+          "name": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CreateChannelRequest": {
+        "type": "object",
+        "description": "Create a notification channel. `kind` selects the delivery (webhook in v1);\n`config` is the kind-specific settings (e.g. `{ \"url\": \"…\" }`).",
+        "required": [
+          "name",
+          "kind",
+          "config"
+        ],
+        "properties": {
+          "config": {},
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateDashboardRequest": {
+        "type": "object",
+        "description": "Create a dashboard. The slug must be unique within the tenant; the server\nrejects a duplicate rather than silently aliasing.",
+        "required": [
+          "slug",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateDatasourceRequest": {
+        "type": "object",
+        "description": "Body for creating a datasource. The `password` is write-only: it is accepted\nhere, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
+        "required": [
+          "name",
+          "kind",
+          "host",
+          "port",
+          "database",
+          "user",
+          "password"
+        ],
+        "properties": {
+          "database": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind",
+            "description": "Which connector to use."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name shown in the datasource picker."
+          },
+          "password": {
+            "type": "string",
+            "description": "Write-only secret. Stored as ciphertext; absent from every response."
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "user": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateFlowRequest": {
+        "type": "object",
+        "description": "Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
+        "required": [
+          "name",
+          "input",
+          "output"
+        ],
+        "properties": {
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {},
+          "name": {
+            "type": "string"
+          },
+          "output": {},
+          "pipeline": {}
+        }
+      },
+      "CreatePanelRequest": {
+        "type": "object",
+        "description": "Create a panel under the dashboard named in the path. The dashboard is keyed\nby its immutable id (resolved from the path slug at the request edge).",
+        "required": [
+          "title",
+          "datasource_id",
+          "sql"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Datasource this panel queries."
+          },
+          "layout": {
+            "description": "Grid layout; defaults to empty when omitted."
+          },
+          "sql": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "viz": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Visualization kind; defaults to `table` when omitted."
+          }
+        }
+      },
+      "CreateSilenceRequest": {
+        "type": "object",
+        "description": "Create a silence. `rule_id = None` silences every rule in the tenant for the\nwindow; a value silences just that rule. Silencing suppresses notification,\nnot evaluation — the event history still records what fired.",
+        "required": [
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rule_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateStreamRequest": {
+        "type": "object",
+        "description": "Body for creating a live stream: the datasource to read and the SQL shaping\napplied to each batch before it is pushed to subscribers.",
+        "required": [
+          "datasource_id",
+          "sql"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Datasource whose live input feeds this stream."
+          },
+          "sql": {
+            "type": "string",
+            "description": "SQL applied per batch (DataFusion pipeline) to shape the live rows."
+          }
+        }
+      },
+      "CreateStreamResponse": {
+        "type": "object",
+        "description": "Result of creating a stream. The token is single-use-per-connection,\nshort-lived, and scoped to exactly this stream — it authorizes the SSE\nsubscription and nothing else.",
+        "required": [
+          "id",
+          "token",
+          "subscribe_url",
+          "expires_in_secs"
+        ],
+        "properties": {
+          "expires_in_secs": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Token lifetime in seconds; the client must connect before it expires.",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable stream id."
+          },
+          "subscribe_url": {
+            "type": "string",
+            "description": "Relative URL to connect an `EventSource` to, with the token embedded."
+          },
+          "token": {
+            "type": "string",
+            "description": "Signed token to pass as `?token=` when opening the SSE connection."
+          }
+        }
+      },
+      "DashboardDetail": {
+        "type": "object",
+        "description": "Full dashboard view: identity plus its ordered panels. The slug resolves to\nthe `id` at the request edge; everything below keys on the id.",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "panels"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PanelDetail"
+            }
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardSummary": {
+        "type": "object",
+        "description": "A dashboard in a list: identity, route alias, and display name.",
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable id — grants and panel refs key on this."
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Mutable route alias."
+          }
+        }
+      },
+      "DatasourceDetail": {
+        "type": "object",
+        "description": "Full datasource view. The connection is redacted — host/port/database/user\nonly, never the secret.",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "connection"
+        ],
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/RedactedConnection"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable datasource id."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "DatasourceKind": {
+        "type": "string",
+        "description": "The kind of datasource, which selects the ArkFlow input builder. v1 ships\nSQL-over-Postgres as the first connector; the enum is the extension point as\nmore `register_input_builder` connectors land.",
+        "enum": [
+          "postgres"
+        ]
+      },
+      "DatasourceSchema": {
+        "type": "object",
+        "description": "A datasource's introspected tables, for SQL autocomplete in the editor.",
+        "required": [
+          "tables"
+        ],
+        "properties": {
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaTable"
+            }
+          }
+        }
+      },
+      "DatasourceSummary": {
+        "type": "object",
+        "description": "A datasource as it appears in a list — identity and kind only, no connection\ndetail. Use `GET /datasources/:id` for the redacted connection view.",
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable datasource id (grants and panel refs key on this)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "FlowDetail": {
+        "type": "object",
+        "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
+        "required": [
+          "id",
+          "name",
+          "input",
+          "pipeline",
+          "output",
+          "enabled",
+          "running"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the flow is configured to run."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "input": {},
+          "name": {
+            "type": "string"
+          },
+          "output": {},
+          "pipeline": {},
+          "running": {
+            "type": "boolean",
+            "description": "Whether the FlowManager currently has it running on this node."
+          }
+        }
+      },
+      "FlowSummary": {
+        "type": "object",
+        "description": "A flow as it appears in the list: identity and run state, without the config\nblobs (those come from the detail endpoint).",
+        "required": [
+          "id",
+          "name",
+          "enabled",
+          "running"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "running": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "description": "The authenticated caller's full context.",
+        "required": [
+          "subject",
+          "role",
+          "teams",
+          "scopes"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Coarse role: `reader` | `writer` | `admin`."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Fine-grained scope strings attached to the credential."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Stable subject id (the user id)."
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Team slugs the caller belongs to in the current tenant. Grants reference\nteams by slug, so the SPA matches against these."
+          },
+          "tenant_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tenant the session is bound to. `None` for an unbound principal; `\"*\"`\nmarks a super-admin that bypasses the cross-tenant predicate."
+          }
+        }
+      },
+      "PanelDetail": {
+        "type": "object",
+        "description": "A panel as the canvas renders it: which datasource + query feed it, how it is\ndrawn, and where it sits on the grid.",
+        "required": [
+          "id",
+          "title",
+          "sql",
+          "viz",
+          "layout"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Datasource the panel queries. `None` if its datasource was deleted."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "layout": {
+            "description": "Opaque grid layout the canvas owns."
+          },
+          "sql": {
+            "type": "string",
+            "description": "The panel's SQL, run under the server query guards when refreshed."
+          },
+          "title": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string",
+            "description": "Visualization kind: `line` | `bar` | `table` | `stat` | …"
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "description": "Machine-readable error body.\n\nMirrors RFC 7807 loosely. The `type` field is a stable string\nidentifier (`not_found`, `invalid_input`, …) that callers can\nswitch on; the HTTP status is set by the transport.",
+        "required": [
+          "type",
+          "title"
+        ],
+        "properties": {
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional detailed explanation."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short human title for the problem."
+          },
+          "type": {
+            "type": "string",
+            "description": "Stable identifier for the error class. Matches lower-case\nsnake-case of [`crate::error::Error`] variants."
+          }
+        }
+      },
+      "QueryRequest": {
+        "type": "object",
+        "description": "Body of a one-shot query. The caller supplies only the SQL; every safety\nbound (read-only role, statement timeout, forced `LIMIT`, row/byte caps) is\napplied server-side and is deliberately *not* expressible here — a client\ncannot raise its own limits.",
+        "required": [
+          "sql"
+        ],
+        "properties": {
+          "sql": {
+            "type": "string",
+            "description": "The SQL to run against the datasource. Pushed down to the source database\nso `WHERE`/`LIMIT` execute there, not in memory."
+          }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "description": "A completed query result: column schema, rows as JSON objects keyed by\ncolumn name, and execution stats. Rows are an array of objects rather than a\ncolumn-major frame because panels consume row records directly.",
+        "required": [
+          "columns",
+          "rows",
+          "stats"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSchema"
+            },
+            "description": "Ordered column schema for the result set."
+          },
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "One JSON object per row, keyed by column name."
+          },
+          "stats": {
+            "$ref": "#/components/schemas/QueryStats",
+            "description": "Execution metadata, including the `truncated` cap signal."
+          }
+        }
+      },
+      "QueryStats": {
+        "type": "object",
+        "description": "Execution metadata returned alongside the rows. `truncated` is the signal a\ncaller needs: when `true` the result hit a server-enforced row/byte cap and\nis incomplete — the caller must narrow the query rather than assume it saw\neverything.",
+        "required": [
+          "row_count",
+          "byte_count",
+          "elapsed_ms",
+          "truncated"
+        ],
+        "properties": {
+          "byte_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Approximate serialized byte size of the returned rows.",
+            "minimum": 0
+          },
+          "elapsed_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Wall-clock execution time in milliseconds.",
+            "minimum": 0
+          },
+          "row_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of rows actually returned (after any cap).",
+            "minimum": 0
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "`true` if a row/byte cap stopped the stream before it completed."
+          }
+        }
+      },
+      "RedactedConnection": {
+        "type": "object",
+        "description": "Connection details safe to return over the API: everything *except* the\nsecret. The password lives only as ciphertext in the store and is never\nserialized here — `GET /datasources/:id` returns this redacted view.",
+        "required": [
+          "host",
+          "port",
+          "database",
+          "user",
+          "has_secret"
+        ],
+        "properties": {
+          "database": {
+            "type": "string",
+            "description": "Database name."
+          },
+          "has_secret": {
+            "type": "boolean",
+            "description": "Always `true` — present so the UI can show a \"secret set\" affordance\nwithout ever receiving the secret itself."
+          },
+          "host": {
+            "type": "string",
+            "description": "Database host."
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Database port.",
+            "minimum": 0
+          },
+          "user": {
+            "type": "string",
+            "description": "Connecting user."
+          }
+        }
+      },
+      "ResultColumnType": {
+        "type": "string",
+        "description": "The column's logical type, derived from the Arrow schema of the result.\nKept deliberately coarse — the frontend renders cells, it does not need the\nfull Arrow type lattice. Anything not in this set arrives as [`Self::Other`]\nwith the rows already JSON-encoded.",
+        "enum": [
+          "bool",
+          "int",
+          "float",
+          "string",
+          "timestamp",
+          "other"
+        ]
+      },
+      "SchemaColumn": {
+        "type": "object",
+        "description": "One column: its name and declared SQL type (e.g. `timestamp`, `double\nprecision`).",
+        "required": [
+          "name",
+          "data_type"
+        ],
+        "properties": {
+          "data_type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "SchemaTable": {
+        "type": "object",
+        "description": "One table or view, schema-qualified, with its columns in declaration order.",
+        "required": [
+          "schema",
+          "name",
+          "columns"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaColumn"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string",
+            "description": "The Postgres schema the table lives in (e.g. `public`)."
+          }
+        }
+      },
+      "SetTagsRequest": {
+        "type": "object",
+        "description": "Body for `PUT …/tags` — the complete tag set to persist on an entity. This\nis a full replace: tags not listed are removed, so the client sends the\nwhole set it wants, not a delta.",
+        "required": [
+          "tags"
+        ],
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          }
+        }
+      },
+      "SilenceDetail": {
+        "type": "object",
+        "description": "A silence window.",
+        "required": [
+          "id",
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rule_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StreamEvent": {
+        "type": "object",
+        "description": "One `data:` frame on a live stream. `seq` is the monotonic per-stream event\nid echoed in the SSE `id:` field so a reconnecting client can send\n`Last-Event-ID` to resume; `rows` is the batch shaped by the stream's SQL.",
+        "required": [
+          "seq",
+          "rows"
+        ],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "The rows in this batch, one JSON object per row."
+          },
+          "seq": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Monotonic event sequence number within this stream.",
+            "minimum": 0
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "description": "One tag: a `key` with an optional `value`. `value` absent (or null) is a\nbare label; present is a key:value pair.",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The tag key, e.g. `temp` or `building`."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tag value, e.g. `abc`. Absent for a bare label."
+          }
+        }
+      },
+      "TaggableKind": {
+        "type": "string",
+        "description": "The kinds of entity that can be tagged. The set the API accepts — a tag's\ntarget is referenced by kind + id, so a kind owned by another layer (a user,\na team) is taggable without this crate owning the entity. New variants are\nadd-only within a major.",
+        "enum": [
+          "dashboard",
+          "datasource",
+          "flow",
+          "alert_rule",
+          "user",
+          "team"
+        ]
+      },
+      "TaggedEntity": {
+        "type": "object",
+        "description": "An entity returned by a by-tag lookup: its kind and id.",
+        "required": [
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The entity's id as a string (ids owned by other layers are not uuids)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TaggableKind"
+          }
+        }
+      },
+      "TestDatasourceResponse": {
+        "type": "object",
+        "description": "Outcome of a connection probe. `ok` is the headline; on failure `message`\ncarries the redacted reason (driver errors are sanitized so they never leak\nthe connection secret).",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "latency_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Round-trip latency of the probe in milliseconds, when it connected.",
+            "minimum": 0
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ok": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateAlertRuleRequest": {
+        "type": "object",
+        "description": "Partially update an alert rule; omitted fields are unchanged.",
+        "properties": {
+          "channel_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "op": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "query": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "threshold": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "UpdateDashboardRequest": {
+        "type": "object",
+        "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateDatasourceRequest": {
+        "type": "object",
+        "description": "Partial update. Every field is optional; `None` leaves the stored value\nuntouched. `password` follows the write-only rule — supplying it rotates the\nsecret, omitting it keeps the existing ciphertext.",
+        "properties": {
+          "database": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "host": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "password": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Supplying a new secret rotates it; omitting it keeps the current one."
+          },
+          "port": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "user": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateFlowRequest": {
+        "type": "object",
+        "description": "Partially update a flow; omitted fields are left unchanged. Toggling\n`enabled` here does not by itself start/stop the flow — the dedicated\n`start`/`stop` routes do that and also flip this flag — so a plain update is\nfor editing the config or name.",
+        "properties": {
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {},
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output": {},
+          "pipeline": {}
+        }
+      },
+      "UpdatePanelRequest": {
+        "type": "object",
+        "description": "Partial update of a panel. `None` fields are left unchanged.",
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "layout": {},
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "viz": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

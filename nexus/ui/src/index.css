@@ -1,0 +1,156 @@
+@import "@nube/starter-ui-kit/styles.css";
+
+/* The visual identity is the `nexus-ui` mock — a premium dashboard with
+   an emerald signal accent, frosted-glass surfaces, and an ambient
+   aurora backdrop. The starter kit supplies the shadcn *components*;
+   the *colour identity* now lives in `src/theme/theme.json` and is
+   written onto `<html>` as `--*` custom properties at runtime by
+   `src/theme/theme.ts` (light + dark, switchable). To rebrand for a
+   client, edit that JSON — no CSS or component changes needed.
+
+   This file keeps only the *decorative* layer that isn't a flat token:
+   the aurora backdrop, glass surfaces, scrollbars, and react-grid-layout
+   chrome. Those reference the runtime tokens (`var(--primary)`, …) so
+   they re-tint automatically with whatever palette the JSON defines. */
+
+body {
+  font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* The floating/inset sidebar panel lifts off the OLED black with a soft
+   shadow and a faint emerald edge glow, so the rounded "detached" look
+   reads clearly against the near-black background. */
+[data-slot="sidebar-container"] [data-sidebar="sidebar"] {
+  box-shadow:
+    0 18px 50px -24px color-mix(in oklab, var(--background) 90%, black),
+    inset 0 0 0 1px color-mix(in oklab, var(--sidebar-foreground) 4%, transparent);
+}
+
+/* Ambient aurora backdrop — gives the background depth without noise.
+   Tinted from the runtime chart tokens (via color-mix so any colour
+   space works), so it re-hues with the client's brand and softens
+   automatically in light mode. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, color-mix(in oklab, var(--chart-1) 10%, transparent), transparent 60%),
+    radial-gradient(50rem 36rem at 110% 0%, color-mix(in oklab, var(--chart-2) 8%, transparent), transparent 55%),
+    radial-gradient(46rem 40rem at 50% 120%, color-mix(in oklab, var(--chart-3) 6%, transparent), transparent 60%);
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+  /* Frosted panel surface used across cards/sidebar. Built from the
+     runtime card token so it follows the active brand and mode. */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--card) 72%, transparent),
+      color-mix(in oklab, var(--popover) 72%, transparent)
+    );
+    backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  }
+  .ring-glow {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--ring) 25%, transparent),
+      0 0 28px -6px color-mix(in oklab, var(--ring) 45%, transparent);
+  }
+  .card-hover {
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    border-color: color-mix(in oklab, var(--primary) 35%, transparent);
+    box-shadow: 0 14px 40px -18px color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* react-grid-layout — drag/resize chrome tinted to the emerald accent,
+   ported from the mock so the canvas feels identical. */
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+.react-grid-item {
+  /* Base positioning the library normally ships in its own stylesheet —
+     items are absolutely placed and moved via transform; we inline the
+     essentials so no package CSS import is needed. */
+  position: absolute;
+  box-sizing: border-box;
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+.react-grid-item.react-grid-placeholder {
+  user-select: none;
+}
+.react-grid-item.static {
+  background: transparent;
+}
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+.react-grid-item.resizing {
+  z-index: 3;
+  will-change: width, height;
+}
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 30;
+  will-change: transform;
+}
+.react-grid-item.react-grid-placeholder {
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+  border: 1.5px dashed color-mix(in oklab, var(--primary) 50%, transparent);
+  border-radius: var(--radius);
+  transition-duration: 100ms;
+  z-index: 2;
+}
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  bottom: 2px;
+  right: 2px;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
+}
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--muted-foreground);
+  border-bottom: 2px solid var(--muted-foreground);
+}

@@ -1,0 +1,85 @@
+# Nexus backend — its own cargo workspace (a sibling of the root starter
+# workspace, excluded from it). It pins ArkFlow to an exact git rev because the
+# cancellation-token `Stream::run` signature the live/query runners depend on
+# exists only on git HEAD, not the crates.io release. Keeping a separate lockfile
+# means an ArkFlow bump here never perturbs the root workspace's resolution.
+[workspace]
+resolver = "2"
+members = [
+    "crates/nexus-spi",
+    "crates/nexus-engine",
+    "crates/nexus-store",
+    "crates/nexus-api",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.88"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+# In-repo nexus crates (path deps within this workspace).
+nexus-spi    = { path = "crates/nexus-spi" }
+nexus-engine = { path = "crates/nexus-engine" }
+nexus-store  = { path = "crates/nexus-store" }
+
+# Starter crates consumed from the root workspace via path deps. Path
+# dependencies cross workspace boundaries freely; these are NOT forked.
+starter-spi            = { path = "../../crates/starter-spi" }
+starter-server         = { path = "../../crates/starter-server" }
+starter-auth-users     = { path = "../../crates/starter-auth-users" }
+starter-authz          = { path = "../../crates/starter-authz" }
+starter-store-postgres = { path = "../../crates/starter-store-postgres" }
+starter-config         = { path = "../../crates/starter-config" }
+starter-observability  = { path = "../../crates/starter-observability" }
+
+# ArkFlow — the only external dependency, pinned to an exact rev (R3). The same
+# rev the POC proved the Collector seam against.
+arkflow-core   = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
+arkflow-plugin = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
+
+# DataFusion / Arrow pinned to the versions ArkFlow resolves at that rev, so the
+# `RecordBatch` the collector sink receives is byte-identical to the engine's.
+datafusion = "47"
+
+# Web + async stack — versions matched to the starter crates so the shared axum
+# Router / utoipa OpenApi types unify across the dependency graph.
+axum         = { version = "0.8", features = ["macros"] }
+tower        = "0.5"
+tower-http   = { version = "0.6", features = ["cors", "trace"] }
+utoipa       = { version = "5", features = ["axum_extras", "uuid", "chrono"] }
+tokio        = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal", "time"] }
+tokio-util   = { version = "0.7", features = ["rt"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures      = "0.3"
+
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "macros", "migrate", "uuid", "chrono", "json"] }
+
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid       = { version = "1", features = ["v4", "serde"] }
+chrono     = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+
+async-trait = "0.1"
+thiserror   = "1"
+tracing     = "0.1"
+
+# Crypto for the R6 envelope encryption and R8 stream-token signing.
+aes-gcm = "0.10"
+hmac    = "0.12"
+sha2    = "0.10"
+rand    = "0.8"
+base64  = "0.22"
+
+# Test-only.
+testcontainers         = "0.23"
+testcontainers-modules = { version = "0.11", features = ["postgres"] }
+reqwest                = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+tracing-subscriber     = { version = "0.3", features = ["env-filter"] }
+
+# Redirect upstream `arkflow-plugin` to the connector-trimmed copy in vendor/.
+# Upstream registers every connector unconditionally (DuckDB, Kafka, PyO3, …);
+# the vendored copy keeps only the pure-DataFusion modules the query/live seam
+# uses. The engine crate (`arkflow-core`) is consumed unpatched.
+[patch."https://github.com/arkflow-rs/arkflow"]
+arkflow-plugin = { path = "vendor/arkflow-plugin" }

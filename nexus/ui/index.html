@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" data-theme="nexus" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus · Dashboards</title>
+    <!-- JetBrains Mono backs the `.tabular` metric figures (the kit
+         bundles Inter; this adds the mono face the mock uses). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- react-grid-layout's drag core reads `process.env.NODE_ENV`,
+         which Vite does not polyfill; without this its handlers throw
+         "process is not defined" at drag/resize time. -->
+    <script>
+      window.process = window.process || { env: { NODE_ENV: "production" } };
+    </script>
+    <!-- Importmap for extension `remoteEntry.js` bundles loaded via
+         dynamic `import()`. The host publishes its React on
+         `globalThis.__rubixReact*` (see `app/providers.tsx`); these
+         shims re-export from those globals so remotes that externalise
+         `react`/`react-dom`/`react/jsx-runtime` resolve to the host's
+         instance — required for SDK hooks to work across the boundary. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "/shims/react.mjs",
+          "react-dom": "/shims/react-dom.mjs",
+          "react-dom/client": "/shims/react-dom-client.mjs",
+          "react/jsx-runtime": "/shims/react-jsx-runtime.mjs"
+        }
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </head>
+  <body class="antialiased">
+    <div id="root"></div>
+  </body>
+</html>

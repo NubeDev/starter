@@ -1,0 +1,102 @@
+{
+  "$schema": "./theme.schema.json",
+  "name": "Nexus",
+  "description": "Premium OLED dashboard — emerald signal accent, frosted-glass surfaces, ambient aurora backdrop.",
+  "defaultMode": "dark",
+  "defaultPalette": "emerald",
+  "tokens": {
+    "light": {
+      "background": "hsl(210 40% 98%)",
+      "foreground": "hsl(222 47% 11%)",
+
+      "card": "hsl(0 0% 100%)",
+      "card-foreground": "hsl(222 47% 11%)",
+
+      "popover": "hsl(0 0% 100%)",
+      "popover-foreground": "hsl(222 47% 11%)",
+
+      "primary": "hsl(152 64% 36%)",
+      "primary-foreground": "hsl(0 0% 100%)",
+
+      "secondary": "hsl(210 40% 94%)",
+      "secondary-foreground": "hsl(222 47% 16%)",
+
+      "muted": "hsl(210 40% 94%)",
+      "muted-foreground": "hsl(215 16% 40%)",
+
+      "accent": "hsl(152 50% 90%)",
+      "accent-foreground": "hsl(152 64% 24%)",
+
+      "destructive": "hsl(0 72% 50%)",
+      "destructive-foreground": "hsl(0 0% 100%)",
+
+      "border": "hsl(214 32% 88%)",
+      "input": "hsl(214 32% 86%)",
+      "ring": "hsl(152 64% 36%)",
+
+      "chart-1": "hsl(152 64% 36%)",
+      "chart-2": "hsl(199 89% 44%)",
+      "chart-3": "hsl(263 70% 50%)",
+      "chart-4": "hsl(38 92% 48%)",
+      "chart-5": "hsl(0 72% 50%)",
+
+      "sidebar": "hsl(210 40% 96%)",
+      "sidebar-foreground": "hsl(222 47% 11%)",
+      "sidebar-primary": "hsl(152 64% 36%)",
+      "sidebar-primary-foreground": "hsl(0 0% 100%)",
+      "sidebar-accent": "hsl(152 50% 90%)",
+      "sidebar-accent-foreground": "hsl(152 64% 24%)",
+      "sidebar-border": "hsl(214 32% 88%)",
+      "sidebar-ring": "hsl(152 64% 36%)",
+
+      "radius": "0.85rem"
+    },
+
+    "dark": {
+      "background": "hsl(222 47% 4%)",
+      "foreground": "hsl(210 40% 98%)",
+
+      "card": "hsl(222 40% 7%)",
+      "card-foreground": "hsl(210 40% 98%)",
+
+      "popover": "hsl(222 44% 6%)",
+      "popover-foreground": "hsl(210 40% 98%)",
+
+      "primary": "hsl(152 76% 44%)",
+      "primary-foreground": "hsl(152 80% 6%)",
+
+      "secondary": "hsl(217 33% 14%)",
+      "secondary-foreground": "hsl(210 40% 96%)",
+
+      "muted": "hsl(217 33% 12%)",
+      "muted-foreground": "hsl(215 20% 60%)",
+
+      "accent": "hsl(152 60% 16%)",
+      "accent-foreground": "hsl(152 76% 70%)",
+
+      "destructive": "hsl(0 72% 55%)",
+      "destructive-foreground": "hsl(210 40% 98%)",
+
+      "border": "hsl(217 33% 15%)",
+      "input": "hsl(217 33% 16%)",
+      "ring": "hsl(152 76% 44%)",
+
+      "chart-1": "hsl(152 76% 44%)",
+      "chart-2": "hsl(199 90% 56%)",
+      "chart-3": "hsl(263 80% 60%)",
+      "chart-4": "hsl(38 95% 56%)",
+      "chart-5": "hsl(0 72% 55%)",
+
+      "sidebar": "hsl(222 38% 9%)",
+      "sidebar-foreground": "hsl(210 40% 98%)",
+      "sidebar-primary": "hsl(152 76% 44%)",
+      "sidebar-primary-foreground": "hsl(152 80% 6%)",
+      "sidebar-accent": "hsl(152 60% 16%)",
+      "sidebar-accent-foreground": "hsl(152 76% 70%)",
+      "sidebar-border": "hsl(210 40% 100% / 0.08)",
+      "sidebar-ring": "hsl(152 76% 44%)",
+
+      "radius": "0.85rem"
+    }
+  }
+}

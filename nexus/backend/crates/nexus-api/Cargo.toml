@@ -1,0 +1,111 @@
+[package]
+name = "nexus-api"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Nexus control plane — Axum binary composing auth/authz/product routers over the engine and store."
+default-run = "nexus-api"
+
+[dependencies]
+nexus-spi.workspace = true
+nexus-engine.workspace = true
+nexus-store.workspace = true
+
+starter-spi.workspace = true
+starter-server.workspace = true
+starter-auth-users = { workspace = true, features = ["postgres"] }
+starter-authz = { workspace = true, features = ["postgres"] }
+starter-store-postgres.workspace = true
+starter-config.workspace = true
+starter-observability.workspace = true
+
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+utoipa.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+
+sqlx.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+
+async-trait.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# R8 stream-token signing.
+hmac.workspace = true
+sha2.workspace = true
+base64.workspace = true
+
+# Alert webhook notification delivery.
+reqwest.workspace = true
+
+[features]
+# Pulls in the starter-server test harness (TestApp) and the testcontainers
+# Postgres helper for HTTP integration tests. Off by default so production
+# builds stay lean.
+testing = ["starter-server/testing", "starter-store-postgres/testing", "nexus-store/testing"]
+
+[[bin]]
+name = "nexus-api"
+path = "src/main.rs"
+
+# Dumps the OpenAPI document to stdout/file for the frontend codegen. Kept as a
+# separate bin so the contract can be regenerated without starting the server.
+[[bin]]
+name = "nexus-openapi"
+path = "src/bin/openapi.rs"
+
+# Idempotent bootstrap: seed an admin tenant + user + admin grant into a fresh
+# database. Run via `make seed`.
+[[bin]]
+name = "seed-admin"
+path = "src/bin/seed_admin.rs"
+
+[dev-dependencies]
+reqwest.workspace = true
+sqlx.workspace = true
+tokio = { workspace = true, features = ["test-util", "io-util", "net"] }
+tokio-util = { workspace = true, features = ["io"] }
+futures.workspace = true
+starter-store-postgres.workspace = true
+
+[[test]]
+name = "routes_query_run"
+path = "tests/routes/query/run_test.rs"
+
+[[test]]
+name = "routes_datasources_query_e2e"
+path = "tests/routes/datasources/query_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_update_e2e"
+path = "tests/routes/datasources/update_e2e_test.rs"
+
+[[test]]
+name = "routes_streams_subscribe"
+path = "tests/routes/streams/subscribe_test.rs"
+
+[[test]]
+name = "routes_identity_wiring"
+path = "tests/routes/identity/wiring_test.rs"
+
+[[test]]
+name = "routes_authz_grant_gate"
+path = "tests/routes/authz/grant_gate_test.rs"
+
+[[test]]
+name = "routes_flows_e2e"
+path = "tests/routes/flows/flow_e2e_test.rs"
+
+[[test]]
+name = "routes_alerts_e2e"
+path = "tests/routes/alerts/alert_e2e_test.rs"

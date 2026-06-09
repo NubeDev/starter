@@ -23,6 +23,7 @@ packages:
   - "rubix/frontend"
   - "rubix/mobile"
   - "rubix/apps/*"
+  - "nexus/ui"
 
 allowBuilds:
   esbuild: true

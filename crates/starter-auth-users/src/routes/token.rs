@@ -247,23 +247,19 @@ async fn resolve_tenant(
         };
     }
 
-    // No explicit tenant_id requested. A global Admin defaults to the
-    // super-admin sentinel so a bearer-authenticated admin sees every
-    // tenant's resources — exactly like the cookie path's
-    // `resolve_login_tenant` (login.rs), which returns `"*"` for an Admin
-    // BEFORE counting memberships. Without this, an admin who happens to
-    // hold one or more memberships gets bound to a single tenant here while
-    // the same admin's cookie session is global — so the provision-app
-    // (bearer) showed zero devices while the console (cookie) showed all of
-    // them. Checked before the membership match to keep the two paths in
-    // lockstep regardless of how many memberships the admin has.
-    if matches!(user_role, Role::Admin) {
-        return Ok("*".to_string());
-    }
-
-    match memberships.len() {
-        1 => Ok(memberships[0].tenant_id.clone()),
-        0 => Err(StatusCode::FORBIDDEN.into_response()),
+    // No explicit tenant_id requested. Resolution mirrors the cookie path's
+    // `resolve_login_tenant` (login.rs) so a user's bearer and cookie principals
+    // agree. An admin with exactly one membership binds to THAT tenant (they are
+    // that tenant's admin, not a cross-tenant operator); an admin with zero or
+    // several memberships defaults to the super-admin sentinel "*" (a genuinely
+    // global operator that sees every tenant). An admin who wants the global view
+    // despite holding one membership can still pass `tenant_id="*"` explicitly
+    // (handled above). Non-admins resolve from memberships only.
+    match (user_role, memberships.len()) {
+        (Role::Admin, 1) => Ok(memberships[0].tenant_id.clone()),
+        (Role::Admin, _) => Ok("*".to_string()),
+        (_, 1) => Ok(memberships[0].tenant_id.clone()),
+        (_, 0) => Err(StatusCode::FORBIDDEN.into_response()),
         _ => Err((
             StatusCode::CONFLICT,
             Json(TenantRequiredResponse {

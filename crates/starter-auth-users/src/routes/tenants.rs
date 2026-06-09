@@ -117,6 +117,10 @@ pub struct MembershipView {
     pub user_id: String,
     /// Role.
     pub role: String,
+    /// The member's email, present on the list endpoint (which joins the users
+    /// table) and omitted on add/patch responses. A human label for pickers.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
 }
 
 impl From<MembershipRecord> for MembershipView {
@@ -125,6 +129,7 @@ impl From<MembershipRecord> for MembershipView {
             tenant_id: r.tenant_id,
             user_id: r.user_id,
             role: r.role,
+            email: r.email,
         }
     }
 }
@@ -300,6 +305,7 @@ async fn add_member_h(
         tenant_id: id,
         user_id: body.user_id,
         role: body.role,
+        email: None,
     };
     match tenants.add_member(&row).await {
         Ok(()) => (StatusCode::CREATED, Json(MembershipView::from(row))).into_response(),

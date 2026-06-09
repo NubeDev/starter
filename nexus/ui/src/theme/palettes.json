@@ -1,0 +1,296 @@
+{
+  "$schema": "./palettes.schema.json",
+  "palettes": [
+    {
+      "id": "emerald",
+      "name": "Emerald",
+      "description": "Premium OLED green — the signature Nexus signal accent.",
+      "light": {
+        "background": "hsl(210 40% 98%)",
+        "foreground": "hsl(222 47% 11%)",
+
+        "card": "hsl(0 0% 100%)",
+        "card-foreground": "hsl(222 47% 11%)",
+
+        "popover": "hsl(0 0% 100%)",
+        "popover-foreground": "hsl(222 47% 11%)",
+
+        "primary": "hsl(152 64% 36%)",
+        "primary-foreground": "hsl(0 0% 100%)",
+
+        "secondary": "hsl(210 40% 94%)",
+        "secondary-foreground": "hsl(222 47% 16%)",
+
+        "muted": "hsl(210 40% 94%)",
+        "muted-foreground": "hsl(215 16% 40%)",
+
+        "accent": "hsl(152 50% 90%)",
+        "accent-foreground": "hsl(152 64% 24%)",
+
+        "destructive": "hsl(0 72% 50%)",
+        "destructive-foreground": "hsl(0 0% 100%)",
+
+        "border": "hsl(214 32% 88%)",
+        "input": "hsl(214 32% 86%)",
+        "ring": "hsl(152 64% 36%)",
+
+        "chart-1": "hsl(152 64% 36%)",
+        "chart-2": "hsl(199 89% 44%)",
+        "chart-3": "hsl(263 70% 50%)",
+        "chart-4": "hsl(38 92% 48%)",
+        "chart-5": "hsl(0 72% 50%)",
+
+        "sidebar": "hsl(210 40% 96%)",
+        "sidebar-foreground": "hsl(222 47% 11%)",
+        "sidebar-primary": "hsl(152 64% 36%)",
+        "sidebar-primary-foreground": "hsl(0 0% 100%)",
+        "sidebar-accent": "hsl(152 50% 90%)",
+        "sidebar-accent-foreground": "hsl(152 64% 24%)",
+        "sidebar-border": "hsl(214 32% 88%)",
+        "sidebar-ring": "hsl(152 64% 36%)",
+
+        "radius": "0.85rem"
+      },
+      "dark": {
+        "background": "hsl(222 47% 4%)",
+        "foreground": "hsl(210 40% 98%)",
+
+        "card": "hsl(222 40% 7%)",
+        "card-foreground": "hsl(210 40% 98%)",
+
+        "popover": "hsl(222 44% 6%)",
+        "popover-foreground": "hsl(210 40% 98%)",
+
+        "primary": "hsl(152 76% 44%)",
+        "primary-foreground": "hsl(152 80% 6%)",
+
+        "secondary": "hsl(217 33% 14%)",
+        "secondary-foreground": "hsl(210 40% 96%)",
+
+        "muted": "hsl(217 33% 12%)",
+        "muted-foreground": "hsl(215 20% 60%)",
+
+        "accent": "hsl(152 60% 16%)",
+        "accent-foreground": "hsl(152 76% 70%)",
+
+        "destructive": "hsl(0 72% 55%)",
+        "destructive-foreground": "hsl(210 40% 98%)",
+
+        "border": "hsl(217 33% 15%)",
+        "input": "hsl(217 33% 16%)",
+        "ring": "hsl(152 76% 44%)",
+
+        "chart-1": "hsl(152 76% 44%)",
+        "chart-2": "hsl(199 90% 56%)",
+        "chart-3": "hsl(263 80% 60%)",
+        "chart-4": "hsl(38 95% 56%)",
+        "chart-5": "hsl(0 72% 55%)",
+
+        "sidebar": "hsl(222 38% 9%)",
+        "sidebar-foreground": "hsl(210 40% 98%)",
+        "sidebar-primary": "hsl(152 76% 44%)",
+        "sidebar-primary-foreground": "hsl(152 80% 6%)",
+        "sidebar-accent": "hsl(152 60% 16%)",
+        "sidebar-accent-foreground": "hsl(152 76% 70%)",
+        "sidebar-border": "hsl(210 40% 100% / 0.08)",
+        "sidebar-ring": "hsl(152 76% 44%)",
+
+        "radius": "0.85rem"
+      }
+    },
+    {
+      "id": "blue",
+      "name": "Ocean",
+      "description": "Classic SaaS blue — the most-loved dashboard accent.",
+      "light": {
+        "background": "hsl(210 40% 98%)",
+        "foreground": "hsl(222 47% 11%)",
+
+        "card": "hsl(0 0% 100%)",
+        "card-foreground": "hsl(222 47% 11%)",
+
+        "popover": "hsl(0 0% 100%)",
+        "popover-foreground": "hsl(222 47% 11%)",
+
+        "primary": "hsl(217 91% 53%)",
+        "primary-foreground": "hsl(0 0% 100%)",
+
+        "secondary": "hsl(210 40% 94%)",
+        "secondary-foreground": "hsl(222 47% 16%)",
+
+        "muted": "hsl(210 40% 94%)",
+        "muted-foreground": "hsl(215 16% 40%)",
+
+        "accent": "hsl(214 95% 93%)",
+        "accent-foreground": "hsl(217 91% 35%)",
+
+        "destructive": "hsl(0 72% 50%)",
+        "destructive-foreground": "hsl(0 0% 100%)",
+
+        "border": "hsl(214 32% 88%)",
+        "input": "hsl(214 32% 86%)",
+        "ring": "hsl(217 91% 53%)",
+
+        "chart-1": "hsl(217 91% 53%)",
+        "chart-2": "hsl(199 89% 44%)",
+        "chart-3": "hsl(263 70% 50%)",
+        "chart-4": "hsl(38 92% 48%)",
+        "chart-5": "hsl(0 72% 50%)",
+
+        "sidebar": "hsl(210 40% 96%)",
+        "sidebar-foreground": "hsl(222 47% 11%)",
+        "sidebar-primary": "hsl(217 91% 53%)",
+        "sidebar-primary-foreground": "hsl(0 0% 100%)",
+        "sidebar-accent": "hsl(214 95% 93%)",
+        "sidebar-accent-foreground": "hsl(217 91% 35%)",
+        "sidebar-border": "hsl(214 32% 88%)",
+        "sidebar-ring": "hsl(217 91% 53%)",
+
+        "radius": "0.85rem"
+      },
+      "dark": {
+        "background": "hsl(222 47% 4%)",
+        "foreground": "hsl(210 40% 98%)",
+
+        "card": "hsl(222 40% 7%)",
+        "card-foreground": "hsl(210 40% 98%)",
+
+        "popover": "hsl(222 44% 6%)",
+        "popover-foreground": "hsl(210 40% 98%)",
+
+        "primary": "hsl(213 94% 62%)",
+        "primary-foreground": "hsl(222 47% 6%)",
+
+        "secondary": "hsl(217 33% 14%)",
+        "secondary-foreground": "hsl(210 40% 96%)",
+
+        "muted": "hsl(217 33% 12%)",
+        "muted-foreground": "hsl(215 20% 60%)",
+
+        "accent": "hsl(217 60% 18%)",
+        "accent-foreground": "hsl(213 94% 78%)",
+
+        "destructive": "hsl(0 72% 55%)",
+        "destructive-foreground": "hsl(210 40% 98%)",
+
+        "border": "hsl(217 33% 15%)",
+        "input": "hsl(217 33% 16%)",
+        "ring": "hsl(213 94% 62%)",
+
+        "chart-1": "hsl(213 94% 62%)",
+        "chart-2": "hsl(199 90% 56%)",
+        "chart-3": "hsl(263 80% 60%)",
+        "chart-4": "hsl(38 95% 56%)",
+        "chart-5": "hsl(0 72% 55%)",
+
+        "sidebar": "hsl(222 38% 9%)",
+        "sidebar-foreground": "hsl(210 40% 98%)",
+        "sidebar-primary": "hsl(213 94% 62%)",
+        "sidebar-primary-foreground": "hsl(222 47% 6%)",
+        "sidebar-accent": "hsl(217 60% 18%)",
+        "sidebar-accent-foreground": "hsl(213 94% 78%)",
+        "sidebar-border": "hsl(210 40% 100% / 0.08)",
+        "sidebar-ring": "hsl(213 94% 62%)",
+
+        "radius": "0.85rem"
+      }
+    },
+    {
+      "id": "violet",
+      "name": "Violet",
+      "description": "Modern premium purple — the contemporary product accent.",
+      "light": {
+        "background": "hsl(210 40% 98%)",
+        "foreground": "hsl(222 47% 11%)",
+
+        "card": "hsl(0 0% 100%)",
+        "card-foreground": "hsl(222 47% 11%)",
+
+        "popover": "hsl(0 0% 100%)",
+        "popover-foreground": "hsl(222 47% 11%)",
+
+        "primary": "hsl(262 83% 58%)",
+        "primary-foreground": "hsl(0 0% 100%)",
+
+        "secondary": "hsl(210 40% 94%)",
+        "secondary-foreground": "hsl(222 47% 16%)",
+
+        "muted": "hsl(210 40% 94%)",
+        "muted-foreground": "hsl(215 16% 40%)",
+
+        "accent": "hsl(262 90% 94%)",
+        "accent-foreground": "hsl(262 83% 40%)",
+
+        "destructive": "hsl(0 72% 50%)",
+        "destructive-foreground": "hsl(0 0% 100%)",
+
+        "border": "hsl(214 32% 88%)",
+        "input": "hsl(214 32% 86%)",
+        "ring": "hsl(262 83% 58%)",
+
+        "chart-1": "hsl(262 83% 58%)",
+        "chart-2": "hsl(199 89% 44%)",
+        "chart-3": "hsl(330 81% 56%)",
+        "chart-4": "hsl(38 92% 48%)",
+        "chart-5": "hsl(0 72% 50%)",
+
+        "sidebar": "hsl(210 40% 96%)",
+        "sidebar-foreground": "hsl(222 47% 11%)",
+        "sidebar-primary": "hsl(262 83% 58%)",
+        "sidebar-primary-foreground": "hsl(0 0% 100%)",
+        "sidebar-accent": "hsl(262 90% 94%)",
+        "sidebar-accent-foreground": "hsl(262 83% 40%)",
+        "sidebar-border": "hsl(214 32% 88%)",
+        "sidebar-ring": "hsl(262 83% 58%)",
+
+        "radius": "0.85rem"
+      },
+      "dark": {
+        "background": "hsl(222 47% 4%)",
+        "foreground": "hsl(210 40% 98%)",
+
+        "card": "hsl(222 40% 7%)",
+        "card-foreground": "hsl(210 40% 98%)",
+
+        "popover": "hsl(222 44% 6%)",
+        "popover-foreground": "hsl(210 40% 98%)",
+
+        "primary": "hsl(263 90% 68%)",
+        "primary-foreground": "hsl(222 47% 6%)",
+
+        "secondary": "hsl(217 33% 14%)",
+        "secondary-foreground": "hsl(210 40% 96%)",
+
+        "muted": "hsl(217 33% 12%)",
+        "muted-foreground": "hsl(215 20% 60%)",
+
+        "accent": "hsl(263 50% 22%)",
+        "accent-foreground": "hsl(263 90% 80%)",
+
+        "destructive": "hsl(0 72% 55%)",
+        "destructive-foreground": "hsl(210 40% 98%)",
+
+        "border": "hsl(217 33% 15%)",
+        "input": "hsl(217 33% 16%)",
+        "ring": "hsl(263 90% 68%)",
+
+        "chart-1": "hsl(263 90% 68%)",
+        "chart-2": "hsl(199 90% 56%)",
+        "chart-3": "hsl(330 85% 64%)",
+        "chart-4": "hsl(38 95% 56%)",
+        "chart-5": "hsl(0 72% 55%)",
+
+        "sidebar": "hsl(222 38% 9%)",
+        "sidebar-foreground": "hsl(210 40% 98%)",
+        "sidebar-primary": "hsl(263 90% 68%)",
+        "sidebar-primary-foreground": "hsl(222 47% 6%)",
+        "sidebar-accent": "hsl(263 50% 22%)",
+        "sidebar-accent-foreground": "hsl(263 90% 80%)",
+        "sidebar-border": "hsl(210 40% 100% / 0.08)",
+        "sidebar-ring": "hsl(263 90% 68%)",
+
+        "radius": "0.85rem"
+      }
+    }
+  ]
+}

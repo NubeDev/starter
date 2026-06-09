@@ -1,0 +1,70 @@
+[package]
+name = "nexus-engine"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Nexus engine bridge — ArkFlow sinks, runners, registry, Arrow→JSON. The keystone."
+
+[dependencies]
+nexus-spi.workspace = true
+
+arkflow-core.workspace = true
+arkflow-plugin.workspace = true
+datafusion.workspace = true
+
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+async-trait.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+starter-spi.workspace = true
+
+# Flow connectors: an http-poll input fetches an upstream API on an interval; a
+# postgres output writes the shaped rows to a datasource DB. Both are registered
+# ArkFlow builders, so a saved flow is config, not code.
+reqwest.workspace = true
+sqlx.workspace = true
+
+# The simulator input stamps RFC3339 timestamps on synthetic rows; the seed bin
+# uses the same row builder.
+chrono.workspace = true
+
+# A small bin that bulk-seeds the three simulator profiles into a datasource DB
+# for testing, reusing the simulator's row shapes.
+[[bin]]
+name = "nexus-seed"
+path = "src/bin/seed.rs"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "net", "io-util"] }
+serde_json.workspace = true
+
+# Integration tests mirror src/ one-to-one; cargo only auto-discovers top-level
+# tests/*.rs, so the mirrored paths are declared explicitly.
+[[test]]
+name = "runner_query"
+path = "tests/runner/query_test.rs"
+
+[[test]]
+name = "runner_live"
+path = "tests/runner/live_test.rs"
+
+[[test]]
+name = "flow_manager"
+path = "tests/flow/manager_test.rs"
+
+[[test]]
+name = "source_http_poll"
+path = "tests/source/http_poll_test.rs"
+
+[[test]]
+name = "source_simulator"
+path = "tests/source/simulator_test.rs"
