@@ -17,6 +17,7 @@ import {
 import {
   MembersPanel,
   TeamsPanel,
+  UserDirectoryProvider,
   useTenantMembers,
 } from "@nube/starter-ui-authz";
 
@@ -24,6 +25,7 @@ import { usePrincipal } from "@/auth/usePrincipal";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
 import { DashboardAccessTab } from "@/features/access/DashboardAccessTab";
+import { useMemberDirectory } from "@/features/access/useMemberDirectory";
 
 export function AccessPage() {
   const principal = usePrincipal();
@@ -45,6 +47,17 @@ export function AccessPage() {
   const scopedTenant = tenantId && tenantId !== "*" ? tenantId : null;
 
   return (
+    <AccessTabs scopedTenant={scopedTenant} />
+  );
+}
+
+// Split out so the member directory hook (which subscribes to the members query)
+// only runs once a tenant is resolved, and the picker provider wraps both panels.
+function AccessTabs({ scopedTenant }: { scopedTenant: string | null }) {
+  const directory = useMemberDirectory(scopedTenant);
+
+  return (
+    <UserDirectoryProvider value={directory}>
     <Tabs defaultValue="dashboards" className="flex h-full flex-col">
       <TabsList>
         <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
@@ -71,6 +84,7 @@ export function AccessPage() {
         </TabsContent>
       </div>
     </Tabs>
+    </UserDirectoryProvider>
   );
 }
 

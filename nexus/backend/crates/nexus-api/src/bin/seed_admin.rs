@@ -76,6 +76,7 @@ async fn main() -> Result<(), String> {
         tenant_id: tenant_slug.clone(),
         user_id: user_id.clone(),
         role: "admin".to_string(),
+        email: None,
     };
     match tenants.add_member(&membership).await {
         Ok(()) => println!("added '{email}' to tenant '{tenant_slug}'"),

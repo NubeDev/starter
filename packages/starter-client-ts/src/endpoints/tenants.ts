@@ -45,6 +45,9 @@ export interface MembershipView {
   tenant_id: string;
   user_id: string;
   role: TenantRole;
+  /** Present on the list endpoint (joins the users table); omitted on
+   * add/patch responses. A human-readable label for member pickers. */
+  email?: string;
 }
 
 /** Body for `POST /v1/tenants/{id}/members`. */

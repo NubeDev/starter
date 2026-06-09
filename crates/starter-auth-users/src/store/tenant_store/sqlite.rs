@@ -52,6 +52,17 @@ fn map_membership(row: sqlx::sqlite::SqliteRow) -> MembershipRecord {
         tenant_id: row.get(0),
         user_id: row.get(1),
         role: row.get(2),
+        email: None,
+    }
+}
+
+/// Map a membership row that also selected the joined user email (column 3).
+fn map_membership_with_email(row: sqlx::sqlite::SqliteRow) -> MembershipRecord {
+    MembershipRecord {
+        tenant_id: row.get(0),
+        user_id: row.get(1),
+        role: row.get(2),
+        email: row.get(3),
     }
 }
 
@@ -308,15 +319,17 @@ impl TenantStore for SqliteTenantStore {
         tenant_id: &str,
     ) -> Result<Vec<MembershipRecord>, TenantStoreError> {
         let rows = sqlx::query(
-            "SELECT tenant_id, user_id, role \
-             FROM starter_auth_users_memberships WHERE tenant_id = ?1 \
-             ORDER BY created_at ASC",
+            "SELECT m.tenant_id, m.user_id, m.role, u.email \
+             FROM starter_auth_users_memberships m \
+             JOIN starter_auth_users_users u ON u.id = m.user_id \
+             WHERE m.tenant_id = ?1 \
+             ORDER BY m.created_at ASC",
         )
         .bind(tenant_id)
         .fetch_all(self.pool.sqlx())
         .await
         .map_err(err)?;
-        Ok(rows.into_iter().map(map_membership).collect())
+        Ok(rows.into_iter().map(map_membership_with_email).collect())
     }
 
     async fn create_team(&self, row: &TeamRecord) -> Result<(), TenantStoreError> {

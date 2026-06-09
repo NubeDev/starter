@@ -67,6 +67,11 @@ pub struct MembershipRecord {
     pub user_id: String,
     /// Role within the tenant. One of `reader | writer | admin`.
     pub role: String,
+    /// The user's email, populated when the read joins the users table. `None`
+    /// for writes (add/patch return the membership without re-reading the user)
+    /// and for stores that do not populate it — a human-readable label for
+    /// member pickers.
+    pub email: Option<String>,
 }
 
 /// Tenant-store failures.
