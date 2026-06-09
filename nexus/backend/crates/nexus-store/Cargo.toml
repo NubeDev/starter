@@ -53,3 +53,7 @@ path = "tests/datasource/crud_test.rs"
 [[test]]
 name = "dashboard_crud"
 path = "tests/dashboard/crud_test.rs"
+
+[[test]]
+name = "flow_crud"
+path = "tests/flow/crud_test.rs"
