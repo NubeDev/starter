@@ -15,7 +15,7 @@ session always finds its dependencies already committed in the working tree.
 |------:|----|-------|:------:|---------|----------|--------|-------|
 | 1 | WS-03 | Query Authoring + Macro Engine (C2 binder) | ✅ | 2026-06-09 11:58 | 2026-06-09 12:21 | ac76c1de | binder+history; B/C pre-shipped; unblocks 01/02/10 |
 | 2 | WS-04 | Panel Editor & Viz Config | ✅ | 2026-06-09 12:40 | 2026-06-09 20:05 | d27f293f | full editor + transforms + field config |
-| 3 | WS-07 | Alerting depth | ✅ | 2026-06-09 13:05 | 2026-06-09 13:30 | PENDING | multi-condition + no-data/error policy + slack/email + templating + retry |
+| 3 | WS-07 | Alerting depth | ✅ | 2026-06-09 13:05 | 2026-06-09 13:30 | f52d6b38 | multi-condition + no-data/error policy + slack/email + templating + retry |
 | 4 | WS-10 | Kinds — declarative extensibility | ⬜ | | | | reuses WS-03 binder |
 | 5 | WS-08 | Connector breadth (MQTT/Modbus/…) | ⬜ | | | | feeds WS-06 palette |
 | 6 | WS-01 | Time Range & Auto-Refresh | ⬜ | | | | needs WS-03 macros |
