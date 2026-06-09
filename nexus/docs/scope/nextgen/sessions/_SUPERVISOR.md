@@ -195,3 +195,11 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   gap, NOT a wedge (under 25-min/3-firing threshold; flock self-heals). NEXT WAKE: expect WS-08b
   spawned; if WS-08b still ⬜ + this wake exited without spawning → next cron firing picks it up;
   only escalate if WS-08b stays ⬜ across 3+ firings with lock FREE. No real blockers. NO action.
+- 2026-06-10 00:59 — All healthy, NO action. Cron firing (00:45/50/55). **FULL-STACK BUILD GREEN:**
+  first lock-FREE check since WS-09 — `cargo check --workspace` clean in 22s against committed HEAD
+  with ALL 11 done workstreams integrated (real cross-WS integration proof, not per-WS). WS-09 wake
+  exited CLEAN (heartbeat wake-complete, PID 330356 gone, lock FREE) — confirms last wake's "20min
+  still alive" was just exit latency, not a wedge. WS-08b still ⬜: the WS-09 firing gated+exited
+  without spawning next (normal one-action-per-firing); NEXT cron firing (~01:00) picks up WS-08b as
+  first pending. Not a stall (lock free, <3 firings). No STOP, no real blockers. 11/12 ✅ + WS-08b
+  queued. WATCH: confirm WS-08b spawns next wake.
