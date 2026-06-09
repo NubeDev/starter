@@ -6,6 +6,163 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/dashboards": {
+      "get": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "list_dashboards",
+        "responses": {
+          "200": {
+            "description": "Dashboards",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DashboardSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "create_dashboard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDashboardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}": {
+      "get": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "get_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug (route alias)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard with panels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "delete_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}/panels": {
+      "post": {
+        "tags": [
+          "panels"
+        ],
+        "operationId": "add_panel",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePanelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Panel added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PanelDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dashboard not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/datasources": {
       "get": {
         "tags": [
@@ -143,6 +300,34 @@
         }
       }
     },
+    "/api/v1/panels/{id}": {
+      "delete": {
+        "tags": [
+          "panels"
+        ],
+        "operationId": "delete_panel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Panel id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/query": {
       "post": {
         "tags": [
@@ -276,6 +461,22 @@
           }
         }
       },
+      "CreateDashboardRequest": {
+        "type": "object",
+        "description": "Create a dashboard. The slug must be unique within the tenant; the server\nrejects a duplicate rather than silently aliasing.",
+        "required": [
+          "slug",
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
       "CreateDatasourceRequest": {
         "type": "object",
         "description": "Body for creating a datasource. The `password` is write-only: it is accepted\nhere, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
@@ -314,6 +515,38 @@
           },
           "user": {
             "type": "string"
+          }
+        }
+      },
+      "CreatePanelRequest": {
+        "type": "object",
+        "description": "Create a panel under the dashboard named in the path. The dashboard is keyed\nby its immutable id (resolved from the path slug at the request edge).",
+        "required": [
+          "title",
+          "datasource_id",
+          "sql"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Datasource this panel queries."
+          },
+          "layout": {
+            "description": "Grid layout; defaults to empty when omitted."
+          },
+          "sql": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "viz": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Visualization kind; defaults to `table` when omitted."
           }
         }
       },
@@ -364,6 +597,57 @@
           "token": {
             "type": "string",
             "description": "Signed token to pass as `?token=` when opening the SSE connection."
+          }
+        }
+      },
+      "DashboardDetail": {
+        "type": "object",
+        "description": "Full dashboard view: identity plus its ordered panels. The slug resolves to\nthe `id` at the request edge; everything below keys on the id.",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "panels"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PanelDetail"
+            }
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardSummary": {
+        "type": "object",
+        "description": "A dashboard in a list: identity, route alias, and display name.",
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Immutable id — grants and panel refs key on this."
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Mutable route alias."
           }
         }
       },
@@ -460,6 +744,45 @@
               "null"
             ],
             "description": "Tenant the session is bound to. `None` for an unbound principal; `\"*\"`\nmarks a super-admin that bypasses the cross-tenant predicate."
+          }
+        }
+      },
+      "PanelDetail": {
+        "type": "object",
+        "description": "A panel as the canvas renders it: which datasource + query feed it, how it is\ndrawn, and where it sits on the grid.",
+        "required": [
+          "id",
+          "title",
+          "sql",
+          "viz",
+          "layout"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Datasource the panel queries. `None` if its datasource was deleted."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "layout": {
+            "description": "Opaque grid layout the canvas owns."
+          },
+          "sql": {
+            "type": "string",
+            "description": "The panel's SQL, run under the server query guards when refreshed."
+          },
+          "title": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string",
+            "description": "Visualization kind: `line` | `bar` | `table` | `stat` | …"
           }
         }
       },
@@ -657,6 +980,24 @@
           }
         }
       },
+      "UpdateDashboardRequest": {
+        "type": "object",
+        "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "UpdateDatasourceRequest": {
         "type": "object",
         "description": "Partial update. Every field is optional; `None` leaves the stored value\nuntouched. `password` follows the write-only rule — supplying it rotates the\nsecret, omitting it keeps the existing ciphertext.",
@@ -695,6 +1036,38 @@
             "minimum": 0
           },
           "user": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdatePanelRequest": {
+        "type": "object",
+        "description": "Partial update of a panel. `None` fields are left unchanged.",
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "layout": {},
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "viz": {
             "type": [
               "string",
               "null"

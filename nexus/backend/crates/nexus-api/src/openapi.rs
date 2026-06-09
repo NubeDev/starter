@@ -22,6 +22,12 @@ use utoipa::OpenApi;
         crate::routes::datasources::list::list_datasources,
         crate::routes::datasources::get::get_datasource,
         crate::routes::datasources::delete::delete_datasource,
+        crate::routes::dashboards::create::create_dashboard,
+        crate::routes::dashboards::list::list_dashboards,
+        crate::routes::dashboards::get::get_dashboard,
+        crate::routes::dashboards::delete::delete_dashboard,
+        crate::routes::dashboards::add_panel::add_panel,
+        crate::routes::dashboards::delete_panel::delete_panel,
     )
 )]
 pub struct Paths;

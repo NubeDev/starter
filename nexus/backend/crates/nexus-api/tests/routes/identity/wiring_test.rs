@@ -104,3 +104,30 @@ async fn auth_routes_are_mounted() {
 
     drop(app);
 }
+
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn dashboard_routes_are_mounted_and_gated() {
+    let (admin, _guard) = with_database().await;
+    let app = assembled_app(admin.sqlx()).await;
+    let client = reqwest::Client::new();
+
+    // Listing dashboards without a principal is refused (gated), not 404.
+    let list = client
+        .get(format!("{}/api/v1/dashboards", app.base_url))
+        .send()
+        .await
+        .expect("request");
+    assert_eq!(list.status(), 401);
+
+    // Creating one is likewise gated.
+    let create = client
+        .post(format!("{}/api/v1/dashboards", app.base_url))
+        .json(&json!({ "slug": "plant-1", "name": "Plant 1" }))
+        .send()
+        .await
+        .expect("request");
+    assert_eq!(create.status(), 401);
+
+    drop(app);
+}
