@@ -9,8 +9,10 @@ rust-version = "1.88"
 description = "POC backend that embeds the ArkFlow engine and exposes a config-builder API"
 
 [dependencies]
-arkflow-core = { git = "https://github.com/arkflow-rs/arkflow" }
-arkflow-plugin = { git = "https://github.com/arkflow-rs/arkflow" }
+# Vendored + trimmed (see vendor/arkflow/crates/arkflow-plugin/Cargo.toml header):
+# the heavy native connectors are disabled so the POC builds toolchain-free.
+arkflow-core = { path = "../vendor/arkflow/crates/arkflow-core" }
+arkflow-plugin = { path = "../vendor/arkflow/crates/arkflow-plugin" }
 
 axum = "0.7"
 tokio = { version = "1", features = ["full"] }
