@@ -45,6 +45,9 @@ hmac.workspace = true
 sha2.workspace = true
 base64.workspace = true
 
+# Alert webhook notification delivery.
+reqwest.workspace = true
+
 [features]
 # Pulls in the starter-server test harness (TestApp) and the testcontainers
 # Postgres helper for HTTP integration tests. Off by default so production
@@ -60,6 +63,12 @@ path = "src/main.rs"
 [[bin]]
 name = "nexus-openapi"
 path = "src/bin/openapi.rs"
+
+# Idempotent bootstrap: seed an admin tenant + user + admin grant into a fresh
+# database. Run via `make seed`.
+[[bin]]
+name = "seed-admin"
+path = "src/bin/seed_admin.rs"
 
 [dev-dependencies]
 reqwest.workspace = true

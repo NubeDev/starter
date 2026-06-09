@@ -47,6 +47,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
     };
 
+    // The alert scheduler runs for the process's lifetime, evaluating due rules
+    // on its own cadence. Single-node for v1.
+    nexus_api::alerting::schedule::spawn(state.clone());
+
     let router = serve::assemble(state, identity.auth, identity.authz, identity.authenticator);
     tracing::info!(bind = %cfg.bind, "nexus-api listening");
     starter_server::builder::bind(router, cfg.bind).await?;

@@ -5,6 +5,7 @@
 //! aggregator live here so they can be exercised by integration tests without
 //! going through `fn main`.
 
+pub mod alerting;
 pub mod authz;
 pub mod bootstrap;
 pub mod identity;
