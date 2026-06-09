@@ -10,6 +10,7 @@ use nexus_api::middleware::StreamTokenSigner;
 use nexus_api::serve;
 use nexus_api::state::AppState;
 use nexus_engine::LiveRunner;
+use nexus_store::datasource::Envelope;
 use nexus_store::QueryGuards;
 use serde_json::json;
 use starter_server::testing::TestApp;
@@ -17,7 +18,9 @@ use starter_store_postgres::testing::with_database;
 
 fn test_state(pool: &sqlx::PgPool) -> AppState {
     AppState {
+        metadata: pool.clone(),
         datasource: pool.clone(),
+        envelope: Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
         guards: QueryGuards {
             statement_timeout: Duration::from_secs(5),
             max_rows: 1000,

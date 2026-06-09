@@ -11,15 +11,19 @@ use nexus_api::middleware::StreamTokenSigner;
 use nexus_api::serve;
 use nexus_api::state::AppState;
 use nexus_engine::LiveRunner;
+use nexus_store::datasource::Envelope;
 use nexus_store::QueryGuards;
 use serde_json::{json, Value};
 use starter_server::testing::TestApp;
 use tokio::io::AsyncReadExt;
 
 fn test_state() -> AppState {
+    let unused = sqlx::PgPool::connect_lazy("postgres://unused").expect("lazy pool");
     AppState {
-        // No datasource query in this test; an unconnected lazy pool is unused.
-        datasource: sqlx::PgPool::connect_lazy("postgres://unused").expect("lazy pool"),
+        // No datasource/metadata query in this test; unconnected lazy pools.
+        metadata: unused.clone(),
+        datasource: unused,
+        envelope: Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
         guards: QueryGuards {
             statement_timeout: Duration::from_secs(5),
             max_rows: 1000,
@@ -64,9 +68,8 @@ async fn subscribe_streams_events_without_a_bearer_header() {
     // 3. Read until the first `data:` frame arrives (the generate source ticks
     //    every second).
     let body = resp.bytes_stream();
-    let mut reader = tokio_util::io::StreamReader::new(
-        body.map(|r| r.map_err(std::io::Error::other)),
-    );
+    let mut reader =
+        tokio_util::io::StreamReader::new(body.map(|r| r.map_err(std::io::Error::other)));
     let mut buf = vec![0u8; 4096];
     let mut seen = String::new();
     let deadline = tokio::time::Instant::now() + Duration::from_secs(8);

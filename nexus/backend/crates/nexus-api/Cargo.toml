@@ -14,8 +14,8 @@ nexus-store.workspace = true
 
 starter-spi.workspace = true
 starter-server.workspace = true
-starter-auth-users.workspace = true
-starter-authz.workspace = true
+starter-auth-users = { workspace = true, features = ["postgres"] }
+starter-authz = { workspace = true, features = ["postgres"] }
 starter-store-postgres.workspace = true
 starter-config.workspace = true
 starter-observability.workspace = true
@@ -76,3 +76,7 @@ path = "tests/routes/query/run_test.rs"
 [[test]]
 name = "routes_streams_subscribe"
 path = "tests/routes/streams/subscribe_test.rs"
+
+[[test]]
+name = "routes_identity_wiring"
+path = "tests/routes/identity/wiring_test.rs"

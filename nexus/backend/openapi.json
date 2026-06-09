@@ -6,6 +6,143 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/datasources": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "list_datasources",
+        "responses": {
+          "200": {
+            "description": "Datasources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DatasourceSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Seal the secret and insert the datasource under the caller's tenant.",
+        "operationId": "create_datasource",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDatasourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/{id}": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "get_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datasource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "delete_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Map the authenticated `Principal` to the richer context DTO. 401 when no\nprincipal is present (the request was unauthenticated).",
+        "operationId": "get_me",
+        "responses": {
+          "200": {
+            "description": "Caller context",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
     "/api/v1/query": {
       "post": {
         "tags": [

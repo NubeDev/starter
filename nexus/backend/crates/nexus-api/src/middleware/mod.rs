@@ -2,5 +2,6 @@
 //! join as the identity milestone lands.
 
 pub mod stream_token;
+pub mod tenant;
 
 pub use stream_token::{StreamClaims, StreamTokenSigner, TokenError};
