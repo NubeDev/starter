@@ -5,6 +5,7 @@ import { DashboardGrid } from "@/features/canvas/DashboardGrid";
 import { DashboardToolbar } from "@/features/dashboards/DashboardToolbar";
 import { useDashboard } from "@/features/dashboards/useDashboard";
 import { useRemovePanel } from "@/features/dashboards/useRemovePanel";
+import { useSaveLayout } from "@/features/dashboards/useSaveLayout";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -18,6 +19,7 @@ export function DashboardPage() {
   const { data: dashboard, isPending, isError, error } = useDashboard(slug);
   const editing = useUiStore((s) => s.editMode);
   const removePanel = useRemovePanel(slug ?? "");
+  const saveLayout = useSaveLayout(slug ?? "");
 
   if (isPending) return <Loading label="Loading dashboard…" />;
   if (isError) {
@@ -43,6 +45,7 @@ export function DashboardPage() {
             dashboard={dashboard}
             editing={editing}
             onRemovePanel={(id) => removePanel.mutate(id)}
+            onLayoutChange={(moved) => saveLayout.mutate(moved)}
           />
         </div>
       )}

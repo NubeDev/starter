@@ -52,3 +52,27 @@ export function applyGridLayout(
   });
   return changed ? next : null;
 }
+
+// The subset of widgets whose position/size changed, with their new
+// layouts. Used to persist a drag as one PATCH per moved panel — sending
+// only what changed, not the whole board.
+export function changedWidgets(
+  widgets: ReadonlyArray<Widget>,
+  layout: ReadonlyArray<Layout>,
+): Widget[] {
+  const byId = new Map(layout.map((l) => [l.i, l]));
+  const moved: Widget[] = [];
+  for (const w of widgets) {
+    const l = byId.get(w.id);
+    if (!l) continue;
+    if (
+      l.x !== w.layout.x ||
+      l.y !== w.layout.y ||
+      l.w !== w.layout.w ||
+      l.h !== w.layout.h
+    ) {
+      moved.push({ ...w, layout: { x: l.x, y: l.y, w: l.w, h: l.h } });
+    }
+  }
+  return moved;
+}

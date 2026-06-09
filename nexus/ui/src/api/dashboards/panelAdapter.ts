@@ -1,6 +1,7 @@
 import type {
   CreatePanelRequest,
   PanelDetail,
+  UpdatePanelRequest,
 } from "@/api/types";
 import type {
   FieldMapping,
@@ -80,15 +81,26 @@ export function panelToWidget(panel: PanelDetail): Widget {
 // mapping in the opaque `layout`. The backend echoes `layout` back
 // untouched, so `panelToWidget` reconstructs the full widget.
 export function widgetToCreatePanel(widget: Widget): CreatePanelRequest {
-  const layout: StashedLayout = {
-    ...widget.layout,
-    fields: widget.config.fields,
-  };
   return {
     title: widget.title,
     sql: widget.config.query.sql,
     datasource_id: widget.config.query.datasourceId,
     viz: widget.type,
-    layout,
+    layout: stashLayout(widget),
   };
+}
+
+// A layout-only PATCH for a moved/resized panel: re-stash the grid
+// position with the (unchanged) field mapping so the opaque layout stays
+// complete, and send nothing else — the panel's sql/viz/datasource are
+// untouched by a drag.
+export function widgetToLayoutPatch(widget: Widget): UpdatePanelRequest {
+  return { layout: stashLayout(widget) };
+}
+
+// The opaque `layout` payload: grid position + the field mapping the
+// backend doesn't model. Used by both create and the layout PATCH so the
+// stashed shape stays in one place.
+function stashLayout(widget: Widget): StashedLayout {
+  return { ...widget.layout, fields: widget.config.fields };
 }

@@ -3,7 +3,7 @@ import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
 
 import type { Dashboard, Widget } from "@/data/types";
 import { PanelHost } from "@/features/widgets/PanelHost";
-import { applyGridLayout, toGridLayout } from "@/features/canvas/layout";
+import { changedWidgets, toGridLayout } from "@/features/canvas/layout";
 
 // react-grid-layout's positioning + resize-handle chrome is provided by
 // the ported styles in `index.css` (the `.react-grid-*` block), so the
@@ -34,8 +34,11 @@ export function DashboardGrid({
 
   const handleChange = (current: Layout[]) => {
     if (!editing || !onLayoutChange) return;
-    const next = applyGridLayout(dashboard.widgets, current);
-    if (next) onLayoutChange(next);
+    // Persist only the panels that actually moved — react-grid-layout
+    // fires this on mount/resize too, and PATCHing unchanged panels would
+    // churn the backend.
+    const moved = changedWidgets(dashboard.widgets, current);
+    if (moved.length > 0) onLayoutChange(moved);
   };
 
   return (
