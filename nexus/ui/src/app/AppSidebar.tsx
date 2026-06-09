@@ -10,6 +10,7 @@ import { NavLink } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useLayout } from "@/app/LayoutProvider";
+import { SidebarUser } from "@/app/SidebarUser";
 import { ExtensionSlot } from "@/extensions/ExtensionSlot";
 import { NewDashboardButton } from "@/features/dashboards/NewDashboardButton";
 import { SidebarDashboards } from "@/features/dashboards/SidebarDashboards";
@@ -127,6 +129,9 @@ export function AppSidebar() {
           <ExtensionSlot id="sidebar-nav" />
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarUser />
+      </SidebarFooter>
       <ExtensionSlot id="sidebar" />
       <SidebarRail />
     </Sidebar>
