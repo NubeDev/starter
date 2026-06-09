@@ -24,6 +24,12 @@ export type QueryResponse = S["QueryResponse"];
 export type QueryStats = S["QueryStats"];
 export type ColumnSchema = S["ColumnSchema"];
 export type ResultColumnType = S["ResultColumnType"];
+export type QueryTimeRange = S["QueryTimeRange"];
+export type QueryVariable = S["QueryVariable"];
+
+export type QueryHistoryEntry = S["QueryHistoryEntry"];
+export type QueryHistoryList = S["QueryHistoryList"];
+export type StarQueryRequest = S["StarQueryRequest"];
 
 export type CreateStreamRequest = S["CreateStreamRequest"];
 export type CreateStreamResponse = S["CreateStreamResponse"];

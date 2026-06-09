@@ -75,3 +75,7 @@ path = "tests/alert/crud_test.rs"
 [[test]]
 name = "tag_crud"
 path = "tests/tag/crud_test.rs"
+
+[[test]]
+name = "query_history_crud"
+path = "tests/query_history/crud_test.rs"

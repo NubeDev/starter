@@ -14,6 +14,7 @@ pub mod datasource;
 pub mod flow;
 pub mod migrate;
 pub mod query;
+pub mod query_history;
 pub mod tag;
 pub mod tenant_tx;
 
@@ -22,7 +23,7 @@ pub mod testing;
 
 pub use datasource::{Envelope, NewDatasource};
 pub use query::{
-    bind, bind_with, introspect, run_bound_query, run_query, BindCtx, BindError, BoundQuery,
-    ColumnInfo, Dialect, HostTokens, ParamValue, Postgres, QueryGuards, ScalarValue, SqlValue,
-    TableInfo, TimeRange, VarValue,
+    bind, bind_with, introspect, run_bound_query, run_query, run_request, BindCtx, BindError,
+    BoundQuery, ColumnInfo, Dialect, HostTokens, ParamValue, Postgres, QueryGuards, QueryIdentity,
+    ScalarValue, SqlValue, TableInfo, TimeRange, VarValue,
 };

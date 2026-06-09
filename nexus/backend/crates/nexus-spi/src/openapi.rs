@@ -20,8 +20,12 @@ use crate::dto::alert::{
 };
 use crate::dto::flow::{CreateFlowRequest, FlowDetail, FlowSummary, UpdateFlowRequest};
 use crate::dto::me::MeResponse;
+use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
-use crate::dto::query::{ColumnSchema, QueryRequest, QueryResponse, QueryStats, ResultColumnType};
+use crate::dto::query::{
+    ColumnSchema, QueryRequest, QueryResponse, QueryStats, QueryTimeRange, QueryVariable,
+    ResultColumnType,
+};
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
 use crate::Problem;
@@ -32,10 +36,15 @@ use crate::Problem;
     Problem,
     MeResponse,
     QueryRequest,
+    QueryTimeRange,
+    QueryVariable,
     QueryResponse,
     QueryStats,
     ColumnSchema,
     ResultColumnType,
+    QueryHistoryEntry,
+    QueryHistoryList,
+    StarQueryRequest,
     DatasourceSummary,
     DatasourceDetail,
     CreateDatasourceRequest,

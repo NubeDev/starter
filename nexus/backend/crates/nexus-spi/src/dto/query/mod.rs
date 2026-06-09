@@ -3,5 +3,5 @@
 mod run;
 mod shared;
 
-pub use run::{QueryRequest, QueryResponse};
+pub use run::{QueryRequest, QueryResponse, QueryTimeRange, QueryVariable};
 pub use shared::{ColumnSchema, QueryStats, ResultColumnType};

@@ -343,7 +343,7 @@
         "operationId": "list_dashboards",
         "responses": {
           "200": {
-            "description": "Dashboards",
+            "description": "Dashboards the caller may view",
             "content": {
               "application/json": {
                 "schema": {
@@ -1159,7 +1159,7 @@
         "tags": [
           "query"
         ],
-        "summary": "Extract the SQL, run it under the server guards, return the rows. The guards\n(read-only, timeout, caps) live in the store; this handler only wires.",
+        "summary": "Extract the request, bind its macros/variables, run it under the server\nguards, return the rows. The dev single-datasource shortcut carries no\nprincipal, so host tokens (`$caller_tenant_id`) are absent — a query needing\nthem errors, which is correct. The guards (read-only, timeout, caps) and the\nbinder live in the store; this handler only wires.",
         "operationId": "run_query",
         "requestBody": {
           "content": {
@@ -1191,6 +1191,67 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/query-history": {
+      "get": {
+        "tags": [
+          "query"
+        ],
+        "operationId": "list_query_history",
+        "responses": {
+          "200": {
+            "description": "Recent query runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHistoryList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/query-history/{id}/star": {
+      "post": {
+        "tags": [
+          "query"
+        ],
+        "operationId": "star_query_history",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "History row id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Star state updated"
+          },
+          "404": {
+            "description": "Not this user's history row"
           }
         }
       }
@@ -1666,12 +1727,26 @@
       },
       "CreateDashboardRequest": {
         "type": "object",
-        "description": "Create a dashboard. The slug must be unique within the tenant; the server\nrejects a duplicate rather than silently aliasing.",
+        "description": "Create a dashboard. The slug must be unique within the tenant; the server\nrejects a duplicate rather than silently aliasing. Appearance (icon +\naccent) is optional — omitted fields fall back to server defaults, so older\nclients that send only name/slug keep working.",
         "required": [
           "slug",
           "name"
         ],
         "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"; defaults\nserver-side when omitted."
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "lucide icon name; defaults server-side when omitted."
+          },
           "name": {
             "type": "string"
           },
@@ -1864,9 +1939,19 @@
           "id",
           "slug",
           "name",
+          "icon",
+          "accent",
           "panels"
         ],
         "properties": {
+          "accent": {
+            "type": "string",
+            "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"."
+          },
+          "icon": {
+            "type": "string",
+            "description": "lucide icon name for the sidebar/page chrome."
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -1887,13 +1972,23 @@
       },
       "DashboardSummary": {
         "type": "object",
-        "description": "A dashboard in a list: identity, route alias, and display name.",
+        "description": "A dashboard in a list: identity, route alias, display name, and appearance.",
         "required": [
           "id",
           "slug",
-          "name"
+          "name",
+          "icon",
+          "accent"
         ],
         "properties": {
+          "accent": {
+            "type": "string",
+            "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"."
+          },
+          "icon": {
+            "type": "string",
+            "description": "lucide icon name for the sidebar/page chrome."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -2141,16 +2236,118 @@
           }
         }
       },
+      "QueryHistoryEntry": {
+        "type": "object",
+        "description": "A past query run, as the recall drawer shows it. The `sql` is the authored\ntext so re-running it reproduces the original query.",
+        "required": [
+          "id",
+          "sql",
+          "ran_at",
+          "starred"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The datasource queried, or absent for the dev single-source path."
+          },
+          "elapsed_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Wall-clock execution time, when the run completed."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The error message, when the run failed."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ran_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the run happened, RFC-3339."
+          },
+          "row_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Rows returned, when the run completed."
+          },
+          "sql": {
+            "type": "string",
+            "description": "The authored SQL."
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the user pinned this run."
+          }
+        }
+      },
+      "QueryHistoryList": {
+        "type": "object",
+        "description": "The history list response, newest (and starred) first.",
+        "required": [
+          "entries"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryHistoryEntry"
+            }
+          }
+        }
+      },
       "QueryRequest": {
         "type": "object",
-        "description": "Body of a one-shot query. The caller supplies only the SQL; every safety\nbound (read-only role, statement timeout, forced `LIMIT`, row/byte caps) is\napplied server-side and is deliberately *not* expressible here — a client\ncannot raise its own limits.",
+        "description": "Body of a one-shot query. The caller supplies the SQL plus the optional\nmacro context (time range, variables) the server-side binder substitutes;\nevery safety bound (read-only role, statement timeout, forced `LIMIT`,\nrow/byte caps) is applied server-side and is deliberately *not* expressible\nhere — a client cannot raise its own limits, and every supplied value is\n*bound* into the prepared statement, never inlined.\n\nThis is the C7 contract: a single owner (WS-03) for an endpoint several\nworkstreams feed. WS-01 fills `time_range`, WS-02 fills `variables`; both\nflow through the same binder.",
         "required": [
           "sql"
         ],
         "properties": {
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a\nbare `$__interval`.",
+            "minimum": 0
+          },
           "sql": {
             "type": "string",
-            "description": "The SQL to run against the datasource. Pushed down to the source database\nso `WHERE`/`LIMIT` execute there, not in memory."
+            "description": "The SQL to run against the datasource. May carry macros (`$__timeFilter`)\nand variable references (`$region`) the binder expands into bound args.\nPushed down to the source database so `WHERE`/`LIMIT` execute there."
+          },
+          "time_range": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QueryTimeRange",
+                "description": "The resolved absolute time window for `$__timeFilter`/`$__timeFrom`/\n`$__timeTo`. Relative ranges (`now-6h`) are resolved client-side to\ninstants before sending so the bound query and the cache key agree."
+              }
+            ]
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryVariable"
+            },
+            "description": "Dashboard variable values, by name (without the leading `$`), expanded by\n`$var` / `${var:csv}` / `$__sqlIn(var)`."
           }
         }
       },
@@ -2212,6 +2409,47 @@
           "truncated": {
             "type": "boolean",
             "description": "`true` if a row/byte cap stopped the stream before it completed."
+          }
+        }
+      },
+      "QueryTimeRange": {
+        "type": "object",
+        "description": "An absolute query window. Half-open (`from` inclusive, `to` exclusive),\nmatching the binder's `col >= from AND col < to` expansion.",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Inclusive lower bound, RFC-3339."
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Exclusive upper bound, RFC-3339."
+          }
+        }
+      },
+      "QueryVariable": {
+        "type": "object",
+        "description": "One dashboard variable's resolved value(s). A single-valued variable carries\none entry; a multi-select carries several (expanded by `$__sqlIn`/`:csv`).",
+        "required": [
+          "name",
+          "values"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variable name without the `$` (e.g. `region`)."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One or more string values. Multiple values drive list expansion; the\nbinder binds each as its own argument so values are always inert."
           }
         }
       },
@@ -2350,6 +2588,18 @@
           "starts_at": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "StarQueryRequest": {
+        "type": "object",
+        "description": "Body of the star toggle: the desired pinned state for one history row.",
+        "required": [
+          "starred"
+        ],
+        "properties": {
+          "starred": {
+            "type": "boolean"
           }
         }
       },
@@ -2515,6 +2765,20 @@
         "type": "object",
         "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned.",
         "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "accent HSL triple string; `None` leaves it unchanged."
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "lucide icon name; `None` leaves it unchanged."
+          },
           "name": {
             "type": [
               "string",

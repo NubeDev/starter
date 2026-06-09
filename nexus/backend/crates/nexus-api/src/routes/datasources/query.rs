@@ -76,8 +76,48 @@ pub async fn query_datasource(
         Ok(p) => p,
         Err(e) => return IntoResponse(e).into_response(),
     };
-    match nexus_store::run_query(&pool, &req.sql, state.guards).await {
+    let identity = nexus_store::QueryIdentity {
+        tenant_id: Some(tenant.clone()),
+        user_id: Some(caller_principal.subject.clone()),
+    };
+    let result = nexus_store::run_request(&pool, &req, &identity, state.guards).await;
+    record(&state, &tenant, &caller_principal.subject, id, &req.sql, &result).await;
+    match result {
         Ok(out) => Json(out).into_response(),
         Err(e) => IntoResponse(e).into_response(),
+    }
+}
+
+/// Persist the run to query history (best-effort: a history write failure must
+/// not fail the query, so its error is logged, not propagated). The stats →
+/// record mapping is a plain DTO shaping, not business logic.
+async fn record(
+    state: &AppState,
+    tenant: &str,
+    user_id: &str,
+    datasource_id: Uuid,
+    sql: &str,
+    result: &Result<nexus_spi::dto::query::QueryResponse, starter_spi::Error>,
+) {
+    let run = match result {
+        Ok(out) => nexus_store::query_history::NewQueryRun {
+            user_id: user_id.to_string(),
+            datasource_id: Some(datasource_id),
+            sql: sql.to_string(),
+            elapsed_ms: Some(out.stats.elapsed_ms as i64),
+            row_count: Some(out.stats.row_count as i64),
+            error: None,
+        },
+        Err(e) => nexus_store::query_history::NewQueryRun {
+            user_id: user_id.to_string(),
+            datasource_id: Some(datasource_id),
+            sql: sql.to_string(),
+            elapsed_ms: None,
+            row_count: None,
+            error: Some(e.to_string()),
+        },
+    };
+    if let Err(e) = nexus_store::query_history::record_run(&state.metadata, tenant, &run).await {
+        tracing::warn!(error = %e, "failed to record query history");
     }
 }

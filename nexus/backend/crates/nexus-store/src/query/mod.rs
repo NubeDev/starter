@@ -2,6 +2,7 @@
 
 mod bind;
 mod introspect;
+mod request;
 mod row_json;
 mod run;
 
@@ -12,6 +13,7 @@ pub use bind::{
     ScalarValue, SqlValue, TimeRange, VarValue,
 };
 pub use introspect::{introspect, ColumnInfo, TableInfo};
+pub use request::{run_request, QueryIdentity};
 pub use run::{run_bound_query, run_query};
 
 /// The server-enforced safety bounds applied to every datasource query. None of

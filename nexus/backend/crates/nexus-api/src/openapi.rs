@@ -16,6 +16,8 @@ use utoipa::OpenApi;
     paths(
         crate::routes::me::get::get_me,
         crate::routes::query::run::run_query,
+        crate::routes::query::history::list_query_history,
+        crate::routes::query::history::star_query_history,
         crate::routes::streams::create::create_stream,
         crate::routes::streams::subscribe::subscribe_stream,
         crate::routes::datasources::create::create_datasource,

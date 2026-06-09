@@ -14,5 +14,6 @@ pub mod flow;
 pub mod me;
 pub mod panel;
 pub mod query;
+pub mod query_history;
 pub mod stream;
 pub mod tag;

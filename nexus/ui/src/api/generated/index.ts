@@ -355,10 +355,45 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Extract the SQL, run it under the server guards, return the rows. The guards
-         *     (read-only, timeout, caps) live in the store; this handler only wires.
+         * Extract the request, bind its macros/variables, run it under the server
+         *     guards, return the rows. The dev single-datasource shortcut carries no
+         *     principal, so host tokens (`$caller_tenant_id`) are absent — a query needing
+         *     them errors, which is correct. The guards (read-only, timeout, caps) and the
+         *     binder live in the store; this handler only wires.
          */
         post: operations["run_query"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_query_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-history/{id}/star": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["star_query_history"];
         delete?: never;
         options?: never;
         head?: never;
@@ -541,9 +576,18 @@ export interface components {
         };
         /**
          * @description Create a dashboard. The slug must be unique within the tenant; the server
-         *     rejects a duplicate rather than silently aliasing.
+         *     rejects a duplicate rather than silently aliasing. Appearance (icon +
+         *     accent) is optional — omitted fields fall back to server defaults, so older
+         *     clients that send only name/slug keep working.
          */
         CreateDashboardRequest: {
+            /**
+             * @description accent colour as an HSL triple string, e.g. "152 76% 44%"; defaults
+             *     server-side when omitted.
+             */
+            accent?: string | null;
+            /** @description lucide icon name; defaults server-side when omitted. */
+            icon?: string | null;
             name: string;
             slug: string;
         };
@@ -648,14 +692,22 @@ export interface components {
          *     the `id` at the request edge; everything below keys on the id.
          */
         DashboardDetail: {
+            /** @description accent colour as an HSL triple string, e.g. "152 76% 44%". */
+            accent: string;
+            /** @description lucide icon name for the sidebar/page chrome. */
+            icon: string;
             /** Format: uuid */
             id: string;
             name: string;
             panels: components["schemas"]["PanelDetail"][];
             slug: string;
         };
-        /** @description A dashboard in a list: identity, route alias, and display name. */
+        /** @description A dashboard in a list: identity, route alias, display name, and appearance. */
         DashboardSummary: {
+            /** @description accent colour as an HSL triple string, e.g. "152 76% 44%". */
+            accent: string;
+            /** @description lucide icon name for the sidebar/page chrome. */
+            icon: string;
             /**
              * Format: uuid
              * @description Immutable id — grants and panel refs key on this.
@@ -789,17 +841,74 @@ export interface components {
             type: string;
         };
         /**
-         * @description Body of a one-shot query. The caller supplies only the SQL; every safety
-         *     bound (read-only role, statement timeout, forced `LIMIT`, row/byte caps) is
-         *     applied server-side and is deliberately *not* expressible here — a client
-         *     cannot raise its own limits.
+         * @description A past query run, as the recall drawer shows it. The `sql` is the authored
+         *     text so re-running it reproduces the original query.
+         */
+        QueryHistoryEntry: {
+            /**
+             * Format: uuid
+             * @description The datasource queried, or absent for the dev single-source path.
+             */
+            datasource_id?: string | null;
+            /**
+             * Format: int64
+             * @description Wall-clock execution time, when the run completed.
+             */
+            elapsed_ms?: number | null;
+            /** @description The error message, when the run failed. */
+            error?: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description When the run happened, RFC-3339.
+             */
+            ran_at: string;
+            /**
+             * Format: int64
+             * @description Rows returned, when the run completed.
+             */
+            row_count?: number | null;
+            /** @description The authored SQL. */
+            sql: string;
+            /** @description Whether the user pinned this run. */
+            starred: boolean;
+        };
+        /** @description The history list response, newest (and starred) first. */
+        QueryHistoryList: {
+            entries: components["schemas"]["QueryHistoryEntry"][];
+        };
+        /**
+         * @description Body of a one-shot query. The caller supplies the SQL plus the optional
+         *     macro context (time range, variables) the server-side binder substitutes;
+         *     every safety bound (read-only role, statement timeout, forced `LIMIT`,
+         *     row/byte caps) is applied server-side and is deliberately *not* expressible
+         *     here — a client cannot raise its own limits, and every supplied value is
+         *     *bound* into the prepared statement, never inlined.
+         *
+         *     This is the C7 contract: a single owner (WS-03) for an endpoint several
+         *     workstreams feed. WS-01 fills `time_range`, WS-02 fills `variables`; both
+         *     flow through the same binder.
          */
         QueryRequest: {
             /**
-             * @description The SQL to run against the datasource. Pushed down to the source database
-             *     so `WHERE`/`LIMIT` execute there, not in memory.
+             * Format: int64
+             * @description The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a
+             *     bare `$__interval`.
+             */
+            interval_secs?: number | null;
+            /**
+             * @description The SQL to run against the datasource. May carry macros (`$__timeFilter`)
+             *     and variable references (`$region`) the binder expands into bound args.
+             *     Pushed down to the source database so `WHERE`/`LIMIT` execute there.
              */
             sql: string;
+            time_range?: null | components["schemas"]["QueryTimeRange"];
+            /**
+             * @description Dashboard variable values, by name (without the leading `$`), expanded by
+             *     `$var` / `${var:csv}` / `$__sqlIn(var)`.
+             */
+            variables?: components["schemas"]["QueryVariable"][];
         };
         /**
          * @description A completed query result: column schema, rows as JSON objects keyed by
@@ -838,6 +947,35 @@ export interface components {
             row_count: number;
             /** @description `true` if a row/byte cap stopped the stream before it completed. */
             truncated: boolean;
+        };
+        /**
+         * @description An absolute query window. Half-open (`from` inclusive, `to` exclusive),
+         *     matching the binder's `col >= from AND col < to` expansion.
+         */
+        QueryTimeRange: {
+            /**
+             * Format: date-time
+             * @description Inclusive lower bound, RFC-3339.
+             */
+            from: string;
+            /**
+             * Format: date-time
+             * @description Exclusive upper bound, RFC-3339.
+             */
+            to: string;
+        };
+        /**
+         * @description One dashboard variable's resolved value(s). A single-valued variable carries
+         *     one entry; a multi-select carries several (expanded by `$__sqlIn`/`:csv`).
+         */
+        QueryVariable: {
+            /** @description Variable name without the `$` (e.g. `region`). */
+            name: string;
+            /**
+             * @description One or more string values. Multiple values drive list expansion; the
+             *     binder binds each as its own argument so values are always inert.
+             */
+            values: string[];
         };
         /**
          * @description Connection details safe to return over the API: everything *except* the
@@ -904,6 +1042,10 @@ export interface components {
             rule_id?: string | null;
             /** Format: date-time */
             starts_at: string;
+        };
+        /** @description Body of the star toggle: the desired pinned state for one history row. */
+        StarQueryRequest: {
+            starred: boolean;
         };
         /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
@@ -976,6 +1118,10 @@ export interface components {
          *     panel refs keep pointing at the immutable id, so nothing is orphaned.
          */
         UpdateDashboardRequest: {
+            /** @description accent HSL triple string; `None` leaves it unchanged. */
+            accent?: string | null;
+            /** @description lucide icon name; `None` leaves it unchanged. */
+            icon?: string | null;
             name?: string | null;
             slug?: string | null;
         };
@@ -1332,7 +1478,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Dashboards */
+            /** @description Dashboards the caller may view */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2127,6 +2273,65 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Problem"];
                 };
+            };
+        };
+    };
+    list_query_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent query runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryHistoryList"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    star_query_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description History row id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Star state updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not this user's history row */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -26,3 +26,21 @@
 ## Open blockers
 
 <!-- newest first -->
+
+### [2026-06-09 12:40] WS-03 — pre-existing `pnpm typecheck` failure in `starter-ui-authz` (out of lane)
+- **What I was doing:** running the DoD gate (`pnpm typecheck && pnpm build`) for WS-03.
+- **The blocker:** `packages/starter-ui-authz/src/panels/authz-admin.tsx:305` declares
+  `function TenantRail(...)` that is never used → `TS6133 'TenantRail' is declared but its value is
+  never read`, which fails `pnpm typecheck` for the whole workspace. This file is **committed at
+  HEAD (`90939747`)**, is **not touched by WS-03**, and is **outside WS-03's owned files** (ROADMAP
+  §4 — WS-03 owns `features/query-editor/**` + query/query-history API). It fails on a clean base
+  independent of my work.
+- **Options I see:** (a) delete the unused `TenantRail` function (one line of dead code) — but it's
+  another workstream's file; (b) leave it for the owning session / a human to clean up.
+- **My recommendation:** (a) — it's a trivial dead-code removal and the gate is shared; but per the
+  "stay in your lane / commit only your hunks" rule I did **not** edit it.
+- **What I did instead:** WS-03's own code is fully green — `cargo test` passes (binder: 17/17),
+  `pnpm build` is green, `pnpm test` is green (90 passed). Only `pnpm typecheck` trips on this
+  unrelated file. Landed all WS-03 work; flagging this so it doesn't read as a WS-03 regression.
+- **To unblock the shared typecheck gate:** remove the unused `TenantRail` in
+  `starter-ui-authz/src/panels/authz-admin.tsx` (the session that owns that package, or a human).

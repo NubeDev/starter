@@ -8,6 +8,10 @@ import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import type { QueryResponse } from "@/api/types";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
+import {
+  QueryHistoryDrawer,
+  useRefreshQueryHistory,
+} from "@/features/query-editor/QueryHistoryDrawer";
 import { QuickQueries } from "@/features/query-editor/QuickQueries";
 import { ResultGrid } from "@/features/query-editor/ResultGrid";
 import { SqlEditor } from "@/features/sql-editor";
@@ -21,17 +25,20 @@ import { Loading } from "@/features/state/Loading";
 // so we own this against the Nexus contract).
 export function Explore() {
   const client = useStarterClient();
+  const refreshHistory = useRefreshQueryHistory();
   const [datasourceId, setDatasourceId] = useState<string | undefined>();
   const [sql, setSql] = useState("");
 
   // Takes the SQL to run as the mutation variable rather than reading `sql`
   // from state, so a quick-add chip can run the exact query it just inserted
-  // without waiting for a state update to flush.
+  // without waiting for a state update to flush. A datasource-scoped run is
+  // recorded server-side, so refresh the history drawer once it settles.
   const run = useMutation<QueryResponse, Error, string>({
     mutationFn: (toRun) =>
       datasourceId
         ? queryDatasource(client, datasourceId, { sql: toRun })
         : runQuery(client, { sql: toRun }),
+    onSettled: () => refreshHistory(),
   });
 
   // Insert a query into the editor and run it in one go — the discovery path.
@@ -58,6 +65,7 @@ export function Explore() {
           </Button>
         </div>
         <QuickQueries datasourceId={datasourceId} onRun={runSql} />
+        <QueryHistoryDrawer onRecall={setSql} onRerun={runSql} />
         <SqlEditor
           value={sql}
           onChange={setSql}
