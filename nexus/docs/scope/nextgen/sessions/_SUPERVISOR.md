@@ -110,3 +110,9 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   resolve/manifest/error.rs all touched <4min) — the HOW-TO-CODE file-layout standard is landing.
   Lock kernel-held, no STOP. WS-10.md not created yet (normal at 7min; charter requires it — will
   confirm next wake). Only "blocker" is the ✅RESOLVED WS-03 note. Real WS commits: 6 done (03,04,07).
+- 2026-06-09 13:42 — Healthy, NO action. Cron firing (20:30/35/40). WS-10 🔵 wake PID 167125 ALIVE
+  12min, actively wiring kind dispatch (kinds/dispatch.rs + routes/query/run.rs touched <4min —
+  matches ROADMAP §4 run.rs kind-dispatch). Lock kernel-held, no STOP. MINOR WATCH: WS-10.md session
+  doc still not created at 12min (charter requires it; WS-04/07 effectively wrote theirs near commit
+  time). Not blocking, not acting on a live wake. ESCALATE ONLY IF: WS-10 commits ✅ without ever
+  producing WS-10.md — that's a real DoD miss to flag next wake. Real WS commits: 6 done (03,04,07).
