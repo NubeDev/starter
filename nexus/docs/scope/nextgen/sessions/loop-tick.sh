@@ -4,6 +4,12 @@
 # STOP sentinel kill switch, then runs ONE pass of the LOOP ALGORITHM in _ORCHESTRATION.md headless.
 set -euo pipefail
 
+# Cron runs with a stripped PATH that lacks claude/node/pnpm/cargo — without this the tick dies
+# with "claude: command not found" and the whole loop silently no-ops. Pin the real tool dirs so
+# the tick and every subagent (which shell out to cargo/pnpm/git) find their binaries.
+export PATH="/home/user/snap/code/226/.local/share/pnpm:/home/user/.nvm/versions/node/v22.22.0/bin:/home/user/.cargo/bin:/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/go/bin:/home/user/go/bin:$PATH"
+CLAUDE_BIN="/home/user/snap/code/226/.local/share/pnpm/claude"
+
 REPO="/home/user/code/rust/starter"
 SESS="$REPO/nexus/docs/scope/nextgen/sessions"
 LOG="$SESS/cron.log"
@@ -34,7 +40,7 @@ echo "$(ts) firing one wake." >>"$LOG"
 # --model pins Opus 4.8 for the tick AND every subagent it spawns (subagents inherit the parent
 # model). Effort level is NOT set here on purpose: it comes from ~/.claude/settings.json
 # ("effortLevel": "medium"), which every headless firing inherits.
-claude -p "Read nexus/docs/scope/nextgen/sessions/_ORCHESTRATION.md and execute exactly ONE wake of the LOOP ALGORITHM (headless cron mode section applies), then exit. You are on branch nexus-gaps. Do not ask questions; a blocked workstream logs to sessions/TODOs.md and the next pending one is chosen. Spawn the workstream session as a subagent using the AGENT CHARTER verbatim. Commit only files the workstream owns. When you have spawned or gated exactly one workstream, append a one-line entry to sessions/STATUS.md's loop log and stop." \
+"$CLAUDE_BIN" -p "Read nexus/docs/scope/nextgen/sessions/_ORCHESTRATION.md and execute exactly ONE wake of the LOOP ALGORITHM (headless cron mode section applies), then exit. You are on branch nexus-gaps. Do not ask questions; a blocked workstream logs to sessions/TODOs.md and the next pending one is chosen. Spawn the workstream session as a subagent using the AGENT CHARTER verbatim. Commit only files the workstream owns. When you have spawned or gated exactly one workstream, append a one-line entry to sessions/STATUS.md's loop log and stop." \
   --model claude-opus-4-8 \
   --dangerously-skip-permissions \
   >>"$LOG" 2>&1
