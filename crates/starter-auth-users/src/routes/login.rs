@@ -124,7 +124,9 @@ pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest
     //   * 0 memberships + non-admin   -> NULL (downstream tenant-
     //                                     scoped routes reject with
     //                                     `no_tenant_binding`)
-    //   * 1 membership                -> that tenant
+    //   * 1 membership (any role)     -> that tenant (an admin of one
+    //                                     tenant is that tenant's admin,
+    //                                     not a cross-tenant operator)
     //   * N>1 memberships + Admin     -> "*"
     //   * N>1 memberships + non-admin -> first by created_at
     //                                     (picker UX is future work)
@@ -185,13 +187,16 @@ async fn resolve_login_tenant(state: &AuthState, user_id: &str, role: &Role) -> 
             return None;
         }
     };
-    if matches!(role, Role::Admin) {
-        // Global admins always get the super-admin sentinel so they
-        // see every tenant's resources. Cookie + bearer paths agree.
-        return Some("*".to_string());
-    }
-    match memberships.len() {
-        0 => None,
+    // An admin with exactly one tenant binds to *that* tenant, like any
+    // single-membership user — they are that tenant's admin, not a cross-tenant
+    // operator, so tenant-scoped routes resolve without an explicit `?tenant=`.
+    // The super-admin sentinel "*" is reserved for an admin that is genuinely
+    // global: zero memberships (a platform operator) or several (must choose at
+    // request time). Non-admins never get "*".
+    match (role, memberships.len()) {
+        (Role::Admin, 1) => Some(memberships[0].tenant_id.clone()),
+        (Role::Admin, _) => Some("*".to_string()),
+        (_, 0) => None,
         _ => Some(memberships[0].tenant_id.clone()),
     }
 }
