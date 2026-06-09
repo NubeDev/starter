@@ -59,6 +59,8 @@ end-to-end. To make N sessions safe at once:
         │  C4 nexus-spi/openapi registration conventions for new areas                 │
         │  C5 Kinds manifest + PanelQuery union (WS-10)                                │
         │  C6 Changelog recording convention + tenant-scoped table (WS-12)             │
+        │  C7 QueryRequest DTO / /query endpoint — single owner (WS-03)                │
+        │  + Wave-0 DECISIONS D1–D5 (§6a). ALL of C1–C7 freeze before parallel work.   │
         └──────────────────────────────────┬──────────────────────────────────────────┘
                                             │ unblocks
         ┌───────────────────────────────────┼───────────────────────────────────────────┐
@@ -84,7 +86,7 @@ end-to-end. To make N sessions safe at once:
 
 **Reading it:**
 - **Wave 0 is a *design* wave, not a ½-day chore.** It must settle the contracts that 5+ workstreams
-  build against (C1–C6). Critically, **C2 (the binder) can't be fully frozen without WS-10's param
+  build against (**C1–C7** + decisions **D1–D5**). Critically, **C2 (the binder) can't be fully frozen without WS-10's param
   model and WS-11's cache-key needs** — so Wave 0 pulls in design input from WS-10 and WS-11 (and
   WS-12 for C6), and is **scoped/budgeted as real design work** (think days, with the right people in
   the room), not a single quick session. Under-budgeting Wave 0 is the #1 way the parallel plan
@@ -115,7 +117,7 @@ end-to-end. To make N sessions safe at once:
 
 | Wave | Workstreams (parallel within a wave) | Why here |
 |---|---|---|
-| **0** | C1–C6 shared contracts (1 session) **+** WS-09 login-hang fix | unblock everyone; fix a live bug |
+| **0** | **C1–C7 shared contracts + decisions D1–D5** (a design wave, see §6/§6a) **+** WS-09 login-hang fix | freeze every cross-WS seam before parallel work; fix a live bug |
 | **1** | **WS-03 + WS-10 query-kinds** (one effort: binder+macros+kinds+schema+history) · **WS-04** (panel editor) · **WS-07** (alerting) · **WS-09** (cache/rate-limit/quotas) · **WS-11** (prefs-on-PG + Accept-Units convert path) · **WS-12** (changelog-on-PG + record-on-mutate + `GET /audit`) | WS-03/10 unblock W2; the rest are independent high-value |
 | **2** | **WS-01** (time range) · **WS-02** (variables) · **WS-06** (flows builder) · **WS-08 + WS-10 datasource-kinds** (connectors-as-declaration) · **WS-11** (series quantity-tagging + UI) · **WS-12** (per-kind `Reversible` + undo/redo + audit UI) | consume the WS-03/10 binder; WS-08 feeds WS-06; WS-11 tags series for conversion |
 | **3** | **WS-05** (folders/rows/repeat/JSON/versioning) · WS-07 phase-2 (routing) · WS-09 HA/OTel · WS-10 tenant-authored kinds · WS-12 retention/forget + AI-actor undo | repeat needs WS-02; structure needs C1; WS-12 versioning-overlap settled w/ WS-05 |

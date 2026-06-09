@@ -90,6 +90,10 @@ import/export validates against.** Publish it as `schemaVersion: 1` with a migra
 - Reuse `authz/dashboard_instances.rs` patterns for folder grants; don't fork the grant model.
 
 ## Acceptance criteria
+- [ ] **C6 (audit/undo):** the `dashboard` + `folder` kinds have `Reversible` impls (dashboard pinned
+  to **snapshot** per D2) + `record_if_reversible` in their create/update/delete handlers + are in
+  WS-12's mutable-kinds manifest; edits produce `Change` rows, are undoable, and version-checkpoints
+  tag those snapshots (D1). Coverage guard green for both kinds.
 - [ ] C1 JSON model published as `schemaVersion: 1`; round-trips export→import losslessly.
 - [ ] Folders: create/nest/move; sidebar tree; folder grants enforced.
 - [ ] Collapsible rows persist; panels group correctly.

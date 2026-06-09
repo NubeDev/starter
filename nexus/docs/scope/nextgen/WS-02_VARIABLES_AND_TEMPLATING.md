@@ -56,6 +56,10 @@ hand-authoring one per site — directly serving the energy/water/HVAC vision.
   higher-level concept that interpolates into SQL text before binding.
 
 ## Acceptance criteria
+- [ ] **C6 (audit/undo):** the `dashboard_variable` kind has a `Reversible` impl + a
+  `record_if_reversible` call in its create/update/delete handlers + is in WS-12's mutable-kinds
+  manifest; create/edit/delete a variable produces a `Change` row and is undoable. *(If variables live
+  in the dashboard JSON, they're covered by the dashboard kind — confirm with WS-12, don't double-record.)*
 - [ ] Create a `query` variable; its dropdown is populated from live SQL.
 - [ ] A panel using `region = '$region'` (or `$__sqlIn(region)`) re-queries when the selection changes.
 - [ ] Multi-select + "All" produce correct, safely-quoted `IN (...)`.

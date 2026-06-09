@@ -141,10 +141,10 @@ HTTP-REST becomes a manifest entry + a thin builder, not enum edits scattered ac
    defaults, min/max, patterns) **before** the SQL runs.
 
 > **This is the keystone:** the WS-03 "macro engine" and the kinds "param binder" are the **same
-> component**. It binds host tokens, injects time/vars, validates caller params, and safely
-> quotes/parameterizes — for *both* raw-SQL panels (macros in pasted SQL) and kinds (named params).
-> Build it once. (C2 in the roadmap — its signature widens slightly to carry the param map +
-> host-bound token set; freeze that in Wave 0.)
+> component**. It injects time/vars/host-tokens, validates caller params, and **emits every value as a
+> bound `$N` parameter** (returning `BoundQuery {sql, args, validated_identifiers}` — NOT a finished
+> SQL string; see WS-03 §"Macro engine") — for *both* raw-SQL panels and kinds. Build it once. (C2 in
+> the roadmap — its signature carries the param map + host-bound token set; freeze that in Wave 0.)
 
 ### 4.3 Dispatch & governance
 - A single guarded entry: `POST /api/v1/query` accepts either `sql` or `{kind, params}`.
@@ -214,7 +214,8 @@ Start with (a) — a loader + registry + the param binder — and make the regis
    `sql_file` + `params_schema` + optional `cache` + `description`, validate at boot (schema parses,
    SQL references only declared params, tenant-predicate lint §4.4). Reverse-DNS namespacing.
 2. **Param binder (with WS-03)**: host-bound tokens, host-injected time/vars, schema-validated caller
-   params, safe parameterization. One engine for sql-mode and kind-mode.
+   params — **all emitted as bound `$N` args** (returns `BoundQuery`, not a SQL string). One engine for
+   sql-mode and kind-mode.
 3. **Dispatch**: extend `POST /query` (and `QueryRequest` DTO) to accept `{kind, params}`; run under
    existing guards; resolve `datasource_kind`/binding + `tables` capability.
 4. **Core kinds pack**: a `kinds/` dir + 4–6 starter kinds (a list, a detail, a time-bucket
@@ -226,6 +227,9 @@ Start with (a) — a loader + registry + the param binder — and make the regis
 8. **(Later)** tenant-authored kinds: "save Explore query as a kind" + `1401_query_kinds.sql` (WS-10 `14xx` block).
 
 ## 7. Acceptance criteria
+- [ ] **C6 (audit/undo):** if tenant-authored kinds are persisted (§4.5c), the `query_kind` resource
+  has a `Reversible` impl + `record_if_reversible` in its handlers + is in WS-12's mutable-kinds
+  manifest. *(Manifest-only / built-in kinds are immutable config — no recording needed; note that.)*
 - [ ] A core query-kind runs via `POST /query` with `{kind, params}`; params validated against schema;
   bad params rejected pre-execution.
 - [ ] `$caller_tenant_id` is host-bound and **cannot** be overridden by caller input (test it).

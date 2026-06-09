@@ -16,6 +16,7 @@ import { getCookie } from "@/lib/cookie";
 // chrome and pages stay focused on their content.
 const TITLES: Record<string, string> = {
   "/": "Dashboards",
+  "/dashboards": "Dashboards",
   "/explore": "Explore",
   "/datasources": "Datasources",
   "/flows": "Flows",

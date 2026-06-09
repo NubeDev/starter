@@ -85,10 +85,23 @@ Bonus: AI edits record as `Actor::Agent` (same ledger) and are user-undoable. Se
 6. **WS-05 structure** (folders/JSON/versioning → AI-generated dashboards + GitOps).
 7. **WS-09 cache/quotas**, then **WS-06 / WS-07 / WS-08** by business priority.
 
+## Wave 0 comes first — do NOT start parallel sessions until it's done
+Parallel safety depends on freezing the cross-WS seams up front. **Wave 0 (a design wave, not ½ a day)
+freezes contracts C1–C7 and decisions D1–D5** (ROADMAP §6/§6a): the dashboard JSON model (C1), the
+**bound-query binder that returns `{sql, args, validated_identifiers}`, not a SQL string** (C2 — the
+injection boundary), the cache-key tuple (C3), OpenAPI conventions (C4), the kinds manifest +
+`PanelQuery` union (C5), the changelog recording convention (C6), and the single-owner `QueryRequest`
+(C7). Two cross-cutting concerns are owned by single workstreams, not edited in parallel: the **WS-03
+binder/`QueryRequest`** and **WS-12 audit substrate** (each other WS adds its own `record_if_reversible`
+call per C6 — WS-12 does not touch their handlers).
+
 ## Ground rules for every session
+- **Re-grep your evidence first** (ROADMAP §0) and bump your WS `Verified:` line — claims rot.
 - One workstream = one git worktree = one PR. Stay in your **owned files** (ROADMAP §4).
 - DTO-first, codegen-driven: `nexus-spi` DTO → `openapi.rs` → `openapi.json` → `pnpm codegen`.
-- Use your **reserved migration number** (ROADMAP §5).
+- Use your **per-WS migration block** (ROADMAP §5 — e.g. `06xx`, `12xx`), not a shared sequence.
+- If your WS adds a **mutable resource**, wire its **C6 audit/undo** (Reversible + `record_if_reversible`
+  + WS-12 manifest entry) — it's in your acceptance criteria + the DoD, not optional.
 - **Extend, don't rebuild** what GAP §3 marks as already-good (engine, RLS, state machine, sharing).
 - Ship mirrored tests; keep `cargo test` + `pnpm typecheck/test/build` green; don't break the live
   integration suite.

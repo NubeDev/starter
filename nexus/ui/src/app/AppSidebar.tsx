@@ -3,6 +3,7 @@ import {
   Compass,
   Database,
   LayoutDashboard,
+  LayoutGrid,
   Shield,
   Workflow,
 } from "lucide-react";
@@ -60,6 +61,20 @@ export function AppSidebar() {
           <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
           <SidebarDashboards />
           <SidebarMenu>
+            <SidebarMenuItem>
+              <NavLink to="/dashboards" end>
+                {({ isActive }) => (
+                  <SidebarMenuButton
+                    isActive={isActive}
+                    tooltip="Manage dashboards"
+                    className="text-muted-foreground"
+                  >
+                    <LayoutGrid />
+                    <span>Manage dashboards</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <NewDashboardButton />
             </SidebarMenuItem>

@@ -69,6 +69,10 @@ Priority order (confirm with business):
   (no parser, no full function set) — full parity is a separate future effort.
 
 ## Acceptance criteria
+- [ ] **C6 (audit/undo):** the `datasource` kind has a `Reversible` impl + `record_if_reversible` in
+  its create/update/delete handlers + is in WS-12's mutable-kinds manifest; datasource changes produce
+  `Change` rows and are undoable (secrets redacted in the recorded snapshot — never log plaintext
+  credentials). Coverage guard green.
 - [ ] At least the top-2 priority connectors registered, configurable, testable, secret-protected.
 - [ ] `POST /datasources/test` validates raw config pre-save (closes the TODO-FOR.UI gap).
 - [ ] A live panel/flow ingests from MQTT or Modbus end-to-end.

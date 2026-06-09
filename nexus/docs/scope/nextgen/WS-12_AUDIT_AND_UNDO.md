@@ -83,22 +83,31 @@ Read before writing. This subsystem is mature; nexus just hasn't adopted it.
 - Construct a `PgChangeRecorder` + `UndoService` (with a `PgUndoCursor`) in nexus-api state; mount
   `undo_router`.
 
-### 3.2 Record on every mutation (the "for everything" part)
-Drop **`record_if_reversible(registry, recorder, actor, draft)`** into each nexus write handler,
-right after the successful domain mutation, inside the same tenant transaction. The handler already
-has the `before` (it read the row for authz/version checks) and the `after` (what it wrote):
+### 3.2 The recording pattern (the "for everything" part) — adopted by each owning WS, not by WS-12
+WS-12 defines and ships this **pattern + helper**; **each mutable-resource workstream drops the call
+into its own handlers** (C6). The call goes right after the successful domain mutation, inside the same
+tenant transaction. The handler already has the `before` (it read the row for authz/version checks)
+and the `after` (what it wrote):
 ```
-// in routes/dashboards/update.rs (illustrative)
+// in routes/dashboards/update.rs — added by WS-05's PR, not WS-12's (illustrative)
 let before = store.get(id).await?;            // already fetched
 let after  = store.update(id, patch).await?;  // the mutation
 let group  = record_if_reversible(&reg, &recorder,
                 Actor::User { subject: principal.subject.clone() },
                 ChangeDraft::update(resource_ref, json(before), json(after))).await?;
 ```
-Kinds to cover (the user's "users, dashboards, datasources and so on"): **dashboards, panels,
+Kinds to cover (the user's "users, dashboards, datasources and so on"), **each wired by its owner**:
+**dashboards, panels,
 datasources, flows, alert rules/channels/silences, grants/shares, folders (WS-05), variables
 (WS-02), kinds (WS-10), users/teams** (via the auth crates' handlers — coordinate). Read-only verbs
 record nothing (unregistered kinds are skipped by design).
+
+> 🔒 **Secret redaction in snapshots (a recording contract every owner must honor):** `before`/`after`
+> must **never** capture plaintext (or even encrypted) secrets — a datasource's connection password,
+> SMTP/Slack tokens (WS-07), etc. The `Reversible`/`ChangeDraft` for a secret-bearing kind redacts
+> those fields before recording (the changelog already supports tombstoning, but redaction must happen
+> *at record time*, not after). The audit log shows "password changed", not the value. Owners of
+> secret-bearing kinds (WS-08 datasources, WS-07 channels) assert this in their C6 tests.
 
 ### 3.3 One `Reversible` per kind (the extension point)
 For each undoable kind, implement `Reversible` (`apply_inverse`/`apply_forward`/`clone_with`) against
@@ -154,11 +163,18 @@ complete but isn't). WS-12 ships a **coverage guard**, not just a convention:
 - An **audit/history view**: a per-resource "History" tab + an admin "Audit log" screen with
   filters and a before→after diff viewer.
 
-## 4. Scope (this workstream)
+## 4. Scope (this workstream) — **SUBSTRATE-ONLY; WS-12 does NOT edit other workstreams' handlers**
+> Per ROADMAP §6a C6: each mutable-resource workstream wires **its own** `record_if_reversible` call +
+> `Reversible` impl in *its* PR. WS-12 owns the substrate, the registry, the audit API, the UI, and the
+> coverage guard that proves everyone wired it — **not** the per-handler edits. This keeps the
+> "stay in owned files" model honest.
 1. **Mount changelog + undo on nexus Postgres+RLS** (migrations + recorder/service wiring + tenant tx).
-2. **`record_if_reversible` in every nexus mutation handler** (dashboards, panels, datasources, flows,
-   alerts, grants, folders, variables, kinds; users/teams via auth crates — coordinate).
-3. **`Reversible` impl + registry entry per kind** (snapshot/patch per the matrix).
+2. **Build the `ReversibleRegistry` + `record_if_reversible` helper + the C6 call pattern** other
+   workstreams adopt. WS-12 may seed **1–2 reference `Reversible` impls** (e.g. dashboard, datasource)
+   to prove the pattern and exercise the substrate end-to-end — but the remaining kinds' impls + calls
+   land in *their* owning workstreams (C6), not here.
+3. **The coverage guard (§3.5b + scope item 9)** that fails CI if a registered mutable kind has no
+   recording path — this is how WS-12 stays whole without owning everyone's handlers.
 4. **Audit query API** (`GET /audit`, `GET /audit/resources/{kind}/{id}`, optional SSE tail) + authz gate.
 5. **Undo/redo UI** (shortcuts + toasts + query invalidation by `group_id`).
 6. **Audit/history UI** (per-resource History tab + admin Audit screen + before→after diff).

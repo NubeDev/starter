@@ -60,6 +60,9 @@ channels (email/Slack), notification templating, and an alert timeline UI.
 - **Secrets** for SMTP/Slack tokens go through the **existing envelope-encryption** model, not plaintext.
 
 ## Acceptance criteria
+- [ ] **C6 (audit/undo):** the `alert_rule` (+ `channel`, `silence`) kinds have `Reversible` impls +
+  `record_if_reversible` in their create/update/delete handlers + are in WS-12's mutable-kinds
+  manifest; rule edits produce `Change` rows and are undoable. Coverage guard green.
 - [ ] A rule with two conditions combined by AND fires only when both breach; back-compat single
   condition still works.
 - [ ] No-data policy `alerting` fires on an empty result; `ok` doesn't (toggle respected).
