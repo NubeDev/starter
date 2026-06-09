@@ -154,3 +154,17 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   (DatasourceFormDialog.tsx, test-connection.ts, useDatasourceMutations.ts) touched <3min = DTO
   codegen + per-kind connector UI (WS-08-owned per §4). Lock kernel-held, no STOP. Only blocker is
   ✅RESOLVED WS-03 note. 4/12 done (03,04,07,10); WS-08 in mid/late build.
+- 2026-06-09 14:15 — FIRST REAL BLOCKER (escalating to human). Cron firing (21:05/10/15). WS-08 ⛔
+  blocked — LEGITIMATE "ask-don't-guess" call: MQTT/Modbus need new gated deps (rumqttc/tokio-modbus,
+  a §9 human dep-policy decision) AND the datasource-kind config format = WS-10 datasource-kinds
+  (Wave 2) which is NOT YET BUILT (WS-10 shipped only query-kinds). WS-08 correctly refused to invent
+  the format or add heavy deps; recommends running WS-10 datasource-kinds first, then re-run WS-08.
+  It DID fully land the pre-save POST /datasources/test acceptance criterion (test_connection.rs,
+  probe.rs, UI button, mirrored tests). STATE TO WATCH NEXT WAKE: wake PID 187071/child 187082 still
+  ALIVE 16min, partial work still UNCOMMITTED (test_connection.rs/probe.rs ?? , form dialogs M).
+  Heartbeat=wake-start (not complete) → it logged blocker + marked ⛔ but has NOT yet committed the
+  partial or exited. NOT forcing (under 25-min/3-firing stall threshold; flock self-heals). If NEXT
+  wake shows 187071 still alive >25min OR exited with the partial still uncommitted → that's a real
+  problem to handle. NO supervisor action taken (can't commit WS-08's lane, can't rm the lock).
+  HUMAN DECISION NEEDED: approve "run WS-10 datasource-kinds first + gate rumqttc/tokio-modbus off
+  by default", or pick another path. 4/12 done; WS-08 partial+blocked.
