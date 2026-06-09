@@ -23,6 +23,7 @@ import type {
   WidgetLayout,
   WidgetType,
 } from "@/data/types";
+import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { nextSlot } from "@/features/canvas/placement";
@@ -135,7 +136,14 @@ export function AddWidgetDialog({
             <DatasourcePicker value={datasourceId} onChange={setDatasourceId} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="panel-sql">SQL</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="panel-sql">SQL</Label>
+              <AiSqlAssist
+                datasourceId={datasourceId}
+                currentSql={sql}
+                onApply={setSql}
+              />
+            </div>
             <SqlEditor
               id="panel-sql"
               value={sql}

@@ -4,6 +4,7 @@ import { Play } from "lucide-react";
 import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
+import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import type { QueryResponse } from "@/api/types";
@@ -102,8 +103,17 @@ export function Explore() {
           ) : (
             <KindPicker value={kind} onChange={setKind} />
           )}
+          {mode === "sql" ? (
+            <div className="ms-auto">
+              <AiSqlAssist
+                datasourceId={datasourceId}
+                currentSql={sql}
+                onApply={setSql}
+              />
+            </div>
+          ) : null}
           <Button
-            className="ms-auto gap-2"
+            className={mode === "sql" ? "gap-2" : "ms-auto gap-2"}
             disabled={!canRun}
             onClick={onRun}
           >

@@ -82,6 +82,7 @@ use utoipa::OpenApi;
         crate::routes::agents::list_sessions::list_agent_sessions,
         crate::routes::agents::get_session::get_agent_session,
         crate::routes::agents::events::subscribe_agent_session,
+        crate::routes::ai::assist::ai_assist,
         crate::routes::variables::list::list_variables,
         crate::routes::variables::create::create_variable,
         crate::routes::variables::update::update_variable,

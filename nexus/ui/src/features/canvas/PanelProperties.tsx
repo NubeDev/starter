@@ -16,6 +16,7 @@ import type { Widget, WidgetType } from "@/data/types";
 import type { QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
+import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
@@ -159,7 +160,14 @@ export function PanelProperties({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="prop-sql">SQL</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="prop-sql">SQL</Label>
+            <AiSqlAssist
+              datasourceId={datasourceId}
+              currentSql={sql}
+              onApply={setSql}
+            />
+          </div>
           <SqlEditor
             id="prop-sql"
             value={sql}

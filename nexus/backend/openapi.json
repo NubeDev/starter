@@ -337,6 +337,45 @@
         }
       }
     },
+    "/api/v1/ai/assist": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "ai_assist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Structured assistance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty prompt"
+          },
+          "403": {
+            "description": "Not allowed to view the grounding datasource"
+          },
+          "502": {
+            "description": "The model call failed"
+          }
+        }
+      }
+    },
     "/api/v1/alerts/channels": {
       "get": {
         "tags": [
@@ -3000,6 +3039,74 @@
             "format": "double"
           }
         }
+      },
+      "AssistRequest": {
+        "type": "object",
+        "description": "An assist request: a task, the user's natural-language intent, and optional\ngrounding context.",
+        "required": [
+          "task",
+          "prompt"
+        ],
+        "properties": {
+          "current_sql": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional existing SQL to edit/improve rather than write from scratch."
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional datasource the query should target; when set, the server grounds\nthe model with that datasource's table/column schema so generated SQL\nreferences real columns."
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional model override (concrete id or `small`/`medium`/`large`).\nDefaults to the service's medium tier when omitted."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The user's plain-English ask (e.g. \"average temperature per site, last 24h\")."
+          },
+          "task": {
+            "$ref": "#/components/schemas/AssistTask"
+          }
+        }
+      },
+      "AssistResponse": {
+        "type": "object",
+        "description": "The assistant's structured answer. `result` shape depends on the request task\n(see [`AssistTask`]); it is opaque JSON on the wire so the contract stays\nstable as task outputs evolve. `raw` carries the model's unparsed reply for\ndebugging / when structured parsing degrades.",
+        "required": [
+          "task",
+          "result"
+        ],
+        "properties": {
+          "raw": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The model's raw text reply, retained so the UI can fall back to showing it\nif the structured `result` is empty."
+          },
+          "result": {},
+          "task": {
+            "$ref": "#/components/schemas/AssistTask"
+          }
+        }
+      },
+      "AssistTask": {
+        "type": "string",
+        "description": "What the caller wants the assistant to produce. The task selects the system\ninstructions and the expected shape of [`AssistResponse::result`].",
+        "enum": [
+          "sql",
+          "panel",
+          "dashboard"
+        ]
       },
       "Change": {
         "type": "object",

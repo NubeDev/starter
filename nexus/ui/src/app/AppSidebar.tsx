@@ -1,5 +1,6 @@
 import {
   Bell,
+  Bot,
   Compass,
   Database,
   History,
@@ -120,6 +121,16 @@ export function AppSidebar() {
                   <SidebarMenuButton isActive={isActive} tooltip="Alerts">
                     <Bell />
                     <span>Alerts</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <NavLink to="/agents">
+                {({ isActive }) => (
+                  <SidebarMenuButton isActive={isActive} tooltip="Agents">
+                    <Bot />
+                    <span>Agents</span>
                   </SidebarMenuButton>
                 )}
               </NavLink>

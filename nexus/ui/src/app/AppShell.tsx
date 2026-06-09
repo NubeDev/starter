@@ -22,6 +22,7 @@ const TITLES: Record<string, string> = {
   "/datasources": "Datasources",
   "/flows": "Flows",
   "/alerts": "Alerts",
+  "/agents": "Agents",
   "/access": "Access",
   "/audit": "Audit",
 };

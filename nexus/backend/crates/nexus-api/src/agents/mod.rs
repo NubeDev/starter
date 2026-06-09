@@ -3,4 +3,4 @@
 
 pub mod runtime;
 
-pub use runtime::{PromptInputs, SessionRunner};
+pub use runtime::{PromptInputs, SessionRun, SessionRunner};

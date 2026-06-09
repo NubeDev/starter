@@ -77,15 +77,15 @@ pub async fn create_agent_session(
     let _ = agent::set_session_status(&state.metadata, &tenant, session.id, "running").await;
     let model = parse_model(&agent_rec.model);
     let inputs = crate::agents::PromptInputs::from_config(&agent_rec.config);
-    state.sessions.start(
-        state.metadata.clone(),
-        tenant.clone(),
-        session.id,
+    state.sessions.start(crate::agents::SessionRun {
+        metadata: state.metadata.clone(),
+        tenant: tenant.clone(),
+        session_id: session.id,
         model,
-        agent_rec.system_prompt.clone(),
+        system_prompt: agent_rec.system_prompt.clone(),
         inputs,
-        req.prompt,
-    );
+        prompt: req.prompt,
+    });
 
     // Mint a short-lived SSE token bound to this session id. We reuse the stream
     // signer; datasource_id is unused for agent sessions.

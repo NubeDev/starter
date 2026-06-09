@@ -93,3 +93,17 @@ export type Op = S["Op"];
 export type UndoResponse = S["UndoResponse"];
 export type ForgetRequest = S["ForgetRequest"];
 export type ForgetResponse = S["ForgetResponse"];
+
+// AI agents + sessions (agent CRUD, chatbot sessions, SSE).
+export type AgentSummary = S["AgentSummary"];
+export type AgentDetail = S["AgentDetail"];
+export type CreateAgentRequest = S["CreateAgentRequest"];
+export type UpdateAgentRequest = S["UpdateAgentRequest"];
+export type CreateSessionRequest = S["CreateSessionRequest"];
+export type CreateSessionResponse = S["CreateSessionResponse"];
+export type SessionDetail = S["SessionDetail"];
+
+// AI assist (synchronous, task-typed: SQL gen, panel/dashboard suggest).
+export type AssistRequest = S["AssistRequest"];
+export type AssistResponse = S["AssistResponse"];
+export type AssistTask = S["AssistTask"];

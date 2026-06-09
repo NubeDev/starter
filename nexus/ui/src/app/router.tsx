@@ -7,6 +7,7 @@ import { AlertsPage } from "@/features/alerts/AlertsPage";
 import { DatasourcesPage } from "@/features/datasources/DatasourcesPage";
 import { FlowsPage } from "@/features/flows/FlowsPage";
 import { Explore } from "@/features/query-editor/Explore";
+import { AgentsPage } from "@/features/agents";
 import { AccessPage } from "@/features/access/AccessPage";
 import { AuditPage } from "@/features/audit/AuditPage";
 
@@ -25,6 +26,7 @@ export const router = createBrowserRouter([
       { path: "datasources", element: <DatasourcesPage /> },
       { path: "flows", element: <FlowsPage /> },
       { path: "alerts", element: <AlertsPage /> },
+      { path: "agents", element: <AgentsPage /> },
       { path: "access", element: <AccessPage /> },
       { path: "audit", element: <AuditPage /> },
       { path: "*", element: <Navigate to="/" replace /> },

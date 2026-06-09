@@ -1,11 +1,21 @@
 import { useState } from "react";
-import { Braces, Eye, Pencil, Plus, Redo2, Share2, Undo2 } from "lucide-react";
+import {
+  Braces,
+  Eye,
+  Pencil,
+  Plus,
+  Redo2,
+  Share2,
+  Sparkles,
+  Undo2,
+} from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import type { Dashboard } from "@/data/types";
 import { useUiStore } from "@/store/ui";
 import { useRedo, useUndo } from "@/features/audit/useUndoRedo";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
+import { AiBuildDialog } from "@/features/canvas/AiBuildDialog";
 import { ShareDashboardDialog } from "@/features/dashboards/ShareDashboardDialog";
 import { TimeRangePicker } from "@/features/time/TimeRangePicker";
 import { RefreshControl } from "@/features/time/RefreshControl";
@@ -21,6 +31,7 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
   const editing = useUiStore((s) => s.editMode);
   const toggle = useUiStore((s) => s.toggleEditMode);
   const [adding, setAdding] = useState(false);
+  const [aiBuilding, setAiBuilding] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [editingVars, setEditingVars] = useState(false);
   // Undo/redo target the caller's most recent change group (per-actor, bodyless)
@@ -78,6 +89,15 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
               variant="outline"
               size="sm"
               className="gap-2"
+              onClick={() => setAiBuilding(true)}
+            >
+              <Sparkles className="size-4" />
+              AI build
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
               onClick={() => setEditingVars(true)}
             >
               <Braces className="size-4" />
@@ -108,6 +128,12 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         dashboard={dashboard}
         open={adding}
         onOpenChange={setAdding}
+      />
+      <AiBuildDialog
+        slug={dashboard.slug}
+        existingWidgets={dashboard.widgets}
+        open={aiBuilding}
+        onOpenChange={setAiBuilding}
       />
       <ShareDashboardDialog
         dashboardId={dashboard.id}

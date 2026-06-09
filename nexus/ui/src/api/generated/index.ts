@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/assist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ai_assist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts/channels": {
         parameters: {
             query?: never;
@@ -983,6 +999,49 @@ export interface components {
             /** Format: double */
             threshold: number;
         };
+        /**
+         * @description An assist request: a task, the user's natural-language intent, and optional
+         *     grounding context.
+         */
+        AssistRequest: {
+            /** @description Optional existing SQL to edit/improve rather than write from scratch. */
+            current_sql?: string | null;
+            /**
+             * @description Optional datasource the query should target; when set, the server grounds
+             *     the model with that datasource's table/column schema so generated SQL
+             *     references real columns.
+             */
+            datasource_id?: string | null;
+            /**
+             * @description Optional model override (concrete id or `small`/`medium`/`large`).
+             *     Defaults to the service's medium tier when omitted.
+             */
+            model?: string | null;
+            /** @description The user's plain-English ask (e.g. "average temperature per site, last 24h"). */
+            prompt: string;
+            task: components["schemas"]["AssistTask"];
+        };
+        /**
+         * @description The assistant's structured answer. `result` shape depends on the request task
+         *     (see [`AssistTask`]); it is opaque JSON on the wire so the contract stays
+         *     stable as task outputs evolve. `raw` carries the model's unparsed reply for
+         *     debugging / when structured parsing degrades.
+         */
+        AssistResponse: {
+            /**
+             * @description The model's raw text reply, retained so the UI can fall back to showing it
+             *     if the structured `result` is empty.
+             */
+            raw?: string | null;
+            result: unknown;
+            task: components["schemas"]["AssistTask"];
+        };
+        /**
+         * @description What the caller wants the assistant to produce. The task selects the system
+         *     instructions and the expected shape of [`AssistResponse::result`].
+         * @enum {string}
+         */
+        AssistTask: "sql" | "panel" | "dashboard";
         /**
          * @description A typed, append-only record of a single domain mutation.
          *
@@ -2674,6 +2733,51 @@ export interface operations {
             };
             /** @description Agent not found in this tenant */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ai_assist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Structured assistance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistResponse"];
+                };
+            };
+            /** @description Empty prompt */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to view the grounding datasource */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The model call failed */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -46,6 +46,20 @@ impl PromptInputs {
     }
 }
 
+/// The parameters of one session run, bundled so [`SessionRunner::start`] takes
+/// a single argument. `metadata` is the control-plane pool the transcript is
+/// persisted to under `tenant`'s RLS; `system_prompt`/`inputs` build the system
+/// message; `prompt` is the opening user turn.
+pub struct SessionRun {
+    pub metadata: PgPool,
+    pub tenant: String,
+    pub session_id: Uuid,
+    pub model: ModelRef,
+    pub system_prompt: Option<String>,
+    pub inputs: PromptInputs,
+    pub prompt: String,
+}
+
 /// Cloneable handle to the session runtime. Holds the AI client, the knowledge
 /// store, the service brevity default, and the live broadcast channels keyed by
 /// session id.
@@ -83,18 +97,19 @@ impl SessionRunner {
     /// Start streaming a session run on a background task. The run drives the
     /// inference tier over `messages`, broadcasts each [`Event`], accumulates the
     /// assistant reply, and on completion persists the full transcript and a
-    /// terminal status. `metadata` is the control-plane pool the transcript is
+    /// terminal status. `run.metadata` is the control-plane pool the transcript is
     /// written back to under the tenant's RLS.
-    pub fn start(
-        &self,
-        metadata: PgPool,
-        tenant: String,
-        session_id: Uuid,
-        model: ModelRef,
-        system_prompt: Option<String>,
-        inputs: PromptInputs,
-        prompt: String,
-    ) {
+    pub fn start(&self, run: SessionRun) {
+        let SessionRun {
+            metadata,
+            tenant,
+            session_id,
+            model,
+            system_prompt,
+            inputs,
+            prompt,
+        } = run;
+
         let (tx, _rx) = broadcast::channel(CHANNEL_CAPACITY);
         self.channels
             .lock()
@@ -147,6 +162,32 @@ impl SessionRunner {
                 .expect("session channels mutex")
                 .remove(&session_id);
         });
+    }
+
+    /// One-shot, non-streaming completion. Drives the inference tier over a
+    /// `system` + `user` pair and returns the full reply text. Unlike [`start`]
+    /// this records nothing and opens no channel — it backs the synchronous AI
+    /// assist endpoint (SQL generation, panel suggestion), where the caller wants
+    /// a single structured answer, not a transcript. `system` is used verbatim
+    /// (assist callers build their own task-specific instructions).
+    pub async fn chat_once(
+        &self,
+        model: ModelRef,
+        system: Option<String>,
+        prompt: String,
+    ) -> Result<String, String> {
+        let mut messages = Vec::new();
+        if let Some(sys) = system.filter(|s| !s.is_empty()) {
+            messages.push(Message::system(sys));
+        }
+        messages.push(Message::user(&prompt));
+        let req = ChatRequest::new(model, messages);
+        self.client
+            .inference()
+            .chat(req)
+            .await
+            .map(|res| res.text)
+            .map_err(|e| e.to_string())
     }
 
     /// Build the system message: the brevity rule, then the resolved knowledge

@@ -11,6 +11,7 @@ use crate::dto::agent::{
     AgentDetail, AgentSummary, CreateAgentRequest, CreateSessionRequest, CreateSessionResponse,
     SessionDetail, UpdateAgentRequest,
 };
+use crate::dto::ai::{AssistRequest, AssistResponse, AssistTask};
 use crate::dto::audit::{ForgetRequest, ForgetResponse, UndoResponse};
 use crate::dto::dashboard::{
     CreateDashboardRequest, DashboardDetail, DashboardExport, DashboardSummary, PanelExport,
@@ -120,6 +121,9 @@ use crate::Problem;
     CreateSessionRequest,
     CreateSessionResponse,
     SessionDetail,
+    AssistRequest,
+    AssistResponse,
+    AssistTask,
     VariableDetail,
     VariableKind,
     CreateVariableRequest,

@@ -2,6 +2,7 @@
 //! only composes them. Domain logic stays in the engine and store.
 
 pub mod agents;
+pub mod ai;
 pub mod alerts;
 pub mod audit;
 pub mod dashboards;
@@ -34,6 +35,7 @@ pub fn product_router() -> Router<AppState> {
         .merge(alerts::router())
         .merge(tags::router())
         .merge(agents::router())
+        .merge(ai::router())
         .merge(variables::router())
         .merge(audit::router())
         .merge(undo::router())

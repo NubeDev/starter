@@ -8,6 +8,7 @@
 //! and extend this module add-only.
 
 pub mod agent;
+pub mod ai;
 pub mod alert;
 pub mod audit;
 pub mod dashboard;
