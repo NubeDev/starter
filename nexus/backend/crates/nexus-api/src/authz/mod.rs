@@ -24,6 +24,11 @@ use starter_spi::authz::{Ownership, PolicyEngine, ResourceRef, ResourceRegistry,
 /// Registry kind for a dashboard. Grants and the engine key on this plus the
 /// dashboard's immutable id (never its slug, which is a mutable route alias).
 pub const KIND_DASHBOARD: &str = "nexus.dashboard";
+/// Registry kind for a panel (a chart/widget on a dashboard). Panels authorize
+/// against their owning dashboard's grant (a panel edit is a dashboard `edit`),
+/// but record their own changelog rows under this kind so undo reverts the last
+/// panel edit, not the dashboard's creation (WS-12).
+pub const KIND_PANEL: &str = "nexus.panel";
 /// Registry kind for a folder (the dashboard organisation tree, WS-05).
 pub const KIND_FOLDER: &str = "nexus.folder";
 /// Registry kind for a datasource.

@@ -50,7 +50,7 @@ export function PanelEditor({
   return (
     <Dialog open onOpenChange={(open) => (!open ? onClose() : undefined)}>
       <DialogContent
-        className="glass flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] flex-col gap-3 p-4"
+        className="glass flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] flex-col gap-3 p-4 sm:max-w-[95vw]"
         showCloseButton={false}
       >
         <DialogHeader className="flex-row items-center justify-between space-y-0">
@@ -77,13 +77,25 @@ export function PanelEditor({
           </div>
 
           <Tabs defaultValue="query" className="flex min-h-0 flex-col">
-            <TabsList className="flex-wrap">
-              <TabsTrigger value="query">Query</TabsTrigger>
-              <TabsTrigger value="viz">Visualization</TabsTrigger>
-              <TabsTrigger value="field">Field</TabsTrigger>
-              <TabsTrigger value="overrides">Overrides</TabsTrigger>
-              <TabsTrigger value="legend">Legend &amp; Axes</TabsTrigger>
-              <TabsTrigger value="transforms">Transforms</TabsTrigger>
+            <TabsList className="w-full justify-start overflow-x-auto">
+              <TabsTrigger value="query" className="flex-none">
+                Query
+              </TabsTrigger>
+              <TabsTrigger value="viz" className="flex-none">
+                Visualization
+              </TabsTrigger>
+              <TabsTrigger value="field" className="flex-none">
+                Field
+              </TabsTrigger>
+              <TabsTrigger value="overrides" className="flex-none">
+                Overrides
+              </TabsTrigger>
+              <TabsTrigger value="legend" className="flex-none">
+                Legend &amp; Axes
+              </TabsTrigger>
+              <TabsTrigger value="transforms" className="flex-none">
+                Transforms
+              </TabsTrigger>
             </TabsList>
             <ScrollArea className="min-h-0 flex-1 pr-3">
               <TabsContent value="query">

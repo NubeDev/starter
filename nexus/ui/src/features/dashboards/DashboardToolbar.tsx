@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Braces, Eye, Pencil, Plus, Share2 } from "lucide-react";
+import { Braces, Eye, Pencil, Plus, Redo2, Share2, Undo2 } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import type { Dashboard } from "@/data/types";
 import { useUiStore } from "@/store/ui";
+import { useRedo, useUndo } from "@/features/audit/useUndoRedo";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { ShareDashboardDialog } from "@/features/dashboards/ShareDashboardDialog";
 import { TimeRangePicker } from "@/features/time/TimeRangePicker";
@@ -22,6 +23,13 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
   const [adding, setAdding] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [editingVars, setEditingVars] = useState(false);
+  // Undo/redo target the caller's most recent change group (per-actor, bodyless)
+  // and invalidate the whole nexus query tree on success, so the canvas
+  // refreshes with the reverted/re-applied state. The same hooks back the
+  // global Cmd/Ctrl+Z shortcut (AppShell); these buttons make the action
+  // discoverable while editing.
+  const undo = useUndo();
+  const redo = useRedo();
 
   return (
     <div className="flex items-center justify-between gap-3">
@@ -33,6 +41,30 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         <RefreshControl />
         {editing ? (
           <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => undo.mutate()}
+              disabled={undo.isPending}
+              title="Undo (Ctrl/Cmd+Z)"
+              aria-label="Undo"
+            >
+              <Undo2 className="size-4" />
+              Undo
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => redo.mutate()}
+              disabled={redo.isPending}
+              title="Redo (Ctrl/Cmd+Shift+Z)"
+              aria-label="Redo"
+            >
+              <Redo2 className="size-4" />
+              Redo
+            </Button>
             <Button
               variant="outline"
               size="sm"

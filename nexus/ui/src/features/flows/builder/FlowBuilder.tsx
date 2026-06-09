@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FlaskConical, Trash2 } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import {
@@ -27,7 +27,7 @@ import {
 import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 
 import type { NodeType } from "@/api/types";
-import { useCreateFlow } from "@/features/flows/useFlows";
+import { useCreateFlow, useFlow, useUpdateFlow } from "@/features/flows/useFlows";
 import { Canvas } from "@/features/flows/builder/Canvas";
 import { DryRunResult } from "@/features/flows/builder/DryRunResult";
 import { NodeConfigForm } from "@/features/flows/builder/NodeConfigForm";
@@ -45,38 +45,62 @@ import { Loading } from "@/features/state/Loading";
 // hatch that round-trips with the graph. "Test" runs a bounded dry-run of the
 // current graph without saving; "Save" serialises the graph to the ArkFlow
 // `{input, pipeline, output}` shape and creates the flow. Replaces the
-// raw-three-textareas dialog as the primary authoring path.
+// raw-three-textareas dialog as the primary authoring path. When `flowId` is
+// given the dialog opens that saved flow for editing (load detail → graph,
+// save via update) instead of creating a new one.
 export function FlowBuilder({
   open,
   onOpenChange,
+  flowId = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  flowId?: string | null;
 }) {
+  const editing = flowId !== null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass flex h-[85vh] max-w-[90vw] flex-col gap-3 p-0 sm:max-w-[90vw]">
         <DialogHeader className="px-5 pt-5">
-          <DialogTitle>Flow builder</DialogTitle>
+          <DialogTitle>{editing ? "Edit flow" : "Flow builder"}</DialogTitle>
           <DialogDescription>
             Drag node types onto the canvas, connect input → processor → output,
             and test the pipeline before saving.
           </DialogDescription>
         </DialogHeader>
-        {open ? <BuilderBody onDone={() => onOpenChange(false)} /> : null}
+        {/* Key by flowId so switching which flow is open remounts the body,
+            resetting its graph/name/enabled state to the new flow. */}
+        {open ? (
+          <BuilderBody
+            key={flowId ?? "new"}
+            flowId={flowId}
+            onDone={() => onOpenChange(false)}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   );
 }
 
-function BuilderBody({ onDone }: { onDone: () => void }) {
+function BuilderBody({
+  flowId,
+  onDone,
+}: {
+  flowId: string | null;
+  onDone: () => void;
+}) {
   const nodeTypes = useNodeTypes();
   const create = useCreateFlow();
+  const update = useUpdateFlow();
+  const detail = useFlow(flowId);
   const dryRun = useDryRun();
   const builder = useBuilderGraph();
 
   const [name, setName] = useState("");
   const [enabled, setEnabled] = useState(true);
+  // Seed the editor from the loaded flow once, after both the detail and the
+  // palette (needed to recover node categories) are available.
+  const [seeded, setSeeded] = useState(false);
   const [tab, setTab] = useState<"config" | "raw">("config");
   const [rawText, setRawText] = useState("");
   const [rawError, setRawError] = useState<string | null>(null);
@@ -93,6 +117,22 @@ function BuilderBody({ onDone }: { onDone: () => void }) {
     () => serializeGraph(builder.graph),
     [builder.graph],
   );
+
+  // Open a saved flow for editing: parse its config into the graph and adopt
+  // its name/enabled. Runs once per mount (the dialog is keyed by flow id, so a
+  // different flow remounts a fresh body).
+  useEffect(() => {
+    if (seeded || !flowId || !detail.data || nodeTypes.data === undefined) {
+      return;
+    }
+    const flow = detail.data;
+    builder.setGraph(
+      parseGraph(flow.input, flow.pipeline, flow.output, nodeTypes.data),
+    );
+    setName(flow.name);
+    setEnabled(flow.enabled);
+    setSeeded(true);
+  }, [seeded, flowId, detail.data, nodeTypes.data, builder]);
 
   const addFromPalette = (type: NodeType) => {
     // Stagger by node count so a click-added node doesn't land on the last.
@@ -170,29 +210,38 @@ function BuilderBody({ onDone }: { onDone: () => void }) {
       setSaveError("Give the flow a name.");
       return;
     }
+    if (flowId) {
+      // Editing: PUT the full config (the request is partial, but we send all
+      // fields so the saved flow matches the canvas exactly).
+      update.mutate(
+        { id: flowId, body: built.value },
+        {
+          onSuccess: onDone,
+          onError: () => setSaveError("Couldn't save the flow."),
+        },
+      );
+      return;
+    }
     create.mutate(built.value, {
       onSuccess: onDone,
       onError: () => setSaveError("Couldn't save the flow."),
     });
   };
 
-  if (nodeTypes.isPending) {
+  if (nodeTypes.isPending || (flowId && detail.isPending)) {
     return (
       <div className="flex-1 px-5 pb-5">
-        <Loading label="Loading node types…" />
+        <Loading
+          label={detail.isPending ? "Loading flow…" : "Loading node types…"}
+        />
       </div>
     );
   }
-  if (nodeTypes.isError) {
+  if (nodeTypes.isError || detail.isError) {
+    const err = nodeTypes.error ?? detail.error;
     return (
       <div className="flex-1 px-5 pb-5">
-        <ErrorState
-          message={
-            nodeTypes.error instanceof Error
-              ? nodeTypes.error.message
-              : undefined
-          }
-        />
+        <ErrorState message={err instanceof Error ? err.message : undefined} />
       </div>
     );
   }
@@ -224,10 +273,16 @@ function BuilderBody({ onDone }: { onDone: () => void }) {
             </SelectContent>
           </Select>
         </div>
-        <label className="flex items-center gap-2 pb-2 text-sm">
-          <Switch checked={enabled} onCheckedChange={setEnabled} />
-          Enabled
-        </label>
+        <div className="flex items-center gap-2 pb-2 text-sm">
+          <Switch
+            id="builder-enabled"
+            checked={enabled}
+            onCheckedChange={setEnabled}
+          />
+          <Label htmlFor="builder-enabled" className="font-normal">
+            Enabled
+          </Label>
+        </div>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-[200px_1fr_320px] gap-3">
@@ -337,10 +392,15 @@ function BuilderBody({ onDone }: { onDone: () => void }) {
             {dryRun.isPending ? "Testing…" : "Test"}
           </Button>
           <Button
-            disabled={!serialised.ok || create.isPending || !name.trim()}
+            disabled={
+              !serialised.ok ||
+              create.isPending ||
+              update.isPending ||
+              !name.trim()
+            }
             onClick={save}
           >
-            {create.isPending ? "Saving…" : "Save flow"}
+            {create.isPending || update.isPending ? "Saving…" : "Save flow"}
           </Button>
         </div>
       </div>
