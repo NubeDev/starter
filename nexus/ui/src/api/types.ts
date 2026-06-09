@@ -1,0 +1,27 @@
+import type { components } from "@/api/generated";
+
+// Named wire types lifted from the codegen'd OpenAPI schema (F2 — the
+// single source of truth; never hand-edit these shapes). Bindings and
+// hooks import from here so call sites read in domain terms rather than
+// `components["schemas"][...]`.
+type S = components["schemas"];
+
+export type MeResponse = S["MeResponse"];
+export type Problem = S["Problem"];
+
+export type DatasourceSummary = S["DatasourceSummary"];
+export type DatasourceDetail = S["DatasourceDetail"];
+export type DatasourceKind = S["DatasourceKind"];
+export type CreateDatasourceRequest = S["CreateDatasourceRequest"];
+export type UpdateDatasourceRequest = S["UpdateDatasourceRequest"];
+export type TestDatasourceResponse = S["TestDatasourceResponse"];
+
+export type QueryRequest = S["QueryRequest"];
+export type QueryResponse = S["QueryResponse"];
+export type QueryStats = S["QueryStats"];
+export type ColumnSchema = S["ColumnSchema"];
+export type ResultColumnType = S["ResultColumnType"];
+
+export type CreateStreamRequest = S["CreateStreamRequest"];
+export type CreateStreamResponse = S["CreateStreamResponse"];
+export type StreamEvent = S["StreamEvent"];
