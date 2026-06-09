@@ -64,7 +64,7 @@ path = "src/bin/openapi.rs"
 [dev-dependencies]
 reqwest.workspace = true
 sqlx.workspace = true
-tokio = { workspace = true, features = ["test-util", "io-util"] }
+tokio = { workspace = true, features = ["test-util", "io-util", "net"] }
 tokio-util = { workspace = true, features = ["io"] }
 futures.workspace = true
 starter-store-postgres.workspace = true
@@ -84,3 +84,7 @@ path = "tests/routes/identity/wiring_test.rs"
 [[test]]
 name = "routes_authz_grant_gate"
 path = "tests/routes/authz/grant_gate_test.rs"
+
+[[test]]
+name = "routes_flows_e2e"
+path = "tests/routes/flows/flow_e2e_test.rs"

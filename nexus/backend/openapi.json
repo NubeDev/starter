@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Nexus API",
-    "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, and panels.",
+    "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, panels, and flows.",
     "version": "0.1.0"
   },
   "paths": {
@@ -276,6 +276,242 @@
         }
       }
     },
+    "/api/v1/flows": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "list_flows",
+        "responses": {
+          "200": {
+            "description": "Flows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlowSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "create_flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "get_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "update_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Updated"
+          },
+          "403": {
+            "description": "Not allowed to edit this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "delete_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/start": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "start_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Flow config is invalid"
+          },
+          "403": {
+            "description": "Not allowed to run this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/stop": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "stop_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stopped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to stop this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "tags": [
@@ -523,6 +759,29 @@
           }
         }
       },
+      "CreateFlowRequest": {
+        "type": "object",
+        "description": "Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
+        "required": [
+          "name",
+          "input",
+          "output"
+        ],
+        "properties": {
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {},
+          "name": {
+            "type": "string"
+          },
+          "output": {},
+          "pipeline": {}
+        }
+      },
       "CreatePanelRequest": {
         "type": "object",
         "description": "Create a panel under the dashboard named in the path. The dashboard is keyed\nby its immutable id (resolved from the path slug at the request edge).",
@@ -708,6 +967,64 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "FlowDetail": {
+        "type": "object",
+        "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
+        "required": [
+          "id",
+          "name",
+          "input",
+          "pipeline",
+          "output",
+          "enabled",
+          "running"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the flow is configured to run."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "input": {},
+          "name": {
+            "type": "string"
+          },
+          "output": {},
+          "pipeline": {},
+          "running": {
+            "type": "boolean",
+            "description": "Whether the FlowManager currently has it running on this node."
+          }
+        }
+      },
+      "FlowSummary": {
+        "type": "object",
+        "description": "A flow as it appears in the list: identity and run state, without the config\nblobs (those come from the detail endpoint).",
+        "required": [
+          "id",
+          "name",
+          "enabled",
+          "running"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "running": {
+            "type": "boolean"
           }
         }
       },
@@ -1046,6 +1363,27 @@
               "null"
             ]
           }
+        }
+      },
+      "UpdateFlowRequest": {
+        "type": "object",
+        "description": "Partially update a flow; omitted fields are left unchanged. Toggling\n`enabled` here does not by itself start/stop the flow — the dedicated\n`start`/`stop` routes do that and also flip this flag — so a plain update is\nfor editing the config or name.",
+        "properties": {
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "input": {},
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "output": {},
+          "pipeline": {}
         }
       },
       "UpdatePanelRequest": {

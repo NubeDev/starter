@@ -9,7 +9,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use nexus_engine::LiveRunner;
+use nexus_engine::{FlowManager, LiveRunner};
 use nexus_store::datasource::Envelope;
 use nexus_store::QueryGuards;
 use sqlx::PgPool;
@@ -32,6 +32,8 @@ pub struct AppState {
     pub guards: QueryGuards,
     /// Drives unbounded live streams into the SSE broadcast.
     pub live: LiveRunner,
+    /// Runs saved ingestion flows as long-lived streams, keyed by flow id.
+    pub flows: FlowManager,
     /// Signs/verifies the short-lived SSE subscription tokens.
     pub stream_signer: StreamTokenSigner,
     /// Lifetime granted to a freshly-minted stream token.

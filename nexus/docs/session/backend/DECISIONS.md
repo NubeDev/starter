@@ -3,6 +3,35 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D8 — Flow connectors are nexus custom builders (http_poll input, postgres output), not a vendor restore
+
+FlowManager runs the topology's weather→Postgres ingestion, which needs an input that
+*polls* an upstream API and an output that *writes* to Postgres. The trimmed vendor
+(D3) has neither. Two ways to get them; the chosen one avoids touching the vendor:
+
+- **`http_poll` input + `postgres` output are registered ArkFlow builders living in
+  `nexus-engine`** (`source/http_poll.rs`, `sink/postgres.rs`), mirroring the existing
+  `collector`/`sse` custom outputs. This is the SCOPE's "extend data sources via
+  `register_input_builder`" path — no core change, no fork, and crucially no vendor
+  edit. The alternative — restoring upstream's `http` input and `sql` output — was
+  rejected because upstream's `http` input is an *ingress HTTP server*, not a poller
+  (wrong shape for "poll weather every 15m"), and would drag axum/tower/flume/subtle
+  into the vendor for a tool that does not even fit the use case. `sqlx` and `reqwest`
+  (already workspace deps) are the only additions, both to `nexus-engine`.
+- **Kafka and Modbus stay out**, per the session scope. The only connectors restored
+  are the two the documented flow needs, and they are added as nexus code, not vendor.
+
+A flow is config-not-code: the `flows` table stores its three ArkFlow config blobs
+(input/pipeline/output) as jsonb, tenant-scoped and RLS-isolated like datasources.
+`FlowManager` runs each as a long-lived `Stream` keyed by the immutable flow id, with
+idempotent `start` and a `stop` that cancels the token; the running set is in-process
+(single-node for v1, like live fan-out — a multi-node flow scheduler/leader-election is
+a later concern, stated not discovered). The REST surface gates on the `nexus.flow`
+grant kind (D6): view→get, edit→update/start/stop, delete→delete; start also flips the
+stored `enabled` flag so the intent survives for a future resume-on-boot. End-to-end
+test: a flow created over the API polls a real local endpoint and lands the response in
+a Postgres table, then stops.
+
 ## D7 — Live SQL panels are a poll loop over the guarded query, not an ArkFlow streaming input
 
 A live panel watches a SQL datasource, but the engine has no streaming way to do

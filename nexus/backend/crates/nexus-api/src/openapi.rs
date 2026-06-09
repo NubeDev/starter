@@ -28,6 +28,13 @@ use utoipa::OpenApi;
         crate::routes::dashboards::delete::delete_dashboard,
         crate::routes::dashboards::add_panel::add_panel,
         crate::routes::dashboards::delete_panel::delete_panel,
+        crate::routes::flows::list::list_flows,
+        crate::routes::flows::create::create_flow,
+        crate::routes::flows::get::get_flow,
+        crate::routes::flows::update::update_flow,
+        crate::routes::flows::delete::delete_flow,
+        crate::routes::flows::start::start_flow,
+        crate::routes::flows::stop::stop_flow,
     )
 )]
 pub struct Paths;
@@ -40,7 +47,7 @@ pub fn document() -> OpenApiDoc {
         .version(env!("CARGO_PKG_VERSION"))
         .description(Some(
             "Control plane for the Nexus observability/BI platform: datasources, \
-             one-shot queries, live SSE streams, dashboards, and panels.",
+             one-shot queries, live SSE streams, dashboards, panels, and flows.",
         ))
         .build();
     doc.merge(nexus_spi::openapi::Schemas::openapi());

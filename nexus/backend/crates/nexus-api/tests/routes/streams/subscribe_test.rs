@@ -37,6 +37,7 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
             max_bytes: 8 * 1024 * 1024,
         },
         live: LiveRunner::new().expect("engine init"),
+        flows: nexus_engine::FlowManager::new().expect("flow manager init"),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),

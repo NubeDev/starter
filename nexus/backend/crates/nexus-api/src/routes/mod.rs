@@ -3,6 +3,7 @@
 
 pub mod dashboards;
 pub mod datasources;
+pub mod flows;
 pub mod me;
 pub mod query;
 pub mod streams;
@@ -21,4 +22,5 @@ pub fn product_router() -> Router<AppState> {
         .merge(streams::router())
         .merge(datasources::router())
         .merge(dashboards::router())
+        .merge(flows::router())
 }

@@ -9,6 +9,7 @@
 
 pub mod dashboard;
 pub mod datasource;
+pub mod flow;
 pub mod me;
 pub mod panel;
 pub mod query;

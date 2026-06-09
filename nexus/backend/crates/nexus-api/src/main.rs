@@ -9,7 +9,7 @@ use std::time::Duration;
 use nexus_api::middleware::StreamTokenSigner;
 use nexus_api::state::AppState;
 use nexus_api::{bootstrap, identity, serve};
-use nexus_engine::LiveRunner;
+use nexus_engine::{FlowManager, LiveRunner};
 use nexus_store::datasource::Envelope;
 use nexus_store::QueryGuards;
 use starter_store_postgres::Pool;
@@ -41,6 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         envelope: Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?,
         guards: default_guards(),
         live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,
+        flows: FlowManager::new().map_err(|e| format!("flow manager init: {e}"))?,
         stream_signer: StreamTokenSigner::new(cfg.stream_key.into_bytes()),
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,

@@ -14,6 +14,7 @@ use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceSummary,
     RedactedConnection, TestDatasourceResponse, UpdateDatasourceRequest,
 };
+use crate::dto::flow::{CreateFlowRequest, FlowDetail, FlowSummary, UpdateFlowRequest};
 use crate::dto::me::MeResponse;
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{ColumnSchema, QueryRequest, QueryResponse, QueryStats, ResultColumnType};
@@ -47,5 +48,9 @@ use crate::Problem;
     PanelDetail,
     CreatePanelRequest,
     UpdatePanelRequest,
+    FlowSummary,
+    FlowDetail,
+    CreateFlowRequest,
+    UpdateFlowRequest,
 )))]
 pub struct Schemas;
