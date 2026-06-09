@@ -1,4 +1,4 @@
-import { LayoutDashboard, Plus } from "lucide-react";
+import { Compass, LayoutDashboard, Plus } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -63,6 +63,21 @@ export function AppSidebar() {
                 <Plus />
                 <span>New dashboard</span>
               </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Data</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <NavLink to="/explore">
+                {({ isActive }) => (
+                  <SidebarMenuButton isActive={isActive} tooltip="Explore">
+                    <Compass />
+                    <span>Explore</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
