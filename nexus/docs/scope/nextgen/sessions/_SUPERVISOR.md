@@ -177,3 +177,11 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   WS-09's lane (committed only my docs). Blockers list = healthy: mostly "deferred follow-up NOT a
   blocker" + 2 pre-existing out-of-lane. NO further questions per human instruction — pure autonomous
   from here. 10/12 done, WS-09 building, WS-08b queued.
+- 2026-06-10 00:50 — All healthy, NO action, NO REAL BLOCKERS remaining. Cron firing (00:40/45/50).
+  WS-09 (last core WS) 🔵 wake PID 330356/child 330360 ALIVE ~15min, actively writing its scoped
+  modules: cache/key.rs + cache/store.rs (C3 cache-key tuple — all inputs WS-01/02/11 now committed,
+  ordering paid off), ratelimit/bucket.rs, quota/limiter.rs + main/serve/state wiring (§4 shared
+  mounts). Lock kernel-held, no STOP. WS-08b queued ⬜ (row 13) per human decision — will run after
+  WS-09. Filtered blocker list EMPTY (all TODOs now resolved/human-decided/deferred-follow-up/pre-
+  existing-out-of-lane). 10/12 core done; WS-09 building → then WS-08b. Autonomous per human "no
+  questions" instruction.
