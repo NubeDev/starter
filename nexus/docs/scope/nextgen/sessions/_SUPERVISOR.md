@@ -217,3 +217,10 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   NO Modbus files anywhere — correctly dropped. Lock kernel-held, no STOP, no real blockers. Only
   incomplete row is WS-08b 🔵 (WS-08 ⛔ is the superseded original). 11/12 ✅; WS-08b in mid/late
   build. After it commits → ENTIRE QUEUE DONE.
+- 2026-06-10 01:13 — All healthy, NO action. Cron firing (01:00/05/10). WS-08b 🔵 wake PID 344587/
+  child 344599 ALIVE 14min, in FINISHING phase: openapi.json + ui generated/index.ts touched <4min =
+  DTO-first codegen (regenerate OpenAPI → pnpm codegen, runs near commit). MQTT connector files
+  present (datasource/mqtt/mod.rs + probe.rs). Codegen rippled formatting touches into shared UI
+  consumers (flows/, PanelEditor.tsx) — benign codegen churn from regenerating shared
+  generated/index.ts; verify WS-08b commits only its own logic hunks next wake. Lock kernel-held, no
+  STOP, no real blockers. 11/12 ✅; WS-08b last item, near commit. NEXT WAKE likely = ALL DONE.
