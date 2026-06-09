@@ -3,6 +3,7 @@ import {
   Compass,
   Database,
   LayoutDashboard,
+  Shield,
   Workflow,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
@@ -101,6 +102,21 @@ export function AppSidebar() {
                   <SidebarMenuButton isActive={isActive} tooltip="Alerts">
                     <Bell />
                     <span>Alerts</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Manage</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <NavLink to="/access">
+                {({ isActive }) => (
+                  <SidebarMenuButton isActive={isActive} tooltip="Access">
+                    <Shield />
+                    <span>Access</span>
                   </SidebarMenuButton>
                 )}
               </NavLink>

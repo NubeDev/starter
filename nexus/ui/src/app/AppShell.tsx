@@ -20,6 +20,7 @@ const TITLES: Record<string, string> = {
   "/datasources": "Datasources",
   "/flows": "Flows",
   "/alerts": "Alerts",
+  "/access": "Access",
 };
 
 export function AppShell() {
