@@ -17,6 +17,7 @@ import { getCookie } from "@/lib/cookie";
 const TITLES: Record<string, string> = {
   "/": "Dashboards",
   "/explore": "Explore",
+  "/datasources": "Datasources",
 };
 
 export function AppShell() {

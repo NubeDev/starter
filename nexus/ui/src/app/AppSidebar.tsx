@@ -1,4 +1,4 @@
-import { Compass, LayoutDashboard } from "lucide-react";
+import { Compass, Database, LayoutDashboard } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -65,6 +65,16 @@ export function AppSidebar() {
                   <SidebarMenuButton isActive={isActive} tooltip="Explore">
                     <Compass />
                     <span>Explore</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <NavLink to="/datasources">
+                {({ isActive }) => (
+                  <SidebarMenuButton isActive={isActive} tooltip="Datasources">
+                    <Database />
+                    <span>Datasources</span>
                   </SidebarMenuButton>
                 )}
               </NavLink>
