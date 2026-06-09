@@ -185,3 +185,13 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   WS-09. Filtered blocker list EMPTY (all TODOs now resolved/human-decided/deferred-follow-up/pre-
   existing-out-of-lane). 10/12 core done; WS-09 building → then WS-08b. Autonomous per human "no
   questions" instruction.
+- 2026-06-10 00:54 — MILESTONE: WS-09 ✅ committed clean (813b01c4 — C3-keyed TTL query cache w/
+  single-flight + units_locale_tz placeholder per D4, per-tenant quota semaphore, token-bucket
+  rate-limit layer, run_cached seam; 94 lib tests green). **ALL 12 ORIGINAL CORE WORKSTREAMS NOW
+  RESOLVED: 11 ✅ DONE (03,04,07,10,01,02,11,12,05,06,09) + WS-08 deferred→WS-08b per human.** Only
+  WS-08b (⬜, human-decided MQTT-only) remains in queue. Loop log shows WS-09 wake logged complete,
+  but wake PID 330356/330360 still ALIVE 20min + lock HELD + WS-08b still ⬜ + nothing touched 3min:
+  WS-09 deliverable IS committed (no queue risk) — this is process-exit latency / pre-WS-08b-spawn
+  gap, NOT a wedge (under 25-min/3-firing threshold; flock self-heals). NEXT WAKE: expect WS-08b
+  spawned; if WS-08b still ⬜ + this wake exited without spawning → next cron firing picks it up;
+  only escalate if WS-08b stays ⬜ across 3+ firings with lock FREE. No real blockers. NO action.
