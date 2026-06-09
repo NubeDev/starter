@@ -72,13 +72,31 @@ mod zag_impl {
     use super::*;
     use crate::error::Error;
     use crate::event::Event;
-    use crate::model::AliasMap;
+    use crate::model::{AliasMap, ModelRef, Size};
     use futures::StreamExt;
     use zag::builder::AgentBuilder;
+
+    /// Translate a [`ModelRef`] into the model string zag's CLI wrappers accept.
+    /// A size alias maps to zag's own size words (`small`/`medium`/`large`) — NOT
+    /// to a provider API id, which zag rejects. A concrete id is passed verbatim
+    /// (the caller asserts zag/the CLI accepts it). `None` means "let zag pick its
+    /// default" rather than forcing a possibly-invalid value.
+    fn zag_model(m: &ModelRef) -> Option<&'static str> {
+        match m {
+            ModelRef::Alias(Size::Small) => Some("small"),
+            ModelRef::Alias(Size::Medium) => Some("medium"),
+            ModelRef::Alias(Size::Large) => Some("large"),
+            // A concrete id is handled by the caller (passed verbatim); this
+            // helper only resolves the size aliases to zag's vocabulary.
+            ModelRef::Concrete(_) => None,
+        }
+    }
 
     /// zag-backed [`Agent`]. All calls into zag's `AgentBuilder` are isolated to
     /// this adapter so a zag API change touches only this file.
     pub struct ZagAgent {
+        #[allow(dead_code)] // retained for parity with the inference tier; zag
+        // resolves size words itself, so the alias map isn't consulted here.
         aliases: AliasMap,
     }
 
@@ -91,13 +109,30 @@ mod zag_impl {
         /// because a control-plane run is non-interactive — there is no human at
         /// a TTY to approve tool calls.
         fn builder(&self, task: &AgentTask) -> AgentBuilder {
+            // `output_format("json")` is required for `exec` to capture the
+            // agent's reply into `AgentOutput.result`: with the default format
+            // zag's non-streaming exec returns an empty result for the Claude
+            // provider. JSON mode makes the final result line parseable.
             let mut b = AgentBuilder::new()
                 .provider(&task.backend)
-                .auto_approve(true);
-            if let Some(m) = task.model.as_ref() {
-                // A size alias resolves to a concrete id; zag also accepts its own
-                // tier names ("sonnet"), so a concrete passthrough covers both.
-                b = b.model(&self.aliases.resolve(m));
+                .auto_approve(true)
+                .output_format("json");
+            if let Some(cwd) = task.cwd.as_deref() {
+                b = b.root(cwd);
+            }
+            match task.model.as_ref() {
+                // A size alias maps to zag's own size words (small/medium/large) —
+                // NOT a provider API id, which zag's CLI wrappers reject.
+                Some(m @ ModelRef::Alias(_)) => {
+                    if let Some(tier) = zag_model(m) {
+                        b = b.model(tier);
+                    }
+                }
+                // A concrete id is the caller's explicit choice — pass it verbatim.
+                Some(ModelRef::Concrete(id)) => {
+                    b = b.model(id);
+                }
+                None => {}
             }
             b
         }

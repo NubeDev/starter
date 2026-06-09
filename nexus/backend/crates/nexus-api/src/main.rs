@@ -16,6 +16,17 @@ use starter_store_postgres::Pool;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // The zag agent tier drives `claude --print` non-interactively (using the
+    // CLI's own login — no API key). zag disables print mode unless this env var
+    // is set, to stop accidental API-token spend; for the control plane that
+    // headless mode is exactly the intent, so opt in unless the operator has
+    // already chosen a value. Set before any session can spawn the CLI.
+    if std::env::var_os("ZAG_CLAUDE_ALLOW_PRINT").is_none() {
+        // SAFETY: first statement in `main`, before pools/tasks start; no other
+        // thread reads this var until a much-later session run.
+        std::env::set_var("ZAG_CLAUDE_ALLOW_PRINT", "1");
+    }
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
