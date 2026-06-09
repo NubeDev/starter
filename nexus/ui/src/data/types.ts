@@ -98,13 +98,11 @@ export interface Dashboard {
   updatedAt: string;
 }
 
-/** A single point in time across all mapped series — the shape a widget
- *  receives after the query result is reshaped to its field mapping.
- *  Keyed by series `value` column; `x` carries the axis value. */
-export interface SeriesPoint {
-  x?: string | number;
-  [seriesColumn: string]: string | number | undefined;
-}
+/** One result row, keyed by query-result column name. The widget reads
+ *  the columns named in its field mapping (`x` for the axis, each
+ *  series' `value`). This is the raw `POST /query` row shape — no widget
+ *  vocabulary leaks into it. */
+export type SeriesPoint = Record<string, string | number | null | undefined>;
 
 /** The data a widget renders from — pure rows, already fetched and
  *  reshaped. Widgets receive this via props; they never fetch (F6). */
