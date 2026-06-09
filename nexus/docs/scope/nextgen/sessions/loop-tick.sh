@@ -34,6 +34,14 @@ fi
 cd "$REPO"
 echo "$(ts) firing one wake." >>"$LOG"
 
+# Heartbeat: a wake holds the lock for the whole subagent run (~20 min). If the machine sleeps or
+# claude crashes mid-wake, the lock releases but the WS row stays 🔵 with no Done/Blocked line.
+# A recovering firing reads this file: if the heartbeat is stale (>20 min) AND the lock is free AND
+# a row is still 🔵, the prior wake died → re-spawn that WS (its work is idempotent). Updated again
+# after the wake so a fresh start always sees a recent stamp while a wake is genuinely in flight.
+HEARTBEAT="$SESS/.loop.heartbeat"
+echo "$(ts) wake-start" >"$HEARTBEAT"
+
 # One headless wake. Claude reads the driver doc, runs the LOOP ALGORITHM once, spawns/gates one
 # WS, updates STATUS, and exits. --dangerously-skip-permissions because cron is non-interactive;
 # the work is confined to this repo on branch nexus-gaps.
@@ -45,4 +53,5 @@ echo "$(ts) firing one wake." >>"$LOG"
   --dangerously-skip-permissions \
   >>"$LOG" 2>&1
 
+echo "$(ts) wake-complete" >"$HEARTBEAT"
 echo "$(ts) wake complete." >>"$LOG"

@@ -57,6 +57,23 @@ pub fn register_nexus_resources(registry: &dyn ResourceRegistry) {
     }
 }
 
+/// Boolean form of [`require`]: does `principal` have `action` on the
+/// `(kind, id)` instance within `tenant`? Used to *filter* a collection to the
+/// instances the caller may see (e.g. listing only viewable dashboards), where
+/// a denied item is silently dropped rather than turned into a 403. Same engine
+/// check as `require`, so single-item and list views can't diverge.
+pub async fn can(
+    engine: &dyn PolicyEngine,
+    principal: &Principal,
+    action: &str,
+    kind: &str,
+    id: &str,
+    tenant: &str,
+) -> bool {
+    let object = ResourceRef::row(kind, id).with_tenant(tenant);
+    engine.check(principal, action, &object).await.is_allow()
+}
+
 /// Authorize `action` on the `(kind, id)` instance for `principal` within
 /// `tenant`. Returns `Ok(())` on allow, or a ready `403` response carrying the
 /// engine's stable deny reason on deny. The id is the resource's immutable

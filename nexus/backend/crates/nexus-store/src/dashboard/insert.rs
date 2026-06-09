@@ -16,11 +16,14 @@ pub async fn insert(
 ) -> Result<DashboardRecord, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(
-        "INSERT INTO nexus_dashboards (tenant_id, slug, name) VALUES ($1, $2, $3) RETURNING id",
+        "INSERT INTO nexus_dashboards (tenant_id, slug, name, icon, accent) \
+         VALUES ($1, $2, $3, $4, $5) RETURNING id",
     )
     .bind(tenant_id)
     .bind(&new.slug)
     .bind(&new.name)
+    .bind(&new.icon)
+    .bind(&new.accent)
     .fetch_one(&mut *tx)
     .await
     .map_err(conflict_or_internal)?;
@@ -31,6 +34,8 @@ pub async fn insert(
         tenant_id: tenant_id.to_string(),
         slug: new.slug.clone(),
         name: new.name.clone(),
+        icon: new.icon.clone(),
+        accent: new.accent.clone(),
     })
 }
 

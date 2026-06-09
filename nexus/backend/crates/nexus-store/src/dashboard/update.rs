@@ -23,14 +23,18 @@ pub async fn update(
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(
         "UPDATE nexus_dashboards SET \
-           name = COALESCE($2, name), \
-           slug = COALESCE($3, slug) \
+           name   = COALESCE($2, name), \
+           slug   = COALESCE($3, slug), \
+           icon   = COALESCE($4, icon), \
+           accent = COALESCE($5, accent) \
          WHERE id = $1 \
-         RETURNING id, tenant_id, slug, name",
+         RETURNING id, tenant_id, slug, name, icon, accent",
     )
     .bind(id)
     .bind(&patch.name)
     .bind(&patch.slug)
+    .bind(&patch.icon)
+    .bind(&patch.accent)
     .fetch_optional(&mut *tx)
     .await
     .map_err(conflict_or_internal)?;
@@ -41,6 +45,8 @@ pub async fn update(
         tenant_id: r.get::<String, _>("tenant_id"),
         slug: r.get::<String, _>("slug"),
         name: r.get::<String, _>("name"),
+        icon: r.get::<String, _>("icon"),
+        accent: r.get::<String, _>("accent"),
     }))
 }
 

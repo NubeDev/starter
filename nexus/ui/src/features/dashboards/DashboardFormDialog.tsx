@@ -12,11 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@nube/starter-ui-kit/components/dialog";
-import { Input } from "@nube/starter-ui-kit/components/input";
-import { Label } from "@nube/starter-ui-kit/components/label";
 
 import { createDashboard } from "@/api/dashboards/create";
 import type { DashboardSummary } from "@/api/types";
+import {
+  DashboardForm,
+  type DashboardFormValues,
+} from "@/features/dashboards/DashboardForm";
+import { DEFAULT_ACCENT, DEFAULT_ICON } from "@/features/dashboards/appearance";
 import { DASHBOARDS_KEY } from "@/features/dashboards/useDashboards";
 
 // Slugs are lower-kebab; derive one from the name so the user types once.
@@ -41,15 +44,25 @@ export function DashboardFormDialog({
   const client = useStarterClient();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const [values, setValues] = useState<DashboardFormValues>({
+    name: "",
+    icon: DEFAULT_ICON,
+    accent: DEFAULT_ACCENT,
+  });
   const [error, setError] = useState<string | null>(null);
 
-  const create = useMutation<DashboardSummary, Error, string>({
-    mutationFn: (n) => createDashboard(client, { name: n, slug: slugify(n) }),
+  const create = useMutation<DashboardSummary, Error, DashboardFormValues>({
+    mutationFn: (v) =>
+      createDashboard(client, {
+        name: v.name,
+        slug: slugify(v.name),
+        icon: v.icon,
+        accent: v.accent,
+      }),
     onSuccess: (summary) => {
       queryClient.invalidateQueries({ queryKey: DASHBOARDS_KEY });
       onOpenChange(false);
-      setName("");
+      setValues({ name: "", icon: DEFAULT_ICON, accent: DEFAULT_ACCENT });
       navigate(`/d/${summary.slug}`);
     },
     onError: (err) => {
@@ -64,7 +77,8 @@ export function DashboardFormDialog({
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
-    if (name.trim()) create.mutate(name.trim());
+    if (values.name.trim())
+      create.mutate({ ...values, name: values.name.trim() });
   }
 
   return (
@@ -75,24 +89,17 @@ export function DashboardFormDialog({
           <DialogDescription>Give it a name to get started.</DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={onSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="dashboard-name">Name</Label>
-            <Input
-              id="dashboard-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Cold chain"
-              autoFocus
-              required
-            />
-          </div>
+          <DashboardForm values={values} onChange={setValues} />
           {error ? (
             <p role="alert" className="text-sm text-destructive">
               {error}
             </p>
           ) : null}
           <DialogFooter>
-            <Button type="submit" disabled={create.isPending || !name.trim()}>
+            <Button
+              type="submit"
+              disabled={create.isPending || !values.name.trim()}
+            >
               {create.isPending ? "Creating…" : "Create"}
             </Button>
           </DialogFooter>

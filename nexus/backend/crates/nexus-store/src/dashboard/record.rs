@@ -10,6 +10,10 @@ pub struct DashboardRecord {
     pub tenant_id: String,
     pub slug: String,
     pub name: String,
+    /// lucide icon name for the sidebar/page chrome.
+    pub icon: String,
+    /// accent colour as an HSL triple string, e.g. "152 76% 44%".
+    pub accent: String,
 }
 
 /// A stored panel.
@@ -29,6 +33,8 @@ pub struct PanelRecord {
 pub struct NewDashboard {
     pub slug: String,
     pub name: String,
+    pub icon: String,
+    pub accent: String,
 }
 
 /// Partial update of a dashboard. Every field is optional — `None` leaves the
@@ -38,6 +44,8 @@ pub struct NewDashboard {
 pub struct DashboardPatch {
     pub name: Option<String>,
     pub slug: Option<String>,
+    pub icon: Option<String>,
+    pub accent: Option<String>,
 }
 
 /// Input to create a panel under a dashboard.

@@ -11,7 +11,8 @@ use crate::tenant_tx;
 pub async fn list(pool: &PgPool, tenant_id: &str) -> Result<Vec<DashboardRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let rows = sqlx::query(
-        "SELECT id, tenant_id, slug, name FROM nexus_dashboards ORDER BY created_at DESC",
+        "SELECT id, tenant_id, slug, name, icon, accent \
+         FROM nexus_dashboards ORDER BY created_at DESC",
     )
     .fetch_all(&mut *tx)
     .await
@@ -28,11 +29,14 @@ pub async fn by_slug(
     slug: &str,
 ) -> Result<Option<DashboardRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
-    let row = sqlx::query("SELECT id, tenant_id, slug, name FROM nexus_dashboards WHERE slug = $1")
-        .bind(slug)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(internal)?;
+    let row = sqlx::query(
+        "SELECT id, tenant_id, slug, name, icon, accent \
+         FROM nexus_dashboards WHERE slug = $1",
+    )
+    .bind(slug)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(row.as_ref().map(row_to_record))
 }
@@ -43,6 +47,8 @@ fn row_to_record(row: &sqlx::postgres::PgRow) -> DashboardRecord {
         tenant_id: row.get::<String, _>("tenant_id"),
         slug: row.get::<String, _>("slug"),
         name: row.get::<String, _>("name"),
+        icon: row.get::<String, _>("icon"),
+        accent: row.get::<String, _>("accent"),
     }
 }
 

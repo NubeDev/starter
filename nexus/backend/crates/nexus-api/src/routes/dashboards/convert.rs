@@ -4,12 +4,14 @@ use nexus_spi::dto::dashboard::{DashboardDetail, DashboardSummary};
 use nexus_spi::dto::panel::PanelDetail;
 use nexus_store::dashboard::{DashboardRecord, PanelRecord};
 
-/// List view: id + slug + name.
+/// List view: id + slug + name + appearance.
 pub fn to_summary(r: &DashboardRecord) -> DashboardSummary {
     DashboardSummary {
         id: r.id,
         slug: r.slug.clone(),
         name: r.name.clone(),
+        icon: r.icon.clone(),
+        accent: r.accent.clone(),
     }
 }
 
@@ -19,6 +21,8 @@ pub fn to_detail(d: &DashboardRecord, panels: &[PanelRecord]) -> DashboardDetail
         id: d.id,
         slug: d.slug.clone(),
         name: d.name.clone(),
+        icon: d.icon.clone(),
+        accent: d.accent.clone(),
         panels: panels.iter().map(to_panel).collect(),
     }
 }

@@ -32,9 +32,13 @@ pub async fn create_dashboard(
         Ok(t) => t,
         Err(resp) => return resp,
     };
+    // Appearance is optional on the wire; fall back to the same defaults the
+    // DB column carries so a name/slug-only client still gets a valid record.
     let new = NewDashboard {
         slug: req.slug,
         name: req.name,
+        icon: req.icon.unwrap_or_else(|| "Activity".to_string()),
+        accent: req.accent.unwrap_or_else(|| "152 76% 44%".to_string()),
     };
     match dashboard::insert(&state.metadata, &tenant, &new).await {
         Ok(rec) => Json(to_summary(&rec)).into_response(),

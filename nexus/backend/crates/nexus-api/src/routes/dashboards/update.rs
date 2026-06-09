@@ -63,6 +63,8 @@ pub async fn update_dashboard(
     let patch = DashboardPatch {
         name: req.name,
         slug: req.slug,
+        icon: req.icon,
+        accent: req.accent,
     };
     match dashboard::update(&state.metadata, &tenant, dash.id, &patch).await {
         Ok(Some(rec)) => Json(to_summary(&rec)).into_response(),

@@ -13,5 +13,9 @@ pub struct DashboardDetail {
     pub id: Uuid,
     pub slug: String,
     pub name: String,
+    /// lucide icon name for the sidebar/page chrome.
+    pub icon: String,
+    /// accent colour as an HSL triple string, e.g. "152 76% 44%".
+    pub accent: String,
     pub panels: Vec<PanelDetail>,
 }

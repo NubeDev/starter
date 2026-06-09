@@ -133,6 +133,14 @@ previous firing's subagent. Use durable signals only: the WS-xx.md `Status:` lin
   subagent died; re-spawn the SAME WS fresh (it resumes from committed state — work is idempotent
   because each WS reads STATUS + git to see what's already landed).
 
+**Heartbeat-based death detection (the precise signal):** `loop-tick.sh` writes
+`sessions/.loop.heartbeat` (`<utc> wake-start`) before the long claude call and `<utc> wake-complete`
+after. A recovering firing that holds the lock checks: if a WS row is 🔵, its WS-xx.md is still
+`In-progress`, the heartbeat reads `wake-start`, AND that timestamp is >20 min old → the prior wake
+died mid-run (machine slept / claude crashed). Re-spawn that SAME WS. If the heartbeat is recent,
+a wake is genuinely in flight — but it would also hold the lock, so a fresh firing wouldn't get here
+anyway. This file is the tie-breaker for the case where the lock was force-released by a kill.
+
 **The installer:** `sessions/install-cron.sh` writes the crontab line. To stop the run, the human
 runs `crontab -r` (or removes the line) — leave a `STOP` sentinel check too: if a file
 `sessions/.loop.STOP` exists, every firing exits immediately without spawning. That's the kill switch.
