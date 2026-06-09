@@ -10,37 +10,49 @@ Ordered by UI impact. Cross-references: UI blockers are tracked in
 
 ---
 
-## 1. A running `nexus-api` to point at  — **highest leverage**
-The single biggest unblocker. The UI's dev runtime and its **integration tests run against a
-real backend** (README §6 / R11 — no mocks). Nothing is listening on a port yet.
+## 1. A running `nexus-api` to point at  ✅ LIVE
+`nexus-api` is up on `127.0.0.1:8080`; the dev proxy now forwards `/api/v1` **and** `/auth`
+there (cookie-session login lives at the root, outside `/api/v1`). Seeded admin
+`admin@nexus.local` / `change-me-admin`.
 
-- **Need:** a dev instance of `nexus-api` reachable on a known port (with a seeded tenant +
-  login so `/me` returns a real principal).
-- **UI proxies to** `127.0.0.1:8099` today (`nexus/ui/vite.config.ts`); tell us the real port and
-  we'll repoint it.
-- **Unblocks:** live verification of *every* screen end-to-end, and the F10 integration tests
-  (which can't be written against a faked network).
+- **UI consumed it:** verified end-to-end — login → `GET /me` returns the real principal → the
+  app renders the signed-in landing. Needed a **Nexus AuthProvider** (the starter one assumed
+  `/api/v1/auth/*`, which 404s; nexus mounts `/auth/login` + `/api/v1/me`).
+- **Still open:** the F10 *integration* suite (Playwright/testcontainers) wants this instance to
+  be reliably up in CI/dev. Manual live verification is done; automating it is next.
 
-## 2. `PATCH /panels/{id}` (or a bulk dashboard-layout `PUT`)  — canvas layout-save
-The contract has `POST /dashboards/{slug}/panels` and `DELETE /panels/{id}` but **no panel
-update**, so a drag/resize on the canvas can't be persisted (UI blocker **B5**).
+## 2. `PATCH /panels/{id}` — canvas layout-save  ✅ SHIPPED & CONSUMED
+`PATCH /api/v1/panels/{id}` is now in `openapi.json`, consuming the existing
+`UpdatePanelRequest`. It's a **partial** update: any subset of
+`layout`/`title`/`sql`/`datasource_id`/`viz` (omitted fields are left unchanged), returns the
+updated `PanelDetail` (200), or 404 if the panel isn't visible to the tenant. Authorized as
+`edit` on the owning dashboard, same as add/delete. The owning `dashboard_id` is immutable
+(panels don't move between dashboards through this path).
 
-- **Need:** `PATCH /panels/{id}` accepting at least `layout` (the opaque grid JSON the UI owns),
-  ideally also `title`/`sql`/`datasource_id`/`viz` so panels are editable without delete+re-add.
-  A bulk `PUT /dashboards/{slug}/layout` taking all panel positions at once would be even better
-  for a multi-panel drag.
-- **UI is ready:** `DashboardGrid.onLayoutChange` already computes the changed-widgets diff
-  (`applyGridLayout`); persisting is a one-call addition the moment the route exists.
-- **Note:** `UpdatePanelRequest` is *already defined* in the contract schema — it just has no
-  route consuming it.
+- **UI action:** re-run `pnpm codegen`; wire `DashboardGrid.onLayoutChange` → one PATCH per
+  changed widget (or per drag). Verified live: a `{layout, title}`-only PATCH left sql/viz/ds
+  untouched.
+- A bulk `PUT /dashboards/{slug}/layout` for multi-panel drag was **not** built — say if the
+  per-panel PATCH is too chatty for big multi-drags and I'll add the bulk route.
 
-## 3. Datasource **test-connection** endpoint
-`TestDatasourceResponse` is defined in the contract schema but **no route returns it**, so the
-"Test connection" affordance in the datasource form has nothing to call.
+## 3. Datasource **test-connection** endpoint  ✅ SHIPPED
+`POST /api/v1/datasources/{id}/test` → `TestDatasourceResponse` is now in `openapi.json`.
+It resolves the caller's datasource (same `view` gate as query), builds/reuses the pool, and
+runs `SELECT 1` to force a real round-trip. Outcomes:
+- success → `200 { "ok": true, "latency_ms": 20 }`
+- failed probe → `200 { "ok": false, "message": "<driver reason>" }` — note **200, not an error
+  status**: a failed connection is a normal Test-button result. `message` is the sanitized
+  first line of the driver error (secret-free), e.g. `"pool timed out while waiting for an open
+  connection"`.
+- `404` if the datasource isn't visible to the tenant; `403` if not authorized to view it.
 
-- **Need:** something like `POST /datasources/{id}/test` (or a pre-create
-  `POST /datasources/test` taking a connection body) → `TestDatasourceResponse`.
-- **UI adds:** a Test button on the datasource form/row — one binding + a button.
+- **UI action:** re-run `pnpm codegen`; add the Test button → bind to this route on the
+  **saved** datasource row/form.
+- **Caveats for the UI:** (a) this tests an *already-created* datasource by id — there's no
+  pre-create `POST /datasources/test` taking a raw connection body yet; test after save (say if
+  you need the pre-create variant). (b) A wrong host/port fails via the connect **acquire
+  timeout (~10s)**, so show a spinner and don't race it — success is fast (~20ms), failure can
+  take up to ten seconds.
 
 ## 4. `nexus-api` serving the **extensions manifest + remoteEntry**  — federation loading
 The federation *host* is wired in the UI (`ExtensionHostProvider` + `<ExtensionSlot>`s), but
@@ -53,24 +65,28 @@ The federation *host* is wired in the UI (`ExtensionHostProvider` + `<ExtensionS
   activates loading. (v1 only needs the in-repo remote; 3rd-party gating is later.)
 - Lower priority than 1–3 unless extension panels are needed soon.
 
-## 5. `GET /me` payload — please confirm it's complete
-The UI's `usePrincipal`/`useCan` read `{ subject, role, scopes, teams, tenant_id }` from `/me`.
-That's what the current contract returns and it's sufficient for per-user gating — **no change
-needed unless** more is required for authz (e.g. effective permissions beyond team/scope
-strings). Flagging only so it's a conscious "yes, that's the final shape."
+## 5. `GET /me` payload  ✅ CONFIRMED
+Verified live against the seeded admin: `GET /api/v1/me` returns exactly
+`{ subject, role, tenant_id, teams, scopes }` — the shape `usePrincipal`/`useCan` already read.
+That's the final shape; no change planned. (Note: auth is **cookie-session**, not bearer —
+`POST /auth/login` sets the session cookie + returns a CSRF token to echo on mutations via
+`x-csrf-token`. The `/auth/*` routes live outside `/api/v1`, so the dev proxy now forwards both.)
 
 ---
 
 ## Not blockers — already unblocked, UI is building / has built
 
-- **Alerts** — `/alerts/{rules,channels,events,silences}` **just landed in the contract** ✅.
-  The UI placeholder is being replaced with real screens; no backend action needed. If the
-  alert DTO shapes are still in flux, a heads-up before a breaking change (R12) helps.
+- **Alerts** — `/alerts/{rules,channels,events,silences}` ✅ **CONSUMED.** Tabbed Alerts page
+  (rules CRUD + channels + silences + event history) is wired and verified live (lists 200,
+  rule create+delete round-trips). If the alert DTO shapes change, a heads-up before a breaking
+  change (R12) helps.
+- **Per-datasource query** — `POST /datasources/{id}/query` ✅ **CONSUMED.** Panels and Explore
+  now query their own datasource; resolves the multi-datasource question below.
 - **Flows** — `/flows` CRUD + start/stop is fully wired (list/run/stop/delete + a JSON config
   editor). No backend ask. *Nice-to-have later:* connector/schema metadata (what input/output
   plugin types exist + their field schemas) would let us build a **visual** flow builder instead
   of raw-JSON editing — not required.
-- **Query** — `POST /query` works. *Open question, not blocking:* it currently targets a single
+- **Query** — `POST /query` works (and per-datasource above). *Resolved:* it once targeted a single
   server-configured datasource (no `datasource_id` in the request body). When a dashboard has
   panels across **different** datasources, each panel needs to name its datasource. If/when you
   add per-request datasource routing, the UI already carries `datasourceId` per panel and will
