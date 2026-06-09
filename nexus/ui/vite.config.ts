@@ -26,6 +26,10 @@ export default defineConfig({
     proxy: {
       "/api/v1": { target: "http://127.0.0.1:4780", changeOrigin: true },
       "/auth": { target: "http://127.0.0.1:4780", changeOrigin: true },
+      // The authz admin surface (grants, share-scope, resource instances) is
+      // mounted at `/v1/authz/*` — outside `/api/v1` — so dashboard sharing 404s
+      // through the dev server without its own proxy entry.
+      "/v1": { target: "http://127.0.0.1:4780", changeOrigin: true },
     },
   },
 });

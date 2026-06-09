@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Eye, Pencil, Plus } from "lucide-react";
+import { Eye, Pencil, Plus, Share2 } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import type { Dashboard } from "@/data/types";
 import { useUiStore } from "@/store/ui";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
+import { ShareDashboardDialog } from "@/features/dashboards/ShareDashboardDialog";
 
 // The dashboard's header strip: its name, an Add-panel action (edit mode
 // only), and the view/edit toggle. Edit mode lives in the shared UI store
@@ -14,6 +15,7 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
   const editing = useUiStore((s) => s.editMode);
   const toggle = useUiStore((s) => s.toggleEditMode);
   const [adding, setAdding] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   return (
     <div className="flex items-center justify-between gap-3">
@@ -33,6 +35,15 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
           </Button>
         ) : null}
         <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={() => setSharing(true)}
+        >
+          <Share2 className="size-4" />
+          Share
+        </Button>
+        <Button
           variant={editing ? "default" : "outline"}
           size="sm"
           className="gap-2"
@@ -46,6 +57,11 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         dashboard={dashboard}
         open={adding}
         onOpenChange={setAdding}
+      />
+      <ShareDashboardDialog
+        dashboardId={dashboard.id}
+        open={sharing}
+        onOpenChange={setSharing}
       />
     </div>
   );
