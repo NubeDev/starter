@@ -14,8 +14,15 @@ nexus-store.workspace = true
 nexus-ai.workspace = true
 nexus-skills.workspace = true
 
-starter-spi.workspace = true
+# `preferences` (which pulls `units`) is enabled so handlers can name the
+# `ResolvedPreferences` / `Quantity` / `Unit` types for WS-11 units conversion.
+starter-spi = { workspace = true, features = ["preferences"] }
 starter-server.workspace = true
+# WS-11: reuse the platform preference store (PG) + three-layer resolver rather
+# than reinventing them. `postgres` enables `PgPrefsStore`. The nexus routes pin
+# the workspace to the caller's tenant (so isolation is not the spoofable starter
+# `?org=`), so the starter `routes`/`middleware` features are deliberately off.
+starter-prefs = { workspace = true, features = ["postgres"] }
 starter-auth-users = { workspace = true, features = ["postgres"] }
 starter-authz = { workspace = true, features = ["postgres"] }
 starter-store-postgres.workspace = true
@@ -111,6 +118,10 @@ path = "tests/routes/streams/subscribe_test.rs"
 [[test]]
 name = "routes_identity_wiring"
 path = "tests/routes/identity/wiring_test.rs"
+
+[[test]]
+name = "routes_me_preferences_e2e"
+path = "tests/routes/me/preferences_e2e_test.rs"
 
 [[test]]
 name = "routes_authz_grant_gate"

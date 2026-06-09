@@ -42,6 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kinds = nexus_api::kinds::Registry::load_dir(&cfg.kinds_dir)?;
     tracing::info!(count = kinds.len(), dir = %cfg.kinds_dir.display(), "loaded query-kinds");
 
+    let prefs = nexus_api::prefs::prefs_store(metadata.clone());
     let state = AppState {
         metadata,
         datasource,
@@ -58,6 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
         kinds: std::sync::Arc::new(kinds),
+        prefs,
     };
 
     // The alert scheduler runs for the process's lifetime, evaluating due rules

@@ -27,6 +27,28 @@
 
 <!-- newest first -->
 
+### [2026-06-09 22:40] WS-11 — series quantity-tagging + query-edge conversion deferred (follow-up, NOT a blocker)
+- **What I was doing:** WS-11's "bulk of the effort" per the spec §2 — tag query/stream series with a
+  `quantity` so the `SeriesEnvelope` + `UnitsCtx::convert` can render values in the caller's units at
+  the response edge.
+- **The situation (not a hard blocker):** the backend prefs + units substrate landed green
+  (migration `1501_prefs.sql`, `PgPrefsStore` mount, route-pinned `/api/v1/me/preferences`,
+  `Accept-Units`/`UnitsCtx` layer mounted). But there is **no backend contract for where a series
+  declares its quantity**: WS-04 made panel config opaque UI-only layout JSON (no backend series/field
+  DTO), and WS-10 kinds do not yet declare output quantities. Tagging a column as "temperature"
+  therefore has no home in any committed schema.
+- **Options I see:** (a) add an output-quantity declaration to the WS-10 kind manifest (kind authors
+  tag each result column) — cleanest, but edits the WS-10 lane; (b) a per-panel field→quantity map in
+  the WS-04/WS-05 dashboard JSON model — UI-driven, overlaps the C1 model WS-05 owns; (c) infer
+  quantity from column-name heuristics — fragile, rejected.
+- **My recommendation:** (a) — kind-declared output quantities, run as a small WS-10 follow-up, then a
+  WS-11 follow-up wires `ToCanonicalSeries`/`Accept-Units` through the kind-mode query path.
+- **What I did instead:** landed the full backend prefs/units substrate (WS-11 row ✅); logged this
+  series-tagging delta + the UI prefs screen / `PreferencesProvider` mount / alerting
+  render-in-recipient-units couplings as follow-ups in WS-11.md.
+- **To unblock me:** confirm option (a) (kind manifest carries output quantities) or pick another home
+  for the series→quantity contract.
+
 ### [2026-06-09 21:35] WS-01 — zoom-by-drag + per-panel time override deferred (follow-up, NOT a blocker)
 - **What I was doing:** WS-01 acceptance items 6 (drag-zoom on a line/area panel writes the global
   range back; "zoom out / back" affordance) and 7 (per-panel time override — explicitly "stretch").

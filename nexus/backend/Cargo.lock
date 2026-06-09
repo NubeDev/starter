@@ -3227,6 +3227,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "iso_country"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20633e788d3948ea7336861fdb09ec247f5dae4267e8f0743fa97de26c28624d"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
+name = "iso_currency"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fed4b3f0921193400b1df556228bfd917c57c7fa38bda904d552653c5c3b641b"
+dependencies = [
+ "iso_country",
+ "proc-macro2",
+ "quote",
+ "serde",
+]
+
+[[package]]
 name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3773,6 +3794,7 @@ dependencies = [
  "starter-authz",
  "starter-config",
  "starter-observability",
+ "starter-prefs",
  "starter-server",
  "starter-spi",
  "starter-store-postgres",
@@ -5917,6 +5939,20 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "starter-prefs"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "iso_currency",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "starter-spi",
+ "tracing",
+ "utoipa",
 ]
 
 [[package]]

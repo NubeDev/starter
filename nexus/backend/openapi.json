@@ -1529,6 +1529,65 @@
         }
       }
     },
+    "/api/v1/me/preferences": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`GET /api/v1/me/preferences` — resolve the caller's user → org → default\npreferences for its own tenant. 401 without a tenant-bound principal.",
+        "operationId": "get_me_preferences",
+        "responses": {
+          "200": {
+            "description": "Resolved preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedPreferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`PATCH /api/v1/me/preferences` — merge a partial update into the caller's\nuser-layer row for its own tenant. Missing key leaves a field unchanged;\nexplicit `null` reverts it to inherit. 401 without a tenant-bound principal.",
+        "operationId": "patch_me_preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved preferences after patch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedPreferences"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
     "/api/v1/panels/{id}": {
       "delete": {
         "tags": [
@@ -2876,6 +2935,16 @@
           }
         }
       },
+      "DateFormat": {
+        "type": "string",
+        "description": "Closed enum of date-format choices. Variants locked in stage 1.\n*Revisit trigger:* a locale ships that none of these three formats\nfit.",
+        "enum": [
+          "auto",
+          "YYYY-MM-DD",
+          "DD/MM/YYYY",
+          "MM/DD/YYYY"
+        ]
+      },
       "FlowDetail": {
         "type": "object",
         "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
@@ -2975,6 +3044,16 @@
           }
         }
       },
+      "NumberFormat": {
+        "type": "string",
+        "description": "Closed enum of number-format choices. Variants locked in stage 1.\n*Revisit trigger:* Indian grouping (`1,23,456.78`) becomes a\nshipped requirement.",
+        "enum": [
+          "auto",
+          "1,234.56",
+          "1.234,56",
+          "1 234,56"
+        ]
+      },
       "PanelDetail": {
         "type": "object",
         "description": "A panel as the canvas renders it: which datasource + query feed it, how it is\ndrawn, and where it sits on the grid.",
@@ -3011,6 +3090,161 @@
           "viz": {
             "type": "string",
             "description": "Visualization kind: `line` | `bar` | `table` | `stat` | …"
+          }
+        }
+      },
+      "PreferencesPatch": {
+        "type": "object",
+        "description": "`PATCH` body shape — mirror of [`super::ResolvedPreferences`] with\nevery field made optional.",
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional ISO 4217 currency code or `\"auto\"`."
+          },
+          "date_format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DateFormat",
+                "description": "Optional date format."
+              }
+            ]
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional BCP-47 language subtag."
+          },
+          "length_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional length unit."
+              }
+            ]
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional BCP-47 locale tag."
+          },
+          "mass_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional mass unit."
+              }
+            ]
+          },
+          "number_format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NumberFormat",
+                "description": "Optional number format."
+              }
+            ]
+          },
+          "pressure_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional pressure unit."
+              }
+            ]
+          },
+          "speed_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional speed unit."
+              }
+            ]
+          },
+          "temperature_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional temperature unit."
+              }
+            ]
+          },
+          "theme": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Theme",
+                "description": "Optional theme. User-only field."
+              }
+            ]
+          },
+          "time_format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TimeFormat",
+                "description": "Optional time format."
+              }
+            ]
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional IANA timezone identifier or `\"auto\"`."
+          },
+          "unit_system": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UnitSystem",
+                "description": "Optional `metric` / `imperial` toggle."
+              }
+            ]
+          },
+          "week_start": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WeekStart",
+                "description": "Optional week-start."
+              }
+            ]
           }
         }
       },
@@ -3346,6 +3580,89 @@
           }
         }
       },
+      "ResolvedPreferences": {
+        "type": "object",
+        "description": "Fully-resolved per-principal preferences. All fields are concrete —\nthe resolver has already collapsed user → org → system → ICU\nchains, so callers can trust every value.",
+        "required": [
+          "timezone",
+          "locale",
+          "language",
+          "unit_system",
+          "temperature_unit",
+          "pressure_unit",
+          "speed_unit",
+          "length_unit",
+          "mass_unit",
+          "date_format",
+          "time_format",
+          "week_start",
+          "number_format",
+          "currency",
+          "theme"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (e.g. `\"USD\"`, `\"EUR\"`). Never `\"auto\"`\nonce resolved."
+          },
+          "date_format": {
+            "$ref": "#/components/schemas/DateFormat",
+            "description": "Concrete date format — never `Auto` once resolved."
+          },
+          "language": {
+            "type": "string",
+            "description": "BCP-47 language subtag (e.g. `\"en\"`, `\"fr\"`). Drives i18n\nmessage catalogue lookup."
+          },
+          "length_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete length unit (one of `Meter`, `Foot`)."
+          },
+          "locale": {
+            "type": "string",
+            "description": "BCP-47 locale tag (e.g. `\"en-US\"`, `\"fr-FR\"`). Drives ICU\nformatting fallbacks."
+          },
+          "mass_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete mass unit (one of `Kilogram`, `Pound`)."
+          },
+          "number_format": {
+            "$ref": "#/components/schemas/NumberFormat",
+            "description": "Concrete number format — never `Auto` once resolved."
+          },
+          "pressure_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete pressure unit (one of `Kilopascal`, `Psi`, `Bar`)."
+          },
+          "speed_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete speed unit (one of `MeterPerSecond`,\n`KilometerPerHour`, `MilePerHour`, `Knot`)."
+          },
+          "temperature_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete temperature unit (one of `Celsius`, `Fahrenheit`)."
+          },
+          "theme": {
+            "$ref": "#/components/schemas/Theme",
+            "description": "UI theme (`Light`, `Dark`, or `System`). User-only field."
+          },
+          "time_format": {
+            "$ref": "#/components/schemas/TimeFormat",
+            "description": "Concrete time format — never `Auto` once resolved."
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. `\"Europe/Paris\"`,\n`\"America/New_York\"`). Never `\"auto\"` once resolved."
+          },
+          "unit_system": {
+            "$ref": "#/components/schemas/UnitSystem",
+            "description": "`metric` or `imperial`. Drives per-unit `Auto` derivation\nupstream; by the time it lands here the per-unit fields below\nare already concrete, so this value is informational."
+          },
+          "week_start": {
+            "$ref": "#/components/schemas/WeekStart",
+            "description": "Concrete week-start — never `Auto` once resolved."
+          }
+        }
+      },
       "ResultColumnType": {
         "type": "string",
         "description": "The column's logical type, derived from the Arrow schema of the result.\nKept deliberately coarse — the frontend renders cells, it does not need the\nfull Arrow type lattice. Anything not in this set arrives as [`Self::Other`]\nwith the rows already JSON-encoded.",
@@ -3620,6 +3937,77 @@
             "type": "boolean"
           }
         }
+      },
+      "Theme": {
+        "type": "string",
+        "description": "Closed enum of UI theme choices. User-only field — the org-layer\nPreferences DTO omits `theme` entirely. *Revisit trigger:* a\nconsumer needs org-enforced theming.",
+        "enum": [
+          "light",
+          "dark",
+          "system"
+        ]
+      },
+      "TimeFormat": {
+        "type": "string",
+        "description": "Closed enum of clock formats. Variants locked in stage 1.\n*Revisit trigger:* none expected.",
+        "enum": [
+          "auto",
+          "24h",
+          "12h"
+        ]
+      },
+      "Unit": {
+        "type": "string",
+        "description": "Closed enum of unit codes for the v1 surface. Variants are locked\nin stage 1 of the Phase 0 plan.",
+        "enum": [
+          "celsius",
+          "fahrenheit",
+          "kilopascal",
+          "psi",
+          "bar",
+          "meter_per_second",
+          "kilometer_per_hour",
+          "mile_per_hour",
+          "knot",
+          "meter",
+          "foot",
+          "kilogram",
+          "pound",
+          "second",
+          "millisecond",
+          "minute",
+          "hour",
+          "day",
+          "cubic_meter",
+          "liter",
+          "milliliter",
+          "gallon_us",
+          "fluid_ounce_us",
+          "joule",
+          "kilojoule",
+          "kilowatt_hour",
+          "btu",
+          "watt",
+          "kilowatt",
+          "horsepower",
+          "square_meter",
+          "square_foot",
+          "acre",
+          "hectare",
+          "radian",
+          "degree",
+          "hertz",
+          "kilohertz",
+          "megahertz"
+        ]
+      },
+      "UnitSystem": {
+        "type": "string",
+        "description": "Closed enum of unit systems. Variants locked in stage 1 of the\nPhase 0 plan. *Revisit trigger:* none expected — US-customary vs\nImperial nuance is handled in the per-unit derivation, not by\nadding a third variant here.",
+        "enum": [
+          "metric",
+          "imperial"
+        ]
       },
       "UpdateAgentRequest": {
         "type": "object",
@@ -4012,6 +4400,15 @@
           "datasource",
           "interval",
           "textbox"
+        ]
+      },
+      "WeekStart": {
+        "type": "string",
+        "description": "Closed enum of week-start choices. Variants locked in stage 1.\n*Revisit trigger:* a locale that starts the week on Saturday (parts\nof MENA) surfaces as a shipped requirement.",
+        "enum": [
+          "auto",
+          "monday",
+          "sunday"
         ]
       }
     }

@@ -14,6 +14,7 @@ pub mod identity;
 pub mod kinds;
 pub mod middleware;
 pub mod openapi;
+pub mod prefs;
 pub mod routes;
 pub mod serve;
 pub mod state;

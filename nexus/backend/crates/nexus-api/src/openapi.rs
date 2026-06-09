@@ -15,6 +15,8 @@ use utoipa::OpenApi;
     info(title = "Nexus API", version = "0.1.0"),
     paths(
         crate::routes::me::get::get_me,
+        crate::routes::me::preferences::get_me_preferences,
+        crate::routes::me::preferences::patch_me_preferences,
         crate::routes::query::run::run_query,
         crate::routes::query::kinds::list_query_kinds,
         crate::routes::query::history::list_query_history,
@@ -74,7 +76,14 @@ use utoipa::OpenApi;
         crate::routes::variables::create::create_variable,
         crate::routes::variables::update::update_variable,
         crate::routes::variables::delete::delete_variable,
-    )
+    ),
+    components(schemas(
+        // Preferences (WS-11) — starter-spi types referenced by the
+        // `/api/v1/me/preferences` handlers. Registered here so the document's
+        // `$ref`s resolve without nexus-spi re-exporting starter types.
+        starter_spi::preferences::ResolvedPreferences,
+        starter_spi::preferences::PreferencesPatch,
+    )),
 )]
 pub struct Paths;
 

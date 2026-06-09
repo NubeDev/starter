@@ -34,6 +34,7 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         stream_token_ttl: Duration::from_secs(60),
         engine: std::sync::Arc::new(starter_authz::testing::AllowAll),
         kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
+        prefs: nexus_api::prefs::prefs_store(pool.clone()),
     }
 }
 

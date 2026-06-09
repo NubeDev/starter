@@ -45,6 +45,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         stream_token_ttl: Duration::from_secs(60),
         engine: id.engine.clone(),
         kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
+        prefs: nexus_api::prefs::prefs_store(admin.clone()),
     };
     let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
     TestApp::spawn(router).await

@@ -31,6 +31,7 @@ nexus-skills = { path = "crates/nexus-skills" }
 # dependencies cross workspace boundaries freely; these are NOT forked.
 starter-spi            = { path = "../../crates/starter-spi" }
 starter-server         = { path = "../../crates/starter-server" }
+starter-prefs          = { path = "../../crates/starter-prefs" }
 starter-auth-users     = { path = "../../crates/starter-auth-users" }
 starter-authz          = { path = "../../crates/starter-authz" }
 starter-store-postgres = { path = "../../crates/starter-store-postgres" }

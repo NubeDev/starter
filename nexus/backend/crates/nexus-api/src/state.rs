@@ -18,6 +18,7 @@ use starter_spi::authz::PolicyEngine;
 use crate::datasource_pools::DatasourcePools;
 use crate::kinds::Registry as KindRegistry;
 use crate::middleware::StreamTokenSigner;
+use crate::prefs::NexusPrefs;
 
 /// Cloneable handle bundle for the control plane.
 #[derive(Clone)]
@@ -57,4 +58,9 @@ pub struct AppState {
     /// binds the kind's SQL through the shared binder. Shared read-only across
     /// requests; an empty registry means kind-mode requests 404.
     pub kinds: Arc<KindRegistry>,
+    /// User/org preference handles (WS-11): the Postgres store + system defaults
+    /// backing both `/me/preferences` and the `Accept-Units` units-conversion
+    /// middleware. `workspace_id` is the caller's tenant; storage is route-pinned
+    /// to it for isolation.
+    pub prefs: NexusPrefs,
 }

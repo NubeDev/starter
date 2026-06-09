@@ -9,10 +9,13 @@ use std::sync::Arc;
 
 use axum::Router;
 use starter_server::auth::with_principal;
+use starter_server::middleware::{accept_units_layer, PrefsResolverFor};
 use starter_server::ServerBuilder;
 use starter_spi::auth::Authenticator;
+use starter_spi::units::{StaticRegistry, UnitRegistry};
 
 use crate::openapi::document;
+use crate::prefs::NexusPrefsResolver;
 use crate::routes::product_router;
 use crate::state::AppState;
 
@@ -45,7 +48,14 @@ where
     // the product routes. The auth routes (`/auth/*`) mint the session and must
     // stay unwrapped. Each `with_principal` call adds its own layer over its
     // routes.
-    let protected = with_principal(product_router(), authenticator.clone());
+    // The Accept-Units layer resolves the caller's units once per request and
+    // threads a `UnitsCtx` into handler extensions (see `prefs/resolver.rs`). It
+    // wraps the product router *inside* the principal layer so the `Principal`
+    // the resolver reads is already present when it runs.
+    let registry: Arc<dyn UnitRegistry + Send + Sync> = Arc::new(StaticRegistry::new());
+    let resolver: Arc<dyn PrefsResolverFor> = Arc::new(NexusPrefsResolver::new(&state.prefs));
+    let product = product_router().layer(accept_units_layer(registry, resolver));
+    let protected = with_principal(product, authenticator.clone());
     let authz = with_principal(authz, authenticator.clone());
     let tenants = with_principal(tenants, authenticator);
     ServerBuilder::<AppState>::new(state)
