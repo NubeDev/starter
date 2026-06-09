@@ -35,10 +35,19 @@ aes-gcm.workspace = true
 rand.workspace = true
 base64.workspace = true
 
+# WS-08b: the MQTT connector's connect-probe client. Optional + off by default so
+# a build without the `mqtt` feature carries none of rumqttc's transitive deps
+# (HOW-TO-CODE §9). With the feature off, the probe returns a clear "not enabled"
+# error rather than a fake success.
+rumqttc = { workspace = true, optional = true }
+
 [features]
 # Mirrors starter-store-postgres: gates the testcontainers harness so the heavy
 # docker-backed deps stay out of normal builds.
 testing = ["starter-store-postgres/testing"]
+# Compiles the rumqttc-backed MQTT connect probe. OFF by default; enable with
+# `--features mqtt` to build the device-telemetry connector.
+mqtt = ["dep:rumqttc"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }

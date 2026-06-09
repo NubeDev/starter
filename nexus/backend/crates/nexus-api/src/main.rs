@@ -42,6 +42,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let kinds = nexus_api::kinds::Registry::load_dir(&cfg.kinds_dir)?;
     tracing::info!(count = kinds.len(), dir = %cfg.kinds_dir.display(), "loaded query-kinds");
 
+    // Load the built-in datasource-kinds pack at boot (WS-08b). A malformed
+    // declaration (bad config schema, or a secret_field that names no config
+    // property) aborts startup rather than shipping a connector that would leave
+    // a credential unsealed.
+    let datasource_kinds =
+        nexus_api::datasource_kinds::Registry::load_dir(&cfg.datasource_kinds_dir)?;
+    tracing::info!(
+        count = datasource_kinds.len(),
+        dir = %cfg.datasource_kinds_dir.display(),
+        "loaded datasource-kinds"
+    );
+
     let prefs = nexus_api::prefs::prefs_store(metadata.clone());
     let envelope = Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?;
     // WS-12 audit/undo: build the reversible registry + redo cursor once at boot.
@@ -64,6 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
         kinds: std::sync::Arc::new(kinds),
+        datasource_kinds: std::sync::Arc::new(datasource_kinds),
         prefs,
         changelog,
         query_cache: nexus_api::cache::CacheConfig::from_env().build(),
@@ -113,6 +126,10 @@ struct Config {
     /// `*.sql`/`*_params.json` files). Optional; defaults to `./kinds`. A missing
     /// dir means no kinds are registered.
     kinds_dir: std::path::PathBuf,
+    /// Directory holding the built-in datasource-kinds pack (`manifest.yaml` + the
+    /// `*_config.json` schema files). Optional; defaults to `./datasource-kinds`.
+    /// A missing dir means no connector type is declared.
+    datasource_kinds_dir: std::path::PathBuf,
 }
 
 impl Config {
@@ -139,6 +156,9 @@ impl Config {
                 .into(),
             kinds_dir: std::env::var("NEXUS_KINDS_DIR")
                 .unwrap_or_else(|_| "./kinds".into())
+                .into(),
+            datasource_kinds_dir: std::env::var("NEXUS_DATASOURCE_KINDS_DIR")
+                .unwrap_or_else(|_| "./datasource-kinds".into())
                 .into(),
         })
     }

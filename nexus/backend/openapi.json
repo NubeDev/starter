@@ -1353,6 +1353,27 @@
         }
       }
     },
+    "/api/v1/datasources/kinds": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Return the datasource-kind registry's entries, name-ordered (the registry is a\n`BTreeMap`, so iteration is already sorted). A read-only catalogue.",
+        "operationId": "list_datasource_kinds",
+        "responses": {
+          "200": {
+            "description": "Registered datasource-kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceKindList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/datasources/test": {
       "post": {
         "tags": [
@@ -3765,6 +3786,71 @@
         "enum": [
           "postgres"
         ]
+      },
+      "DatasourceKindList": {
+        "type": "object",
+        "description": "The registered datasource-kinds, name-ordered.",
+        "required": [
+          "kinds"
+        ],
+        "properties": {
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasourceKindSummary"
+            },
+            "description": "One entry per declared connector type."
+          }
+        }
+      },
+      "DatasourceKindSummary": {
+        "type": "object",
+        "description": "One datasource-kind's catalogue entry: enough for the UI to render a config\nform and know how the connector is tested, never the connector's internals.",
+        "required": [
+          "name",
+          "surface",
+          "config_schema",
+          "secret_fields",
+          "test_mode"
+        ],
+        "properties": {
+          "config_schema": {
+            "description": "The JSON Schema the connector's config validates against — the UI builds\nits form from this."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional human description for the config form."
+          },
+          "dialect": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The SQL dialect a query connector renders time macros in; absent for a\nstream connector."
+          },
+          "name": {
+            "type": "string",
+            "description": "The kind id a datasource record stores (e.g. `postgres`, `mqtt`)."
+          },
+          "secret_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Which config fields are secrets (sealed at rest, redacted on read). The UI\nrenders these as write-only password inputs."
+          },
+          "surface": {
+            "type": "string",
+            "description": "Which query surface the connector serves: `query` (request → rows) or\n`stream` (subscribe → events for live panels/flows)."
+          },
+          "test_mode": {
+            "type": "string",
+            "description": "How connectivity is tested before save: `query` (a probe query) or\n`connect` (open + close a session)."
+          }
+        }
       },
       "DatasourceSchema": {
         "type": "object",

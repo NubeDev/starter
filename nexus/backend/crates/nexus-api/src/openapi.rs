@@ -32,6 +32,7 @@ use utoipa::OpenApi;
         crate::routes::datasources::schema::datasource_schema,
         crate::routes::datasources::test::test_datasource,
         crate::routes::datasources::test_connection::test_connection,
+        crate::routes::datasources::kinds::list_datasource_kinds,
         crate::routes::dashboards::create::create_dashboard,
         crate::routes::dashboards::list::list_dashboards,
         crate::routes::dashboards::get::get_dashboard,

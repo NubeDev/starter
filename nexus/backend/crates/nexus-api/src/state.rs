@@ -17,6 +17,7 @@ use starter_spi::authz::PolicyEngine;
 
 use crate::cache::QueryCache;
 use crate::changelog::ChangelogHandles;
+use crate::datasource_kinds::Registry as DatasourceKindRegistry;
 use crate::datasource_pools::DatasourcePools;
 use crate::kinds::Registry as KindRegistry;
 use crate::middleware::StreamTokenSigner;
@@ -62,6 +63,13 @@ pub struct AppState {
     /// binds the kind's SQL through the shared binder. Shared read-only across
     /// requests; an empty registry means kind-mode requests 404.
     pub kinds: Arc<KindRegistry>,
+    /// Registered declarative datasource-kinds (WS-08b), loaded from the built-in
+    /// pack at boot. A connector type (`postgres`, `mqtt`) declared by manifest:
+    /// its config schema validates a config before save, its `secret_fields`
+    /// drive the seal boundary, its `test` descriptor selects the probe path. The
+    /// catalogue route reads this so the UI renders per-kind config forms. Shared
+    /// read-only across requests; an empty registry means no connector is declared.
+    pub datasource_kinds: Arc<DatasourceKindRegistry>,
     /// User/org preference handles (WS-11): the Postgres store + system defaults
     /// backing both `/me/preferences` and the `Accept-Units` units-conversion
     /// middleware. `workspace_id` is the caller's tenant; storage is route-pinned

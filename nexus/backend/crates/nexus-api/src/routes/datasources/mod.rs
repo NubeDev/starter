@@ -5,6 +5,7 @@ mod convert;
 pub mod create;
 pub mod delete;
 pub mod get;
+pub mod kinds;
 pub mod list;
 pub mod probe_outcome;
 pub mod query;
@@ -28,6 +29,12 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/datasources/test",
             post(test_connection::test_connection),
+        )
+        // Declared before the `:id` item route so `kinds` is matched as the
+        // catalogue, never parsed as a datasource id.
+        .route(
+            "/api/v1/datasources/kinds",
+            http_get(kinds::list_datasource_kinds),
         )
         .route(
             "/api/v1/datasources/{id}",

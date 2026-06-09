@@ -18,9 +18,9 @@ use crate::dto::dashboard::{
 };
 use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
 use crate::dto::datasource::{
-    CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceSchema, DatasourceSummary,
-    RedactedConnection, SchemaColumn, SchemaTable, TestConnectionRequest, TestDatasourceResponse,
-    UpdateDatasourceRequest,
+    CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceKindList,
+    DatasourceKindSummary, DatasourceSchema, DatasourceSummary, RedactedConnection, SchemaColumn,
+    SchemaTable, TestConnectionRequest, TestDatasourceResponse, UpdateDatasourceRequest,
 };
 use crate::dto::alert::{
     AlertCondition, AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest,
@@ -68,6 +68,8 @@ use crate::Problem;
     TestDatasourceResponse,
     TestConnectionRequest,
     DatasourceKind,
+    DatasourceKindList,
+    DatasourceKindSummary,
     RedactedConnection,
     DatasourceSchema,
     SchemaTable,

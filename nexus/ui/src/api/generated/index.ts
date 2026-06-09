@@ -373,6 +373,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/datasources/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return the datasource-kind registry's entries, name-ordered (the registry is a
+         *     `BTreeMap`, so iteration is already sorted). A read-only catalogue.
+         */
+        get: operations["list_datasource_kinds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/datasources/test": {
         parameters: {
             query?: never;
@@ -1355,6 +1375,46 @@ export interface components {
          * @enum {string}
          */
         DatasourceKind: "postgres";
+        /** @description The registered datasource-kinds, name-ordered. */
+        DatasourceKindList: {
+            /** @description One entry per declared connector type. */
+            kinds: components["schemas"]["DatasourceKindSummary"][];
+        };
+        /**
+         * @description One datasource-kind's catalogue entry: enough for the UI to render a config
+         *     form and know how the connector is tested, never the connector's internals.
+         */
+        DatasourceKindSummary: {
+            /**
+             * @description The JSON Schema the connector's config validates against — the UI builds
+             *     its form from this.
+             */
+            config_schema: unknown;
+            /** @description Optional human description for the config form. */
+            description?: string | null;
+            /**
+             * @description The SQL dialect a query connector renders time macros in; absent for a
+             *     stream connector.
+             */
+            dialect?: string | null;
+            /** @description The kind id a datasource record stores (e.g. `postgres`, `mqtt`). */
+            name: string;
+            /**
+             * @description Which config fields are secrets (sealed at rest, redacted on read). The UI
+             *     renders these as write-only password inputs.
+             */
+            secret_fields: string[];
+            /**
+             * @description Which query surface the connector serves: `query` (request → rows) or
+             *     `stream` (subscribe → events for live panels/flows).
+             */
+            surface: string;
+            /**
+             * @description How connectivity is tested before save: `query` (a probe query) or
+             *     `connect` (open + close a session).
+             */
+            test_mode: string;
+        };
         /** @description A datasource's introspected tables, for SQL autocomplete in the editor. */
         DatasourceSchema: {
             tables: components["schemas"]["SchemaTable"][];
@@ -3460,6 +3520,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DatasourceDetail"];
+                };
+            };
+        };
+    };
+    list_datasource_kinds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registered datasource-kinds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasourceKindList"];
                 };
             };
         };

@@ -3,6 +3,7 @@
 
 mod create;
 mod get;
+mod kinds;
 mod list;
 mod schema;
 mod shared;
@@ -11,6 +12,7 @@ mod update;
 
 pub use create::CreateDatasourceRequest;
 pub use get::DatasourceDetail;
+pub use kinds::{DatasourceKindList, DatasourceKindSummary};
 pub use list::DatasourceSummary;
 pub use schema::{DatasourceSchema, SchemaColumn, SchemaTable};
 pub use shared::{DatasourceKind, RedactedConnection};

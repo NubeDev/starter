@@ -45,6 +45,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         stream_token_ttl: Duration::from_secs(60),
         engine: id.engine.clone(),
         kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
+        datasource_kinds: std::sync::Arc::new(nexus_api::datasource_kinds::Registry::empty()),
         prefs: nexus_api::prefs::prefs_store(admin.clone()),
         changelog: nexus_api::changelog::ChangelogHandles::new(
             admin.clone(),

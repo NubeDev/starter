@@ -81,6 +81,12 @@ async-trait = "0.1"
 thiserror   = "1"
 tracing     = "0.1"
 
+# MQTT client for the optional `mqtt` datasource connector (WS-08b). Pulled in
+# only when the `mqtt` feature is enabled — OFF by default per HOW-TO-CODE §9, so
+# a build without device connectors carries none of its transitive deps. `url`
+# off keeps the surface to the broker host/port/credentials nexus already models.
+rumqttc = { version = "0.24", default-features = false, features = ["use-rustls"] }
+
 # Crypto for the R6 envelope encryption and R8 stream-token signing.
 aes-gcm = "0.10"
 hmac    = "0.12"
