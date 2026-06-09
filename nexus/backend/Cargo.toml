@@ -10,6 +10,7 @@ members = [
     "crates/nexus-engine",
     "crates/nexus-store",
     "crates/nexus-api",
+    "crates/nexus-ai",
 ]
 
 [workspace.package]
