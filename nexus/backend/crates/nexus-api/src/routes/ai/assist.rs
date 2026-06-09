@@ -68,8 +68,15 @@ pub async fn ai_assist(
         .as_deref()
         .map(parse_model)
         .unwrap_or_else(ModelRef::medium);
+    // Default to the CLI tier so assist works without a provider key wherever a
+    // coding-agent CLI is logged in (the project's primary mode).
+    let backend = req.backend.as_deref().unwrap_or("claude");
 
-    let reply = match state.sessions.chat_once(model, Some(system), req.prompt.clone()).await {
+    let reply = match state
+        .sessions
+        .chat_once(backend, model, Some(system), req.prompt.clone())
+        .await
+    {
         Ok(text) => text,
         Err(e) => return (StatusCode::BAD_GATEWAY, format!("model call failed: {e}")).into_response(),
     };

@@ -13,7 +13,9 @@ import { Label } from "@nube/starter-ui-kit/components/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@nube/starter-ui-kit/components/select";
@@ -26,14 +28,20 @@ import type {
 } from "@/api/types";
 import { useCreateAgent, useUpdateAgent } from "@/features/agents/useAgents";
 
-// Inference provider hints the backend understands. The agent's `backend`
-// selects which client tier the run dispatches to; `model` is then a tier
-// alias (large/medium/small) or a concrete id for that provider.
-const BACKENDS = [
-  { value: "anthropic", label: "Anthropic" },
-  { value: "openai", label: "OpenAI" },
-  { value: "gemini", label: "Gemini" },
-  { value: "ollama", label: "Ollama" },
+// The agent's `backend` selects which tier the run dispatches to. CLI agents
+// drive the locally-installed coding-agent binary via its OWN login — no
+// provider API key needed in the platform (the headline mode). Raw providers
+// call the HTTP API and need a key configured server-side. `model` is then a
+// tier alias (large/medium/small) or a concrete id for that backend.
+const CLI_BACKENDS = [
+  { value: "claude", label: "Claude Code (CLI)" },
+  { value: "codex", label: "Codex (CLI)" },
+  { value: "gemini", label: "Gemini (CLI)" },
+  { value: "ollama", label: "Ollama (local)" },
+];
+const PROVIDER_BACKENDS = [
+  { value: "anthropic", label: "Anthropic API" },
+  { value: "openai", label: "OpenAI API" },
 ];
 
 // Create / edit an agent: name + backend + model + an optional system
@@ -54,7 +62,7 @@ export function AgentFormDialog({
 
   const [form, setForm] = useState({
     name: agent?.name ?? "",
-    backend: agent?.backend ?? "anthropic",
+    backend: agent?.backend ?? "claude",
     model: agent?.model ?? "",
     system_prompt: agent?.system_prompt ?? "",
   });
@@ -117,13 +125,28 @@ export function AgentFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {BACKENDS.map((b) => (
-                  <SelectItem key={b.value} value={b.value}>
-                    {b.label}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  <SelectLabel>Local CLI — no API key</SelectLabel>
+                  {CLI_BACKENDS.map((b) => (
+                    <SelectItem key={b.value} value={b.value}>
+                      {b.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>Provider API — needs a key</SelectLabel>
+                  {PROVIDER_BACKENDS.map((b) => (
+                    <SelectItem key={b.value} value={b.value}>
+                      {b.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              CLI agents use the locally-installed tool's own login — no provider
+              key needed.
+            </p>
           </div>
           <Field
             id="agent-model"

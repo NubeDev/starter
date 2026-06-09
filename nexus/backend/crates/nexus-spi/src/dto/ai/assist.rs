@@ -43,6 +43,13 @@ pub struct AssistRequest {
     /// Defaults to the service's medium tier when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
+    /// Which AI backend to run the assist against. A CLI agent backend
+    /// (`claude`, `codex`, `gemini`, `ollama`) uses the locally-installed CLI's
+    /// own auth — no provider API key needed. A raw provider (`anthropic`,
+    /// `openai`, …) uses the inference tier and needs a key. Defaults to the CLI
+    /// tier (`claude`) so assist works out of the box wherever a CLI is logged in.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub backend: Option<String>,
 }
 
 /// The assistant's structured answer. `result` shape depends on the request task

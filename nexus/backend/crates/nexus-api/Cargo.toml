@@ -11,7 +11,11 @@ default-run = "nexus-api"
 nexus-spi.workspace = true
 nexus-engine.workspace = true
 nexus-store.workspace = true
-nexus-ai.workspace = true
+# The `agent` feature pulls in the zag tier so sessions can drive the local
+# coding-agent CLIs (Claude Code, Codex, Gemini, Ollama) using their own auth —
+# no provider API key needed. The `inference` (genai) tier stays on by default
+# for raw-provider backends.
+nexus-ai = { workspace = true, features = ["agent"] }
 nexus-skills.workspace = true
 
 # `preferences` (which pulls `units`) is enabled so handlers can name the

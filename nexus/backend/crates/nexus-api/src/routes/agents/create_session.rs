@@ -81,6 +81,7 @@ pub async fn create_agent_session(
         metadata: state.metadata.clone(),
         tenant: tenant.clone(),
         session_id: session.id,
+        backend: agent_rec.backend.clone(),
         model,
         system_prompt: agent_rec.system_prompt.clone(),
         inputs,

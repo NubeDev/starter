@@ -6,18 +6,54 @@
 //! persisted to the store as the run progresses, so a session survives the
 //! channel's lifetime even though the channel itself is ephemeral.
 //!
-//! The runtime drives the **inference** tier of the nexus-ai facade. The agent
-//! tier (zag) plugs in here the same way once its adapter is wired — the
-//! broadcast/persist machinery is tier-agnostic.
+//! The runtime drives **either tier** of the nexus-ai facade depending on the
+//! agent's backend, and the broadcast/persist machinery is identical for both:
+//!
+//!   * A **CLI agent** backend (`claude`, `codex`, `gemini`, `ollama`) routes to
+//!     the zag *agent* tier, which drives the locally-installed coding-agent CLI
+//!     using *its own* authentication — no provider API key in the control plane.
+//!     This is the headline capability: the platform can run agents wherever the
+//!     operator has a CLI logged in.
+//!   * A raw **inference provider** backend (`anthropic`, `openai`, `gemini-api`,
+//!     …) routes to the genai *inference* tier, which calls the provider HTTP API
+//!     and needs a key in the environment.
+//!
+//! [`Backend::classify`] decides per agent from the backend string.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use nexus_ai::{ChatRequest, Client, Event, Inference as _, Message, ModelRef};
+use nexus_ai::{AgentTask, ChatRequest, Client, Event, Inference as _, Message, ModelRef};
 use nexus_skills::{BrevityMode, KnowledgeStore};
 use sqlx::PgPool;
 use tokio::sync::broadcast;
 use uuid::Uuid;
+
+/// Which nexus-ai tier an agent's backend routes to. The backend string on an
+/// agent record is the discriminator; unknown backends default to the CLI tier
+/// (the no-key path), since that is the project's primary mode.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Backend {
+    /// A coding-agent CLI driven by zag, using the CLI's own auth (no key).
+    Cli,
+    /// A raw inference provider called over HTTP by genai (needs an API key).
+    Inference,
+}
+
+impl Backend {
+    /// Classify a backend string. The known raw-provider names route to the
+    /// inference tier; everything else (claude/codex/gemini/ollama and any
+    /// unrecognised value) routes to the CLI tier, the no-key default.
+    pub fn classify(backend: &str) -> Self {
+        match backend.trim().to_ascii_lowercase().as_str() {
+            // Raw HTTP providers — need a key, go through genai.
+            "anthropic" | "openai" | "gemini-api" | "google" | "groq" | "xai" | "mistral"
+            | "cohere" | "deepseek" | "inference" => Backend::Inference,
+            // CLI agents (and anything unknown) — driven by zag, no key.
+            _ => Backend::Cli,
+        }
+    }
+}
 
 /// How many events a slow SSE subscriber may fall behind before it lags. Matches
 /// the live-stream broadcast sizing.
@@ -54,6 +90,9 @@ pub struct SessionRun {
     pub metadata: PgPool,
     pub tenant: String,
     pub session_id: Uuid,
+    /// The agent's backend string — decides which tier drives the run
+    /// ([`Backend::classify`]).
+    pub backend: String,
     pub model: ModelRef,
     pub system_prompt: Option<String>,
     pub inputs: PromptInputs,
@@ -104,6 +143,7 @@ impl SessionRunner {
             metadata,
             tenant,
             session_id,
+            backend,
             model,
             system_prompt,
             inputs,
@@ -116,25 +156,32 @@ impl SessionRunner {
             .expect("session channels mutex")
             .insert(session_id, tx.clone());
 
-        // Assemble the system message off the runner's handles before spawning, so
-        // the task captures only the finished strings.
+        // Assemble the system block (brevity rule + knowledge prefix + the agent's
+        // own system prompt) off the runner's handles before spawning, so the task
+        // captures only the finished strings.
         let system = self.assemble_system(&inputs, system_prompt);
+        let tier = Backend::classify(&backend);
 
         let client = self.client.clone();
         let channels = self.channels.clone();
 
         tokio::spawn(async move {
-            // Build the message list: the assembled system block (brevity rule +
-            // knowledge prefix + the agent's own system prompt), then the user
-            // turn.
-            let mut messages = Vec::new();
-            if let Some(sys) = system.filter(|s| !s.is_empty()) {
-                messages.push(Message::system(sys));
-            }
-            messages.push(Message::user(&prompt));
-
-            let req = ChatRequest::new(model, messages);
-            let outcome = run_and_broadcast(&client, req, &tx).await;
+            // Route by tier. The CLI tier drives the local agent binary via zag
+            // (no key); the inference tier calls the provider API via genai. Both
+            // broadcast unified events onto `tx` and return the full reply.
+            let outcome = match tier {
+                Backend::Cli => {
+                    run_agent_broadcast(&client, &backend, model, system.clone(), &prompt, &tx).await
+                }
+                Backend::Inference => {
+                    let mut messages = Vec::new();
+                    if let Some(sys) = system.clone().filter(|s| !s.is_empty()) {
+                        messages.push(Message::system(sys));
+                    }
+                    messages.push(Message::user(&prompt));
+                    run_inference_broadcast(&client, ChatRequest::new(model, messages), &tx).await
+                }
+            };
 
             // Persist terminal state and the assembled transcript, then drop the
             // channel so subscribers see the stream close.
@@ -164,30 +211,49 @@ impl SessionRunner {
         });
     }
 
-    /// One-shot, non-streaming completion. Drives the inference tier over a
-    /// `system` + `user` pair and returns the full reply text. Unlike [`start`]
-    /// this records nothing and opens no channel — it backs the synchronous AI
-    /// assist endpoint (SQL generation, panel suggestion), where the caller wants
-    /// a single structured answer, not a transcript. `system` is used verbatim
-    /// (assist callers build their own task-specific instructions).
+    /// One-shot, non-streaming completion routed by `backend`. Returns the full
+    /// reply text. Unlike [`start`] this records nothing and opens no channel — it
+    /// backs the synchronous AI assist endpoint (SQL generation, panel
+    /// suggestion). A CLI backend runs the local agent via zag (no key); a
+    /// provider backend calls genai. `system` is used verbatim (assist callers
+    /// build their own task-specific instructions).
     pub async fn chat_once(
         &self,
+        backend: &str,
         model: ModelRef,
         system: Option<String>,
         prompt: String,
     ) -> Result<String, String> {
-        let mut messages = Vec::new();
-        if let Some(sys) = system.filter(|s| !s.is_empty()) {
-            messages.push(Message::system(sys));
+        match Backend::classify(backend) {
+            Backend::Cli => {
+                // CLI agents take a single prompt; prepend the system block so the
+                // task-specific instructions still apply.
+                let composed = compose_prompt(system.as_deref(), &prompt);
+                let task = AgentTask {
+                    backend: backend.to_string(),
+                    prompt: composed,
+                    model: Some(model),
+                    cwd: None,
+                    isolate_worktree: false,
+                };
+                let agent = self.client.agent().map_err(|e| e.to_string())?;
+                agent.run(task).await.map(|o| o.text).map_err(|e| e.to_string())
+            }
+            Backend::Inference => {
+                let mut messages = Vec::new();
+                if let Some(sys) = system.filter(|s| !s.is_empty()) {
+                    messages.push(Message::system(sys));
+                }
+                messages.push(Message::user(&prompt));
+                let req = ChatRequest::new(model, messages);
+                self.client
+                    .inference()
+                    .chat(req)
+                    .await
+                    .map(|res| res.text)
+                    .map_err(|e| e.to_string())
+            }
         }
-        messages.push(Message::user(&prompt));
-        let req = ChatRequest::new(model, messages);
-        self.client
-            .inference()
-            .chat(req)
-            .await
-            .map(|res| res.text)
-            .map_err(|e| e.to_string())
     }
 
     /// Build the system message: the brevity rule, then the resolved knowledge
@@ -215,20 +281,61 @@ impl SessionRunner {
     }
 }
 
-/// Drive the inference stream, forwarding each event to subscribers and
-/// accumulating the assistant text. Returns the full reply or an error message.
-async fn run_and_broadcast(
+/// Compose a CLI agent's single prompt from an optional system block and the
+/// user turn. CLI agents (Claude Code, Codex, …) take one prompt string rather
+/// than a role-tagged message list, so the system context is prepended.
+fn compose_prompt(system: Option<&str>, prompt: &str) -> String {
+    match system.map(str::trim).filter(|s| !s.is_empty()) {
+        Some(sys) => format!("{sys}\n\n{prompt}"),
+        None => prompt.to_string(),
+    }
+}
+
+/// Drive the **inference** tier stream into the broadcast. Returns the full reply.
+async fn run_inference_broadcast(
     client: &Client,
     req: ChatRequest,
     tx: &broadcast::Sender<Event>,
 ) -> Result<String, String> {
-    use futures::StreamExt;
-
-    let mut stream = client
+    let stream = client
         .inference()
         .stream(req)
         .await
         .map_err(|e| e.to_string())?;
+    forward_stream(stream, tx).await
+}
+
+/// Drive the **agent** (CLI) tier stream into the broadcast. Builds the zag task
+/// from the backend + composed prompt, then forwards its events. Returns the
+/// full reply. The CLI uses its own auth — no provider key is read here.
+async fn run_agent_broadcast(
+    client: &Client,
+    backend: &str,
+    model: ModelRef,
+    system: Option<String>,
+    prompt: &str,
+    tx: &broadcast::Sender<Event>,
+) -> Result<String, String> {
+    let task = AgentTask {
+        backend: backend.to_string(),
+        prompt: compose_prompt(system.as_deref(), prompt),
+        model: Some(model),
+        cwd: None,
+        isolate_worktree: false,
+    };
+    let agent = client.agent().map_err(|e| e.to_string())?;
+    let stream = agent.run_stream(task).await.map_err(|e| e.to_string())?;
+    forward_stream(stream, tx).await
+}
+
+/// Forward a unified event stream onto the broadcast channel, accumulating the
+/// assistant text. Shared by both tiers — the event shape is the same. Returns
+/// the full reply or an error message.
+async fn forward_stream(
+    mut stream: futures::stream::BoxStream<'static, nexus_ai::Result<Event>>,
+    tx: &broadcast::Sender<Event>,
+) -> Result<String, String> {
+    use futures::StreamExt;
 
     let mut reply = String::new();
     while let Some(item) = stream.next().await {
