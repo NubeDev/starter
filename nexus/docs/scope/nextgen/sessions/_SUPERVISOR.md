@@ -24,11 +24,14 @@
    `kill -0 <N>`. If the PID is alive → healthy wake in flight, leave it. If the lock reads HELD
    but no `loop-tick`/`claude -p` process exists, the kernel will already have freed it by the next
    firing — do nothing. The only legitimate repair is the STOP sentinel (see below), never `rm`.
-3. **Is the build red?** Run `cargo check` (fast) on the workspace. If a committed WS left the
-   tree not compiling, that poisons every later WS. Safe repair: if it's an obvious, in-the-last-
-   commit, mechanical break (missing `use`, unclosed brace) AND it's in nextgen/loop-owned files,
-   fix it and commit `supervisor: fix build break in <file>`. If it's substantive or in another
-   session's lane (e.g. `nexus-ai`), do NOT touch — log it to TODOs.md and note in supervisor log.
+3. **Is the build red?** FIRST check if a wake is live (lock HELD + heartbeat PID alive). If so,
+   the tree is mid-edit and a red `cargo check` is the EXPECTED in-progress state — a WS only
+   compiles green when it commits at the end. **Do NOT diagnose or touch a red build while a wake
+   is live.** Only evaluate the build when NO wake is running (lock FREE). Then: if a *committed*
+   WS left HEAD not compiling, that poisons later WS. Safe repair only if it's an obvious mechanical
+   break (missing `use`, unclosed brace) in HEAD's last commit AND in nextgen/loop-owned files →
+   fix + commit `supervisor: fix build break in <file>`. If substantive, or uncommitted, or in
+   another session's lane (`nexus-ai`, `agents/`) → do NOT touch; log to TODOs.md + supervisor log.
 4. **Is the queue progressing?** Compare `git log` WS-commit count vs the previous wake. If no new
    WS commits for ~30 min AND no row is legitimately 🔵-building, the queue has stalled →
    investigate (blocked row? cron dead? all done?) and escalate.
@@ -70,3 +73,9 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   (19:55/20:00/20:05). WS-07 (Alerting) now 🔵 — live cron wake PID 136336 ALIVE, lock correctly
   HELD (kernel-owned, not touched). No STOP. Only open TODO is the WS-03 one already ✅ RESOLVED
   above it. WS commits: 5→6. The two-loop design is self-driving: cron spawned WS-07 on its own.
+- 2026-06-09 13:13 — All healthy. Cron firing (20:00/05/10). WS-07 🔵, wake PID 136336 ALIVE, lock
+  HELD. `cargo check` is RED (lettre dep not yet wired, NewRule/RulePatch new fields, agents arg
+  count) — but ALL broken files are UNCOMMITTED WIP (email/slack/condition/policy/reduce/template.rs
+  are ?? ; no WS-07 commit yet). This is the EXPECTED mid-edit state of a live wake, NOT a committed
+  break. Correctly took NO action (touching it would corrupt in-flight work + violate lane). Refined
+  check #3: don't evaluate the build while a wake is live. WS commits: 7.
