@@ -31,7 +31,11 @@ echo "$(ts) firing one wake." >>"$LOG"
 # One headless wake. Claude reads the driver doc, runs the LOOP ALGORITHM once, spawns/gates one
 # WS, updates STATUS, and exits. --dangerously-skip-permissions because cron is non-interactive;
 # the work is confined to this repo on branch nexus-gaps.
+# --model pins Opus 4.8 for the tick AND every subagent it spawns (subagents inherit the parent
+# model). Effort level is NOT set here on purpose: it comes from ~/.claude/settings.json
+# ("effortLevel": "medium"), which every headless firing inherits.
 claude -p "Read nexus/docs/scope/nextgen/sessions/_ORCHESTRATION.md and execute exactly ONE wake of the LOOP ALGORITHM (headless cron mode section applies), then exit. You are on branch nexus-gaps. Do not ask questions; a blocked workstream logs to sessions/TODOs.md and the next pending one is chosen. Spawn the workstream session as a subagent using the AGENT CHARTER verbatim. Commit only files the workstream owns. When you have spawned or gated exactly one workstream, append a one-line entry to sessions/STATUS.md's loop log and stop." \
+  --model claude-opus-4-8 \
   --dangerously-skip-permissions \
   >>"$LOG" 2>&1
 
