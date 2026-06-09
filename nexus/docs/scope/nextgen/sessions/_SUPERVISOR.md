@@ -137,3 +137,10 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   — the doc EXISTS (7009 bytes, committed in 7a442053) but uses `**Status:**` (bold) so my
   `^Status:` grep missed it. NO real DoD miss. FIX: future wakes grep `[Ss]tatus.*Done` format-
   agnostic. Wake exited clean, lock FREE, no STOP. 4/12 done (03,04,07,10). Next: WS-08.
+- 2026-06-09 14:01 — All healthy, NO action. Cron firing (20:50/55, 21:00). Clean handoff: WS-10 ✅,
+  WS-08 (Connector breadth) now 🔵 — fresh wake PID 187071 (started 14:00), 1.3min in. Heartbeat
+  rolled to new PID, lock kernel-held, no STOP. WS-08.md not yet (normal at 1min; format-agnostic
+  check confirms row present). NOTE: commit 52f5e72c "supervisor: 14:00 wake" was written by the
+  CRON wake itself (it narrates its spawn action) — NOT a second supervisor; cron + I both write
+  nextgen docs in our own sections, no conflict. Only blocker is the ✅RESOLVED WS-03 note.
+  4/12 done (03,04,07,10); WS-08 building.
