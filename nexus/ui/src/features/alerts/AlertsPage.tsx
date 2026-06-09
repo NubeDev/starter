@@ -1,16 +1,43 @@
-import { Empty } from "@/features/state/Empty";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@nube/starter-ui-kit/components/tabs";
 
-// Placeholder for alert rules / events. The backend is building the alert
-// model (`nexus-store::alert` — rules, channels, events) but it isn't in
-// the OpenAPI contract yet, so there are no bindings to call. This screen
-// renders an honest "not available" state rather than mock rules (F0).
-// When the contract surfaces `/alerts`, this becomes a real
-// list/create/acknowledge view over the codegen'd client.
+import { RulesTab } from "@/features/alerts/RulesTab";
+import { ChannelsTab } from "@/features/alerts/ChannelsTab";
+import { SilencesTab } from "@/features/alerts/SilencesTab";
+import { EventsTab } from "@/features/alerts/EventsTab";
+
+// Alerting management over the real `/alerts/*` endpoints: threshold rules,
+// notification channels, silence windows, and the fired-event history.
+// Each tab owns its own data subscription; all render loading/empty/error
+// (F0). Replaces the earlier "coming soon" placeholder now that the
+// alerts contract is published.
 export function AlertsPage() {
   return (
-    <Empty
-      title="Alerts are coming soon"
-      description="Rule and notification management will appear here once the backend exposes the alerts API."
-    />
+    <Tabs defaultValue="rules" className="flex h-full flex-col">
+      <TabsList>
+        <TabsTrigger value="rules">Rules</TabsTrigger>
+        <TabsTrigger value="channels">Channels</TabsTrigger>
+        <TabsTrigger value="silences">Silences</TabsTrigger>
+        <TabsTrigger value="events">Events</TabsTrigger>
+      </TabsList>
+      <div className="mt-4 min-h-0 flex-1">
+        <TabsContent value="rules" className="h-full">
+          <RulesTab />
+        </TabsContent>
+        <TabsContent value="channels" className="h-full">
+          <ChannelsTab />
+        </TabsContent>
+        <TabsContent value="silences" className="h-full">
+          <SilencesTab />
+        </TabsContent>
+        <TabsContent value="events" className="h-full">
+          <EventsTab />
+        </TabsContent>
+      </div>
+    </Tabs>
   );
 }

@@ -38,3 +38,12 @@ export type FlowSummary = S["FlowSummary"];
 export type FlowDetail = S["FlowDetail"];
 export type CreateFlowRequest = S["CreateFlowRequest"];
 export type UpdateFlowRequest = S["UpdateFlowRequest"];
+
+export type AlertRuleDetail = S["AlertRuleDetail"];
+export type CreateAlertRuleRequest = S["CreateAlertRuleRequest"];
+export type UpdateAlertRuleRequest = S["UpdateAlertRuleRequest"];
+export type ChannelDetail = S["ChannelDetail"];
+export type CreateChannelRequest = S["CreateChannelRequest"];
+export type SilenceDetail = S["SilenceDetail"];
+export type CreateSilenceRequest = S["CreateSilenceRequest"];
+export type AlertEvent = S["AlertEvent"];
