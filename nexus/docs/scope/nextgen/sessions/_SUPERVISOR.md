@@ -122,3 +122,9 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   which only runs near commit; still refining kinds lint/validate. Lock kernel-held, no STOP.
   WS-10.md STILL missing at 17min — watch stands: escalate only if WS-10 commits ✅ without it
   (still building, so not yet). Real WS commits: 6 done (03,04,07).
+- 2026-06-09 13:51 — Healthy, NO action. Cron firing (20:40/45/50). WS-10 🔵 wake PID 167125 ALIVE
+  22min (≈ WS-07's 23; large WS: kinds engine + dispatch + codegen + UI picker). NOT wedged —
+  6 files touched <2min, now UI-side (KindPicker.tsx/Explore.tsx/api/query/kinds.ts), live
+  `pnpm --filter`+esbuild running = final frontend build/codegen phase. kinds/ backend module
+  present uncommitted (?? ). Lock kernel-held, no STOP. WS-10.md still missing — watch unchanged
+  (escalate only if it commits ✅ without the doc). Real WS commits: 6 done (03,04,07).
