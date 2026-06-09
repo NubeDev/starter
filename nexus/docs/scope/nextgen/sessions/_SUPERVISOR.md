@@ -116,3 +116,9 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   doc still not created at 12min (charter requires it; WS-04/07 effectively wrote theirs near commit
   time). Not blocking, not acting on a live wake. ESCALATE ONLY IF: WS-10 commits ✅ without ever
   producing WS-10.md — that's a real DoD miss to flag next wake. Real WS commits: 6 done (03,04,07).
+- 2026-06-09 13:47 — Healthy, NO action. Cron firing (20:35/40/45). WS-10 🔵 wake PID 167125 ALIVE
+  17min (within WS-07's 23-min envelope). PROGRESSING + in finishing phase: openapi.json + ui
+  generated/index.ts touched <3min = DTO-first codegen step (regenerate OpenAPI → pnpm codegen),
+  which only runs near commit; still refining kinds lint/validate. Lock kernel-held, no STOP.
+  WS-10.md STILL missing at 17min — watch stands: escalate only if WS-10 commits ✅ without it
+  (still building, so not yet). Real WS commits: 6 done (03,04,07).
