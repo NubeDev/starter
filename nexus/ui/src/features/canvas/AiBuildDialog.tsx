@@ -125,14 +125,17 @@ export function AiBuildDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass max-w-lg">
+      <DialogContent className="glass flex max-h-[85vh] max-w-lg flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>AI dashboard builder</DialogTitle>
           <DialogDescription>
             Describe what you want and pick which suggested panels to add.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        {/* min-w-0 lets the long mono SQL previews truncate instead of forcing
+            the dialog wider; overflow-y-auto keeps a long suggestion list
+            scrollable rather than spilling past the dialog. */}
+        <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
           <div className="space-y-2">
             <Label>Datasource</Label>
             <DatasourcePicker value={datasourceId} onChange={setDatasourceId} />
@@ -172,11 +175,11 @@ export function AiBuildDialog({
 
           {/* Structured suggestions: a vettable checklist. */}
           {suggestion && panels.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="min-w-0 space-y-2">
               {panels.map((panel, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
+                  className="flex min-w-0 items-start gap-3 rounded-md border border-border bg-card p-3"
                 >
                   <Checkbox
                     checked={checked[i] ?? false}
@@ -195,7 +198,10 @@ export function AiBuildDialog({
                         {toWidgetType(panel.viz)}
                       </Badge>
                     </div>
-                    <p className="truncate font-mono text-xs text-muted-foreground">
+                    <p
+                      className="truncate font-mono text-xs text-muted-foreground"
+                      title={panel.sql}
+                    >
                       {panel.sql}
                     </p>
                   </div>
