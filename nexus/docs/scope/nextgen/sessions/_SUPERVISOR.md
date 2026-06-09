@@ -17,9 +17,13 @@
    firing in the last ~6 min. If cron has gone silent, that's the #1 failure → escalate loudly
    (and check `crontab -l` still has the entry; if the entry vanished, re-install it — that's a
    safe repair).
-2. **Is a wake stuck?** Lock HELD + `.loop.heartbeat` shows `wake-start` older than ~25 min →
-   the worker died mid-wake. Safe repair: clear the stale lock so the next cron firing can
-   recover the WS (the WS work is idempotent; it resumes from committed state).
+2. **Is a wake stuck?** `flock` is the source of truth and the kernel frees it the instant the
+   holder dies — so a HELD lock ALWAYS means a live holder. NEVER `rm` the lock to "recover"
+   (that orphans a running wake and invites a double-spawn — a mistake made on 2026-06-09).
+   To check liveness: read the PID from `.loop.heartbeat` (`wake-start pid=<N>`) and run
+   `kill -0 <N>`. If the PID is alive → healthy wake in flight, leave it. If the lock reads HELD
+   but no `loop-tick`/`claude -p` process exists, the kernel will already have freed it by the next
+   firing — do nothing. The only legitimate repair is the STOP sentinel (see below), never `rm`.
 3. **Is the build red?** Run `cargo check` (fast) on the workspace. If a committed WS left the
    tree not compiling, that poisons every later WS. Safe repair: if it's an obvious, in-the-last-
    commit, mechanical break (missing `use`, unclosed brace) AND it's in nextgen/loop-owned files,
@@ -35,9 +39,9 @@
 
 ## What the supervisor may safely repair (no human needed)
 - Re-install a vanished cron entry.
-- Clear a stale lock from a provably-dead wake (heartbeat > 25 min + no claude process).
 - Fix a trivial, mechanical compile break in loop/nextgen-owned files committed in the last WS.
 - Mark a row ⛔→⬜ when its TODOs.md blocker has a `✅ RESOLVED` line (so cron re-runs it).
+- (Locks self-heal via the kernel — there is NO "clear the lock" repair. See check #2.)
 
 ## What the supervisor must NOT do
 - Spawn a workstream, take the loop lock, or run loop-tick.sh.
@@ -45,5 +49,16 @@
 - Resolve a design-ambiguity blocker by guessing — that's the human's, per the no-questions rule.
 - Revert or force-push anything.
 
+## STOP-sentinel auto-clear (specific recovery)
+If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-flight WS-04 wake
+(PID N)"), check `kill -0 N`. Once that PID has exited, the wake it guarded is done — remove
+`.loop.STOP` so cron resumes. This lets a protective STOP clear itself without anyone watching.
+(A STOP with NO guarded-PID note is a deliberate human kill switch — NEVER auto-remove that one.)
+
 ## Supervisor log
 <!-- Appended each wake: `YYYY-MM-DD HH:MM — <what was checked / repaired / escalated>` -->
+- 2026-06-09 13:00 — Cron healthy (firing 19:45/50/55). WS-03 ✅, WS-04 🔵 building (live cron wake
+  PID 103333). MISTAKE: I `rm`'d the lock thinking it stale; it wasn't — 103333 held it legitimately.
+  Recovered by placing a PID-guarded `.loop.STOP` so the 20:00 firing can't double-spawn WS-04.
+  Hardened loop-tick.sh (heartbeat records pid; flock is sole mutex, never `rm`) + fixed check #2.
+  Supervisor will auto-clear STOP once PID 103333 exits. WS commits: 3.

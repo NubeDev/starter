@@ -34,13 +34,13 @@ fi
 cd "$REPO"
 echo "$(ts) firing one wake." >>"$LOG"
 
-# Heartbeat: a wake holds the lock for the whole subagent run (~20 min). If the machine sleeps or
-# claude crashes mid-wake, the lock releases but the WS row stays 🔵 with no Done/Blocked line.
-# A recovering firing reads this file: if the heartbeat is stale (>20 min) AND the lock is free AND
-# a row is still 🔵, the prior wake died → re-spawn that WS (its work is idempotent). Updated again
-# after the wake so a fresh start always sees a recent stamp while a wake is genuinely in flight.
+# Heartbeat: records THIS firing's PID so a watcher can definitively tell alive-vs-dead with
+# `kill -0 <pid>` instead of guessing from a timestamp. The flock on fd 9 is the real mutex and the
+# kernel releases it automatically when this process dies (even on SIGKILL) — so a "held lock" ALWAYS
+# means a live holder, never a stale one. Do NOT `rm` the lock file to "recover"; trust flock. The
+# heartbeat is only for a watcher to identify which PID owns the in-flight wake and whether it lives.
 HEARTBEAT="$SESS/.loop.heartbeat"
-echo "$(ts) wake-start" >"$HEARTBEAT"
+echo "$(ts) wake-start pid=$$" >"$HEARTBEAT"
 
 # One headless wake. Claude reads the driver doc, runs the LOOP ALGORITHM once, spawns/gates one
 # WS, updates STATUS, and exits. --dangerously-skip-permissions because cron is non-interactive;
@@ -53,5 +53,5 @@ echo "$(ts) wake-start" >"$HEARTBEAT"
   --dangerously-skip-permissions \
   >>"$LOG" 2>&1
 
-echo "$(ts) wake-complete" >"$HEARTBEAT"
+echo "$(ts) wake-complete pid=$$" >"$HEARTBEAT"
 echo "$(ts) wake complete." >>"$LOG"
