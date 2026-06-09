@@ -79,3 +79,8 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   are ?? ; no WS-07 commit yet). This is the EXPECTED mid-edit state of a live wake, NOT a committed
   break. Correctly took NO action (touching it would corrupt in-flight work + violate lane). Refined
   check #3: don't evaluate the build while a wake is live. WS commits: 7.
+- 2026-06-09 13:18 — All healthy. Cron firing (20:05/10/15). WS-07 🔵 still building (wake PID
+  136336, ~13 min in — normal; WS-03/04 took 20-25). Verified PROGRESSING not hung: alerting/
+  template.rs touched <3 min ago. Lock HELD (kernel-owned), no STOP. Build red = same live WIP as
+  13:13 (uncommitted) — no action per refined check #3. Only open TODO is the ✅ RESOLVED WS-03 one.
+  WS commits: 7→8 (8th is a supervisor log commit, not a WS). No worker repair needed.
