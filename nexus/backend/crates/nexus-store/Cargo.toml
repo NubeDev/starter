@@ -16,6 +16,7 @@ serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
+futures.workspace = true
 
 async-trait.workspace = true
 thiserror.workspace = true
@@ -32,6 +33,11 @@ base64.workspace = true
 testing = ["starter-store-postgres/testing"]
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["test-util"] }
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }
+sqlx.workspace = true
 testcontainers.workspace = true
 testcontainers-modules.workspace = true
+
+[[test]]
+name = "query_run"
+path = "tests/query/run_test.rs"

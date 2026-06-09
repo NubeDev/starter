@@ -3,6 +3,31 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D4 — SQL datasource query path runs on sqlx, not ArkFlow's `sql` input
+
+A consequence of D3: the connector trim removed ArkFlow's `sql` input (the one
+piece that pulled DuckDB). So for SQL datasources the user's query executes
+**directly against Postgres via sqlx**, and the result rows flow through the same
+bounded-collector caps + Arrow/JSON shaping the ArkFlow seam uses. This is also the
+*better* design independent of the trim:
+
+- **R4 query safety is enforceable, not aspirational.** Owning the connection
+  directly is how the read-only DB role, server-side statement timeout, forced
+  `LIMIT`, and per-tenant predicate are actually guaranteed — they are connection-
+  and-statement properties, awkward to enforce through an opaque ArkFlow input
+  config.
+- **Pushdown is automatic and total.** Running the user SQL as the input query
+  against Postgres means `WHERE`/`LIMIT` execute in the database (the SCOPE's
+  "two-layer SQL" resolution), with no in-memory full-table pull.
+- **ArkFlow keeps its real job.** The collector/runner seam still drives the
+  *live/streaming* path (memory/generate now; Kafka/MQTT/Modbus restored to the
+  vendored plugin when M3 needs them, each pulling only its own dep). DataFusion
+  remains available for non-SQL/cross-source shaping.
+
+This narrows D1: ArkFlow is on the critical path for the *streaming* seam (proven at
+M0), while the *one-shot SQL query* path is sqlx — the engine seam and the query
+path are deliberately separate runners, as the SCOPE's two-runner model intends.
+
 ## D2 — R8: SSE auth = short-lived signed stream token in the URL (not cookie)
 
 `POST /streams` (Bearer-authed) mints an HMAC-signed, ~60s-TTL token bound to the
