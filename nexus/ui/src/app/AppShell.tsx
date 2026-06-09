@@ -1,24 +1,24 @@
 import { Outlet } from "react-router-dom";
+import { SidebarProvider } from "@nube/starter-ui-kit/components/sidebar";
 
-import { ExtensionSlot } from "@/extensions/ExtensionSlot";
+import { AppSidebar } from "@/app/AppSidebar";
+import { Topbar } from "@/app/Topbar";
 
-// App frame: a glass sidebar (host nav + extension-contributed nav) and
-// a routed content region. Extensions mount into the `sidebar-nav` and
-// `sidebar` slots — the same slot ids the in-repo `com.nubeio.ce` remote
-// contributes to, so it appears here unchanged once loaded.
+// App frame: the kit's collapsible sidebar beside a content region with
+// a glass topbar and the routed outlet. The aurora backdrop (index.css)
+// sits behind everything; surfaces are glass so the depth reads through.
 export function AppShell() {
   return (
-    <div className="flex min-h-screen">
-      <aside className="glass flex w-64 shrink-0 flex-col gap-4 p-4">
-        <div className="px-2 text-lg font-semibold tracking-tight">Nexus</div>
-        <nav className="flex-1 overflow-y-auto">
-          <ExtensionSlot id="sidebar-nav" />
-        </nav>
-        <ExtensionSlot id="sidebar" />
-      </aside>
-      <main className="flex-1 overflow-y-auto p-6">
-        <Outlet />
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Topbar title="Dashboards" />
+          <main className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-6">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }

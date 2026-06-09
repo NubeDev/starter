@@ -5,10 +5,13 @@ import { Empty } from "@/features/state/Empty";
 // status column ("online" / "degraded" / "offline", case-insensitive);
 // the field mapping's first series carries the status value and its
 // `label` field names the label column. Pure DOM, data via props (F6).
-const DOT: Record<string, string> = {
-  online: "bg-[hsl(var(--primary))]",
-  degraded: "bg-[hsl(var(--chart-4))]",
-  offline: "bg-[hsl(var(--destructive))]",
+// Status → token. Applied as an inline CSS var reference so the colour
+// tracks the theme without depending on Tailwind generating an arbitrary
+// class for a runtime-computed value.
+const DOT_VAR: Record<string, string> = {
+  online: "var(--chart-1)",
+  degraded: "var(--chart-4)",
+  offline: "var(--destructive)",
 };
 
 export function Status({ widget, data }: { widget: Widget; data: WidgetData }) {
@@ -23,18 +26,25 @@ export function Status({ widget, data }: { widget: Widget; data: WidgetData }) {
       {data.points.map((p, i) => {
         const status = String(p[statusField.value] ?? "").toLowerCase();
         const label = labelCol ? String(p[labelCol] ?? "—") : `#${i + 1}`;
+        const dot = DOT_VAR[status] ?? "var(--muted-foreground)";
         return (
           <li
             key={i}
-            className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm"
+            className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent/30"
           >
             <span className="truncate text-foreground">{label}</span>
-            <span className="flex items-center gap-2 text-muted-foreground">
+            <span className="flex items-center gap-2">
               <span
-                className={`size-2 rounded-full ${DOT[status] ?? "bg-muted"}`}
+                className="size-2 rounded-full"
+                style={{
+                  backgroundColor: dot,
+                  boxShadow: `0 0 8px ${dot}`,
+                }}
                 aria-hidden
               />
-              <span className="capitalize">{status || "unknown"}</span>
+              <span className="capitalize" style={{ color: dot }}>
+                {status || "unknown"}
+              </span>
             </span>
           </li>
         );
