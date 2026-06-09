@@ -14,6 +14,10 @@ use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceSummary,
     RedactedConnection, TestDatasourceResponse, UpdateDatasourceRequest,
 };
+use crate::dto::alert::{
+    AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest, CreateChannelRequest,
+    CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
+};
 use crate::dto::flow::{CreateFlowRequest, FlowDetail, FlowSummary, UpdateFlowRequest};
 use crate::dto::me::MeResponse;
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
@@ -52,5 +56,13 @@ use crate::Problem;
     FlowDetail,
     CreateFlowRequest,
     UpdateFlowRequest,
+    AlertRuleDetail,
+    CreateAlertRuleRequest,
+    UpdateAlertRuleRequest,
+    AlertEvent,
+    ChannelDetail,
+    CreateChannelRequest,
+    SilenceDetail,
+    CreateSilenceRequest,
 )))]
 pub struct Schemas;

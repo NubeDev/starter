@@ -7,6 +7,7 @@
 //! Dashboards, panels, alerts, and flows arrive with their milestones (M2/M3)
 //! and extend this module add-only.
 
+pub mod alert;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;

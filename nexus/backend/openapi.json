@@ -2,10 +2,339 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Nexus API",
-    "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, panels, and flows.",
+    "description": "Control plane for the Nexus observability/BI platform: datasources, one-shot queries, live SSE streams, dashboards, panels, flows, and alerts.",
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/alerts/channels": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_channels",
+        "responses": {
+          "200": {
+            "description": "Channels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChannelDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "create_channel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/channels/{id}": {
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "delete_channel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Channel id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/events": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_alert_events",
+        "responses": {
+          "200": {
+            "description": "Events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/rules": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_alert_rules",
+        "responses": {
+          "200": {
+            "description": "Rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertRuleDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "create_alert_rule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlertRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRuleDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/rules/{id}": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "get_alert_rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Rule id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rule",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertRuleDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "update_alert_rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Rule id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlertRuleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "delete_alert_rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Rule id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/silences": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "list_silences",
+        "responses": {
+          "200": {
+            "description": "Silences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SilenceDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "create_silence",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSilenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SilenceDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/silences/{id}": {
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "operationId": "delete_silence",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Silence id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
     "/api/v1/dashboards": {
       "get": {
         "tags": [
@@ -684,6 +1013,137 @@
   },
   "components": {
     "schemas": {
+      "AlertEvent": {
+        "type": "object",
+        "description": "One recorded transition: when a rule fired or resolved, the value that\ntriggered it, and whether it was silenced / actually notified.",
+        "required": [
+          "id",
+          "rule_id",
+          "at",
+          "transition",
+          "silenced",
+          "notified"
+        ],
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notified": {
+            "type": "boolean"
+          },
+          "rule_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "silenced": {
+            "type": "boolean"
+          },
+          "transition": {
+            "type": "string",
+            "description": "firing | resolved."
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "AlertRuleDetail": {
+        "type": "object",
+        "description": "An alert rule in full.",
+        "required": [
+          "id",
+          "name",
+          "query",
+          "op",
+          "threshold",
+          "for_secs",
+          "interval_secs",
+          "enabled",
+          "channel_ids"
+        ],
+        "properties": {
+          "channel_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "for_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ChannelDetail": {
+        "type": "object",
+        "description": "A notification channel.",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "config"
+        ],
+        "properties": {
+          "config": {},
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "ColumnSchema": {
         "type": "object",
         "description": "One column of a query result.",
@@ -699,6 +1159,88 @@
           "type": {
             "$ref": "#/components/schemas/ResultColumnType",
             "description": "Coarse logical type for rendering."
+          }
+        }
+      },
+      "CreateAlertRuleRequest": {
+        "type": "object",
+        "description": "Create an alert rule: a query whose first numeric cell is compared to a\nthreshold on a cadence. `op` is one of gt|gte|lt|lte|eq|ne.",
+        "required": [
+          "name",
+          "query",
+          "op",
+          "threshold"
+        ],
+        "properties": {
+          "channel_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Pending dwell in seconds before firing (0 = fire on first breach)."
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Evaluation cadence in seconds."
+          },
+          "name": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "CreateChannelRequest": {
+        "type": "object",
+        "description": "Create a notification channel. `kind` selects the delivery (webhook in v1);\n`config` is the kind-specific settings (e.g. `{ \"url\": \"…\" }`).",
+        "required": [
+          "name",
+          "kind",
+          "config"
+        ],
+        "properties": {
+          "config": {},
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -811,6 +1353,37 @@
               "null"
             ],
             "description": "Visualization kind; defaults to `table` when omitted."
+          }
+        }
+      },
+      "CreateSilenceRequest": {
+        "type": "object",
+        "description": "Create a silence. `rule_id = None` silences every rule in the tenant for the\nwindow; a value silences just that rule. Silencing suppresses notification,\nnot evaluation — the event history still records what fired.",
+        "required": [
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rule_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -1254,6 +1827,42 @@
           "other"
         ]
       },
+      "SilenceDetail": {
+        "type": "object",
+        "description": "A silence window.",
+        "required": [
+          "id",
+          "starts_at",
+          "ends_at"
+        ],
+        "properties": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rule_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "StreamEvent": {
         "type": "object",
         "description": "One `data:` frame on a live stream. `seq` is the monotonic per-stream event\nid echoed in the SSE `id:` field so a reconnecting client can send\n`Last-Event-ID` to resume; `rows` is the batch shaped by the stream's SQL.",
@@ -1299,6 +1908,67 @@
           },
           "ok": {
             "type": "boolean"
+          }
+        }
+      },
+      "UpdateAlertRuleRequest": {
+        "type": "object",
+        "description": "Partially update an alert rule; omitted fields are unchanged.",
+        "properties": {
+          "channel_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "op": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "query": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "threshold": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
           }
         }
       },

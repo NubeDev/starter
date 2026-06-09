@@ -3,6 +3,39 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D9 — Alerting is a scheduler + state machine + notifiers, designed in ALERTING.md before any code
+
+The alerting subsystem follows its own sub-design ([ALERTING.md](ALERTING.md)), written before
+implementation per the session scope. The load-bearing decisions:
+
+- **The state machine is the dedup.** A pure `step(state, breaching, dwell_elapsed)` function
+  (ok→pending→firing→resolved) emits a transition only on `→firing`/`→resolved`, so a rule
+  breaching for an hour notifies once, not every tick. It has no I/O and is exhaustively
+  unit-tested; the evaluator wraps it with persistence and notification. The `for_secs` dwell
+  routes a fresh breach through `pending` first, absorbing a transient spike.
+- **The scheduler's cross-tenant discovery is a SECURITY DEFINER function, not BYPASSRLS.** A
+  system task must find due rules across every tenant, which RLS forbids the runtime role from
+  doing. Rather than weaken the runtime role, `nexus_claim_due_alert_rules` (owned by the
+  migration role, `EXECUTE`-granted to the runtime role) exposes exactly that one cross-tenant
+  read, advances `next_eval_at` atomically, and uses `FOR UPDATE SKIP LOCKED` so the single-node
+  v1 upgrades to multi-node without a claim rewrite. Each claimed rule is then evaluated under
+  its own tenant's RLS context.
+- **Silences suppress notification, never evaluation.** A silenced rule still evaluates and still
+  writes its event (the history stays honest); only the channel delivery is skipped, with the
+  event flagged `silenced`. This is the maintenance-window path.
+- **Channels are a trait + kind enum; v1 ships webhook.** Webhook is the universal integration
+  (Slack/PagerDuty/email gateways all accept one) and needs no provider SDK, so it is the only
+  kind built; `email`/`slack` are a new arm + impl, not an evaluator change. A channel failure is
+  recorded on the event and never crashes the evaluator or blocks the other channels.
+- **The evaluator lives in `nexus-api`, not `nexus-engine` (R2).** It orchestrates the store and
+  the existing guarded query path; putting it in the engine would force the store into the engine.
+  The pure pieces (state machine, threshold comparison) are unit-tested; the evaluator is proven
+  end-to-end (rule fires through a real webhook, dedups while firing, resolves on recovery).
+
+Deferred, with the upgrade path noted: multi-node evaluation (claim already SKIP-LOCKED-safe),
+conditions beyond single-scalar-vs-threshold (operator enum is add-only), channel kinds beyond
+webhook, and durable notification retry (v1 records the failure on the event).
+
 ## D8 — Flow connectors are nexus custom builders (http_poll input, postgres output), not a vendor restore
 
 FlowManager runs the topology's weather→Postgres ingestion, which needs an input that
