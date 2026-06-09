@@ -144,3 +144,8 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   CRON wake itself (it narrates its spawn action) — NOT a second supervisor; cron + I both write
   nextgen docs in our own sections, no conflict. Only blocker is the ✅RESOLVED WS-03 note.
   4/12 done (03,04,07,10); WS-08 building.
+- 2026-06-09 14:06 — All healthy, NO action. Cron firing (20:55, 21:00/05). WS-08 (Connectors) 🔵
+  wake PID 187071 ALIVE 6min, actively writing datasource/postgres/probe.rs + mod.rs (<4min) —
+  on-scope connector probing. Lock kernel-held, no STOP. WS-08.md not yet at 6min (normal; sessions
+  write it near commit — NOT re-opening a multi-wake watch, just confirm with commit). Only blocker
+  is the ✅RESOLVED WS-03 note. 4/12 done (03,04,07,10); WS-08 building.
