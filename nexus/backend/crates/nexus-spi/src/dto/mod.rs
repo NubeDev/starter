@@ -13,6 +13,7 @@ pub mod audit;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;
+pub mod folder;
 pub mod me;
 pub mod panel;
 pub mod query;

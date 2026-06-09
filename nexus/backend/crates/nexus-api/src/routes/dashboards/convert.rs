@@ -12,6 +12,8 @@ pub fn to_summary(r: &DashboardRecord) -> DashboardSummary {
         name: r.name.clone(),
         icon: r.icon.clone(),
         accent: r.accent.clone(),
+        folder_id: r.folder_id,
+        starred: r.starred,
     }
 }
 
@@ -23,6 +25,8 @@ pub fn to_detail(d: &DashboardRecord, panels: &[PanelRecord]) -> DashboardDetail
         name: d.name.clone(),
         icon: d.icon.clone(),
         accent: d.accent.clone(),
+        folder_id: d.folder_id,
+        starred: d.starred,
         panels: panels.iter().map(to_panel).collect(),
     }
 }

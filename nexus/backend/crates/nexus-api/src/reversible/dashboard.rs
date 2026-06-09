@@ -17,7 +17,7 @@ use starter_spi::changelog::{Change, ChangeTx, Reversible};
 use starter_spi::{Error, Result};
 use uuid::Uuid;
 
-use nexus_store::dashboard::{self, DashboardPatch, DashboardRecord};
+use nexus_store::dashboard::{self, DashboardPatch, DashboardRecord, NewDashboard};
 
 use crate::authz::KIND_DASHBOARD;
 
@@ -45,6 +45,8 @@ impl DashboardReversible {
             slug: Some(snapshot.slug.clone()),
             icon: Some(snapshot.icon.clone()),
             accent: Some(snapshot.accent.clone()),
+            folder_id: Some(snapshot.folder_id),
+            starred: Some(snapshot.starred),
         };
         match dashboard::update(&self.metadata, tenant, snapshot.id, &patch).await? {
             Some(_) => Ok(()),
@@ -52,6 +54,25 @@ impl DashboardReversible {
                 what: format!("dashboard {}", snapshot.id),
             }),
         }
+    }
+
+    /// Re-create a deleted dashboard under its **original** id from a snapshot, so
+    /// panels and grants keyed on that id stay valid. Used by undo-of-delete and
+    /// redo-of-create. The store's id-stable insert (WS-05) makes this faithful;
+    /// the panels themselves are not resurrected here (a delete cascades them and
+    /// they are not in the dashboard snapshot — a known limitation, see the
+    /// module doc).
+    async fn resurrect(&self, tenant: &str, snapshot: &DashboardRecord) -> Result<()> {
+        let new = NewDashboard {
+            slug: snapshot.slug.clone(),
+            name: snapshot.name.clone(),
+            icon: snapshot.icon.clone(),
+            accent: snapshot.accent.clone(),
+            folder_id: snapshot.folder_id,
+        };
+        dashboard::insert_with_id(&self.metadata, tenant, snapshot.id, &new)
+            .await
+            .map(drop)
     }
 }
 
@@ -62,9 +83,9 @@ impl Reversible for DashboardReversible {
     }
 
     /// Undo. For an update, re-apply the `before` snapshot. For a create, delete
-    /// the row the create produced. For a delete, the row must be resurrected
-    /// with its original id (panels and grants key on it) — see
-    /// [`resurrect_unsupported`].
+    /// the row the create produced. For a delete, the row is resurrected with its
+    /// original id (panels and grants key on it) via
+    /// [`resurrect`](Self::resurrect).
     async fn apply_inverse(&self, ch: &Change) -> Result<()> {
         let tenant = tenant_of(ch)?;
         match ch.op {
@@ -76,14 +97,17 @@ impl Reversible for DashboardReversible {
                 let id = id_of(ch)?;
                 dashboard::delete(&self.metadata, tenant, id).await.map(drop)
             }
-            starter_spi::changelog::Op::Delete => resurrect_unsupported(),
+            starter_spi::changelog::Op::Delete => {
+                let before = snapshot_from(ch.before.as_ref(), "before")?;
+                self.resurrect(tenant, &before).await
+            }
             starter_spi::changelog::Op::Custom(ref c) => Err(custom_unsupported(c)),
         }
     }
 
     /// Redo. The mirror of [`apply_inverse`]: re-apply `after` for an update,
-    /// re-delete for a delete, re-create for a create (which needs id-stable
-    /// insert — see [`resurrect_unsupported`]).
+    /// re-delete for a delete, re-create for a create (id-stable, via
+    /// [`resurrect`](Self::resurrect)).
     async fn apply_forward(&self, ch: &Change) -> Result<()> {
         let tenant = tenant_of(ch)?;
         match ch.op {
@@ -95,21 +119,31 @@ impl Reversible for DashboardReversible {
                 let id = id_of(ch)?;
                 dashboard::delete(&self.metadata, tenant, id).await.map(drop)
             }
-            starter_spi::changelog::Op::Create => resurrect_unsupported(),
+            starter_spi::changelog::Op::Create => {
+                let after = snapshot_from(ch.after.as_ref(), "after")?;
+                self.resurrect(tenant, &after).await
+            }
             starter_spi::changelog::Op::Custom(ref c) => Err(custom_unsupported(c)),
         }
     }
 
-    /// Duplicate. Re-creating a dashboard under a fresh id with overrides needs an
-    /// id-stable insert path the store does not yet expose; tracked as a WS-05
-    /// follow-up (see [`resurrect_unsupported`]).
+    /// Duplicate. The `Reversible::clone_with` group path is not used for
+    /// dashboards — duplication runs through the dedicated
+    /// `POST /dashboards/:slug/duplicate` route (WS-05), which copies the
+    /// dashboard *and its panels* under a fresh id and records its own `Change`.
+    /// A bare clone here would copy only the dashboard row, orphaning the panels,
+    /// so it is intentionally declined.
     async fn clone_with(
         &self,
         _tx: &dyn ChangeTx,
         _src: &ResourceRef,
         _overrides: serde_json::Value,
     ) -> Result<Vec<ResourceRef>> {
-        Err(resurrect_unsupported().unwrap_err())
+        Err(Error::Invalid {
+            message: "dashboards duplicate via POST /dashboards/:slug/duplicate, \
+                      not the changelog clone path (panels would be orphaned)"
+                .into(),
+        })
     }
 }
 
@@ -140,6 +174,15 @@ fn snapshot_from(value: Option<&serde_json::Value>, which: &str) -> Result<Dashb
         message: format!("dashboard change has no {which} snapshot to apply"),
     })?;
     let id = field_str(v, "id")?;
+    // folder_id is optional (NULL = root) and starred defaults false, so both are
+    // read leniently: an older snapshot recorded before these fields existed
+    // restores to root/unstarred rather than failing.
+    let folder_id = match v.get("folder_id").and_then(|f| f.as_str()) {
+        Some(raw) => Some(Uuid::parse_str(raw).map_err(|e| Error::Invalid {
+            message: format!("dashboard {which} snapshot folder_id {raw:?} is not a uuid: {e}"),
+        })?),
+        None => None,
+    };
     Ok(DashboardRecord {
         id: Uuid::parse_str(&id).map_err(|e| Error::Invalid {
             message: format!("dashboard {which} snapshot id {id:?} is not a uuid: {e}"),
@@ -149,6 +192,8 @@ fn snapshot_from(value: Option<&serde_json::Value>, which: &str) -> Result<Dashb
         name: field_str(v, "name")?,
         icon: field_str(v, "icon")?,
         accent: field_str(v, "accent")?,
+        folder_id,
+        starred: v.get("starred").and_then(|s| s.as_bool()).unwrap_or(false),
     })
 }
 
@@ -174,21 +219,8 @@ pub fn snapshot_json(rec: &DashboardRecord) -> serde_json::Value {
         "name": rec.name,
         "icon": rec.icon,
         "accent": rec.accent,
-    })
-}
-
-/// Resurrecting a deleted dashboard (undo-delete / redo-create / duplicate) must
-/// re-insert with the *original* id so panels and grants keyed on it stay valid.
-/// The nexus-store insert mints a fresh id, so id-stable restore needs a store
-/// helper owned jointly with WS-05 (dashboard structure). Until that lands this
-/// returns an explicit, honest refusal rather than minting a new id that would
-/// silently orphan child rows. Tracked in
-/// `nexus/docs/scope/nextgen/sessions/TODOs.md`.
-fn resurrect_unsupported() -> Result<()> {
-    Err(Error::Invalid {
-        message: "undo of a dashboard delete (id-stable restore) is not yet supported; \
-                  needs an id-preserving store insert (WS-05 follow-up)"
-            .into(),
+        "folder_id": rec.folder_id.map(|id| id.to_string()),
+        "starred": rec.starred,
     })
 }
 

@@ -162,3 +162,33 @@
   unrelated file. Landed all WS-03 work; flagging this so it doesn't read as a WS-03 regression.
 - **To unblock the shared typecheck gate:** remove the unused `TenantRail` in
   `starter-ui-authz/src/panels/authz-admin.tsx` (the session that owns that package, or a human).
+
+### [2026-06-09] WS-05 — deferred scope (not blockers) + one pre-existing out-of-lane break
+WS-05 shipped its self-contained, fully-correct slices end-to-end (folders, `folder_id`/`starred`,
+id-stable inserts, duplicate, JSON export/import, C6 dashboard+folder Reversibles, UI data layer).
+All gates green. The following were **deliberately deferred** to avoid half-landing larger surfaces —
+none block a later WS:
+
+- **Collapsible rows + repeat-by-variable render.** UI-canvas concerns that ride the opaque panel
+  layout JSON; doing them properly needs the canvas grid work (WS-04 lane overlap) and would
+  otherwise be half-done. The repeat dependency on WS-02 variables is satisfied (committed).
+- **Public link / snapshot / embed sharing.** A large security surface (anonymous tokens, frozen-data
+  copies, scoped iframe tokens) that warrants its own focused session. Dashboard sharing today is
+  grant-based (`authz/dashboard_instances.rs`), which is correct and unchanged.
+- **Version-checkpoint UI** (tag-a-changelog-snapshot per D1). The substrate — dashboards pinned to a
+  snapshot `Reversible` — is now in place; the checkpoint tag-index + restore UI is the remaining UI.
+- **Folder-tree / star / export-import component UI.** The API client + TanStack query/mutation hooks
+  are shipped and typed (`api/folders/*`, `useFolders`, `useFolderMutations`,
+  `useDashboardPortability`), but the sidebar tree rendering, drag-to-move, star-toggle control, and
+  export/import buttons are not yet wired into components. A follow-up wires these onto the existing
+  `SidebarDashboards`/`DashboardToolbar`.
+
+**Pre-existing out-of-lane break (NOT caused by WS-05, not fixed here):**
+`crates/nexus-store/tests/alert/crud_test.rs` constructs `NewRule` without its required
+`combinator`, `conditions`, `exec_error_policy` (+2 more) fields — a drift from the alerts WS that
+predates this session (no alert source was touched by WS-05). It blocks compiling **only** the
+`alert_crud` docker-gated test target under `--features testing`. WS-05's own store-test targets
+(`folder_crud`, `dashboard_crud`, `variable_crud`, `tag_crud`) compile; the latter three were
+updated only to add the `NewDashboard` fields this WS introduced (`folder_id`; `dashboard_crud`/
+`tag_crud` also needed the pre-existing-missing `icon`/`accent` to make the same literal compile).
+**To unblock the `alert_crud` target:** the alerts WS (or a human) updates that `NewRule` literal.

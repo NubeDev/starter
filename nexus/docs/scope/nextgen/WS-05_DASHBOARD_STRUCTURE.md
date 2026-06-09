@@ -1,9 +1,9 @@
 # WS-05 — Dashboard Structure (Folders · Rows · Repeat · JSON Model · Versioning · Share)
 
-> **Status:** Not started · **Wave:** 0 (owns the JSON model contract C1) + Wave 3 (repeat/versioning)
-> **Owner:** _unassigned_ · **Depends on:** WS-02 (repeat-by-variable); owns C1
-> **Migrations:** block `06xx` (e.g. `0601_dashboard_model.sql`, `0602_folders.sql`; version-tags are a thin index per D1, not a JSON-snapshot table) · **Read first:** GAP_ANALYSIS §2.5, ROADMAP §0 + §6 (C1)
-> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+> **Status:** Backend + contract + UI data layer done (component UI deferred) · **Wave:** 0 (owns the JSON model contract C1) + Wave 3 (repeat/versioning)
+> **Owner:** WS-05 session · **Depends on:** WS-02 (repeat-by-variable, ✅ committed); owns C1
+> **Migrations:** block `06xx` — shipped `0602_folders.sql` + `0603_dashboard_folder_star.sql` (version-tags are a thin index per D1, not a JSON-snapshot table) · **Read first:** GAP_ANALYSIS §2.5, ROADMAP §0 + §6 (C1)
+> **Verified:** `a26e4f19` on 2026-06-09 — re-grepped: backend lives under `nexus/backend/crates/`; `06xx` block free; WS-12 dashboard handlers did not yet record (now wired). Spec shape held.
 
 ## Goal
 Turn a flat list of dashboards into an organised, scalable, **dashboard-as-code** system: folders,

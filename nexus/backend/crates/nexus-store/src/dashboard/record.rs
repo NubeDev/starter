@@ -14,6 +14,10 @@ pub struct DashboardRecord {
     pub icon: String,
     /// accent colour as an HSL triple string, e.g. "152 76% 44%".
     pub accent: String,
+    /// Folder this dashboard is filed under; `None` is the root (WS-05).
+    pub folder_id: Option<Uuid>,
+    /// Whether the caller's tenant has starred this dashboard (WS-05).
+    pub starred: bool,
 }
 
 /// A stored panel.
@@ -35,6 +39,8 @@ pub struct NewDashboard {
     pub name: String,
     pub icon: String,
     pub accent: String,
+    /// Folder to file the new dashboard under; `None` is the root (WS-05).
+    pub folder_id: Option<Uuid>,
 }
 
 /// Partial update of a dashboard. Every field is optional — `None` leaves the
@@ -46,6 +52,11 @@ pub struct DashboardPatch {
     pub slug: Option<String>,
     pub icon: Option<String>,
     pub accent: Option<String>,
+    /// Move to a folder (`Some(Some(id))`), re-root (`Some(None)`), or leave
+    /// unchanged (`None`) — the three-valued case COALESCE can't express (WS-05).
+    pub folder_id: Option<Option<Uuid>>,
+    /// Star/unstar; `None` leaves it unchanged.
+    pub starred: Option<bool>,
 }
 
 /// Input to create a panel under a dashboard.

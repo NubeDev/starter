@@ -42,9 +42,17 @@ export type DashboardSummary = S["DashboardSummary"];
 export type DashboardDetail = S["DashboardDetail"];
 export type CreateDashboardRequest = S["CreateDashboardRequest"];
 export type UpdateDashboardRequest = S["UpdateDashboardRequest"];
+export type DashboardExport = S["DashboardExport"];
+export type PanelExport = S["PanelExport"];
+export type VariableExport = S["VariableExport"];
 export type PanelDetail = S["PanelDetail"];
 export type CreatePanelRequest = S["CreatePanelRequest"];
 export type UpdatePanelRequest = S["UpdatePanelRequest"];
+
+// Dashboard organisation (WS-05).
+export type FolderSummary = S["FolderSummary"];
+export type CreateFolderRequest = S["CreateFolderRequest"];
+export type UpdateFolderRequest = S["UpdateFolderRequest"];
 
 export type FlowSummary = S["FlowSummary"];
 export type FlowDetail = S["FlowDetail"];

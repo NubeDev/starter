@@ -17,5 +17,11 @@ pub struct DashboardDetail {
     pub icon: String,
     /// accent colour as an HSL triple string, e.g. "152 76% 44%".
     pub accent: String,
+    /// Folder this dashboard is filed under (WS-05); `null` is the root.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub folder_id: Option<Uuid>,
+    /// Whether the dashboard is starred (WS-05).
+    #[serde(default)]
+    pub starred: bool,
     pub panels: Vec<PanelDetail>,
 }

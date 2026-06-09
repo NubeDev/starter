@@ -14,6 +14,7 @@ pub mod changelog;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;
+pub mod folder;
 pub mod migrate;
 pub mod query;
 pub mod query_history;

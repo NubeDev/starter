@@ -964,6 +964,42 @@
         }
       }
     },
+    "/api/v1/dashboards/import": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "import_dashboard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported schema version"
+          },
+          "409": {
+            "description": "Slug already used in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/dashboards/{slug}": {
       "get": {
         "tags": [
@@ -1064,6 +1100,77 @@
           },
           "409": {
             "description": "New slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}/duplicate": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "duplicate_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Source dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Duplicated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Source not found in this tenant"
+          },
+          "409": {
+            "description": "Derived slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}/export": {
+      "get": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "export_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portable dashboard model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardExport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
           }
         }
       }
@@ -1742,6 +1849,134 @@
           },
           "403": {
             "description": "Not allowed to stop this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/folders": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "list_folders",
+        "responses": {
+          "200": {
+            "description": "Folders in the tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FolderSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "create_folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parent folder does not exist in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/folders/{id}": {
+      "delete": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "delete_folder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Folder id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "update_folder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Folder id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFolderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Folder updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid reparent (self-parent or absent parent)"
           },
           "404": {
             "description": "Not found in this tenant"
@@ -3002,6 +3237,14 @@
             ],
             "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"; defaults\nserver-side when omitted."
           },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Folder to file the dashboard under (WS-05); omit/`null` for the root."
+          },
           "icon": {
             "type": [
               "string",
@@ -3079,6 +3322,26 @@
           },
           "output": {},
           "pipeline": {}
+        }
+      },
+      "CreateFolderRequest": {
+        "type": "object",
+        "description": "Create a folder. `parent_id` files it under another folder (in the same\ntenant); omit it for a root folder.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Parent folder id; omit/`null` for a root folder."
+          }
         }
       },
       "CreatePanelRequest": {
@@ -3290,6 +3553,14 @@
             "type": "string",
             "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"."
           },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Folder this dashboard is filed under (WS-05); `null` is the root."
+          },
           "icon": {
             "type": "string",
             "description": "lucide icon name for the sidebar/page chrome."
@@ -3309,6 +3580,56 @@
           },
           "slug": {
             "type": "string"
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the dashboard is starred (WS-05)."
+          }
+        }
+      },
+      "DashboardExport": {
+        "type": "object",
+        "description": "A self-contained, importable dashboard. Identity (`slug`/`name`) plus\nappearance, its panels, and its variables.",
+        "required": [
+          "schema_version",
+          "slug",
+          "name",
+          "icon",
+          "accent",
+          "panels"
+        ],
+        "properties": {
+          "accent": {
+            "type": "string",
+            "description": "accent HSL triple string."
+          },
+          "icon": {
+            "type": "string",
+            "description": "lucide icon name."
+          },
+          "name": {
+            "type": "string"
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PanelExport"
+            }
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Model version; must match [`DASHBOARD_SCHEMA_VERSION`] to import.",
+            "minimum": 0
+          },
+          "slug": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariableExport"
+            }
           }
         }
       },
@@ -3327,6 +3648,14 @@
             "type": "string",
             "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"."
           },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Folder this dashboard is filed under (WS-05); `null` is the root."
+          },
           "icon": {
             "type": "string",
             "description": "lucide icon name for the sidebar/page chrome."
@@ -3342,6 +3671,10 @@
           "slug": {
             "type": "string",
             "description": "Mutable route alias."
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the dashboard is starred (WS-05)."
           }
         }
       },
@@ -3480,6 +3813,31 @@
           },
           "running": {
             "type": "boolean"
+          }
+        }
+      },
+      "FolderSummary": {
+        "type": "object",
+        "description": "One folder: its immutable id, its parent (NULL = root), and display name. The\nclient assembles the tree from the flat list using `parent_id`.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Parent folder id; `null` for a root folder."
           }
         }
       },
@@ -3641,6 +3999,36 @@
           "viz": {
             "type": "string",
             "description": "Visualization kind: `line` | `bar` | `table` | `stat` | …"
+          }
+        }
+      },
+      "PanelExport": {
+        "type": "object",
+        "description": "One panel in the export — everything needed to re-create it bar the ids the\nimporting tenant mints fresh.",
+        "required": [
+          "title",
+          "sql",
+          "viz",
+          "layout"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Datasource this panel queries; `null` when the source dashboard had none\nor the importing tenant should re-bind it."
+          },
+          "layout": {},
+          "sql": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string"
           }
         }
       },
@@ -4738,7 +5126,7 @@
       },
       "UpdateDashboardRequest": {
         "type": "object",
-        "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned.",
+        "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned. Moving\nbetween folders and starring (WS-05) ride this same patch.",
         "properties": {
           "accent": {
             "type": [
@@ -4746,6 +5134,18 @@
               "null"
             ],
             "description": "accent HSL triple string; `None` leaves it unchanged."
+          },
+          "clear_folder": {
+            "type": "boolean",
+            "description": "Re-root the dashboard (clear its folder)."
+          },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Move into this folder. Ignored when `clear_folder` is true; `None` (with\n`clear_folder` false) leaves the folder unchanged."
           },
           "icon": {
             "type": [
@@ -4765,6 +5165,13 @@
               "string",
               "null"
             ]
+          },
+          "starred": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Star/unstar; `None` leaves it unchanged."
           }
         }
       },
@@ -4832,6 +5239,30 @@
           },
           "output": {},
           "pipeline": {}
+        }
+      },
+      "UpdateFolderRequest": {
+        "type": "object",
+        "description": "Partial update. `name` renames. The parent is three-valued, modelled\nexplicitly so a JSON-friendly wire shape (no double-`null` ambiguity) can\ndistinguish the cases: send `parent_id` to move under a folder, set\n`clear_parent: true` to re-root, or send neither to leave the parent\nunchanged. `clear_parent` wins if both are set.",
+        "properties": {
+          "clear_parent": {
+            "type": "boolean",
+            "description": "Re-root the folder (set its parent to NULL)."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Move under this folder. Ignored when `clear_parent` is true."
+          }
         }
       },
       "UpdatePanelRequest": {
@@ -4989,6 +5420,48 @@
             "type": "integer",
             "format": "int32",
             "description": "Display/resolution order within the dashboard's variable bar; lower\nsorts first. Ties break by creation order."
+          }
+        }
+      },
+      "VariableExport": {
+        "type": "object",
+        "description": "One variable in the export. Mirrors the relational variable row minus its\nids; opaque `options_config` travels as-is.",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "current": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "include_all": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options_config": {},
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

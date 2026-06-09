@@ -13,9 +13,15 @@ use nexus_store::dashboard::{self, DashboardPatch};
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 
+use starter_spi::authz::ResourceRef;
+use starter_spi::changelog::Op;
+use starter_undo::ChangeDraft;
+
 use super::convert::to_summary;
 use crate::authz::{self, ACTION_EDIT, KIND_DASHBOARD};
+use crate::changelog::{actor_from, record};
 use crate::middleware::tenant::caller;
+use crate::reversible::dashboard_snapshot_json;
 use crate::state::AppState;
 
 #[utoipa::path(
@@ -60,14 +66,47 @@ pub async fn update_dashboard(
     {
         return resp;
     }
+    // Collapse the JSON-friendly `folder_id` + `clear_folder` pair into the
+    // store's three-valued patch: clear wins, then an explicit folder, else leave.
+    let folder_id = if req.clear_folder {
+        Some(None)
+    } else {
+        req.folder_id.map(Some)
+    };
     let patch = DashboardPatch {
         name: req.name,
         slug: req.slug,
         icon: req.icon,
         accent: req.accent,
+        folder_id,
+        starred: req.starred,
     };
+    // The pre-update row is the `before` snapshot the undo log needs; `dash` was
+    // read by id above for the authz check, so reuse it.
+    let before = dash.clone();
     match dashboard::update(&state.metadata, &tenant, dash.id, &patch).await {
-        Ok(Some(rec)) => Json(to_summary(&rec)).into_response(),
+        Ok(Some(rec)) => {
+            let draft = ChangeDraft {
+                resource: ResourceRef::row(KIND_DASHBOARD, rec.id.to_string()).with_tenant(&tenant),
+                op: Op::Update,
+                before: Some(dashboard_snapshot_json(&before)),
+                after: Some(dashboard_snapshot_json(&rec)),
+                resource_version: None,
+                correlation: None,
+            };
+            if let Err(e) = record(
+                &state.changelog.registry,
+                state.metadata.clone(),
+                &tenant,
+                actor_from(caller),
+                draft,
+            )
+            .await
+            {
+                tracing::warn!(error = %e, "failed to record dashboard update");
+            }
+            Json(to_summary(&rec)).into_response()
+        }
         Ok(None) => (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => IntoResponse(e).into_response(),
     }

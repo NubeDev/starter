@@ -24,6 +24,8 @@ use starter_spi::authz::{Ownership, PolicyEngine, ResourceRef, ResourceRegistry,
 /// Registry kind for a dashboard. Grants and the engine key on this plus the
 /// dashboard's immutable id (never its slug, which is a mutable route alias).
 pub const KIND_DASHBOARD: &str = "nexus.dashboard";
+/// Registry kind for a folder (the dashboard organisation tree, WS-05).
+pub const KIND_FOLDER: &str = "nexus.folder";
 /// Registry kind for a datasource.
 pub const KIND_DATASOURCE: &str = "nexus.datasource";
 /// Registry kind for a saved flow.
@@ -49,6 +51,7 @@ const STANDARD_ACTIONS: &[&str] = &[ACTION_VIEW, ACTION_EDIT, ACTION_DELETE];
 pub fn register_nexus_resources(registry: &dyn ResourceRegistry) {
     for kind in [
         KIND_DASHBOARD,
+        KIND_FOLDER,
         KIND_DATASOURCE,
         KIND_FLOW,
         KIND_ALERT_RULE,

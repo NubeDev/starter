@@ -13,8 +13,10 @@ use crate::dto::agent::{
 };
 use crate::dto::audit::{ForgetRequest, ForgetResponse, UndoResponse};
 use crate::dto::dashboard::{
-    CreateDashboardRequest, DashboardDetail, DashboardSummary, UpdateDashboardRequest,
+    CreateDashboardRequest, DashboardDetail, DashboardExport, DashboardSummary, PanelExport,
+    UpdateDashboardRequest, VariableExport,
 };
+use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
 use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceSchema, DatasourceSummary,
     RedactedConnection, SchemaColumn, SchemaTable, TestConnectionRequest, TestDatasourceResponse,
@@ -74,6 +76,12 @@ use crate::Problem;
     DashboardDetail,
     CreateDashboardRequest,
     UpdateDashboardRequest,
+    DashboardExport,
+    PanelExport,
+    VariableExport,
+    FolderSummary,
+    CreateFolderRequest,
+    UpdateFolderRequest,
     PanelDetail,
     CreatePanelRequest,
     UpdatePanelRequest,

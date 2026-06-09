@@ -14,7 +14,7 @@ mod update;
 
 pub use delete::delete;
 pub use fetch::{by_slug, list};
-pub use insert::insert;
+pub use insert::{insert, insert_with_id};
 pub use record::{
     DashboardPatch, DashboardRecord, NewDashboard, NewPanel, PanelPatch, PanelRecord,
 };

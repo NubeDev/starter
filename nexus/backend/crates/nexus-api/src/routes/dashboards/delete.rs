@@ -8,8 +8,14 @@ use nexus_store::dashboard;
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 
+use starter_spi::authz::ResourceRef;
+use starter_spi::changelog::Op;
+use starter_undo::ChangeDraft;
+
 use crate::authz::{self, ACTION_DELETE, KIND_DASHBOARD};
+use crate::changelog::{actor_from, record};
 use crate::middleware::tenant::caller;
+use crate::reversible::dashboard_snapshot_json;
 use crate::state::AppState;
 
 #[utoipa::path(
@@ -50,7 +56,29 @@ pub async fn delete_dashboard(
         return resp;
     }
     match dashboard::delete(&state.metadata, &tenant, dash.id).await {
-        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Ok(_) => {
+            let draft = ChangeDraft {
+                resource: ResourceRef::row(KIND_DASHBOARD, dash.id.to_string())
+                    .with_tenant(&tenant),
+                op: Op::Delete,
+                before: Some(dashboard_snapshot_json(&dash)),
+                after: None,
+                resource_version: None,
+                correlation: None,
+            };
+            if let Err(e) = record(
+                &state.changelog.registry,
+                state.metadata.clone(),
+                &tenant,
+                actor_from(caller),
+                draft,
+            )
+            .await
+            {
+                tracing::warn!(error = %e, "failed to record dashboard delete");
+            }
+            StatusCode::NO_CONTENT.into_response()
+        }
         Err(e) => IntoResponse(e).into_response(),
     }
 }

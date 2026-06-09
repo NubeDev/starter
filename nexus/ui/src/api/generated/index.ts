@@ -260,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboards/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["import_dashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboards/{slug}": {
         parameters: {
             query?: never;
@@ -274,6 +290,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_dashboard"];
+        trace?: never;
+    };
+    "/api/v1/dashboards/{slug}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["duplicate_dashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{slug}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["export_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/dashboards/{slug}/panels": {
@@ -467,6 +515,38 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_folders"];
+        put?: never;
+        post: operations["create_folder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/folders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_folder"];
+        options?: never;
+        head?: never;
+        patch: operations["update_folder"];
         trace?: never;
     };
     "/api/v1/me": {
@@ -989,6 +1069,11 @@ export interface components {
              *     server-side when omitted.
              */
             accent?: string | null;
+            /**
+             * Format: uuid
+             * @description Folder to file the dashboard under (WS-05); omit/`null` for the root.
+             */
+            folder_id?: string | null;
             /** @description lucide icon name; defaults server-side when omitted. */
             icon?: string | null;
             name: string;
@@ -1024,6 +1109,18 @@ export interface components {
             name: string;
             output: unknown;
             pipeline?: unknown;
+        };
+        /**
+         * @description Create a folder. `parent_id` files it under another folder (in the same
+         *     tenant); omit it for a root folder.
+         */
+        CreateFolderRequest: {
+            name: string;
+            /**
+             * Format: uuid
+             * @description Parent folder id; omit/`null` for a root folder.
+             */
+            parent_id?: string | null;
         };
         /**
          * @description Create a panel under the dashboard named in the path. The dashboard is keyed
@@ -1139,6 +1236,11 @@ export interface components {
         DashboardDetail: {
             /** @description accent colour as an HSL triple string, e.g. "152 76% 44%". */
             accent: string;
+            /**
+             * Format: uuid
+             * @description Folder this dashboard is filed under (WS-05); `null` is the root.
+             */
+            folder_id?: string | null;
             /** @description lucide icon name for the sidebar/page chrome. */
             icon: string;
             /** Format: uuid */
@@ -1146,11 +1248,37 @@ export interface components {
             name: string;
             panels: components["schemas"]["PanelDetail"][];
             slug: string;
+            /** @description Whether the dashboard is starred (WS-05). */
+            starred?: boolean;
+        };
+        /**
+         * @description A self-contained, importable dashboard. Identity (`slug`/`name`) plus
+         *     appearance, its panels, and its variables.
+         */
+        DashboardExport: {
+            /** @description accent HSL triple string. */
+            accent: string;
+            /** @description lucide icon name. */
+            icon: string;
+            name: string;
+            panels: components["schemas"]["PanelExport"][];
+            /**
+             * Format: int32
+             * @description Model version; must match [`DASHBOARD_SCHEMA_VERSION`] to import.
+             */
+            schema_version: number;
+            slug: string;
+            variables?: components["schemas"]["VariableExport"][];
         };
         /** @description A dashboard in a list: identity, route alias, display name, and appearance. */
         DashboardSummary: {
             /** @description accent colour as an HSL triple string, e.g. "152 76% 44%". */
             accent: string;
+            /**
+             * Format: uuid
+             * @description Folder this dashboard is filed under (WS-05); `null` is the root.
+             */
+            folder_id?: string | null;
             /** @description lucide icon name for the sidebar/page chrome. */
             icon: string;
             /**
@@ -1161,6 +1289,8 @@ export interface components {
             name: string;
             /** @description Mutable route alias. */
             slug: string;
+            /** @description Whether the dashboard is starred (WS-05). */
+            starred?: boolean;
         };
         /**
          * @description Full datasource view. The connection is redacted — host/port/database/user
@@ -1234,6 +1364,20 @@ export interface components {
             id: string;
             name: string;
             running: boolean;
+        };
+        /**
+         * @description One folder: its immutable id, its parent (NULL = root), and display name. The
+         *     client assembles the tree from the flat list using `parent_id`.
+         */
+        FolderSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /**
+             * Format: uuid
+             * @description Parent folder id; `null` for a root folder.
+             */
+            parent_id?: string | null;
         };
         /**
          * @description Which user to erase from the audit ledger. Erasure tombstones the *content*
@@ -1311,6 +1455,22 @@ export interface components {
             sql: string;
             title: string;
             /** @description Visualization kind: `line` | `bar` | `table` | `stat` | … */
+            viz: string;
+        };
+        /**
+         * @description One panel in the export — everything needed to re-create it bar the ids the
+         *     importing tenant mints fresh.
+         */
+        PanelExport: {
+            /**
+             * Format: uuid
+             * @description Datasource this panel queries; `null` when the source dashboard had none
+             *     or the importing tenant should re-bind it.
+             */
+            datasource_id?: string | null;
+            layout: unknown;
+            sql: string;
+            title: string;
             viz: string;
         };
         /**
@@ -1843,15 +2003,26 @@ export interface components {
         };
         /**
          * @description Partial update. Renaming the slug changes only the route alias — grants and
-         *     panel refs keep pointing at the immutable id, so nothing is orphaned.
+         *     panel refs keep pointing at the immutable id, so nothing is orphaned. Moving
+         *     between folders and starring (WS-05) ride this same patch.
          */
         UpdateDashboardRequest: {
             /** @description accent HSL triple string; `None` leaves it unchanged. */
             accent?: string | null;
+            /** @description Re-root the dashboard (clear its folder). */
+            clear_folder?: boolean;
+            /**
+             * Format: uuid
+             * @description Move into this folder. Ignored when `clear_folder` is true; `None` (with
+             *     `clear_folder` false) leaves the folder unchanged.
+             */
+            folder_id?: string | null;
             /** @description lucide icon name; `None` leaves it unchanged. */
             icon?: string | null;
             name?: string | null;
             slug?: string | null;
+            /** @description Star/unstar; `None` leaves it unchanged. */
+            starred?: boolean | null;
         };
         /**
          * @description Partial update. Every field is optional; `None` leaves the stored value
@@ -1880,6 +2051,23 @@ export interface components {
             name?: string | null;
             output?: unknown;
             pipeline?: unknown;
+        };
+        /**
+         * @description Partial update. `name` renames. The parent is three-valued, modelled
+         *     explicitly so a JSON-friendly wire shape (no double-`null` ambiguity) can
+         *     distinguish the cases: send `parent_id` to move under a folder, set
+         *     `clear_parent: true` to re-root, or send neither to leave the parent
+         *     unchanged. `clear_parent` wins if both are set.
+         */
+        UpdateFolderRequest: {
+            /** @description Re-root the folder (set its parent to NULL). */
+            clear_parent?: boolean;
+            name?: string | null;
+            /**
+             * Format: uuid
+             * @description Move under this folder. Ignored when `clear_parent` is true.
+             */
+            parent_id?: string | null;
         };
         /** @description Partial update of a panel. `None` fields are left unchanged. */
         UpdatePanelRequest: {
@@ -1945,6 +2133,22 @@ export interface components {
              * @description Display/resolution order within the dashboard's variable bar; lower
              *     sorts first. Ties break by creation order.
              */
+            sort_order?: number;
+        };
+        /**
+         * @description One variable in the export. Mirrors the relational variable row minus its
+         *     ids; opaque `options_config` travels as-is.
+         */
+        VariableExport: {
+            current?: string[];
+            hidden?: boolean;
+            include_all?: boolean;
+            kind: string;
+            label?: string | null;
+            multi?: boolean;
+            name: string;
+            options_config?: unknown;
+            /** Format: int32 */
             sort_order?: number;
         };
         /**
@@ -2773,6 +2977,44 @@ export interface operations {
             };
         };
     };
+    import_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardExport"];
+            };
+        };
+        responses: {
+            /** @description Imported */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+            /** @description Unsupported schema version */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Slug already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_dashboard: {
         parameters: {
             query?: never;
@@ -2865,6 +3107,73 @@ export interface operations {
             };
             /** @description New slug already used in this tenant */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    duplicate_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Source dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Duplicated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+            /** @description Source not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Derived slug already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    export_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Portable dashboard model */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardExport"];
+                };
+            };
+            /** @description Not found in this tenant */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3495,6 +3804,126 @@ export interface operations {
             };
             /** @description Not allowed to stop this flow */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_folders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Folders in the tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderSummary"][];
+                };
+            };
+        };
+    };
+    create_folder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderSummary"];
+                };
+            };
+            /** @description Parent folder does not exist in this tenant */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_folder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Folder id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_folder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Folder id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description Folder updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderSummary"];
+                };
+            };
+            /** @description Invalid reparent (self-parent or absent parent) */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

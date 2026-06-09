@@ -2,6 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 /// Create a dashboard. The slug must be unique within the tenant; the server
 /// rejects a duplicate rather than silently aliasing. Appearance (icon +
@@ -18,4 +19,7 @@ pub struct CreateDashboardRequest {
     /// server-side when omitted.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub accent: Option<String>,
+    /// Folder to file the dashboard under (WS-05); omit/`null` for the root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub folder_id: Option<Uuid>,
 }
