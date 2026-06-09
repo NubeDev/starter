@@ -76,3 +76,10 @@ testcontainers         = "0.23"
 testcontainers-modules = { version = "0.11", features = ["postgres"] }
 reqwest                = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 tracing-subscriber     = { version = "0.3", features = ["env-filter"] }
+
+# Redirect upstream `arkflow-plugin` to the connector-trimmed copy in vendor/.
+# Upstream registers every connector unconditionally (DuckDB, Kafka, PyO3, …);
+# the vendored copy keeps only the pure-DataFusion modules the query/live seam
+# uses. The engine crate (`arkflow-core`) is consumed unpatched.
+[patch."https://github.com/arkflow-rs/arkflow"]
+arkflow-plugin = { path = "vendor/arkflow-plugin" }

@@ -1,0 +1,38 @@
+[package]
+name = "arkflow-plugin"
+version = "0.5.0"
+edition = "2021"
+rust-version = "1.88"
+description = "Connector-trimmed vendoring of arkflow-plugin (DataFusion sql/json + memory/generate inputs only). See src/lib.rs."
+authors = ["chenquan <chenquan.dev@gmail.com>"]
+repository = "https://github.com/arkflow-rs/arkflow"
+homepage = "https://github.com/arkflow-rs/arkflow"
+license = "Apache-2.0"
+
+# This crate is consumed only through the workspace `[patch]` that redirects the
+# upstream `arkflow-plugin` git dependency here. The heavy connector deps
+# (rdkafka, spiceai_duckdb_fork, pyo3, datafusion-table-providers, ballista,
+# object_store, pulsar, async-nats, redis, modbus, tungstenite, vrl, …) are
+# deliberately absent — only the pure-DataFusion modules remain.
+[dependencies]
+arkflow-core = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
+
+datafusion = "47"
+datafusion-functions-json = "0.47"
+arrow-json = "55"
+
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+futures = "0.3"
+futures-util = "0.3"
+async-trait = "0.1"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+humantime = "2"
+
+tracing = "0.1"
+lazy_static = "1"
+once_cell = "1"
+dashmap = "6"
+num_cpus = "1"

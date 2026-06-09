@@ -29,3 +29,10 @@ starter-spi.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
+serde_json.workspace = true
+
+# Integration tests mirror src/ one-to-one; cargo only auto-discovers top-level
+# tests/*.rs, so the mirrored paths are declared explicitly.
+[[test]]
+name = "runner_query"
+path = "tests/runner/query_test.rs"

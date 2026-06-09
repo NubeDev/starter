@@ -15,19 +15,26 @@ stream, not the whole session) and needs no extra browser state. Native `EventSo
 can't set headers, and the token-in-URL is acceptable because the token is
 short-lived, single-audience, and carries no standing credential.
 
-## D3 — ArkFlow native build deps (Risk #4): curl headers via a user prefix
+## D3 — ArkFlow build weight (Risk #4): vendor a connector-trimmed arkflow-plugin
 
-`arkflow-plugin` unconditionally links `rdkafka`, whose cmake-vendored
-`librdkafka` build needs `curl/curl.h` + `libcurl` — and the plugin crate has **no
-feature gates** to drop the Kafka connector. On a host without
-`libcurl4-openssl-dev`, the whole backend fails to compile (the POC fails here
-too, identically). Resolved without root by extracting the distro dev headers
-into `~/.local/{include,lib}` and pointing the C toolchain at them via
-`nexus/backend/.cargo/config.toml` (`CPATH`/`LIBRARY_PATH`). The proper long-term
-fix is upstream feature-gating of arkflow-plugin's connectors; until then this is
-the documented operational cost of the ArkFlow dependency. The `[env]` entries are
-`force = false`, so a host with the package installed (headers in `/usr/include`)
-is unaffected.
+`arkflow-plugin` registers every connector unconditionally and has **no feature
+gates**, so depending on it for the `sql`/`memory`/`json` builders the seam needs
+also drags in DuckDB (a ~15 GB static C++ build that exhausted the disk), librdkafka
+(needs system `curl/curl.h`), PyO3, Ballista, Pulsar, NATS, Redis, Modbus, and more.
+The `sql` input even `use`s `duckdb::` directly, so cargo features alone can't drop
+it.
+
+Resolved by vendoring a **connector-trimmed copy** of `arkflow-plugin` under
+`nexus/backend/vendor/arkflow-plugin` and redirecting the upstream git dep to it
+with a workspace `[patch]`. The copy keeps only the pure-DataFusion modules
+(`memory`/`generate` inputs, `sql`/`json_to_arrow` processors, `drop`/`stdout`
+outputs, and their support modules) and a slim manifest; every native connector
+and its dependency is removed. **`arkflow-core` (the engine) is consumed unpatched**
+— this trims connector *selection*, it does not fork the engine, so R3 holds. Build
+dropped from minutes to ~45 s and disk from 184 GB used to ~114 GB; no curl/cmake/
+duckdb toolchain is needed. Re-sync the vendored copy against the pinned upstream
+rev on every ArkFlow bump (its provenance is recorded in its `src/lib.rs`). The
+right permanent fix is upstream feature-gating; until then this patch is the cost.
 
 ## D1 — Risk #17: ArkFlow is on the M0 critical path (option a), not deferred to M3
 
