@@ -5,7 +5,7 @@ use sqlx::{PgPool, Row};
 use starter_spi::Error;
 use uuid::Uuid;
 
-use super::record::{NewPanel, PanelRecord};
+use super::record::{NewPanel, PanelPatch, PanelRecord};
 use crate::tenant_tx;
 
 /// Add a panel under its dashboard. The dashboard's tenant is bound by the
@@ -75,6 +75,45 @@ pub async fn dashboard_id_of(
         .map_err(internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(row.map(|r| r.get::<Uuid, _>("dashboard_id")))
+}
+
+/// Partial update of a panel within the tenant. Each `None` field is left
+/// unchanged via COALESCE, so one statement handles any subset without dynamic
+/// SQL. Returns the updated record, or `None` when no such panel is visible
+/// (RLS hid it, or it does not exist). The owning `dashboard_id` is immutable —
+/// a panel does not move between dashboards through this path.
+pub async fn update(
+    pool: &PgPool,
+    tenant_id: &str,
+    id: Uuid,
+    patch: &PanelPatch,
+) -> Result<Option<PanelRecord>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    // `datasource_id` is nullable on the column, so a `None` in the patch means
+    // "leave unchanged" rather than "set NULL". COALESCE gives exactly that —
+    // clearing a datasource is not expressible here, which matches the DTO (the
+    // UI only ever sets a datasource, never unsets it).
+    let row = sqlx::query(
+        "UPDATE nexus_panels SET \
+           title         = COALESCE($2, title), \
+           datasource_id = COALESCE($3, datasource_id), \
+           sql           = COALESCE($4, sql), \
+           viz           = COALESCE($5, viz), \
+           layout        = COALESCE($6, layout) \
+         WHERE id = $1 \
+         RETURNING id, dashboard_id, datasource_id, title, sql, viz, layout",
+    )
+    .bind(id)
+    .bind(&patch.title)
+    .bind(patch.datasource_id)
+    .bind(&patch.sql)
+    .bind(&patch.viz)
+    .bind(&patch.layout)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(row.as_ref().map(row_to_record))
 }
 
 /// Delete a panel within the tenant. Returns whether a row was removed.

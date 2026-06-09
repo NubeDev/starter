@@ -36,10 +36,22 @@ export function EChart({
   }, []);
 
   useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
     // `notMerge: true` so a config change fully replaces the prior option
     // rather than layering onto stale series (e.g. when a panel's field
     // mapping changes).
-    chartRef.current?.setOption(option, { notMerge: true });
+    //
+    // `clear()` first drops the previous option entirely. Without it,
+    // ECharts tries to animate from the old series to the new one; when the
+    // series *count* changes (a panel re-renders with a different field
+    // mapping, a widget is deleted, or the option is rebuilt on a
+    // date-format change) the animation interpolates a new series against a
+    // missing old one and throws in `interpolate1DArray` (reading `.length`
+    // of `undefined`). Clearing removes the stale series so there is
+    // nothing to interpolate against.
+    chart.clear();
+    chart.setOption(option, { notMerge: true });
   }, [option]);
 
   return (

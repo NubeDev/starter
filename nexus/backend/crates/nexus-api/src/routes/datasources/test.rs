@@ -108,9 +108,21 @@ fn elapsed_ms(started: Instant) -> u64 {
 fn failed(e: &starter_spi::Error) -> TestDatasourceResponse {
     TestDatasourceResponse {
         ok: false,
-        message: Some(sanitize(&e.to_string())),
+        message: Some(sanitize(&reason(e))),
         latency_ms: None,
     }
+}
+
+/// The user-useful reason for a probe failure. A connect failure surfaces as
+/// `Error::Internal { source }`, whose own `Display` is the fixed "internal
+/// error" — useless on a Test button. So prefer the underlying source's message
+/// (e.g. the driver's "Connection refused"), which is the whole point of the
+/// probe, and fall back to the error's own text otherwise.
+fn reason(e: &starter_spi::Error) -> String {
+    use std::error::Error as _;
+    e.source()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| e.to_string())
 }
 
 /// Keep the headline of a driver/connect error but drop anything past the first

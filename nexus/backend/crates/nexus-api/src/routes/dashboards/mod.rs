@@ -8,6 +8,7 @@ pub mod delete;
 pub mod delete_panel;
 pub mod get;
 pub mod list;
+pub mod update_panel;
 
 use axum::routing::{delete, get as http_get, post};
 use axum::Router;
@@ -29,5 +30,8 @@ pub fn router() -> Router<AppState> {
             "/api/v1/dashboards/{slug}/panels",
             post(add_panel::add_panel),
         )
-        .route("/api/v1/panels/{id}", delete(delete_panel::delete_panel))
+        .route(
+            "/api/v1/panels/{id}",
+            delete(delete_panel::delete_panel).patch(update_panel::update_panel),
+        )
 }

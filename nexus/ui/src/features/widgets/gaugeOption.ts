@@ -39,12 +39,20 @@ export function buildGaugeOption(
         anchor: { show: false },
         detail: {
           valueAnimation: true,
-          formatter: (v: number) => `${v.toFixed(decimals)}${unit}`,
+          // No reading yet → blank detail rather than "NaN"; the dial still
+          // renders an empty arc (F0).
+          formatter: (v: number) =>
+            Number.isFinite(v) ? `${v.toFixed(decimals)}${unit}` : "",
           color: chromeColor("--foreground"),
           fontSize: 22,
           offsetCenter: [0, "40%"],
         },
-        data: value == null ? [] : [{ value }],
+        // Always one data item so the series keeps a stable shape across
+        // live updates. Going from a populated array to `[]` (or back)
+        // makes ECharts' animation interpolate against an undefined element
+        // and throw in `interpolate1DArray`; a constant-length array with a
+        // NaN value avoids that while still reading as "no value".
+        data: [{ value: value == null ? NaN : value }],
       },
     ],
   };

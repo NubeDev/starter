@@ -14,4 +14,4 @@ mod record;
 pub use delete::delete;
 pub use fetch::{by_slug, list};
 pub use insert::insert;
-pub use record::{DashboardRecord, NewDashboard, NewPanel, PanelRecord};
+pub use record::{DashboardRecord, NewDashboard, NewPanel, PanelPatch, PanelRecord};

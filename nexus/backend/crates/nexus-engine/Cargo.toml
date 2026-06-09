@@ -33,6 +33,16 @@ starter-spi.workspace = true
 reqwest.workspace = true
 sqlx.workspace = true
 
+# The simulator input stamps RFC3339 timestamps on synthetic rows; the seed bin
+# uses the same row builder.
+chrono.workspace = true
+
+# A small bin that bulk-seeds the three simulator profiles into a datasource DB
+# for testing, reusing the simulator's row shapes.
+[[bin]]
+name = "nexus-seed"
+path = "src/bin/seed.rs"
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util", "net", "io-util"] }
 serde_json.workspace = true
@@ -54,3 +64,7 @@ path = "tests/flow/manager_test.rs"
 [[test]]
 name = "source_http_poll"
 path = "tests/source/http_poll_test.rs"
+
+[[test]]
+name = "source_simulator"
+path = "tests/source/simulator_test.rs"

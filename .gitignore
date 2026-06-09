@@ -40,3 +40,6 @@ examples/rubix-app
 examples/rubix-app
 .claude/scheduled_tasks.lock
 /nexus/backend/target/
+examples/rubix-app
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-312.pyc
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/core.cpython-312.pyc

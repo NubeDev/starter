@@ -38,8 +38,13 @@ describe("buildGaugeOption", () => {
 
   it("renders no value when there are no rows (no fabricated zero)", () => {
     const opt = buildGaugeOption(widget(0, 100), { points: [] });
-    const series = (opt.series as Array<{ data: unknown[] }>)[0];
-    expect(series.data).toEqual([]);
+    const series = (opt.series as Array<{ data: Array<{ value: number }> }>)[0];
+    // A constant-length data array keeps ECharts' animation from
+    // interpolating against a missing element (the empty-array → populated
+    // transition throws); the single value is NaN, which the detail
+    // formatter renders blank — no fabricated reading (F0).
+    expect(series.data).toHaveLength(1);
+    expect(Number.isNaN(series.data[0].value)).toBe(true);
   });
 });
 

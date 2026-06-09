@@ -1,0 +1,8 @@
+# This file is consulted relative to the build context (the repo root). Keep the
+# context small: never ship build outputs or local deps into the image build.
+**/target
+**/node_modules
+**/dist
+**/.git
+**/*.log
+nexus/poc

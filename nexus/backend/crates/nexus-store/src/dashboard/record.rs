@@ -41,3 +41,15 @@ pub struct NewPanel {
     pub viz: String,
     pub layout: Value,
 }
+
+/// Partial update of a panel. Every field is optional — `None` leaves the
+/// current value untouched (COALESCE in the store). The panel's `dashboard_id`
+/// is not patchable.
+#[derive(Debug, Clone, Default)]
+pub struct PanelPatch {
+    pub title: Option<String>,
+    pub datasource_id: Option<Uuid>,
+    pub sql: Option<String>,
+    pub viz: Option<String>,
+    pub layout: Option<Value>,
+}

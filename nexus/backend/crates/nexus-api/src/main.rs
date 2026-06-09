@@ -85,7 +85,7 @@ impl Config {
             master_key,
             stream_key,
             bind: std::env::var("NEXUS_BIND")
-                .unwrap_or_else(|_| "127.0.0.1:8080".into())
+                .unwrap_or_else(|_| "127.0.0.1:4780".into())
                 .parse()
                 .map_err(|e| format!("NEXUS_BIND: {e}"))?,
         })

@@ -31,6 +31,12 @@ pub fn parse_interval(s: &str) -> Result<Duration, String> {
     Ok(Duration::from_secs(secs))
 }
 
+/// The current wall-clock time as an RFC3339 string — the timestamp the
+/// simulator stamps on each emitted row, matching what a real device sends.
+pub fn now_rfc3339() -> String {
+    chrono::Utc::now().to_rfc3339()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
