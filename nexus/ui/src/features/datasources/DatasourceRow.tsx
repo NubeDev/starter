@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Check, Database, Plug, Trash2, X } from "lucide-react";
+import { Check, Database, Plug, Tag as TagIcon, Trash2, X } from "lucide-react";
 import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import { testDatasource } from "@/api/datasources/test";
 import type { DatasourceSummary, TestDatasourceResponse } from "@/api/types";
+import { TagEditor } from "@/features/tags/TagEditor";
 
 // One datasource row: name/kind, a Test-connection action that probes the
 // stored credentials and shows the result inline, and delete. The test
@@ -22,6 +23,7 @@ export function DatasourceRow({
 }) {
   const client = useStarterClient();
   const [result, setResult] = useState<TestDatasourceResponse | null>(null);
+  const [showTags, setShowTags] = useState(false);
 
   const test = useMutation<TestDatasourceResponse, Error>({
     mutationFn: () => testDatasource(client, datasource.id),
@@ -30,39 +32,57 @@ export function DatasourceRow({
   });
 
   return (
-    <li className="glass flex items-center gap-3 rounded-lg px-4 py-3">
-      <span className="grid size-9 place-items-center rounded-lg bg-primary/15 text-primary">
-        <Database className="size-4" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-foreground">
-          {datasource.name}
-        </p>
-        <p className="text-xs text-muted-foreground">{datasource.kind}</p>
+    <li className="glass flex flex-col gap-3 rounded-lg px-4 py-3">
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 place-items-center rounded-lg bg-primary/15 text-primary">
+          <Database className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">
+            {datasource.name}
+          </p>
+          <p className="text-xs text-muted-foreground">{datasource.kind}</p>
+        </div>
+
+        {result ? <TestResult result={result} /> : null}
+
+        <Button
+          variant={showTags ? "secondary" : "ghost"}
+          size="icon"
+          aria-label={`Tags for ${datasource.name}`}
+          aria-pressed={showTags}
+          onClick={() => setShowTags((s) => !s)}
+          className="text-muted-foreground"
+        >
+          <TagIcon className="size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={test.isPending}
+          onClick={() => test.mutate()}
+        >
+          <Plug className="size-4" />
+          {test.isPending ? "Testing…" : "Test"}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Delete ${datasource.name}`}
+          disabled={removing}
+          onClick={onRemove}
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+        </Button>
       </div>
 
-      {result ? <TestResult result={result} /> : null}
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-2"
-        disabled={test.isPending}
-        onClick={() => test.mutate()}
-      >
-        <Plug className="size-4" />
-        {test.isPending ? "Testing…" : "Test"}
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={`Delete ${datasource.name}`}
-        disabled={removing}
-        onClick={onRemove}
-        className="text-muted-foreground hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </Button>
+      {showTags ? (
+        <div className="border-t border-border/50 pt-3">
+          <TagEditor kind="datasource" id={datasource.id} />
+        </div>
+      ) : null}
     </li>
   );
 }

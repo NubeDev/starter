@@ -14,6 +14,7 @@ pub mod datasource;
 pub mod flow;
 pub mod migrate;
 pub mod query;
+pub mod tag;
 pub mod tenant_tx;
 
 #[cfg(feature = "testing")]

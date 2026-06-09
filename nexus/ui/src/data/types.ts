@@ -13,7 +13,11 @@ export type WidgetType =
   | "gauge"
   | "stat"
   | "status"
-  | "table";
+  | "table"
+  | "pie"
+  | "bar"
+  | "scatter"
+  | "heatmap";
 
 export type Trend = "up" | "down" | "flat";
 

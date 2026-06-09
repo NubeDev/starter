@@ -12,16 +12,21 @@ import { useWidgetQuery } from "@/features/widgets/useWidgetQuery";
 export function PanelHost({
   widget,
   editing,
+  selected,
   onRemove,
+  onSelect,
 }: {
   widget: Widget;
   editing?: boolean;
+  selected?: boolean;
   onRemove?: () => void;
+  onSelect?: () => void;
 }) {
+  const common = { editing, selected, onRemove, onSelect };
   if (widget.config.live?.streamId) {
-    return <LivePanel widget={widget} editing={editing} onRemove={onRemove} />;
+    return <LivePanel widget={widget} {...common} />;
   }
-  return <QueryPanel widget={widget} editing={editing} onRemove={onRemove} />;
+  return <QueryPanel widget={widget} {...common} />;
 }
 
 // Split out so the live/query hooks each live behind their own component
@@ -29,11 +34,15 @@ export function PanelHost({
 function QueryPanel({
   widget,
   editing,
+  selected,
   onRemove,
+  onSelect,
 }: {
   widget: Widget;
   editing?: boolean;
+  selected?: boolean;
   onRemove?: () => void;
+  onSelect?: () => void;
 }) {
   const state = useWidgetQuery(widget);
   return (
@@ -41,7 +50,9 @@ function QueryPanel({
       widget={widget}
       state={state}
       editing={editing}
+      selected={selected}
       onRemove={onRemove}
+      onSelect={onSelect}
     />
   );
 }

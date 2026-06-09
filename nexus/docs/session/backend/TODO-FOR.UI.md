@@ -15,6 +15,30 @@ Ordered by UI impact. Cross-references: UI blockers are tracked in
 > deletes). Smells like a contended lock / exhausted pool / blocking argon2 on the login path.
 > The UI's integration suite (and the app's login) are blocked until this clears — please
 > investigate. Restarting `nexus-api` likely recovers it.
+>
+> **↳ Investigation (backend session #2):** **could not reproduce on a clean rebuild.** Login
+> stays ~235 ms under (a) 15 concurrent datasource `/test` probes each blocking the full 10 s
+> connect-acquire timeout, and (b) 40 concurrent metadata writes. The metadata pool (login's
+> path) and the per-datasource pools are separate, so a hung datasource probe can't starve
+> login — confirmed empirically. A restart "fixing" it + "destabilised mid-burst" points at the
+> instance the UI hit being a **half-built binary** during the active backend edits at that time
+> (ports were being remapped 8080→4780 and datasource `PUT` was landing), not a logic bug in the
+> shipped code. **If it recurs on a clean build, capture it** (see below) and reopen.
+> - **Two real latent issues found (not the acute cause, left unpatched to avoid a hot-path
+>   change while two sessions are live):** (1) `password::verify` (argon2id) runs **synchronously
+>   on the async runtime** — no `spawn_blocking`. Harmless at 28 workers for occasional logins,
+>   but the F10 suite firing many concurrent logins could pin workers. (2) the metadata pool uses
+>   sqlx's **default size (10)** and **default 30 s acquire timeout** — a 30 s hang (not 20 s) is
+>   exactly what pool exhaustion looks like, so if it recurs this is the first thing to rule out.
+> - **The owner of `crates/starter-auth-users` should decide** on (1): wrapping argon2 in
+>   `spawn_blocking` is correct but `password::verify` is *also* on the per-request bearer-token
+>   path (`token/verify.rs`), so it's a hot-path call and `tokio` is currently only a
+>   dev-dependency there — not a change to make blind. Flagging, not fixing.
+> - **To capture if it recurs:** `curl -w '%{time_total}'` a login (confirm ≥20 s), then while it
+>   hangs hit `GET /debug pprof`-equivalent — or simplest: `SELECT count(*), state FROM
+>   pg_stat_activity GROUP BY state` on the dev DB to see if connections are stuck `active`/`idle
+>   in transaction` (pool leak) vs the app being CPU-bound (argon2). That one query distinguishes
+>   the two top suspects.
 
 ---
 

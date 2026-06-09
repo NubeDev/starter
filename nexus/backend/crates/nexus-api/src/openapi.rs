@@ -51,6 +51,10 @@ use utoipa::OpenApi;
         crate::routes::alerts::silences::list_silences,
         crate::routes::alerts::silences::create_silence,
         crate::routes::alerts::silences::delete_silence,
+        crate::routes::tags::set::set_tags,
+        crate::routes::tags::get::get_tags,
+        crate::routes::tags::keys::list_tag_keys,
+        crate::routes::tags::list_entities::list_entities_with_tag,
     )
 )]
 pub struct Paths;

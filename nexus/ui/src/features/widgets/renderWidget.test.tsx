@@ -22,7 +22,16 @@ const base = (type: Widget["type"]): Widget => ({
 const data: WidgetData = { points: [{ a: "n1", b: 12 }, { a: "n2", b: 8 }] };
 
 describe("RenderWidget", () => {
-  for (const type of ["line", "area", "gauge", "stat"] as const) {
+  for (const type of [
+    "line",
+    "area",
+    "gauge",
+    "stat",
+    "bar",
+    "scatter",
+    "heatmap",
+    "pie",
+  ] as const) {
     it(`mounts a ${type} panel from typed props`, () => {
       const { container } = render(
         <RenderWidget widget={base(type)} data={data} />,

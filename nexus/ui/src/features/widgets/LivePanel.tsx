@@ -8,11 +8,15 @@ import { useLiveStream } from "@/features/widgets/useLiveStream";
 export function LivePanel({
   widget,
   editing,
+  selected,
   onRemove,
+  onSelect,
 }: {
   widget: Widget;
   editing?: boolean;
+  selected?: boolean;
   onRemove?: () => void;
+  onSelect?: () => void;
 }) {
   const state = useLiveStream(widget);
   return (
@@ -20,7 +24,9 @@ export function LivePanel({
       widget={widget}
       state={state}
       editing={editing}
+      selected={selected}
       onRemove={onRemove}
+      onSelect={onSelect}
     />
   );
 }

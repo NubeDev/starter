@@ -71,6 +71,8 @@ const CHROME_FALLBACK: Record<string, string> = {
   "--muted": "#1a2536",
   "--muted-foreground": "#8a98ad",
   "--foreground": "#f4f8fb",
+  // The brand accent, used as the high end of the heatmap colour ramp.
+  "--chart-1": "#22c55e",
 };
 
 let cachedChrome: Record<string, string> | null = null;

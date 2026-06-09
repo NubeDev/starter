@@ -15,3 +15,4 @@ pub mod me;
 pub mod panel;
 pub mod query;
 pub mod stream;
+pub mod tag;

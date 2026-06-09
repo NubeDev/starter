@@ -65,3 +65,7 @@ path = "tests/flow/crud_test.rs"
 [[test]]
 name = "alert_crud"
 path = "tests/alert/crud_test.rs"
+
+[[test]]
+name = "tag_crud"
+path = "tests/tag/crud_test.rs"

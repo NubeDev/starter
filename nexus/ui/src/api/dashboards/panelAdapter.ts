@@ -3,12 +3,8 @@ import type {
   PanelDetail,
   UpdatePanelRequest,
 } from "@/api/types";
-import type {
-  FieldMapping,
-  Widget,
-  WidgetLayout,
-  WidgetType,
-} from "@/data/types";
+import type { FieldMapping, Widget, WidgetLayout } from "@/data/types";
+import { toWidgetType } from "@/features/widgets/catalog";
 
 // The backend persists a panel as title + sql + datasource_id + viz + an
 // *opaque* `layout` JSON it doesn't interpret. The UI's `Widget` needs
@@ -17,24 +13,9 @@ import type {
 // module is the single boundary where the wire panel and the UI widget
 // meet; nothing else reaches into `layout`'s shape.
 
-const WIDGET_TYPES: ReadonlyArray<WidgetType> = [
-  "line",
-  "area",
-  "gauge",
-  "stat",
-  "status",
-  "table",
-];
-
-// `viz` is a free string on the wire (`line | bar | table | …`); coerce to
-// a known widget type, mapping `bar`→`table` and anything unknown to a
-// safe `table` default rather than crashing the canvas.
-function toWidgetType(viz: string | null | undefined): WidgetType {
-  if (viz && (WIDGET_TYPES as ReadonlyArray<string>).includes(viz)) {
-    return viz as WidgetType;
-  }
-  return "table";
-}
+// `viz` coercion (free wire string → known widget type, with aliases and
+// a safe `table` fallback) lives in the widget catalog, so the type list
+// and its wire aliases stay in one place. See `toWidgetType`.
 
 const DEFAULT_LAYOUT: WidgetLayout = { x: 0, y: 0, w: 4, h: 4 };
 
@@ -96,6 +77,21 @@ export function widgetToCreatePanel(widget: Widget): CreatePanelRequest {
 // untouched by a drag.
 export function widgetToLayoutPatch(widget: Widget): UpdatePanelRequest {
   return { layout: stashLayout(widget) };
+}
+
+// A full PATCH for an edited panel (the properties panel): title, query,
+// viz *and* the re-stashed layout (so an edited field mapping persists in
+// the opaque blob). Mirrors `widgetToCreatePanel` but for an existing id;
+// the position inside `layout` is the widget's current one, unchanged by a
+// properties edit.
+export function widgetToUpdatePanel(widget: Widget): UpdatePanelRequest {
+  return {
+    title: widget.title,
+    sql: widget.config.query.sql,
+    datasource_id: widget.config.query.datasourceId,
+    viz: widget.type,
+    layout: stashLayout(widget),
+  };
 }
 
 // The opaque `layout` payload: grid position + the field mapping the

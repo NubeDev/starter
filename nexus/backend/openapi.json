@@ -1187,6 +1187,165 @@
           }
         }
       }
+    },
+    "/api/v1/tags/entities/{kind}": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "list_entities_with_tag",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "The kind of entity to list",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaggableKind"
+            }
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "description": "The tag key to match",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "description": "Optional exact value; omit to match any",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entities carrying the tag",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaggedEntity"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tags/keys": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "list_tag_keys",
+        "responses": {
+          "200": {
+            "description": "Distinct tag keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tags/{kind}/{id}": {
+      "get": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "get_tags",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "The kind of entity",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaggableKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The entity's id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tags on the entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "tags"
+        ],
+        "operationId": "set_tags",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "The kind of entity being tagged",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TaggableKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The entity's id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetTagsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Tags replaced"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2005,6 +2164,21 @@
           "other"
         ]
       },
+      "SetTagsRequest": {
+        "type": "object",
+        "description": "Body for `PUT …/tags` — the complete tag set to persist on an entity. This\nis a full replace: tags not listed are removed, so the client sends the\nwhole set it wants, not a delta.",
+        "required": [
+          "tags"
+        ],
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
+          }
+        }
+      },
       "SilenceDetail": {
         "type": "object",
         "description": "A silence window.",
@@ -2059,6 +2233,55 @@
             "format": "int64",
             "description": "Monotonic event sequence number within this stream.",
             "minimum": 0
+          }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "description": "One tag: a `key` with an optional `value`. `value` absent (or null) is a\nbare label; present is a key:value pair.",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The tag key, e.g. `temp` or `building`."
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tag value, e.g. `abc`. Absent for a bare label."
+          }
+        }
+      },
+      "TaggableKind": {
+        "type": "string",
+        "description": "The kinds of entity that can be tagged. The set the API accepts — a tag's\ntarget is referenced by kind + id, so a kind owned by another layer (a user,\na team) is taggable without this crate owning the entity. New variants are\nadd-only within a major.",
+        "enum": [
+          "dashboard",
+          "datasource",
+          "flow",
+          "alert_rule",
+          "user",
+          "team"
+        ]
+      },
+      "TaggedEntity": {
+        "type": "object",
+        "description": "An entity returned by a by-tag lookup: its kind and id.",
+        "required": [
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The entity's id as a string (ids owned by other layers are not uuids)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/TaggableKind"
           }
         }
       },

@@ -23,6 +23,7 @@ use crate::dto::me::MeResponse;
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{ColumnSchema, QueryRequest, QueryResponse, QueryStats, ResultColumnType};
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
+use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
 use crate::Problem;
 
 /// Aggregates every nexus DTO into a schema-only OpenAPI document.
@@ -64,5 +65,9 @@ use crate::Problem;
     CreateChannelRequest,
     SilenceDetail,
     CreateSilenceRequest,
+    Tag,
+    SetTagsRequest,
+    TaggableKind,
+    TaggedEntity,
 )))]
 pub struct Schemas;

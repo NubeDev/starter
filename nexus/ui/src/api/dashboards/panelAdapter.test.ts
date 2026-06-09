@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { PanelDetail } from "@/api/types";
 import type { Widget } from "@/data/types";
-import { panelToWidget, widgetToCreatePanel } from "@/api/dashboards/panelAdapter";
+import {
+  panelToWidget,
+  widgetToCreatePanel,
+  widgetToUpdatePanel,
+} from "@/api/dashboards/panelAdapter";
 
 // The backend `PanelDetail` carries title/sql/datasource_id/viz plus an
 // *opaque* `layout` JSON the canvas owns. The adapter maps it to the UI's
@@ -43,6 +47,11 @@ describe("panelToWidget", () => {
     // No field mapping in layout → an empty series list, not invented columns.
     expect(w.config.fields.series).toEqual([]);
   });
+
+  it("maps known wire-viz aliases to their widget type", () => {
+    expect(panelToWidget({ ...panel, viz: "donut" }).type).toBe("pie");
+    expect(panelToWidget({ ...panel, viz: "column" }).type).toBe("bar");
+  });
 });
 
 describe("widgetToCreatePanel", () => {
@@ -68,6 +77,35 @@ describe("widgetToCreatePanel", () => {
       w: 3,
       h: 3,
       fields: { series: [{ value: "v" }] },
+    });
+  });
+});
+
+describe("widgetToUpdatePanel", () => {
+  it("packs the full config (title/sql/datasource/viz) and re-stashes layout+fields", () => {
+    const widget: Widget = {
+      id: "p1",
+      type: "bar",
+      title: "Renamed",
+      layout: { x: 1, y: 2, w: 6, h: 4 },
+      config: {
+        query: { datasourceId: "ds9", sql: "select x, v from t" },
+        fields: { x: "x", series: [{ value: "v", label: "V" }] },
+      },
+    };
+    const body = widgetToUpdatePanel(widget);
+    expect(body.viz).toBe("bar");
+    expect(body.title).toBe("Renamed");
+    expect(body.sql).toBe("select x, v from t");
+    expect(body.datasource_id).toBe("ds9");
+    // The edited field mapping rides in the opaque layout alongside the
+    // (unchanged) grid position.
+    expect(body.layout).toMatchObject({
+      x: 1,
+      y: 2,
+      w: 6,
+      h: 4,
+      fields: { x: "x", series: [{ value: "v", label: "V" }] },
     });
   });
 });

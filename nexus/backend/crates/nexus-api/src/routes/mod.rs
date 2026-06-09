@@ -8,6 +8,7 @@ pub mod flows;
 pub mod me;
 pub mod query;
 pub mod streams;
+pub mod tags;
 
 use axum::Router;
 
@@ -25,4 +26,5 @@ pub fn product_router() -> Router<AppState> {
         .merge(dashboards::router())
         .merge(flows::router())
         .merge(alerts::router())
+        .merge(tags::router())
 }

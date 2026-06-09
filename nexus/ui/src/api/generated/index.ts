@@ -385,6 +385,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tags/entities/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_entities_with_tag"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tags/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_tag_keys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tags/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_tags"];
+        put: operations["set_tags"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -802,6 +850,14 @@ export interface components {
          * @enum {string}
          */
         ResultColumnType: "bool" | "int" | "float" | "string" | "timestamp" | "other";
+        /**
+         * @description Body for `PUT …/tags` — the complete tag set to persist on an entity. This
+         *     is a full replace: tags not listed are removed, so the client sends the
+         *     whole set it wants, not a delta.
+         */
+        SetTagsRequest: {
+            tags: components["schemas"]["Tag"][];
+        };
         /** @description A silence window. */
         SilenceDetail: {
             /** Format: date-time */
@@ -827,6 +883,30 @@ export interface components {
              * @description Monotonic event sequence number within this stream.
              */
             seq: number;
+        };
+        /**
+         * @description One tag: a `key` with an optional `value`. `value` absent (or null) is a
+         *     bare label; present is a key:value pair.
+         */
+        Tag: {
+            /** @description The tag key, e.g. `temp` or `building`. */
+            key: string;
+            /** @description The tag value, e.g. `abc`. Absent for a bare label. */
+            value?: string | null;
+        };
+        /**
+         * @description The kinds of entity that can be tagged. The set the API accepts — a tag's
+         *     target is referenced by kind + id, so a kind owned by another layer (a user,
+         *     a team) is taggable without this crate owning the entity. New variants are
+         *     add-only within a major.
+         * @enum {string}
+         */
+        TaggableKind: "dashboard" | "datasource" | "flow" | "alert_rule" | "user" | "team";
+        /** @description An entity returned by a by-tag lookup: its kind and id. */
+        TaggedEntity: {
+            /** @description The entity's id as a string (ids owned by other layers are not uuids). */
+            id: string;
+            kind: components["schemas"]["TaggableKind"];
         };
         /**
          * @description Outcome of a connection probe. `ok` is the headline; on failure `message`
@@ -2001,6 +2081,106 @@ export interface operations {
             };
             /** @description Missing/expired/invalid token */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_entities_with_tag: {
+        parameters: {
+            query: {
+                /** @description The tag key to match */
+                key: string;
+                /** @description Optional exact value; omit to match any */
+                value?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The kind of entity to list */
+                kind: components["schemas"]["TaggableKind"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entities carrying the tag */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaggedEntity"][];
+                };
+            };
+        };
+    };
+    list_tag_keys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Distinct tag keys */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
+    get_tags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The kind of entity */
+                kind: components["schemas"]["TaggableKind"];
+                /** @description The entity's id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tags on the entity */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tag"][];
+                };
+            };
+        };
+    };
+    set_tags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The kind of entity being tagged */
+                kind: components["schemas"]["TaggableKind"];
+                /** @description The entity's id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetTagsRequest"];
+            };
+        };
+        responses: {
+            /** @description Tags replaced */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };

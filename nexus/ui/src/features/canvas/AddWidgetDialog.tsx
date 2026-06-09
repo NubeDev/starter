@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import {
   Dialog,
@@ -19,23 +19,22 @@ import {
 } from "@nube/starter-ui-kit/components/select";
 import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 
-import type { Dashboard, Widget, WidgetType } from "@/data/types";
+import type {
+  Dashboard,
+  Widget,
+  WidgetLayout,
+  WidgetType,
+} from "@/data/types";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { nextSlot } from "@/features/canvas/placement";
 import { useAddPanel } from "@/features/dashboards/useAddPanel";
+import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
 
-const TYPES: WidgetType[] = ["line", "area", "gauge", "stat", "status", "table"];
-const NEEDS_X = new Set<WidgetType>(["line", "area"]);
-
-// Default footprint per type, mirroring the canvas min sizes.
-const SIZE: Record<WidgetType, { w: number; h: number }> = {
-  stat: { w: 3, h: 2 },
-  gauge: { w: 3, h: 3 },
-  line: { w: 6, h: 4 },
-  area: { w: 6, h: 4 },
-  status: { w: 3, h: 4 },
-  table: { w: 6, h: 4 },
-};
+// Picker order and per-type metadata (label, default footprint, whether
+// an x column is needed) come from the widget catalog — the one place a
+// panel type is declared. Adding a type to the catalog lists it here for
+// free with the right size and x-column prompt.
+const needsX = (t: WidgetType) => WIDGET_CATALOG[t].roles.x === "required";
 
 // Builds a draft panel — type, datasource, SQL, and the field mapping
 // (which column is the x axis, which is the value) — and adds it to the
@@ -45,10 +44,14 @@ export function AddWidgetDialog({
   dashboard,
   open,
   onOpenChange,
+  initial,
 }: {
   dashboard: Dashboard;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When the dialog is opened by a palette drop, seed the type and pin
+   *  the panel to the dropped grid cell instead of auto-placing it. */
+  initial?: { type?: WidgetType; position?: WidgetLayout };
 }) {
   const add = useAddPanel(dashboard.slug);
   const [type, setType] = useState<WidgetType>("line");
@@ -58,21 +61,33 @@ export function AddWidgetDialog({
   const [xCol, setXCol] = useState("");
   const [valueCol, setValueCol] = useState("");
 
+  // Adopt the dropped type when the dialog is opened from the palette.
+  // Keyed on open + the seed type so reopening with a different tile
+  // re-seeds, but typing a different type by hand mid-edit isn't clobbered.
+  const seedType = initial?.type;
+  useEffect(() => {
+    if (open && seedType) setType(seedType);
+  }, [open, seedType]);
+
   const ready = title.trim() && datasourceId && sql.trim() && valueCol.trim();
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!ready) return;
-    const size = SIZE[type];
+    const size = WIDGET_CATALOG[type].defaultSize;
     const draft: Widget = {
       id: "",
       type,
       title: title.trim(),
-      layout: nextSlot(dashboard.widgets, size.w, size.h),
+      // A drop pins the panel to the cell it landed on (clamped to the
+      // type's footprint); the toolbar button auto-places at the bottom.
+      layout: initial?.position
+        ? { ...initial.position, w: size.w, h: size.h }
+        : nextSlot(dashboard.widgets, size.w, size.h),
       config: {
         query: { datasourceId: datasourceId!, sql: sql.trim() },
         fields: {
-          x: NEEDS_X.has(type) ? xCol.trim() || undefined : undefined,
+          x: needsX(type) ? xCol.trim() || undefined : undefined,
           series: [{ value: valueCol.trim() }],
         },
       },
@@ -98,9 +113,9 @@ export function AddWidgetDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {TYPES.map((t) => (
-                    <SelectItem key={t} value={t} className="capitalize">
-                      {t}
+                  {WIDGET_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {WIDGET_CATALOG[t].label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -132,7 +147,7 @@ export function AddWidgetDialog({
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {NEEDS_X.has(type) ? (
+            {needsX(type) ? (
               <div className="space-y-2">
                 <Label htmlFor="panel-x">X column</Label>
                 <Input

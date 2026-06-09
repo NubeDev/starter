@@ -47,3 +47,8 @@ export type CreateChannelRequest = S["CreateChannelRequest"];
 export type SilenceDetail = S["SilenceDetail"];
 export type CreateSilenceRequest = S["CreateSilenceRequest"];
 export type AlertEvent = S["AlertEvent"];
+
+export type Tag = S["Tag"];
+export type TaggableKind = S["TaggableKind"];
+export type SetTagsRequest = S["SetTagsRequest"];
+export type TaggedEntity = S["TaggedEntity"];

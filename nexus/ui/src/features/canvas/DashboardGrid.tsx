@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { Responsive, WidthProvider, type Layout } from "react-grid-layout";
 
-import type { Dashboard, Widget } from "@/data/types";
+import type { Dashboard, Widget, WidgetType } from "@/data/types";
 import { PanelHost } from "@/features/widgets/PanelHost";
 import { changedWidgets, toGridLayout } from "@/features/canvas/layout";
+import { WIDGET_CATALOG } from "@/features/widgets/catalog";
 
 // react-grid-layout's positioning + resize-handle chrome is provided by
 // the ported styles in `index.css` (the `.react-grid-*` block), so the
@@ -19,13 +20,27 @@ const ResponsiveGrid = WidthProvider(Responsive);
 export function DashboardGrid({
   dashboard,
   editing,
+  dropType,
+  selectedId,
   onLayoutChange,
   onRemovePanel,
+  onDropWidget,
+  onSelectPanel,
 }: {
   dashboard: Dashboard;
   editing: boolean;
+  /** The viz type currently being dragged from the palette, if any. Sizes
+   *  the drop placeholder so the ghost matches the panel that will land. */
+  dropType?: WidgetType | null;
+  /** The panel whose properties are open, highlighted on the canvas. */
+  selectedId?: string | null;
   onLayoutChange?: (widgets: Widget[]) => void;
   onRemovePanel?: (panelId: string) => void;
+  /** Fired when a palette tile is dropped on the grid, with the cell the
+   *  drop landed on. The page turns this into a draft panel. */
+  onDropWidget?: (position: { x: number; y: number }) => void;
+  /** Open a panel's properties (edit mode). */
+  onSelectPanel?: (panelId: string) => void;
 }) {
   const layout = useMemo(
     () => toGridLayout(dashboard.widgets),
@@ -41,6 +56,19 @@ export function DashboardGrid({
     if (moved.length > 0) onLayoutChange(moved);
   };
 
+  // The placeholder shown while a palette tile hovers the grid — sized to
+  // the dragged type's default footprint so the ghost previews the real
+  // panel. `i` is the reserved key react-grid-layout uses for the drop.
+  const dropSize = dropType ? WIDGET_CATALOG[dropType].defaultSize : null;
+  const droppingItem = dropSize
+    ? { i: "__dropping__", w: dropSize.w, h: dropSize.h }
+    : undefined;
+
+  const handleDrop = (_layout: Layout[], item: Layout) => {
+    if (!editing || !onDropWidget || !dropType) return;
+    onDropWidget({ x: item.x, y: item.y });
+  };
+
   return (
     <ResponsiveGrid
       className="layout"
@@ -52,6 +80,9 @@ export function DashboardGrid({
       containerPadding={[0, 0]}
       isDraggable={editing}
       isResizable={editing}
+      isDroppable={editing}
+      droppingItem={droppingItem}
+      onDrop={handleDrop}
       draggableHandle=".widget-drag-handle"
       onLayoutChange={handleChange}
       useCSSTransforms
@@ -61,8 +92,12 @@ export function DashboardGrid({
           <PanelHost
             widget={widget}
             editing={editing}
+            selected={selectedId === widget.id}
             onRemove={
               onRemovePanel ? () => onRemovePanel(widget.id) : undefined
+            }
+            onSelect={
+              onSelectPanel ? () => onSelectPanel(widget.id) : undefined
             }
           />
         </div>

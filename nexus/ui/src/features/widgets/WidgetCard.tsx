@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Settings2, X } from "lucide-react";
 
 import type { Widget, WidgetData } from "@/data/types";
 import { ErrorState } from "@/features/state/ErrorState";
@@ -23,18 +23,30 @@ export function WidgetCard({
   widget,
   state,
   editing = false,
+  selected = false,
   onRemove,
+  onSelect,
 }: {
   widget: Widget;
   state: WidgetState;
   editing?: boolean;
+  /** Highlight this card as the one whose properties are open. */
+  selected?: boolean;
   onRemove?: () => void;
+  /** Open this panel's properties. Wired only in edit mode. */
+  onSelect?: () => void;
 }) {
   return (
-    <div className="glass card-hover flex h-full flex-col rounded-xl p-3">
+    <div
+      className={`glass card-hover flex h-full flex-col rounded-xl p-3 ${
+        selected ? "ring-2 ring-primary" : ""
+      }`}
+    >
       {/* The header is react-grid-layout's drag handle (matched by
           `.widget-drag-handle` in the canvas); the grab cursor only shows
-          in edit mode, when the grid makes it draggable. */}
+          in edit mode, when the grid makes it draggable. The edit controls
+          stop their mousedown reaching the handle so a click on them
+          doesn't start a drag. */}
       <header className="widget-drag-handle mb-2 flex items-baseline justify-between gap-2">
         <h3 className="truncate text-sm font-medium text-foreground">
           {widget.title}
@@ -44,6 +56,21 @@ export function WidgetCard({
             <span className="truncate text-xs text-muted-foreground">
               {widget.subtitle}
             </span>
+          ) : null}
+          {editing && onSelect ? (
+            <button
+              type="button"
+              aria-label={`Edit ${widget.title}`}
+              // Stop the mousedown reaching react-grid-layout's drag start,
+              // so a click opens properties instead of beginning a drag.
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={onSelect}
+              className={`rounded p-0.5 transition-colors hover:bg-accent/40 hover:text-foreground ${
+                selected ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Settings2 className="size-4" />
+            </button>
           ) : null}
           {editing && onRemove ? (
             <button
