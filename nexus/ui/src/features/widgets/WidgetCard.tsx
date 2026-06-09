@@ -24,7 +24,10 @@ export function WidgetCard({
 }) {
   return (
     <div className="glass card-hover flex h-full flex-col rounded-xl p-3">
-      <header className="mb-2 flex items-baseline justify-between gap-2">
+      {/* The header is react-grid-layout's drag handle (matched by
+          `.widget-drag-handle` in the canvas); the grab cursor only shows
+          in edit mode, when the grid makes it draggable. */}
+      <header className="widget-drag-handle mb-2 flex items-baseline justify-between gap-2">
         <h3 className="truncate text-sm font-medium text-foreground">
           {widget.title}
         </h3>
