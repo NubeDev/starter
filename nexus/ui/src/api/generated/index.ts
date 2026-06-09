@@ -480,6 +480,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/query/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return the registry's kinds, name-ordered (the registry is a `BTreeMap`, so
+         *     iteration is already sorted). A read-only catalogue — no datasource work.
+         */
+        get: operations["list_query_kinds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/streams": {
         parameters: {
             query?: never;
@@ -1051,6 +1071,29 @@ export interface components {
         QueryHistoryList: {
             entries: components["schemas"]["QueryHistoryEntry"][];
         };
+        /** @description The registered query-kinds, name-ordered, for the editor's kind picker. */
+        QueryKindList: {
+            /** @description Every registered kind, sorted by `name`. */
+            kinds: components["schemas"]["QueryKindSummary"][];
+        };
+        /**
+         * @description One registered query-kind's descriptive surface. The `params_schema` is the
+         *     kind's JSON Schema document, which a schema-driven form renders to collect
+         *     the named params the kind binds.
+         */
+        QueryKindSummary: {
+            /** @description The datasource shape the kind targets (e.g. `postgres`). */
+            datasource_kind: string;
+            /** @description Human description for the picker, if the manifest declared one. */
+            description?: string | null;
+            /** @description Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `nexus.core.meters_list`). */
+            name: string;
+            /**
+             * @description The kind's params JSON Schema — the contract a kind-mode request's
+             *     `params` validates against, and what a schema-driven form renders.
+             */
+            params_schema: unknown;
+        };
         /**
          * @description Body of a one-shot query. The caller supplies the SQL plus the optional
          *     macro context (time range, variables) the server-side binder substitutes;
@@ -1070,6 +1113,21 @@ export interface components {
              *     bare `$__interval`.
              */
             interval_secs?: number | null;
+            /**
+             * @description WS-10 kind-mode: the reverse-DNS id of a registered query-kind to run
+             *     *instead of* `sql`. When set, the server resolves the kind, validates
+             *     `params` against its schema, and binds the kind's own SQL — `sql` is
+             *     ignored. When absent (the default), the request is raw-SQL mode and `sql`
+             *     runs. This keeps `QueryRequest` a single additive contract (C7): kind-mode
+             *     is opt-in, sql-mode stays the default.
+             */
+            kind?: string | null;
+            /**
+             * @description WS-10 kind-mode named params, validated host-side against the kind's JSON
+             *     Schema before binding. Each value binds as a `$N` arg, never inlined.
+             *     Ignored in raw-SQL mode.
+             */
+            params?: unknown;
             /**
              * @description The SQL to run against the datasource. May carry macros (`$__timeFilter`)
              *     and variable references (`$region`) the binder expands into bound args.
@@ -2841,6 +2899,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_query_kinds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registered query-kinds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindList"];
+                };
             };
         };
     };

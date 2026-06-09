@@ -1587,6 +1587,27 @@
         }
       }
     },
+    "/api/v1/query/kinds": {
+      "get": {
+        "tags": [
+          "query"
+        ],
+        "summary": "Return the registry's kinds, name-ordered (the registry is a `BTreeMap`, so\niteration is already sorted). A read-only catalogue — no datasource work.",
+        "operationId": "list_query_kinds",
+        "responses": {
+          "200": {
+            "description": "Registered query-kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/streams": {
       "post": {
         "tags": [
@@ -2859,6 +2880,51 @@
           }
         }
       },
+      "QueryKindList": {
+        "type": "object",
+        "description": "The registered query-kinds, name-ordered, for the editor's kind picker.",
+        "required": [
+          "kinds"
+        ],
+        "properties": {
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryKindSummary"
+            },
+            "description": "Every registered kind, sorted by `name`."
+          }
+        }
+      },
+      "QueryKindSummary": {
+        "type": "object",
+        "description": "One registered query-kind's descriptive surface. The `params_schema` is the\nkind's JSON Schema document, which a schema-driven form renders to collect\nthe named params the kind binds.",
+        "required": [
+          "name",
+          "datasource_kind",
+          "params_schema"
+        ],
+        "properties": {
+          "datasource_kind": {
+            "type": "string",
+            "description": "The datasource shape the kind targets (e.g. `postgres`)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human description for the picker, if the manifest declared one."
+          },
+          "name": {
+            "type": "string",
+            "description": "Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `nexus.core.meters_list`)."
+          },
+          "params_schema": {
+            "description": "The kind's params JSON Schema — the contract a kind-mode request's\n`params` validates against, and what a schema-driven form renders."
+          }
+        }
+      },
       "QueryRequest": {
         "type": "object",
         "description": "Body of a one-shot query. The caller supplies the SQL plus the optional\nmacro context (time range, variables) the server-side binder substitutes;\nevery safety bound (read-only role, statement timeout, forced `LIMIT`,\nrow/byte caps) is applied server-side and is deliberately *not* expressible\nhere — a client cannot raise its own limits, and every supplied value is\n*bound* into the prepared statement, never inlined.\n\nThis is the C7 contract: a single owner (WS-03) for an endpoint several\nworkstreams feed. WS-01 fills `time_range`, WS-02 fills `variables`; both\nflow through the same binder.",
@@ -2874,6 +2940,16 @@
             "format": "int64",
             "description": "The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a\nbare `$__interval`.",
             "minimum": 0
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "WS-10 kind-mode: the reverse-DNS id of a registered query-kind to run\n*instead of* `sql`. When set, the server resolves the kind, validates\n`params` against its schema, and binds the kind's own SQL — `sql` is\nignored. When absent (the default), the request is raw-SQL mode and `sql`\nruns. This keeps `QueryRequest` a single additive contract (C7): kind-mode\nis opt-in, sql-mode stays the default."
+          },
+          "params": {
+            "description": "WS-10 kind-mode named params, validated host-side against the kind's JSON\nSchema before binding. Each value binds as a `$N` arg, never inlined.\nIgnored in raw-SQL mode."
           },
           "sql": {
             "type": "string",

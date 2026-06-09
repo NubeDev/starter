@@ -5,11 +5,13 @@
 //! aggregator live here so they can be exercised by integration tests without
 //! going through `fn main`.
 
+pub mod agents;
 pub mod alerting;
 pub mod authz;
 pub mod bootstrap;
 pub mod datasource_pools;
 pub mod identity;
+pub mod kinds;
 pub mod middleware;
 pub mod openapi;
 pub mod routes;

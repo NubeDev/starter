@@ -33,6 +33,7 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: std::sync::Arc::new(starter_authz::testing::AllowAll),
+        kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
     }
 }
 

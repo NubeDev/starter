@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UsageBucketedParams",
+  "description": "Time-bucketed energy usage, optionally filtered to one site.",
+  "type": "object",
+  "properties": {
+    "site_id": { "type": "string", "default": "" }
+  },
+  "additionalProperties": false
+}

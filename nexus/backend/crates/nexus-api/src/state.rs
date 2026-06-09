@@ -16,6 +16,7 @@ use sqlx::PgPool;
 use starter_spi::authz::PolicyEngine;
 
 use crate::datasource_pools::DatasourcePools;
+use crate::kinds::Registry as KindRegistry;
 use crate::middleware::StreamTokenSigner;
 
 /// Cloneable handle bundle for the control plane.
@@ -51,4 +52,9 @@ pub struct AppState {
     /// through the API is visible to the next handler check; tests can swap in
     /// `AllowAll`/`DenyAll` to assert a route is gated.
     pub engine: Arc<dyn PolicyEngine>,
+    /// Registered declarative query-kinds (WS-10), loaded from the built-in pack
+    /// at boot. A kind-mode query resolves its name here, validates params, and
+    /// binds the kind's SQL through the shared binder. Shared read-only across
+    /// requests; an empty registry means kind-mode requests 404.
+    pub kinds: Arc<KindRegistry>,
 }

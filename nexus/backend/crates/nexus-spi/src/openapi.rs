@@ -27,8 +27,8 @@ use crate::dto::me::MeResponse;
 use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{
-    ColumnSchema, QueryRequest, QueryResponse, QueryStats, QueryTimeRange, QueryVariable,
-    ResultColumnType,
+    ColumnSchema, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse, QueryStats,
+    QueryTimeRange, QueryVariable, ResultColumnType,
 };
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
@@ -44,6 +44,8 @@ use crate::Problem;
     QueryVariable,
     QueryResponse,
     QueryStats,
+    QueryKindList,
+    QueryKindSummary,
     ColumnSchema,
     ResultColumnType,
     QueryHistoryEntry,

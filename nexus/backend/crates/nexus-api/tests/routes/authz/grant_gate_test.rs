@@ -42,6 +42,7 @@ fn state(pool: &sqlx::PgPool, engine: Arc<dyn PolicyEngine>) -> AppState {
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine,
+        kinds: Arc::new(nexus_api::kinds::Registry::empty()),
     }
 }
 

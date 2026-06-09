@@ -21,6 +21,8 @@ export type SchemaColumn = S["SchemaColumn"];
 
 export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];
+export type QueryKindList = S["QueryKindList"];
+export type QueryKindSummary = S["QueryKindSummary"];
 export type QueryStats = S["QueryStats"];
 export type ColumnSchema = S["ColumnSchema"];
 export type ResultColumnType = S["ResultColumnType"];

@@ -44,6 +44,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: id.engine.clone(),
+        kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
     };
     let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
     TestApp::spawn(router).await

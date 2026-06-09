@@ -40,6 +40,26 @@ pub async fn run_request(
     run_bound_query(pool, &bound, guards).await
 }
 
+/// Run a query-kind (WS-10): the kind's `sql` with its already-validated,
+/// already-lowered named `params`, plus the same time/variable context and
+/// host-bound `identity` as a raw query. The params reach the binder as
+/// `$param` references and bind as `$N` args exactly like variables — so a kind
+/// runs through the one shared binder, not a second engine. The kind registry
+/// (in nexus-api) owns validation; this owns binding and execution.
+pub async fn run_kind_request(
+    pool: &PgPool,
+    sql: &str,
+    params: BTreeMap<String, super::bind::ParamValue>,
+    req: &QueryRequest,
+    identity: &QueryIdentity,
+    guards: QueryGuards,
+) -> Result<QueryResponse, Error> {
+    let mut ctx = to_bind_ctx(req, identity);
+    ctx.params = params;
+    let bound = bind::bind(sql, &ctx)?;
+    run_bound_query(pool, &bound, guards).await
+}
+
 /// Build the binder context from the wire request and the caller's identity.
 fn to_bind_ctx(req: &QueryRequest, identity: &QueryIdentity) -> BindCtx {
     BindCtx {

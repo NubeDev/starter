@@ -36,6 +36,19 @@ pub struct QueryRequest {
     /// `$var` / `${var:csv}` / `$__sqlIn(var)`.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub variables: Vec<QueryVariable>,
+    /// WS-10 kind-mode: the reverse-DNS id of a registered query-kind to run
+    /// *instead of* `sql`. When set, the server resolves the kind, validates
+    /// `params` against its schema, and binds the kind's own SQL — `sql` is
+    /// ignored. When absent (the default), the request is raw-SQL mode and `sql`
+    /// runs. This keeps `QueryRequest` a single additive contract (C7): kind-mode
+    /// is opt-in, sql-mode stays the default.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    /// WS-10 kind-mode named params, validated host-side against the kind's JSON
+    /// Schema before binding. Each value binds as a `$N` arg, never inlined.
+    /// Ignored in raw-SQL mode.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub params: Option<serde_json::Value>,
 }
 
 /// An absolute query window. Half-open (`from` inclusive, `to` exclusive),

@@ -34,6 +34,10 @@ futures.workspace = true
 sqlx.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# WS-10 kinds: parse the YAML pack manifest and validate caller params against
+# each kind's JSON Schema before binding.
+serde_yaml.workspace = true
+jsonschema.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 

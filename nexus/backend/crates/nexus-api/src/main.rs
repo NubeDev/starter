@@ -35,6 +35,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let identity = identity::build(metadata_pool).await?;
 
     let datasource = sqlx::PgPool::connect(&cfg.datasource_url).await?;
+
+    // Load the built-in query-kinds pack at boot. A malformed pack (bad schema,
+    // an undeclared `$param`, or a missing `$caller_tenant_id` predicate on a
+    // tenant-scoped table) aborts startup rather than shipping an unsafe kind.
+    let kinds = nexus_api::kinds::Registry::load_dir(&cfg.kinds_dir)?;
+    tracing::info!(count = kinds.len(), dir = %cfg.kinds_dir.display(), "loaded query-kinds");
+
     let state = AppState {
         metadata,
         datasource,
@@ -50,6 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         stream_signer: StreamTokenSigner::new(cfg.stream_key.into_bytes()),
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
+        kinds: std::sync::Arc::new(kinds),
     };
 
     // The alert scheduler runs for the process's lifetime, evaluating due rules
@@ -81,6 +89,10 @@ struct Config {
     /// injection. Optional; defaults to `./knowledge`. A missing dir just means
     /// no knowledge is injected.
     knowledge_root: std::path::PathBuf,
+    /// Directory holding the built-in query-kinds pack (`manifest.yaml` + the
+    /// `*.sql`/`*_params.json` files). Optional; defaults to `./kinds`. A missing
+    /// dir means no kinds are registered.
+    kinds_dir: std::path::PathBuf,
 }
 
 impl Config {
@@ -104,6 +116,9 @@ impl Config {
                 .map_err(|e| format!("NEXUS_BIND: {e}"))?,
             knowledge_root: std::env::var("NEXUS_KNOWLEDGE_ROOT")
                 .unwrap_or_else(|_| "./knowledge".into())
+                .into(),
+            kinds_dir: std::env::var("NEXUS_KINDS_DIR")
+                .unwrap_or_else(|_| "./kinds".into())
                 .into(),
         })
     }

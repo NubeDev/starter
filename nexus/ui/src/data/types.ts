@@ -36,6 +36,17 @@ export interface PanelQuery {
   sql: string;
   /** Bound query parameters, positional (`$1`, `$2`, …). */
   params?: ReadonlyArray<string | number | boolean | null>;
+  /** Kind-mode (WS-10): a declarative query-kind invoked by reverse-DNS
+   *  name (`nexus.core.meters_list`) instead of raw `sql`. When set, the
+   *  backend resolves the kind from its registry, validates `kindParams`
+   *  against the kind's JSON Schema, and binds the kind's SQL — `sql` is
+   *  ignored. The host-bound tenant predicate is injected server-side and
+   *  is never supplied here. */
+  kind?: string;
+  /** Named params for a kind-mode query, keyed by the schema's property
+   *  names. Scalars only (the binder binds each as a single arg). Ignored
+   *  when `kind` is unset. */
+  kindParams?: Readonly<Record<string, string | number | boolean>>;
 }
 
 /** One drawn series, mapped from a column in the query result. */

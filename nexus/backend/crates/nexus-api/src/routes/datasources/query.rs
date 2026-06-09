@@ -80,8 +80,14 @@ pub async fn query_datasource(
         tenant_id: Some(tenant.clone()),
         user_id: Some(caller_principal.subject.clone()),
     };
-    let result = nexus_store::run_request(&pool, &req, &identity, state.guards).await;
-    record(&state, &tenant, &caller_principal.subject, id, &req.sql, &result).await;
+    let result = crate::kinds::run(&state, &pool, &req, &identity).await;
+    // History records what the caller ran: a kind invocation by name, or the raw
+    // SQL. A kind-mode request has no author-written SQL to store.
+    let recorded = match &req.kind {
+        Some(kind) => format!("kind:{kind}"),
+        None => req.sql.clone(),
+    };
+    record(&state, &tenant, &caller_principal.subject, id, &recorded, &result).await;
     match result {
         Ok(out) => Json(out).into_response(),
         Err(e) => IntoResponse(e).into_response(),
