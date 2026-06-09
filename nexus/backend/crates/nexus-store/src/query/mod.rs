@@ -1,10 +1,12 @@
 //! The guarded one-shot query path against a datasource Postgres.
 
+mod introspect;
 mod row_json;
 mod run;
 
 use std::time::Duration;
 
+pub use introspect::{introspect, ColumnInfo, TableInfo};
 pub use run::run_query;
 
 /// The server-enforced safety bounds applied to every datasource query. None of

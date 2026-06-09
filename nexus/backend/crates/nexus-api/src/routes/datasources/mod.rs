@@ -7,6 +7,7 @@ pub mod delete;
 pub mod get;
 pub mod list;
 pub mod query;
+pub mod schema;
 pub mod test;
 pub mod update;
 
@@ -31,6 +32,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/datasources/{id}/query",
             post(query::query_datasource),
+        )
+        .route(
+            "/api/v1/datasources/{id}/schema",
+            http_get(schema::datasource_schema),
         )
         .route(
             "/api/v1/datasources/{id}/test",

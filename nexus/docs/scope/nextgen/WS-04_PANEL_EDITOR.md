@@ -2,7 +2,14 @@
 
 > **Status:** Not started · **Wave:** 1 (independent) · **Owner:** _unassigned_
 > **Depends on:** C1 JSON model (for `fieldConfig`/overrides) · benefits from WS-03 editor + WS-01 preview
-> **Migration:** none (panel config is in the dashboard/panel model) · **Read first:** GAP_ANALYSIS §2.4
+> **Migration:** none (panel config is in the dashboard/panel model) · **Read first:** GAP_ANALYSIS §2.4, ROADMAP §0
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+>
+> 🔗 **Coordinate with [WS-11 (Units & Prefs)](./WS-11_UNITS_AND_PREFS.md).** The "unit picker" in
+> the Field tab becomes **"pick a `quantity`"** (temperature/power/…) — the *displayed* unit then
+> comes from the viewer's resolved prefs (server-converted), with an optional per-panel display
+> override. Thresholds/min/max become **unit-aware** (store canonical, show in the viewer's unit).
+> Add `quantity` + `storedUnit` to `SeriesField` *with* WS-11 so the model lands once.
 
 ## Goal
 A Grafana-class **panel editor**: full control over visualization type, field mapping, units,

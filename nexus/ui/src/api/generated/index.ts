@@ -213,6 +213,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/datasources/{id}/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["datasource_schema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/datasources/{id}/test": {
         parameters: {
             query?: never;
@@ -670,6 +686,10 @@ export interface components {
          * @enum {string}
          */
         DatasourceKind: "postgres";
+        /** @description A datasource's introspected tables, for SQL autocomplete in the editor. */
+        DatasourceSchema: {
+            tables: components["schemas"]["SchemaTable"][];
+        };
         /**
          * @description A datasource as it appears in a list — identity and kind only, no connection
          *     detail. Use `GET /datasources/:id` for the redacted connection view.
@@ -850,6 +870,21 @@ export interface components {
          * @enum {string}
          */
         ResultColumnType: "bool" | "int" | "float" | "string" | "timestamp" | "other";
+        /**
+         * @description One column: its name and declared SQL type (e.g. `timestamp`, `double
+         *     precision`).
+         */
+        SchemaColumn: {
+            data_type: string;
+            name: string;
+        };
+        /** @description One table or view, schema-qualified, with its columns in declaration order. */
+        SchemaTable: {
+            columns: components["schemas"]["SchemaColumn"][];
+            name: string;
+            /** @description The Postgres schema the table lives in (e.g. `public`). */
+            schema: string;
+        };
         /**
          * @description Body for `PUT …/tags` — the complete tag set to persist on an entity. This
          *     is a full replace: tags not listed are removed, so the client sends the
@@ -1605,6 +1640,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not authorized to view this datasource */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    datasource_schema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Datasource id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tables and columns */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasourceSchema"];
+                };
             };
             /** @description Not authorized to view this datasource */
             403: {

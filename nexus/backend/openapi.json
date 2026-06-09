@@ -702,6 +702,44 @@
         }
       }
     },
+    "/api/v1/datasources/{id}/schema": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "datasource_schema",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tables and columns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/datasources/{id}/test": {
       "post": {
         "tags": [
@@ -1858,6 +1896,21 @@
           "postgres"
         ]
       },
+      "DatasourceSchema": {
+        "type": "object",
+        "description": "A datasource's introspected tables, for SQL autocomplete in the editor.",
+        "required": [
+          "tables"
+        ],
+        "properties": {
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaTable"
+            }
+          }
+        }
+      },
       "DatasourceSummary": {
         "type": "object",
         "description": "A datasource as it appears in a list — identity and kind only, no connection\ndetail. Use `GET /datasources/:id` for the redacted connection view.",
@@ -2163,6 +2216,46 @@
           "timestamp",
           "other"
         ]
+      },
+      "SchemaColumn": {
+        "type": "object",
+        "description": "One column: its name and declared SQL type (e.g. `timestamp`, `double\nprecision`).",
+        "required": [
+          "name",
+          "data_type"
+        ],
+        "properties": {
+          "data_type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "SchemaTable": {
+        "type": "object",
+        "description": "One table or view, schema-qualified, with its columns in declaration order.",
+        "required": [
+          "schema",
+          "name",
+          "columns"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaColumn"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string",
+            "description": "The Postgres schema the table lives in (e.g. `public`)."
+          }
+        }
       },
       "SetTagsRequest": {
         "type": "object",

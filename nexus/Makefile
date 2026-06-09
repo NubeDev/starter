@@ -77,8 +77,10 @@ build-ui:
 
 # Run both in one foreground process group; Ctrl-C (or `make kill`) stops both.
 # The backend logs prefix-free; the trap reaps the child on exit so no orphan
-# server keeps the port held.
-dev:
+# server keeps the port held. Depends on `db` so a stopped/missing dev Postgres
+# is (re)started first — otherwise the backend exits on a connection refusal at
+# startup and the UI just shows proxy ECONNREFUSED with no hint why.
+dev: db
 	@echo "backend → http://127.0.0.1:$(BE_PORT)   ui → http://127.0.0.1:$(UI_PORT)"
 	@trap 'kill 0' EXIT INT TERM; \
 	( cd $(BE_DIR) && cargo run --bin nexus-api ) & \
@@ -86,8 +88,8 @@ dev:
 	wait
 
 # Run one side alone. dev-be applies migrations at startup against the database
-# pointed to by NEXUS_METADATA_URL (start one with `make db` first).
-dev-be:
+# pointed to by NEXUS_METADATA_URL; depends on `db` so that database is up first.
+dev-be: db
 	cd $(BE_DIR) && cargo run --bin nexus-api
 
 dev-ui:
@@ -198,8 +200,10 @@ clean:
 	rm -rf ui/dist
 
 # Free the dev ports if a previous run was killed ungracefully and left a
-# listener behind. Best-effort: no error if nothing is bound.
+# listener behind. Hard kill (SIGKILL) via fuser so a wedged process can't
+# ignore it. Best-effort: fuser exits non-zero when nothing is bound, so the
+# leading '-' keeps make from failing.
 kill:
-	-@lsof -ti tcp:$(BE_PORT) | xargs -r kill 2>/dev/null || true
-	-@lsof -ti tcp:$(UI_PORT) | xargs -r kill 2>/dev/null || true
+	-@fuser -k -KILL $(BE_PORT)/tcp 2>/dev/null || true
+	-@fuser -k -KILL $(UI_PORT)/tcp 2>/dev/null || true
 	@echo "freed ports $(BE_PORT) and $(UI_PORT)"

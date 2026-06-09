@@ -2,7 +2,8 @@
 
 > **Status:** Proposal · **Wave:** 0 (contract) + 1 (query-kinds) + 2 (datasource-kinds) · **Owner:** _unassigned_
 > **Depends on:** C2 macro/param engine (WS-03) — *and reshapes it* · **Reshapes:** WS-03, WS-08, WS-09
-> **Migration:** `0014_query_kinds.sql` (registry; optional if manifest-only) · **Read first:** GAP_ANALYSIS §2.3/2.8/2.9
+> **Migration:** block `14xx` (e.g. `1401_query_kinds.sql`; optional — manifest-only kinds need no table) · **Read first:** GAP_ANALYSIS §2.3/2.8/2.9, ROADMAP §0
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims (incl. rubix `kinds/`) before building (ROADMAP §0).
 >
 > **Origin:** ported from the rubix `kinds/` convention in
 > `rubix/extensions/com.nubeio.rubixos/` (manifest: `block.yaml`; templates: `kinds/*.sql` +
@@ -174,7 +175,7 @@ Two hosting options; **recommend (a) for v1, design for (b)**:
 - **(b) Extension-contributed kinds** — kinds declared in an extension manifest (rubix `block.yaml`
   style) loaded via the federation/extension system (NEXUS.md §7). Gated behind the extension
   security model (allowlist/signature/capability) before any out-of-repo kind loads.
-- **(c) Tenant-authored kinds** (later) — saved kinds in the DB (`0014_query_kinds.sql`) so an admin
+- **(c) Tenant-authored kinds** (later) — saved kinds in the DB (`1401_query_kinds.sql` (WS-10 `14xx` block)) so an admin
   promotes a working Explore query into a reusable named kind via the UI. The natural "save this
   query as a template" feature; reuses the same registry + governance.
 
@@ -199,6 +200,11 @@ Start with (a) — a loader + registry + the param binder — and make the regis
   schema-driven params form (json-schema → rhf/zod), alongside the raw-SQL tab.
 - **WS-05** — kinds make the dashboard JSON model **portable**: a panel references a kind by id +
   params, not an opaque SQL blob bound to one schema. Better for export/AI-generation.
+- **WS-11 (units & prefs)** — a kind can **declare the `quantity` (+ stored unit) of each output
+  column** in its manifest, so a kind-backed panel **converts to the viewer's units automatically**
+  with no per-panel tagging. This makes kinds *self-describing* for units — a strong reason to land
+  the kind output-schema and WS-11's quantity model together. The `.cache.yaml` two-layer scope
+  (canonical@tenant / converted@user, WS-09) is the matching cache shape.
 
 ---
 
@@ -217,7 +223,7 @@ Start with (a) — a loader + registry + the param binder — and make the regis
 6. **Cache sidecar (with WS-09)**: port the `.cache.yaml` schema; wire `invalidate_on.tables`.
 7. **Datasource-kinds (Wave 2, with WS-08)**: declarative datasource type manifest + per-kind config
    form + test path + dialect mapping.
-8. **(Later)** tenant-authored kinds: "save Explore query as a kind" + `0014_query_kinds.sql`.
+8. **(Later)** tenant-authored kinds: "save Explore query as a kind" + `1401_query_kinds.sql` (WS-10 `14xx` block).
 
 ## 7. Acceptance criteria
 - [ ] A core query-kind runs via `POST /query` with `{kind, params}`; params validated against schema;

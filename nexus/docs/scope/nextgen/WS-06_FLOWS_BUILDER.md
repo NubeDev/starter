@@ -3,7 +3,8 @@
 > **Status:** Not started · **Wave:** 2 · **Owner:** _unassigned_
 > **Depends on:** WS-08 (registered connectors enrich the palette) — can start with current nodes
 > **Migration:** none required (flow config is JSONB); maybe `00xx_flow_runs.sql` for metrics
-> **Read first:** GAP_ANALYSIS §2.6, ROADMAP §6 · this is the user's "ArkFlow admin tooling" ask
+> **Read first:** GAP_ANALYSIS §2.6, ROADMAP §0 + §6 · this is the user's "ArkFlow admin tooling" ask
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
 
 ## Goal
 Make flows authorable by a human, not a JSON-savant. Today flows are **real and run**

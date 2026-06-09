@@ -2,7 +2,8 @@
 
 > **Status:** Not started · **Wave:** 2 · **Owner:** _unassigned_
 > **Depends on:** C2 macro engine (WS-03), C1 JSON model, C3 URL-state (Wave 0) · pairs with WS-01
-> **Migration:** `0007_variables.sql` · **Read first:** GAP_ANALYSIS §2.2, ROADMAP §6
+> **Migration:** block `07xx` (e.g. `0701_variables.sql`; may be unneeded if vars live in dashboard JSON) · **Read first:** GAP_ANALYSIS §2.2, ROADMAP §0 + §6
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
 
 ## Goal
 Grafana-class **dashboard variables**: one dashboard, parameterised. A variable bar lets the user
@@ -26,7 +27,7 @@ hand-authoring one per site — directly serving the energy/water/HVAC vision.
    - `interval` — a list of durations (drives `$__interval` overrides).
    - `textbox` — free text.
    - built-ins: `$__dashboard`, `$__user`, `$__from`, `$__to` (read-only, from context).
-2. **Persistence**: variables live in the dashboard JSON model (C1); a `0007_variables.sql` table if
+2. **Persistence**: variables live in the dashboard JSON model (C1); a `0701_variables.sql` table (WS-02 `07xx` block) if
    we store them relationally instead of in the dashboard JSONB — **decide with WS-05** (prefer
    in-model JSON to keep import/export self-contained; the migration may be unused).
 3. **Variable bar UI** (`ui/src/features/variables/**`): renders each visible variable as a

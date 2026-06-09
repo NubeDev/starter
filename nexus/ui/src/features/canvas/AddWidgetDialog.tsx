@@ -17,8 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nube/starter-ui-kit/components/select";
-import { Textarea } from "@nube/starter-ui-kit/components/textarea";
-
 import type {
   Dashboard,
   Widget,
@@ -26,6 +24,7 @@ import type {
   WidgetType,
 } from "@/data/types";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
+import { SqlEditor } from "@/features/sql-editor";
 import { nextSlot } from "@/features/canvas/placement";
 import { useAddPanel } from "@/features/dashboards/useAddPanel";
 import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
@@ -137,13 +136,14 @@ export function AddWidgetDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="panel-sql">SQL</Label>
-            <Textarea
+            <SqlEditor
               id="panel-sql"
               value={sql}
-              onChange={(e) => setSql(e.target.value)}
+              onChange={setSql}
+              datasourceId={datasourceId}
+              minHeight="6rem"
               placeholder="select … from … limit 100"
-              spellCheck={false}
-              className="min-h-24 resize-y font-mono text-sm"
+              ariaLabel="Panel SQL"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">

@@ -2,7 +2,8 @@
 
 > **Status:** Not started · **Wave:** 2 (after WS-03 macro engine) · **Owner:** _unassigned_
 > **Depends on:** C2 macro engine (WS-03), C1 JSON model, C3 URL-state scheme (all Wave 0)
-> **Migration:** none (state is dashboard-model + URL) · **Read first:** GAP_ANALYSIS §2.1, ROADMAP §6
+> **Migration:** none (state is dashboard-model + URL) · **Read first:** GAP_ANALYSIS §2.1, ROADMAP §0 + §6
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
 
 ## Goal
 A Grafana-class **global time-range picker + refresh control** at the dashboard level, whose

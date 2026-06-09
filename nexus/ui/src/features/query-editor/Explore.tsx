@@ -3,13 +3,14 @@ import { useMutation } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
-import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import type { QueryResponse } from "@/api/types";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
+import { QuickQueries } from "@/features/query-editor/QuickQueries";
 import { ResultGrid } from "@/features/query-editor/ResultGrid";
+import { SqlEditor } from "@/features/sql-editor";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
 
@@ -23,12 +24,21 @@ export function Explore() {
   const [datasourceId, setDatasourceId] = useState<string | undefined>();
   const [sql, setSql] = useState("");
 
-  const run = useMutation<QueryResponse, Error>({
-    mutationFn: () =>
+  // Takes the SQL to run as the mutation variable rather than reading `sql`
+  // from state, so a quick-add chip can run the exact query it just inserted
+  // without waiting for a state update to flush.
+  const run = useMutation<QueryResponse, Error, string>({
+    mutationFn: (toRun) =>
       datasourceId
-        ? queryDatasource(client, datasourceId, { sql })
-        : runQuery(client, { sql }),
+        ? queryDatasource(client, datasourceId, { sql: toRun })
+        : runQuery(client, { sql: toRun }),
   });
+
+  // Insert a query into the editor and run it in one go — the discovery path.
+  const runSql = (toRun: string) => {
+    setSql(toRun);
+    run.mutate(toRun);
+  };
 
   // A datasource must be chosen before running — the query is scoped to it.
   const canRun = sql.trim().length > 0 && !!datasourceId && !run.isPending;
@@ -41,19 +51,19 @@ export function Explore() {
           <Button
             className="ms-auto gap-2"
             disabled={!canRun}
-            onClick={() => run.mutate()}
+            onClick={() => run.mutate(sql)}
           >
             <Play className="size-4" />
             {run.isPending ? "Running…" : "Run"}
           </Button>
         </div>
-        <Textarea
+        <QuickQueries datasourceId={datasourceId} onRun={runSql} />
+        <SqlEditor
           value={sql}
-          onChange={(e) => setSql(e.target.value)}
-          placeholder="select … from … where … limit 100"
-          spellCheck={false}
-          className="tabular min-h-32 resize-y font-mono text-sm"
-          aria-label="SQL query"
+          onChange={setSql}
+          datasourceId={datasourceId}
+          minHeight="8rem"
+          ariaLabel="SQL query"
         />
         {run.data?.stats ? (
           <p className="text-xs text-muted-foreground">

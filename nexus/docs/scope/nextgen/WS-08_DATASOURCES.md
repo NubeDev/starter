@@ -1,8 +1,16 @@
 # WS-08 — Datasource Breadth & Connectors
 
 > **Status:** Not started · **Wave:** 2 · **Owner:** _unassigned_
-> **Depends on:** nothing hard; feeds WS-06 palette · **Migration:** `0013_datasource_kinds.sql`
-> **Read first:** GAP_ANALYSIS §2.8, NEXUS.md §2 (ArkFlow connectors) & §3 (PromQL caveat)
+> **Depends on:** nothing hard; feeds WS-06 palette · **Migration:** block `13xx` (e.g. `1301_datasource_kinds.sql`)
+> **Read first:** GAP_ANALYSIS §2.8, ROADMAP §0, NEXUS.md §2 (ArkFlow connectors) & §3 (PromQL caveat)
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+>
+> ⚠️ **Decide the connector *shape* with [WS-10 (Kinds)](./WS-10_KINDS_EXTENSIBILITY.md) §4.1B
+> first.** WS-10 proposes **datasource-kinds**: a connector declared as files — `{config_schema,
+> secret fields, test query, dialect}` — instead of a Rust `DatasourceKind` enum edited across
+> DTOs/forms/registry. Recommended: **declarative config + a thin per-protocol builder.** This WS
+> supplies the builders/dialects; WS-10 owns the *declaration format*. Settle "declarative vs
+> imperative registration" in Wave 0 so this WS builds connectors against the chosen shape.
 
 ## Goal
 Deliver on "any data source." Today **Postgres is the only queryable kind**; ArkFlow speaks far
@@ -15,8 +23,9 @@ path, a secret model, and time-aware querying. Phased: pick the 2–3 the busine
 - Postgres connector real (`datasource/postgres/**`); query path solid (`query/run.rs`).
 - Registered engine inputs: only `http_poll` + `simulator` (`registry/inputs.rs`). Kafka/MQTT/
   Modbus/HTTP/file exist **in ArkFlow upstream** but are **not registered for Nexus**.
-- NEXUS.md §3: native **PromQL/LogQL is "product-sized,"** not a freebie — a raw HTTP-proxy input is
-  small but real PromQL compat is its own effort. Scope accordingly.
+- NEXUS.md §3: native **PromQL/LogQL is "product-sized,"** not a freebie. Even the *scoped* form isn't
+  trivial passthrough — the time-macro→PromQL `query_range` mapping is real work (see §design notes).
+  The raw HTTP transport is small; treat the connector as **medium**. Full PromQL compat is out.
 
 ## Scope (phased — do the business-priority subset first)
 For **each** connector below: (a) register the ArkFlow input/builder in `registry/inputs.rs` (🔶
@@ -50,8 +59,14 @@ Priority order (confirm with business):
   decrypt-at-stream-build boundary (NEXUS.md §4). No plaintext, no return over API.
 - **Build weight** (NEXUS.md Risk #4): some ArkFlow connectors pull heavy deps (protoc/PyO3). Gate
   features so we don't bloat the binary for unused connectors.
-- **PromQL/LogQL**: ship the *scoped* HTTP-proxy form (forward a query string), and **clearly label
-  it** "basic PromQL passthrough, not full compatibility." Full parity is a separate future effort.
+- **PromQL/LogQL — don't undersell the macro mapping.** "Forward a query string" sounds like trivial
+  passthrough, but a Prometheus datasource still has to make WS-01/WS-03 time macros work, and
+  `$__timeFilter`/`$__timeGroup` → PromQL is **not** passthrough: it means mapping a time range to
+  `/api/v1/query_range` `start`/`end`/`step` params and translating `$__interval` to a PromQL `step` /
+  range-vector duration. That's a real `Dialect` impl, not a string forward. Treat the Prometheus
+  connector's effort as **medium, not "small"** — the raw transport is small; the macro→PromQL mapping
+  is the actual work. Still scope it as **basic PromQL passthrough, not full PromQL compatibility**
+  (no parser, no full function set) — full parity is a separate future effort.
 
 ## Acceptance criteria
 - [ ] At least the top-2 priority connectors registered, configurable, testable, secret-protected.

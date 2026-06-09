@@ -21,4 +21,4 @@ pub mod tenant_tx;
 pub mod testing;
 
 pub use datasource::{Envelope, NewDatasource};
-pub use query::{run_query, QueryGuards};
+pub use query::{introspect, run_query, ColumnInfo, QueryGuards, TableInfo};

@@ -64,6 +64,13 @@ lens for sequencing.
 | Alerting | 40% | 100% | medium-large | WS-07 |
 | Datasource breadth (connectors) | 15% | 100% | large | WS-08 |
 | Production ops (cache/audit/HA/OTel) | 25% | 100% | large | WS-09 |
+| **Declarative extensibility ("kinds")** | **0%** | n/a* | **strategic** | **WS-10** |
+| **Units & datetime (backend-side, per-user)** | **10%** | 100% | **medium** | **WS-11** |
+| **Audit log + undo/redo (one ledger, all kinds)** | **5%** | 100% | **medium** | **WS-12** |
+
+\* Not a Grafana parity row — it's an *architecture* bet (the rubix `kinds/` pattern) that reshapes
+how WS-03/08/09 are built. See §2.10. **Units (WS-11) scores low on *nexus integration* but the
+underlying crates (`starter-spi/units` + `starter-prefs`) are ~done — it's wiring, not green-field.**
 
 The five `huge`/`large` rows that are **pure feature gaps on a working base** (WS-01..05) are
 where a power user's "this isn't Grafana" reaction comes from. They are the priority and they
@@ -232,11 +239,12 @@ the 2-3 the business needs first.
 
 **Today:** `/health` + `/metrics` (Prometheus) + structured `tracing` logs exist. **Missing:**
 query-result cache (every panel hits the DB live — a 20-panel dashboard on 10s refresh = 120
-QPS/user), audit log (decrypts are logged but nothing is queryable), query history, **rate
-limiting** (none), **OpenTelemetry** tracing, per-tenant **quotas/concurrency caps**, and
-**multi-node HA** (flow manager + alert scheduler are single-node by design; in-process SSE
-broadcast can't span nodes). There's also a known **login-hang bug**: argon2 verify runs on the
-async runtime without `spawn_blocking` (`TODO-FOR.UI.md`).
+QPS/user), query history, **rate limiting** (none), **OpenTelemetry** tracing, per-tenant
+**quotas/concurrency caps**, and **multi-node HA** (flow manager + alert scheduler are single-node by
+design; in-process SSE broadcast can't span nodes). There's also a known **login-hang bug**: argon2
+verify runs on the async runtime without `spawn_blocking` (`TODO-FOR.UI.md`). *(The **audit log** was
+listed here originally — it has moved to its own workstream **WS-12**, because audit and undo/redo
+share one substrate; see §2.12.)*
 
 **Why it matters:** "scale and into production asap." Without a result cache the DB melts under
 refresh load; without rate limits one tenant can starve others; without multi-node you can't
@@ -247,6 +255,111 @@ scale out live panels at all.
 API, query history, rate limiting, OTel traces, the SSE shared-bus (NATS/Redis) for multi-node
 live, alert-scheduler leader story, and the argon2 `spawn_blocking` fix. **Fix the login bug
 first — it's a live correctness issue.**
+
+---
+
+### 2.10 The extensibility direction — "Kinds" → [WS-10](./WS-10_KINDS_EXTENSIBILITY.md)
+
+**Not a missing feature so much as a missing *shape*** — and the one architectural idea that makes
+the others compound. Ported from the **rubix `kinds/` convention**
+(`rubix/extensions/com.nubeio.rubixos/` — manifest `block.yaml`, templates `kinds/*.sql` +
+`kinds/*_params.json`, cache sidecars `kinds/*.cache.yaml`).
+
+**Today:** you add a queryable thing to nexus by pasting raw SQL into a panel (unsafe, unshareable,
+uncacheable) or by writing Rust (a new connector). There is no middle path. Rubix's answer is a
+**kind**: a named, JSON-Schema-validated, parameterized query declared as *files* —
+tenant isolation is **structural** (a host-bound `$caller_tenant_id` the caller cannot supply),
+caching is a **declarative sidecar**, and the `tables:` list drives both capability grants and cache
+invalidation. Adding API surface becomes a **file-drop**, not a recompile.
+
+**Why it matters here:** it is *strictly better* than the raw-SQL default and it **folds three of the
+gaps above into one mechanism** rather than three bespoke builds:
+- **§2.3 (WS-03):** named **query-kinds** become the safe default; the macro engine *is* the kind
+  param-binder (one engine, two front doors). Raw SQL drops to the advanced escape hatch.
+- **§2.8 (WS-08):** **datasource-kinds** = connectors declared as `{config schema, secrets, test
+  query, dialect}` — a file-drop + thin builder instead of an enum edited across DTOs/forms/registry.
+- **§2.9 (WS-09):** adopt rubix's **`.cache.yaml`** sidecar wholesale (ttl/scope/invalidate-on-tables
+  + time-series bucketing) as the cache spec — a designed format, not a blank page.
+
+It also de-risks two product bets: **AI-generated panels** ("Ask Nexus" picks a *kind + params*,
+never arbitrary SQL → bounded, safe, cacheable) and **GitOps dashboards** (kinds are files in a repo).
+The one real design delta vs. rubix: nexus is **multi-datasource**, so a query-kind must declare what
+it runs against (`datasource_kind` / optional pinned binding) and the `tables:` capability resolves
+against the *bound* datasource — with a **mandatory `$caller_tenant_id`-predicate lint** since the
+data-side DBs have no RLS (NEXUS.md §5.2). Full design, scope, and open questions in WS-10.
+
+---
+
+### 2.11 Units & datetime — convert backend-side, per user prefs → [WS-11](./WS-11_UNITS_AND_PREFS.md)
+
+**Today:** nexus returns **bare numbers and UTC timestamps**; any unit/format choice would have to
+live in each client. There is no quantity model, no per-user unit preference, no server-side
+conversion. For an energy/water/HVAC fleet with mixed metric/imperial operators, that means every
+client re-implements conversion — and a future mobile app, alert text, and CSV export each get it
+wrong differently.
+
+**The good news — the platform already solved this; nexus just hasn't wired it in.** Two existing
+crates implement exactly the "convert on the backend" model the user wants:
+- **`starter-spi/units/`** — canonical-SI storage + `uom`-backed `normalize_for_storage` /
+  `from_canonical` / `convert_for_display`, closed `Quantity` + `Unit` enums, `GET /v1/units`.
+- **`starter-prefs/`** — three-layer (user → org → default) preference resolution with `"auto"`
+  derivation, `ResolvedPreferences` (timezone, units per quantity, date/time/number formats, locale,
+  currency), a prefs middleware, and the **`SeriesEnvelope`** wire shape (`{quantity, unit}` once per
+  series). The architecture matches the project memory note on i18n/unit prefs.
+
+**Why backend-side is the right call (the user's instinct is correct):** one implementation serves
+the web UI, a **future native app**, **alert notifications** (render in the recipient's units), and
+**exports** — instead of N client re-implementations. It's the platform's own mandated rule ("convert
+at the presentation edge, never in storage").
+
+**The gap is integration, not invention:** (a) finish the starter **`Accept-Units` / `UnitsCtx`**
+convert path (it's a deferred "Phase 2" scaffold); (b) stand up **`starter-prefs` on Postgres** (it's
+sqlite-only today, nexus is PG+RLS); (c) **tag nexus series with a `quantity`** (panels/kinds declare
+what a column *is*) so conversion can run, with bare-number passthrough for untagged series. Couples
+with WS-04 (unit picker → quantity), WS-10 (a kind declares output quantities → auto-convert), WS-07
+(notify in recipient units), WS-09 (cache key must include resolved units/locale). Full plan in WS-11.
+
+> 🚧 **Known cross-repo blocker:** `starter-spi`'s `Quantity` enum is **closed** and lacks core
+> energy/water/HVAC quantities — most glaringly **volumetric flow-rate** (plus likely mass-flow,
+> current/voltage, humidity, ppm). Adding them is an **upstream `starter-spi` change** on the
+> critical path, not a nexus-local edit — raise it in Wave 0 (WS-11 header). Until then those
+> measures pass through as bare numbers (no conversion).
+
+---
+
+### 2.12 Audit log + undo/redo — one ledger, for everything → [WS-12](./WS-12_AUDIT_AND_UNDO.md)
+
+**Today:** no audit log a user can query (datasource decrypts are *logged* to stdout, nothing is
+persisted/queryable) and **no undo/redo anywhere** — a fat-fingered dashboard edit or a deleted
+datasource is gone. For a multi-tenant production system this is a real gap: compliance needs "who
+changed what," and operators need to recover from mistakes (and from **AI-made** changes once "Ask
+Nexus" lands).
+
+**The better-long-term answer is already designed and built in this repo — and it's *one* system,
+not two.** `starter-spi/changelog`'s docstring states it outright: *"five product features collapse
+onto this primitive: user audit log, AI-agent log, undo/redo, duplicate, copy/paste."* The
+production-grade crates exist:
+- **`starter-spi/changelog`** — the `Change` envelope (`actor, resource, op, before, after, group_id,
+  correlation`), the `ChangeRecorder` write path, and `Reversible` (the one per-kind extension point).
+- **`starter-changelog-postgres`** (+ sqlite) — the **`starter_changes`** append-only table, a paged
+  `ChangeLog` query trait (`PgChangeLog`), LISTEN/NOTIFY tailing, retention/prune, per-kind policy,
+  and GDPR `forget()` tombstoning.
+- **`starter-undo`** — per-actor undo/redo over the ledger (`UndoService`, a CAS-on-epoch redo
+  cursor, `record_if_reversible` to drop into handlers, `POST /v1/undo|redo` routes).
+
+**Why one ledger is "better long term" (the user's framing):** audit = *read* the ledger; undo/redo =
+*replay* the ledger; duplicate/paste = `clone_with` on the ledger. Adding a new audited+undoable kind
+(users, dashboards, datasources, flows, alerts, grants, …) = **register one `Reversible` + emit one
+`ChangeDraft`** after the mutation — no per-feature audit plumbing, no separate undo stacks.
+
+**The gap is integration, not invention:** (a) mount `starter_changes` + the undo cursor on nexus'
+**Postgres+RLS** (add `tenant_id` + RLS, write inside the tenant tx); (b) call `record_if_reversible`
+in **every nexus mutation handler**; (c) write **one `Reversible` per kind** (snapshot vs patch per
+the crate's matrix); (d) add the missing **`GET /api/v1/audit` endpoint** (the only sizeable net-new
+piece — `PgChangeLog` already queries) + undo/redo UI. **This absorbs the "audit log" item from §2.9
+(WS-09).** Bonus: AI edits record as `Actor::Agent{run_id,model}` → the AI-agent log is the same
+ledger and AI changes are user-undoable. Full plan in WS-12; coordinate the history-overlap with
+WS-05 dashboard versioning (§see WS-12 §7).
 
 ---
 

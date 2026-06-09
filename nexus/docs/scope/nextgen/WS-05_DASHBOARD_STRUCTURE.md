@@ -2,7 +2,8 @@
 
 > **Status:** Not started · **Wave:** 0 (owns the JSON model contract C1) + Wave 3 (repeat/versioning)
 > **Owner:** _unassigned_ · **Depends on:** WS-02 (repeat-by-variable); owns C1
-> **Migrations:** `0006_dashboard_model.sql`, `0009_dashboard_versions.sql` · **Read first:** GAP_ANALYSIS §2.5, ROADMAP §6 (C1)
+> **Migrations:** block `06xx` (e.g. `0601_dashboard_model.sql`, `0602_folders.sql`; version-tags are a thin index per D1, not a JSON-snapshot table) · **Read first:** GAP_ANALYSIS §2.5, ROADMAP §0 + §6 (C1)
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
 
 ## Goal
 Turn a flat list of dashboards into an organised, scalable, **dashboard-as-code** system: folders,
@@ -36,7 +37,7 @@ Dashboard {
 Widget { ..., fieldConfig?, transforms?, repeat?: { varName, direction } }  // WS-04 / repeat
 Row { id, title, collapsed, repeat?: { varName } }
 ```
-Add `0006_dashboard_model.sql`: a `definition JSONB` column on the dashboard table (or per-section
+Add `0601_dashboard_model.sql` (WS-05 `06xx` block): a `definition JSONB` column on the dashboard table (or per-section
 columns) + a `folders` table. **This JSON shape is the contract WS-01/02/04 serialise into and
 import/export validates against.** Publish it as `schemaVersion: 1` with a migration note.
 
@@ -57,16 +58,27 @@ import/export validates against.** Publish it as `schemaVersion: 1` with a migra
   `schemaVersion` and creates/updates. UI "Export JSON" / "Import JSON" / copy-to-clipboard.
 - This is the seam the **AI "Ask Nexus" generator** emits into.
 
-### Versioning
-- `0009_dashboard_versions.sql`: snapshot the JSON model on each save with `{version, author,
-  message?, created_at}`. `GET /dashboards/:id/versions`, `GET .../versions/:v`, restore endpoint.
-  UI: version list + **diff view** + restore.
+### Versioning — **DECIDED (ROADMAP D1/D2): versions are tagged changelog snapshots, not a 2nd store**
+- **There is ONE history system: WS-12's changelog.** A "dashboard version" is **not** a separate JSON
+  copy — it's a **named, user-curated checkpoint that points at a WS-12 changelog snapshot** (a tagged
+  changelog entry + a label/message). This is committed (ROADMAP §6a D1), not an open choice.
+- **Do NOT create a dashboard-versions *JSON-snapshot* table.** If a table is needed at all it's a
+  thin `{dashboard_id, change_id, label, message, author, at}` **tag index** over the changelog
+  (e.g. `0603_version_tags.sql` in WS-05's `06xx` block) — pointers, not copied JSON.
+- **Reuse WS-12's before→after diff + restore** — do not build a third diff/restore stack.
+- Endpoints: `GET /dashboards/:id/versions` (list the tagged checkpoints), `POST .../versions`
+  (tag the current state with a message), restore = WS-12 replay to that change. UI: checkpoint list
+  + WS-12 diff view + restore.
+- **Constraint that makes this work (ROADMAP D2):** the dashboard `Reversible` records **full
+  snapshots, not patches** — "restore to version N" needs an absolute state at N, not a patch chain.
+  Coordinate with WS-12 so the dashboard kind is pinned to snapshot.
 
 ### Sharing extensions (next to existing authz, don't replace it)
 - **Public/anonymous link** — opt-in, read-only, token-scoped URL (tenant-gated config).
 - **Snapshot** — a frozen point-in-time copy (data embedded) shareable without datasource access.
 - **Embed** — iframe/embed snippet for a panel or dashboard with a scoped token.
-- **Duplicate** dashboard; **star/favorite** wired to the existing `starred` field.
+- **Duplicate** dashboard — implement via WS-12's `Reversible::clone_with` (N rows under one group,
+  itself undoable), **not** a bespoke copy path. **Star/favorite** wired to the existing `starred` field.
 
 ## Design notes
 - **Self-contained export**: variables + time defaults + panel fieldConfig all live *in* the JSON so

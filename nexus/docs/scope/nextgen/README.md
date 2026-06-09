@@ -27,6 +27,8 @@ Grafana/Power-BI-class dashboarding platform**, built by **multiple AI sessions 
 | [WS-08](./WS-08_DATASOURCES.md) | **Connector breadth (MQTT/Modbus/…)** | large | 2 | — |
 | [WS-09](./WS-09_PRODUCTION_HARDENING.md) | **Cache/Audit/Rate-limit/HA/OTel** | large | 0+1+3 | C1/C3 (cache key) |
 | [WS-10](./WS-10_KINDS_EXTENSIBILITY.md) | **"Kinds" — declarative query/datasource extensibility** | strategic — *ports the rubix `kinds/` pattern; reshapes WS-03/08/09* | 0+1+2 | WS-03 binder |
+| [WS-11](./WS-11_UNITS_AND_PREFS.md) | **Units & datetime prefs — backend-side conversion** | medium — *mostly wiring existing `starter-prefs`/`starter-spi/units`* | 1+2 | WS-04, WS-10 |
+| [WS-12](./WS-12_AUDIT_AND_UNDO.md) | **Audit log + undo/redo — one changelog substrate, for everything** | medium — *mostly wiring existing `starter-changelog`/`starter-undo`* | 1+2 | absorbs WS-09 audit |
 
 ## The one-paragraph summary
 
@@ -49,6 +51,29 @@ caching is a **declarative sidecar**. The same idea applied to connectors gives 
 This folds three workstreams — **WS-03** (the param binder *is* the macro engine), **WS-08**
 (connectors-as-declaration), **WS-09** (the cache sidecar) — into one coherent mechanism, and is what
 makes "Ask Nexus" AI panels and GitOps dashboards safe. See [WS-10](./WS-10_KINDS_EXTENSIBILITY.md).
+
+## The localisation direction — backend-side units & datetime (WS-11)
+Convert values to each user's **preferred units + date/time format on the *backend*** so every
+consumer — the web UI, a future mobile app, alert notifications, exports, the raw API — gets correct
+output from one implementation. The platform already has the machinery: `starter-spi/units`
+(canonical-SI storage + `uom`-backed convert) + `starter-prefs` (three-layer user→org→default
+resolution) + the `SeriesEnvelope` per-series `{quantity, unit}` wire shape. WS-11 is mostly *wiring
+that in* (plus finishing the starter `Accept-Units` convert path on Postgres) and *tagging nexus
+series with a quantity* so conversion can run. Couples tightly with WS-04 (unit picker → quantity),
+WS-10 (a kind declares its output quantities → auto-convert), WS-07 (notify in recipient's units),
+and WS-09 (cache key must include resolved units/locale). See [WS-11](./WS-11_UNITS_AND_PREFS.md).
+
+## The history direction — audit + undo are ONE ledger (WS-12)
+Audit log and undo/redo are **not two systems** — they're one append-only changelog, and the repo
+already designed it: `starter-spi/changelog`'s own docstring says *"five product features collapse
+onto this primitive: user audit log, AI-agent log, undo/redo, duplicate, copy/paste."* The
+production-grade crates exist (`starter-changelog-postgres` with the `starter_changes` table +
+LISTEN/NOTIFY + retention, `starter-undo` with a per-actor redo cursor + `POST /v1/undo|redo`
+routes). WS-12 **wires that into nexus** and writes **one `Reversible` impl per resource kind** — so
+undo + audit work for **everything** (dashboards, datasources, users, flows, alerts, grants, …) by
+following one pattern, not per-feature plumbing. The **audit-log item moves out of WS-09 into WS-12**.
+Bonus: AI edits record as `Actor::Agent` (same ledger) and are user-undoable. See
+[WS-12](./WS-12_AUDIT_AND_UNDO.md).
 
 ## Fastest path to a visible leap (see GAP §5)
 1. **WS-09 P0 login-fix** (it's a live bug — hours).

@@ -4,6 +4,7 @@
 mod create;
 mod get;
 mod list;
+mod schema;
 mod shared;
 mod test;
 mod update;
@@ -11,6 +12,7 @@ mod update;
 pub use create::CreateDatasourceRequest;
 pub use get::DatasourceDetail;
 pub use list::DatasourceSummary;
+pub use schema::{DatasourceSchema, SchemaColumn, SchemaTable};
 pub use shared::{DatasourceKind, RedactedConnection};
 pub use test::TestDatasourceResponse;
 pub use update::UpdateDatasourceRequest;

@@ -15,6 +15,9 @@ export type DatasourceKind = S["DatasourceKind"];
 export type CreateDatasourceRequest = S["CreateDatasourceRequest"];
 export type UpdateDatasourceRequest = S["UpdateDatasourceRequest"];
 export type TestDatasourceResponse = S["TestDatasourceResponse"];
+export type DatasourceSchema = S["DatasourceSchema"];
+export type SchemaTable = S["SchemaTable"];
+export type SchemaColumn = S["SchemaColumn"];
 
 export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];

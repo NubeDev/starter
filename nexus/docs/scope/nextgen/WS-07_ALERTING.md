@@ -2,7 +2,8 @@
 
 > **Status:** Not started · **Wave:** 1 (mostly independent) · **Owner:** _unassigned_
 > **Depends on:** nothing hard — extends the existing engine. Email/Slack channels are standalone.
-> **Migration:** `0010_alert_channels_v2.sql` · **Read first:** GAP_ANALYSIS §2.7, `docs/session/backend/ALERTING.md`
+> **Migration:** block `10xx` (e.g. `1001_alert_channels_v2.sql`, `1002_alert_routing.sql`) · **Read first:** GAP_ANALYSIS §2.7, ROADMAP §0, `docs/session/backend/ALERTING.md`
+> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
 
 ## Goal
 Take alerting from "solid but basic" to power-user grade — **without rewriting** the proven engine.
@@ -37,7 +38,7 @@ channels (email/Slack), notification templating, and an alert timeline UI.
    - **Email** (`notify/email.rs`) — SMTP config; HTML+text body.
    - **Slack** (`notify/slack.rs`) — incoming-webhook or bot token; blocks formatting.
    - Keep **webhook**. (PagerDuty/OpsGenie = follow-up.)
-   - `0010_alert_channels_v2.sql`: typed per-kind config; UI channel forms per kind (replace the
+   - `1001_alert_channels_v2.sql` (WS-07 `10xx` block): typed per-kind config; UI channel forms per kind (replace the
      free-text `kind` + raw JSON with a kind picker + schema-driven form).
 5. **Notification templating** — message templates with `{{rule_name}} {{value}} {{threshold}}
    {{state}} {{labels}}`; per-channel default + override. Safe rendering (no injection into webhooks).

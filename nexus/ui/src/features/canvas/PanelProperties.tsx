@@ -12,13 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@nube/starter-ui-kit/components/select";
-import { Textarea } from "@nube/starter-ui-kit/components/textarea";
-
 import type { Widget, WidgetType } from "@/data/types";
 import type { QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
+import { SqlEditor } from "@/features/sql-editor";
 import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
 import { useUpdatePanel } from "@/features/dashboards/useUpdatePanel";
 
@@ -145,12 +144,13 @@ export function PanelProperties({
 
         <div className="space-y-1.5">
           <Label htmlFor="prop-sql">SQL</Label>
-          <Textarea
+          <SqlEditor
             id="prop-sql"
             value={sql}
-            onChange={(e) => setSql(e.target.value)}
-            spellCheck={false}
-            className="min-h-24 resize-y font-mono text-sm"
+            onChange={setSql}
+            datasourceId={datasourceId}
+            minHeight="6rem"
+            ariaLabel="Panel SQL"
           />
           <Button
             type="button"
