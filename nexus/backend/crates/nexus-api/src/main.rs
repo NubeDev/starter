@@ -43,6 +43,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         guards: default_guards(),
         live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,
         flows: FlowManager::new().map_err(|e| format!("flow manager init: {e}"))?,
+        sessions: nexus_api::agents::SessionRunner::new(
+            cfg.knowledge_root.clone(),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(cfg.stream_key.into_bytes()),
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
@@ -73,6 +77,10 @@ struct Config {
     master_key: String,
     stream_key: String,
     bind: SocketAddr,
+    /// Root dir holding `skills/` and `rules/` markdown for agent prompt
+    /// injection. Optional; defaults to `./knowledge`. A missing dir just means
+    /// no knowledge is injected.
+    knowledge_root: std::path::PathBuf,
 }
 
 impl Config {
@@ -94,6 +102,9 @@ impl Config {
                 .unwrap_or_else(|_| "127.0.0.1:4780".into())
                 .parse()
                 .map_err(|e| format!("NEXUS_BIND: {e}"))?,
+            knowledge_root: std::env::var("NEXUS_KNOWLEDGE_ROOT")
+                .unwrap_or_else(|_| "./knowledge".into())
+                .into(),
         })
     }
 }

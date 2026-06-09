@@ -59,6 +59,15 @@ use utoipa::OpenApi;
         crate::routes::tags::get::get_tags,
         crate::routes::tags::keys::list_tag_keys,
         crate::routes::tags::list_entities::list_entities_with_tag,
+        crate::routes::agents::list::list_agents,
+        crate::routes::agents::create::create_agent,
+        crate::routes::agents::get::get_agent,
+        crate::routes::agents::update::update_agent,
+        crate::routes::agents::delete::delete_agent,
+        crate::routes::agents::create_session::create_agent_session,
+        crate::routes::agents::list_sessions::list_agent_sessions,
+        crate::routes::agents::get_session::get_agent_session,
+        crate::routes::agents::events::subscribe_agent_session,
     )
 )]
 pub struct Paths;

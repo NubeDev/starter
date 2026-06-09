@@ -38,6 +38,7 @@ fn state(pool: &sqlx::PgPool, engine: Arc<dyn PolicyEngine>) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: nexus_engine::FlowManager::new().expect("flow manager init"),
+        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine,

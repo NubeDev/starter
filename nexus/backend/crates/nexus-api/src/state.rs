@@ -39,6 +39,9 @@ pub struct AppState {
     pub live: LiveRunner,
     /// Runs saved ingestion flows as long-lived streams, keyed by flow id.
     pub flows: FlowManager,
+    /// Drives AI agent sessions and feeds their SSE subscribers, keyed by
+    /// session id. Wraps the nexus-ai facade.
+    pub sessions: crate::agents::SessionRunner,
     /// Signs/verifies the short-lived SSE subscription tokens.
     pub stream_signer: StreamTokenSigner,
     /// Lifetime granted to a freshly-minted stream token.

@@ -1,6 +1,7 @@
 //! HTTP route wiring. Each submodule owns one resource's routes; this module
 //! only composes them. Domain logic stays in the engine and store.
 
+pub mod agents;
 pub mod alerts;
 pub mod dashboards;
 pub mod datasources;
@@ -27,4 +28,5 @@ pub fn product_router() -> Router<AppState> {
         .merge(flows::router())
         .merge(alerts::router())
         .merge(tags::router())
+        .merge(agents::router())
 }

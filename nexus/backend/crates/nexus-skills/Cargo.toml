@@ -1,0 +1,27 @@
+# Nexus skills — the knowledge layer above nexus-ai. A skill/rule loader that
+# resolves named markdown files from a knowledge root and renders them into a
+# prompt prefix prepended to an agent's base prompt, plus a prose-only brevity
+# rule. Ported in design from the hcom-service `knowledge` module but DB-free:
+# this crate is pure filesystem + string rendering, so it stays liftable and has
+# no Postgres/sqlx dependency. Curated agent *memory* lives separately in
+# nexus-store (it needs the tenant-scoped RLS database).
+#
+# Design (intentionally minimal for v1, matching the source's principles):
+#   * Explicit selection only — an agent gets exactly the files it names. No
+#     trigger-matching or scoring; those are additive layers later.
+#   * Tolerant — a missing/unreadable file is logged and skipped, never fatal.
+#   * Path-safe — names are sanitised: no absolute paths, no `..` components.
+[package]
+name = "nexus-skills"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Nexus skill/rule knowledge loader + brevity rule — renders a prompt prefix for agents."
+
+[dependencies]
+serde.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

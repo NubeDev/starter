@@ -30,6 +30,8 @@ pub const KIND_DATASOURCE: &str = "nexus.datasource";
 pub const KIND_FLOW: &str = "nexus.flow";
 /// Registry kind for an alert rule.
 pub const KIND_ALERT_RULE: &str = "nexus.alert_rule";
+/// Registry kind for an AI agent (its sessions inherit the agent's grants).
+pub const KIND_AGENT: &str = "nexus.agent";
 
 /// Read a resource.
 pub const ACTION_VIEW: &str = "view";
@@ -45,7 +47,13 @@ const STANDARD_ACTIONS: &[&str] = &[ACTION_VIEW, ACTION_EDIT, ACTION_DELETE];
 /// enumerate the valid (kind, action) targets. All are tenant-scoped, so the
 /// engine enforces tenant isolation before evaluating any rule.
 pub fn register_nexus_resources(registry: &dyn ResourceRegistry) {
-    for kind in [KIND_DASHBOARD, KIND_DATASOURCE, KIND_FLOW, KIND_ALERT_RULE] {
+    for kind in [
+        KIND_DASHBOARD,
+        KIND_DATASOURCE,
+        KIND_FLOW,
+        KIND_ALERT_RULE,
+        KIND_AGENT,
+    ] {
         registry.register(ResourceSpec {
             kind: kind.to_string(),
             actions: STANDARD_ACTIONS.iter().map(|s| s.to_string()).collect(),

@@ -71,10 +71,13 @@ pub use zag_impl::ZagAgent;
 mod zag_impl {
     use super::*;
     use crate::error::Error;
+    use crate::event::Event;
     use crate::model::AliasMap;
+    use futures::StreamExt;
+    use zag::builder::AgentBuilder;
 
-    /// zag-backed [`Agent`]. The actual call into zag's `AgentBuilder` is isolated
-    /// to the two methods below so a zag API change touches only this adapter.
+    /// zag-backed [`Agent`]. All calls into zag's `AgentBuilder` are isolated to
+    /// this adapter so a zag API change touches only this file.
     pub struct ZagAgent {
         aliases: AliasMap,
     }
@@ -83,28 +86,54 @@ mod zag_impl {
         pub fn new(aliases: AliasMap) -> Self {
             Self { aliases }
         }
+
+        /// Build a configured `AgentBuilder` for `task`. `auto_approve` is on
+        /// because a control-plane run is non-interactive — there is no human at
+        /// a TTY to approve tool calls.
+        fn builder(&self, task: &AgentTask) -> AgentBuilder {
+            let mut b = AgentBuilder::new()
+                .provider(&task.backend)
+                .auto_approve(true);
+            if let Some(m) = task.model.as_ref() {
+                // A size alias resolves to a concrete id; zag also accepts its own
+                // tier names ("sonnet"), so a concrete passthrough covers both.
+                b = b.model(&self.aliases.resolve(m));
+            }
+            b
+        }
     }
 
     #[async_trait]
     impl Agent for ZagAgent {
         async fn run(&self, task: AgentTask) -> Result<AgentOutcome> {
-            let _model = task
-                .model
-                .as_ref()
-                .map(|m| self.aliases.resolve(m));
-            // ADAPTER BOUNDARY: translate `task` into a zag AgentBuilder, exec it,
-            // and map the result back. Pending verification of zag's exact 0.x API
-            // surface before wiring the concrete calls.
-            let _ = &task;
-            Err(Error::Unsupported("zag agent run not yet wired"))
+            let output = self
+                .builder(&task)
+                .exec(&task.prompt)
+                .await
+                .map_err(|e| Error::Provider(e.to_string()))?;
+            Ok(AgentOutcome {
+                text: output.result.unwrap_or_default(),
+                session_id: Some(output.session_id.to_string()),
+            })
         }
 
         async fn run_stream(
             &self,
             task: AgentTask,
         ) -> Result<BoxStream<'static, Result<Event>>> {
-            let _ = &task;
-            Err(Error::Unsupported("zag agent stream not yet wired"))
+            // zag streams live events through `on_log_event`, whose event schema
+            // is not yet pinned in this adapter. Until those event fields are
+            // mapped to the unified `Event`, the stream runs the task to
+            // completion and emits a single terminal `Done` — correct and usable,
+            // just not incremental. The broadcast/persist machinery in nexus-api
+            // already treats `Done` as terminal, so consumers need no change when
+            // incremental deltas are added here later.
+            let outcome = self.run(task).await?;
+            let done = Event::Done {
+                text: outcome.text,
+                usage: None,
+            };
+            Ok(futures::stream::once(async move { Ok(done) }).boxed())
         }
     }
 }

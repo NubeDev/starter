@@ -27,9 +27,10 @@ agent = ["dep:zag"]
 genai = { version = "0.6", optional = true }
 
 # Agent layer. Drives coding-agent CLIs (Claude Code, Codex, Gemini, Ollama).
-# Optional — wrapped behind the `agent` feature. Pinned to a git rev because the
-# `AgentBuilder` programmatic API is the surface we depend on.
-zag = { git = "https://github.com/niclaslindstedt/zag", optional = true }
+# Optional — wrapped behind the `agent` feature. The umbrella `zag` crate lives at
+# `bindings/rust` in the repo and re-exports `zag_agent::*` (so `zag::AgentBuilder`
+# resolves). Pinned by git; `AgentBuilder::exec` is the surface we depend on.
+zag = { git = "https://github.com/niclaslindstedt/zag", package = "zag", optional = true }
 
 tokio.workspace = true
 tokio-stream.workspace = true

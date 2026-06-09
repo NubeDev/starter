@@ -11,6 +11,7 @@ members = [
     "crates/nexus-store",
     "crates/nexus-api",
     "crates/nexus-ai",
+    "crates/nexus-skills",
 ]
 
 [workspace.package]
@@ -23,6 +24,8 @@ license = "Apache-2.0"
 nexus-spi    = { path = "crates/nexus-spi" }
 nexus-engine = { path = "crates/nexus-engine" }
 nexus-store  = { path = "crates/nexus-store" }
+nexus-ai     = { path = "crates/nexus-ai" }
+nexus-skills = { path = "crates/nexus-skills" }
 
 # Starter crates consumed from the root workspace via path deps. Path
 # dependencies cross workspace boundaries freely; these are NOT forked.

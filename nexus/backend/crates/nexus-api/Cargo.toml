@@ -11,6 +11,8 @@ default-run = "nexus-api"
 nexus-spi.workspace = true
 nexus-engine.workspace = true
 nexus-store.workspace = true
+nexus-ai.workspace = true
+nexus-skills.workspace = true
 
 starter-spi.workspace = true
 starter-server.workspace = true
@@ -109,3 +111,7 @@ path = "tests/routes/flows/flow_e2e_test.rs"
 [[test]]
 name = "routes_alerts_e2e"
 path = "tests/routes/alerts/alert_e2e_test.rs"
+
+[[test]]
+name = "routes_agents_e2e"
+path = "tests/routes/agents/agent_e2e_test.rs"

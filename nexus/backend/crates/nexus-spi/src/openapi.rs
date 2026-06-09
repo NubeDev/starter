@@ -7,6 +7,10 @@
 
 use utoipa::OpenApi;
 
+use crate::dto::agent::{
+    AgentDetail, AgentSummary, CreateAgentRequest, CreateSessionRequest, CreateSessionResponse,
+    SessionDetail, UpdateAgentRequest,
+};
 use crate::dto::dashboard::{
     CreateDashboardRequest, DashboardDetail, DashboardSummary, UpdateDashboardRequest,
 };
@@ -81,5 +85,12 @@ use crate::Problem;
     SetTagsRequest,
     TaggableKind,
     TaggedEntity,
+    AgentSummary,
+    AgentDetail,
+    CreateAgentRequest,
+    UpdateAgentRequest,
+    CreateSessionRequest,
+    CreateSessionResponse,
+    SessionDetail,
 )))]
 pub struct Schemas;
