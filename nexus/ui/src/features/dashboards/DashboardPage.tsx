@@ -15,6 +15,8 @@ import { useSaveLayout } from "@/features/dashboards/useSaveLayout";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
+import { useAutoRefresh } from "@/features/time/useAutoRefresh";
+import { useTimeUrlSync } from "@/features/time/useTimeUrlSync";
 
 // A single dashboard: loads it by slug, renders the toolbar (view/edit
 // toggle) and the canvas. The page is a thin shell — data lives in
@@ -28,6 +30,12 @@ export function DashboardPage() {
   const selectWidget = useUiStore((s) => s.selectWidget);
   const removePanel = useRemovePanel(slug ?? "");
   const saveLayout = useSaveLayout(slug ?? "");
+
+  // Global time-range concerns (WS-01): restore/reflect the range + refresh
+  // in the URL for shareable deep links, and drive the auto-refresh loop. Both
+  // read the shared time store the panel queries resolve against.
+  useTimeUrlSync();
+  useAutoRefresh();
 
   // Drag-to-add state: the type currently being dragged from the palette,
   // and the draft (type + dropped cell) that opens the config dialog once

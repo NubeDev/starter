@@ -27,6 +27,26 @@
 
 <!-- newest first -->
 
+### [2026-06-09 21:35] WS-01 — zoom-by-drag + per-panel time override deferred (follow-up, NOT a blocker)
+- **What I was doing:** WS-01 acceptance items 6 (drag-zoom on a line/area panel writes the global
+  range back; "zoom out / back" affordance) and 7 (per-panel time override — explicitly "stretch").
+- **The situation (not a hard blocker):** the core picker + auto-refresh + URL state + query wiring
+  landed green and cover acceptance items 1–5 + the frozen-`now` invariant. Items 6 and 7 need ECharts
+  `dataZoom`/`brush` event plumbing through the shared `EChart`/`PanelHost` components into the time
+  store, plus (for 7) a per-widget time-override field on `WidgetConfig` (a `data/types.ts` 🔶 model
+  extension that overlaps the C1 dashboard-JSON-model work WS-05 owns). Doing them now would either
+  bolt a second pattern onto the canvas renderers under time pressure or pre-empt a shared-model shape.
+- **Options I see:**
+  - (a) Land zoom-by-drag as a focused WS-01 follow-up session against the now-green base (the store +
+    resolver it needs already exist; only the ECharts event → `setRange` wiring remains).
+  - (b) Fold per-panel override (item 7) into WS-05 when the dashboard JSON model / `fieldConfig`-style
+    per-panel extensions are formalised, since it serialises into that model.
+- **My recommendation:** (a) for zoom (small, self-contained, no shared-contract change); (b) for the
+  per-panel override (it's a model concern, and the spec already marks it "stretch / low priority").
+- **What I did instead:** shipped items 1–5 + frozen-`now`; marked WS-01 ✅ for the core feature and
+  logged this so the two remaining items aren't silently dropped. Recorded in WS-01.md "Follow-ups".
+- **To unblock:** no human decision needed — just schedule the (a) follow-up; route (7) through WS-05.
+
 ### [2026-06-09 21:20] WS-08 — connector breadth blocked on the WS-10 datasource-kind format + a gated-deps decision
 - **What I was doing:** wiring the actual non-Postgres connectors (MQTT/Modbus first, per the WS-08
   priority order) so a live panel/flow ingests from a device source.

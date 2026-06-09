@@ -6,11 +6,15 @@ import type { Dashboard } from "@/data/types";
 import { useUiStore } from "@/store/ui";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { ShareDashboardDialog } from "@/features/dashboards/ShareDashboardDialog";
+import { TimeRangePicker } from "@/features/time/TimeRangePicker";
+import { RefreshControl } from "@/features/time/RefreshControl";
 
-// The dashboard's header strip: its name, an Add-panel action (edit mode
-// only), and the view/edit toggle. Edit mode lives in the shared UI store
-// (the canvas reads it to enable drag/resize), so toggling here unlocks
-// the grid everywhere at once.
+// The dashboard's header strip: its name, the global time-range picker +
+// refresh control, an Add-panel action (edit mode only), and the view/edit
+// toggle. Edit mode lives in the shared UI store (the canvas reads it to
+// enable drag/resize), so toggling here unlocks the grid everywhere at once.
+// The time picker + refresh feed the shared time store every panel query
+// resolves against.
 export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
   const editing = useUiStore((s) => s.editMode);
   const toggle = useUiStore((s) => s.toggleEditMode);
@@ -23,6 +27,8 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         {dashboard.name}
       </h2>
       <div className="flex items-center gap-2">
+        <TimeRangePicker />
+        <RefreshControl />
         {editing ? (
           <Button
             variant="outline"
