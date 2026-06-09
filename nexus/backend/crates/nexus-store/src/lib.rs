@@ -21,4 +21,8 @@ pub mod tenant_tx;
 pub mod testing;
 
 pub use datasource::{Envelope, NewDatasource};
-pub use query::{introspect, run_query, ColumnInfo, QueryGuards, TableInfo};
+pub use query::{
+    bind, bind_with, introspect, run_bound_query, run_query, BindCtx, BindError, BoundQuery,
+    ColumnInfo, Dialect, HostTokens, ParamValue, Postgres, QueryGuards, ScalarValue, SqlValue,
+    TableInfo, TimeRange, VarValue,
+};

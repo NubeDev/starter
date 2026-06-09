@@ -42,6 +42,12 @@ testcontainers-modules.workspace = true
 name = "query_run"
 path = "tests/query/run_test.rs"
 
+# Pure binder tests — no database, so deliberately not behind the `testing`
+# feature: these run in a normal `cargo test`.
+[[test]]
+name = "query_bind"
+path = "tests/query/bind_test.rs"
+
 [[test]]
 name = "tenant_pool_leak"
 path = "tests/tenant/pool_leak_test.rs"
