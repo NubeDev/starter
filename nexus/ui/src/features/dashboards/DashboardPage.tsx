@@ -5,6 +5,7 @@ import type { WidgetLayout, WidgetType } from "@/data/types";
 import { useUiStore } from "@/store/ui";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { DashboardGrid } from "@/features/canvas/DashboardGrid";
+import { PanelEditor } from "@/features/canvas/PanelEditor/PanelEditor";
 import { PanelProperties } from "@/features/canvas/PanelProperties";
 import { VizPalette } from "@/features/canvas/VizPalette";
 import { DashboardToolbar } from "@/features/dashboards/DashboardToolbar";
@@ -36,6 +37,12 @@ export function DashboardPage() {
     type: WidgetType;
     position: WidgetLayout;
   } | null>(null);
+
+  // Whether the full-screen Panel Editor is open for the selected panel.
+  // The lightweight side panel (`PanelProperties`) opens it; the editor
+  // edits a draft and PATCHes on Save, so the canvas stays on the saved
+  // panel until then.
+  const [editorOpen, setEditorOpen] = useState(false);
 
   if (isPending) return <Loading label="Loading dashboard…" />;
   if (isError) {
@@ -99,6 +106,7 @@ export function DashboardPage() {
               widget={selected}
               slug={slug ?? ""}
               onClose={() => selectWidget(null)}
+              onOpenEditor={() => setEditorOpen(true)}
             />
           ) : (
             <VizPalette onPick={setDragType} />
@@ -120,6 +128,18 @@ export function DashboardPage() {
             : undefined
         }
       />
+
+      {/* The full-screen Panel Editor, opened from the side panel for the
+          selected panel. Keyed on the panel id so reopening on a different
+          panel re-seeds the editor draft. */}
+      {editorOpen && selected ? (
+        <PanelEditor
+          key={selected.id}
+          widget={selected}
+          slug={slug ?? ""}
+          onClose={() => setEditorOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -74,6 +74,126 @@ export interface Thresholds {
   crit?: number;
 }
 
+/** One step in a multi-step threshold ramp: at or above `value` (for an
+ *  ascending metric) the reading takes `color`. The lowest step's
+ *  `value` is the base colour (conventionally `-Infinity`, serialised as
+ *  `null`). Steps are kept sorted ascending by `value` by the editor;
+ *  consumers should not assume order and sort defensively. */
+export interface ThresholdStep {
+  /** Lower bound of this step. `null` means "the base step" (no lower
+   *  bound) so it survives JSON round-trips (`-Infinity` does not). */
+  value: number | null;
+  /** hsl string, e.g. "152 76% 44%". */
+  color: string;
+}
+
+/** Maps a raw value (or a numeric range, or a regex over text) onto a
+ *  display text and/or colour — Grafana's "value mappings". The first
+ *  matching mapping wins. */
+export interface ValueMapping {
+  /** Exact-value match (compared as string after coercion). */
+  type: "value" | "range" | "regex";
+  /** For `value`: the literal. For `regex`: the pattern. */
+  match?: string;
+  /** For `range`: inclusive bounds (either may be omitted for open-ended). */
+  from?: number;
+  to?: number;
+  /** Replacement display text. */
+  text?: string;
+  /** hsl string applied when this mapping matches. */
+  color?: string;
+}
+
+/** Per-field display configuration — units, precision, bounds, the
+ *  threshold ramp, and value mappings. This is the "defaults" half of
+ *  {@link FieldConfig}; an {@link FieldOverride} carries the same shape
+ *  to selectively replace it per series. All fields optional so an
+ *  untouched panel serialises to `{}` and reads back identically. */
+export interface FieldDisplay {
+  /** Unit id from the unit registry (`features/widgets/units.ts`), e.g.
+   *  `"celsius"`, `"percent"`, `"watt"`. Undefined → unitless. */
+  unit?: string;
+  /** Fixed decimal places for the formatted value. Undefined → auto. */
+  decimals?: number;
+  min?: number;
+  max?: number;
+  /** What to show when there is no value (defaults to an em dash). */
+  noValue?: string;
+  /** Multi-step colour ramp; supersedes the legacy {@link Thresholds}
+   *  when present. Empty/undefined → no threshold colouring. */
+  thresholds?: ReadonlyArray<ThresholdStep>;
+  mappings?: ReadonlyArray<ValueMapping>;
+}
+
+/** A per-series/per-column override: when a series matches `matcher`,
+ *  its display config is the field defaults with these properties laid
+ *  on top. */
+export interface FieldOverride {
+  matcher: FieldMatcher;
+  /** Properties to override; also allows hiding a series and renaming
+   *  its display label, beyond the {@link FieldDisplay} props. */
+  display: FieldDisplay & { displayName?: string; hidden?: boolean; color?: string };
+}
+
+/** How an override selects the series it applies to. `byName` matches a
+ *  series' `value` column (or its label) exactly; `byRegex` tests the
+ *  same against a regular expression. */
+export interface FieldMatcher {
+  type: "byName" | "byRegex";
+  /** The column name (or label) for `byName`, the pattern for `byRegex`. */
+  value: string;
+}
+
+/** Grafana-style field config: a default display applied to every series
+ *  plus targeted overrides. Lives on {@link WidgetConfig} and is read by
+ *  the option-builders (after resolution) and the table/stat renderers. */
+export interface FieldConfig {
+  defaults?: FieldDisplay;
+  overrides?: ReadonlyArray<FieldOverride>;
+}
+
+/** Legend display options for multi-series charts. */
+export interface LegendOptions {
+  show?: boolean;
+  placement?: "top" | "right" | "bottom";
+}
+
+/** Y-axis options for cartesian charts (line/area/bar/scatter). */
+export interface AxisOptions {
+  scale?: "linear" | "log";
+  /** Soft bounds: applied only if the data doesn't already exceed them
+   *  (ECharts `min`/`max`), so outliers still show. */
+  softMin?: number;
+  softMax?: number;
+  label?: string;
+}
+
+/** Chart-chrome options that aren't per-field: legend + axes. Optional
+ *  and additive — absence preserves the prior auto behaviour. */
+export interface PanelOptions {
+  legend?: LegendOptions;
+  yAxis?: AxisOptions;
+}
+
+/** A client-side transform applied to query rows before render. The
+ *  discriminated `kind` selects the operation; each carries only the
+ *  config that operation needs. Transforms run as an ordered pipeline
+ *  (`features/canvas/transforms`) and are pure functions over the row
+ *  set — they never fetch. */
+export type Transform =
+  | { kind: "rename"; from: string; to: string }
+  | { kind: "calculated"; field: string; left: string; op: "+" | "-" | "*" | "/"; right: string }
+  | { kind: "filter"; field: string; op: "=" | "!=" | ">" | ">=" | "<" | "<="; value: string }
+  | {
+      kind: "groupBy";
+      by: string;
+      field: string;
+      agg: "sum" | "avg" | "min" | "max" | "count";
+      as: string;
+    }
+  | { kind: "reduce"; field: string; calc: "last" | "first" | "sum" | "avg" | "min" | "max" | "count"; as: string }
+  | { kind: "organize"; order: ReadonlyArray<string> };
+
 /** Optional live binding: subscribe to an SSE stream that pushes new
  *  rows for this panel (F5 auth is the transport's concern, not here). */
 export interface LiveBinding {
@@ -83,10 +203,23 @@ export interface LiveBinding {
 export interface WidgetConfig {
   query: PanelQuery;
   fields: FieldMapping;
+  /** Legacy single warn/crit gauge bounds. Kept for back-compat: panels
+   *  authored before the field-config editor still read this. New edits
+   *  write {@link FieldConfig.defaults.thresholds} instead, and the
+   *  resolver (`features/widgets/fieldConfig.ts`) reads `fieldConfig`
+   *  first, falling back to these flat fields. */
   thresholds?: Thresholds;
   min?: number;
   max?: number;
   decimals?: number;
+  /** Grafana-style per-field display config + overrides. Additive and
+   *  optional; absence means "render exactly as before". */
+  fieldConfig?: FieldConfig;
+  /** Chart-chrome options (legend, axes). Additive and optional. */
+  options?: PanelOptions;
+  /** Ordered client-side transform pipeline applied to query rows before
+   *  render. Absence (or empty) means rows pass through untouched. */
+  transforms?: ReadonlyArray<Transform>;
   live?: LiveBinding;
 }
 

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
-import { PlayCircle, X } from "lucide-react";
+import { PlayCircle, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
@@ -35,10 +35,15 @@ export function PanelProperties({
   widget,
   slug,
   onClose,
+  onOpenEditor,
 }: {
   widget: Widget;
   slug: string;
   onClose: () => void;
+  /** Open the full-screen Panel Editor for this panel — the inspector with
+   *  field/override/legend/transform tabs and a live preview. This side
+   *  panel stays the quick inline editor for the common fields. */
+  onOpenEditor: () => void;
 }) {
   const update = useUpdatePanel(slug);
   const [type, setType] = useState<WidgetType>(widget.type);
@@ -109,6 +114,17 @@ export function PanelProperties({
           <X className="size-4" />
         </button>
       </header>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full gap-2"
+        onClick={onOpenEditor}
+      >
+        <SlidersHorizontal className="size-4" />
+        Open panel editor
+      </Button>
 
       <form className="space-y-3" onSubmit={onSubmit}>
         <div className="space-y-1.5">

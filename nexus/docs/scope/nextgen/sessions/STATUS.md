@@ -14,7 +14,7 @@ session always finds its dependencies already committed in the working tree.
 | Order | WS | Title | Status | Started | Finished | Commit | Notes |
 |------:|----|-------|:------:|---------|----------|--------|-------|
 | 1 | WS-03 | Query Authoring + Macro Engine (C2 binder) | ✅ | 2026-06-09 11:58 | 2026-06-09 12:21 | ac76c1de | binder+history; B/C pre-shipped; unblocks 01/02/10 |
-| 2 | WS-04 | Panel Editor & Viz Config | ⬜ | | | | renderers ready |
+| 2 | WS-04 | Panel Editor & Viz Config | ✅ | 2026-06-09 12:40 | 2026-06-09 20:05 | (this commit) | full editor + transforms + field config |
 | 3 | WS-07 | Alerting depth | ⬜ | | | | mostly independent |
 | 4 | WS-10 | Kinds — declarative extensibility | ⬜ | | | | reuses WS-03 binder |
 | 5 | WS-08 | Connector breadth (MQTT/Modbus/…) | ⬜ | | | | feeds WS-06 palette |
@@ -31,3 +31,6 @@ session always finds its dependencies already committed in the working tree.
 <!-- Format: `YYYY-MM-DD HH:MM — <action taken>` -->
 2026-06-09 11:58 — Loop start. Queue empty → spawned WS-03 (first in dependency order) on nexus-gaps.
 2026-06-09 12:21 — WS-03 done (commits 855db5ba, ac76c1de). C2 binder + query history landed; Scope B/C were already shipped at base (drift recorded). cargo test + pnpm build/test green; pnpm typecheck blocked only by a pre-existing out-of-lane starter-ui-authz error (TODOs.md). Next: WS-04.
+2026-06-09 12:40 — WS-03 ✅, no WS in-progress. Picked first pending in queue order → spawning WS-04 (Panel Editor & Viz Config) on nexus-gaps.
+2026-06-09 12:41 — Wake skipped: WS-04 already 🔵 (claimed by a concurrent in-flight wake; heartbeat wake-start ~1min old). No double-spawn. Yielding.
+2026-06-09 20:05 — WS-04 ✅. Full-screen Panel Editor (Query/Visualization/Field/Overrides/Legend & Axes/Transforms) with live preview, opened from the side panel. UI-only: panel config rides the opaque layout JSON (no migration, no backend DTO). Field config (unit/decimals/min-max/multi-step thresholds/value mappings) + per-series overrides (colour/unit/displayName/hidden) honoured by gauge/stat/table/line/bar; client transform pipeline (rename/calculated/filter/group-by/reduce/organize) runs after fetch so config edits re-render from cache. pnpm typecheck + test (134 pass) + build green. Committed only WS-04 UI hunks (backend agent/* changes belong to a concurrent session — left untouched).

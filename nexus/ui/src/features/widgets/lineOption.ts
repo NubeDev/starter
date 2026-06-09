@@ -1,6 +1,8 @@
 import type { EChartsOption } from "echarts";
 
 import type { Widget, WidgetData } from "@/data/types";
+import { legendFragment, yAxisFragment } from "@/features/widgets/cartesianChrome";
+import { resolveField } from "@/features/widgets/fieldConfig";
 import { chromeColor, seriesColor, withAlpha } from "@/features/widgets/palette";
 
 // Builds the ECharts option for a line or area panel from its typed
@@ -20,7 +22,12 @@ export function buildLineOption(
     formatX?: (value: string | number) => string;
   },
 ): EChartsOption {
-  const { x, series, xKind } = widget.config.fields;
+  const { x, xKind } = widget.config.fields;
+  // Resolve each series' display (override color/displayName/hidden) and
+  // drop hidden series so an override can mute a line entirely.
+  const series = widget.config.fields.series
+    .map((field, index) => ({ field, index, resolved: resolveField(field, widget.config) }))
+    .filter((s) => !s.resolved.hidden);
   const categories = x ? data.points.map((p) => p[x] ?? "") : data.points.map((_, i) => i);
 
   const border = chromeColor("--border");
@@ -61,9 +68,7 @@ export function buildLineOption(
           },
         }
       : { trigger: "axis" },
-    legend: multi
-      ? { top: 0, right: 0, type: "scroll", textStyle: { color: label }, itemWidth: 10, itemHeight: 10 }
-      : undefined,
+    legend: legendFragment(widget.config.options, multi, label),
     xAxis: {
       type: "category",
       data: categories,
@@ -73,16 +78,16 @@ export function buildLineOption(
         ? { color: label, formatter: (v: string | number) => timeFmt(v) }
         : { color: label },
     },
-    yAxis: {
-      type: "value",
-      axisLabel: { color: label },
-      splitLine: { lineStyle: { color: border, opacity: 0.4 } },
-    },
-    series: series.map((field, i) => {
-      const color = seriesColor(field, i);
+    yAxis: yAxisFragment(widget.config.options, border, label),
+    series: series.map(({ field, index, resolved }) => {
+      // An override colour wins; else the series' own colour or the ramp
+      // slot for its original index (so hiding series doesn't recolour the
+      // rest). `seriesColor` reads `field.color`, so feed it the resolved
+      // colour via a shallow copy.
+      const color = seriesColor({ ...field, color: resolved.color ?? field.color }, index);
       return {
         type: "line",
-        name: field.label ?? field.value,
+        name: resolved.displayName ?? field.label ?? field.value,
         showSymbol: false,
         smooth: true,
         lineStyle: { color, width: 2 },

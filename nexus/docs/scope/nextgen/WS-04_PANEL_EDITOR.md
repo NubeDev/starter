@@ -3,7 +3,9 @@
 > **Status:** Not started · **Wave:** 1 (independent) · **Owner:** _unassigned_
 > **Depends on:** C1 JSON model (for `fieldConfig`/overrides) · benefits from WS-03 editor + WS-01 preview
 > **Migration:** none (panel config is in the dashboard/panel model) · **Read first:** GAP_ANALYSIS §2.4, ROADMAP §0
-> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+> **Verified:** `nexus-gaps` tip on 2026-06-09 — evidence re-grepped; all "Current state" claims
+> hold. Note: panel config rides in the backend's opaque `layout` JSON (`panelAdapter.ts`), so the
+> `fieldConfig`/`transforms` model extension is UI-only — no DTO/migration (confirms "Migration: none").
 >
 > 🔗 **Coordinate with [WS-11 (Units & Prefs)](./WS-11_UNITS_AND_PREFS.md).** The "unit picker" in
 > the Field tab becomes **"pick a `quantity`"** (temperature/power/…) — the *displayed* unit then

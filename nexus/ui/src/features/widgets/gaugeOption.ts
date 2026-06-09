@@ -1,25 +1,37 @@
 import type { EChartsOption } from "echarts";
 
 import type { Widget, WidgetData } from "@/data/types";
+import { resolveField, resolveThresholdSteps } from "@/features/widgets/fieldConfig";
+import { formatValue } from "@/features/widgets/formatValue";
 import { chromeColor, stateColor } from "@/features/widgets/palette";
+import { rampColor } from "@/features/widgets/rampColor";
 import { latestValue } from "@/features/widgets/scalar";
 import { thresholdState } from "@/features/widgets/thresholdState";
 
 // Builds the ECharts gauge option from a single-value panel. The arc
-// colour reflects the value's threshold state (ascending or descending,
-// via `thresholdState`), resolved to a concrete colour ECharts can paint
-// (`stateColor` reads the theme ramp). With no rows the gauge shows an
-// empty dial rather than a fabricated reading (F0).
+// colour reflects the value's threshold state: a multi-step `fieldConfig`
+// ramp when one is set, otherwise the legacy warn/crit `thresholdState`,
+// resolved to a concrete colour ECharts can paint (`stateColor` reads the
+// theme ramp). Unit/decimals/min/max come from the resolved field config
+// so the Field-tab settings reach the dial. With no rows the gauge shows
+// an empty dial rather than a fabricated reading (F0).
 export function buildGaugeOption(
   widget: Widget,
   data: WidgetData,
 ): EChartsOption {
-  const { min = 0, max = 100, decimals = 0, thresholds } = widget.config;
-  const unit = widget.config.fields.series[0]?.unit ?? "";
+  const series = widget.config.fields.series[0];
+  const field = series
+    ? resolveField(series, widget.config)
+    : {};
+  const min = field.min ?? widget.config.min ?? 0;
+  const max = field.max ?? widget.config.max ?? 100;
   const value = latestValue(widget, data);
+  const steps = resolveThresholdSteps(widget.config);
+  const ramped = value != null ? rampColor(value, steps) : undefined;
+  const legacy = widget.config.thresholds;
   const state =
-    value == null ? "ok" : thresholdState(value, thresholds?.warn, thresholds?.crit);
-  const color = stateColor(state);
+    value == null ? "ok" : thresholdState(value, legacy?.warn, legacy?.crit);
+  const color = ramped ?? stateColor(state);
 
   return {
     series: [
@@ -40,9 +52,10 @@ export function buildGaugeOption(
         detail: {
           valueAnimation: true,
           // No reading yet → blank detail rather than "NaN"; the dial still
-          // renders an empty arc (F0).
+          // renders an empty arc (F0). Formatting (unit/decimals/mappings)
+          // comes from the resolved field config.
           formatter: (v: number) =>
-            Number.isFinite(v) ? `${v.toFixed(decimals)}${unit}` : "",
+            Number.isFinite(v) ? formatValue(v, field).text : "",
           color: chromeColor("--foreground"),
           fontSize: 22,
           offsetCenter: [0, "40%"],

@@ -1,4 +1,5 @@
 import type { Trend, Widget, WidgetData } from "@/data/types";
+import { resolveField } from "@/features/widgets/fieldConfig";
 import { latestValue, previousValue } from "@/features/widgets/scalar";
 
 export interface StatReading {
@@ -6,6 +7,8 @@ export interface StatReading {
   /** Percent change vs the prior point; null when there's only one. */
   deltaPct: number | null;
   trend: Trend;
+  /** The resolved unit (a registry id, or a raw symbol from the legacy
+   *  `SeriesField.unit`) the renderer turns into a prefix/suffix. */
   unit?: string;
   decimals: number;
   /** The series values, for a sparkline. */
@@ -23,6 +26,7 @@ export function computeStat(
   if (value == null) return null;
   const prev = previousValue(widget, data);
   const field = widget.config.fields.series[0];
+  const resolved = resolveField(field, widget.config);
 
   const deltaPct =
     prev == null || prev === 0 ? null : ((value - prev) / Math.abs(prev)) * 100;
@@ -33,8 +37,8 @@ export function computeStat(
     value,
     deltaPct,
     trend,
-    unit: field?.unit,
-    decimals: widget.config.decimals ?? 0,
+    unit: resolved.unit ?? field?.unit,
+    decimals: resolved.decimals ?? widget.config.decimals ?? 0,
     spark: data.points
       .map((p) => p[field.value])
       .filter((n): n is number => typeof n === "number"),

@@ -1,5 +1,7 @@
 import type { Widget, WidgetData } from "@/data/types";
 import { Empty } from "@/features/state/Empty";
+import { resolveField, type ResolvedField } from "@/features/widgets/fieldConfig";
+import { formatValue } from "@/features/widgets/formatValue";
 import { useDateTime } from "@/datetime";
 
 // Device / row table. Columns come from the field mapping: the `x`
@@ -21,14 +23,21 @@ export function DeviceTable({
     return <Empty title={widget.title} description="No rows" />;
   }
 
+  // Each series column resolves its field config so unit/decimals/value
+  // mappings reach the cell, and an override can rename, recolour, or hide
+  // the column. Hidden series are dropped from the column list.
   const columns = [
-    ...(x ? [{ key: x, label: x, numeric: false, time: xKind === "time" }] : []),
-    ...series.map((s) => ({
-      key: s.value,
-      label: s.label ?? s.value,
-      numeric: s.kind !== "time",
-      time: s.kind === "time",
-    })),
+    ...(x ? [{ key: x, label: x, numeric: false, time: xKind === "time", display: undefined as ResolvedField | undefined }] : []),
+    ...series
+      .map((s) => ({ s, resolved: resolveField(s, widget.config) }))
+      .filter(({ resolved }) => !resolved.hidden)
+      .map(({ s, resolved }) => ({
+        key: s.value,
+        label: resolved.displayName ?? s.label ?? s.value,
+        numeric: s.kind !== "time",
+        time: s.kind === "time",
+        display: resolved as ResolvedField | undefined,
+      })),
   ];
 
   return (
@@ -46,14 +55,23 @@ export function DeviceTable({
         <tbody>
           {data.points.map((row, i) => (
             <tr key={i} className="border-t border-border/60">
-              {columns.map((c) => (
-                <td
-                  key={c.key}
-                  className={`px-2 py-1.5 ${c.numeric ? "tabular text-right" : "text-foreground"}`}
-                >
-                  {formatCell(row[c.key], c.time ? dateTime : undefined)}
-                </td>
-              ))}
+              {columns.map((c) => {
+                const cell = c.time
+                  ? { text: formatCell(row[c.key], dateTime) }
+                  : c.numeric && c.display
+                    ? formatValue(row[c.key], c.display)
+                    : { text: formatCell(row[c.key]) };
+                return (
+                  <td
+                    key={c.key}
+                    className={`px-2 py-1.5 ${c.numeric ? "tabular text-right" : "text-foreground"}`}
+                    // A value mapping may colour the cell; otherwise inherit.
+                    style={cell.color ? { color: `hsl(${cell.color})` } : undefined}
+                  >
+                    {cell.text}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
