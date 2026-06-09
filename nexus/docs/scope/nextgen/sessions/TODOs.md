@@ -27,6 +27,8 @@
 
 <!-- newest first -->
 
+### ✅ RESOLVED [2026-06-09 12:25] — dead `TenantRail`/`TenantChildren` removed in commit `0d8131f3`; `pnpm typecheck` is green workspace-wide. No longer blocks any session.
+
 ### [2026-06-09 12:40] WS-03 — pre-existing `pnpm typecheck` failure in `starter-ui-authz` (out of lane)
 - **What I was doing:** running the DoD gate (`pnpm typecheck && pnpm build`) for WS-03.
 - **The blocker:** `packages/starter-ui-authz/src/panels/authz-admin.tsx:305` declares
