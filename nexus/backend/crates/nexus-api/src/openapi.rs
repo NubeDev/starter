@@ -13,7 +13,11 @@ use utoipa::OpenApi;
 #[derive(OpenApi)]
 #[openapi(
     info(title = "Nexus API", version = "0.1.0"),
-    paths(crate::routes::query::run::run_query)
+    paths(
+        crate::routes::query::run::run_query,
+        crate::routes::streams::create::create_stream,
+        crate::routes::streams::subscribe::subscribe_stream,
+    )
 )]
 pub struct Paths;
 

@@ -12,7 +12,9 @@ pub mod arrow_json;
 pub mod registry;
 pub mod runner;
 pub mod sink;
+pub mod stream_registry;
 
 pub use registry::register_all;
-pub use runner::{QueryOutcome, QueryRunner};
+pub use runner::{LiveRunner, QueryOutcome, QueryRunner};
 pub use sink::cap::Caps;
+pub use stream_registry::{attach, register, Attach, StreamKey, Subscription};

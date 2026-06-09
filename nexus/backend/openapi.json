@@ -46,6 +46,77 @@
           }
         }
       }
+    },
+    "/api/v1/streams": {
+      "post": {
+        "tags": [
+          "streams"
+        ],
+        "summary": "Mint a short-lived token scoped to a new stream id and return the URL the\nbrowser opens an `EventSource` against. The token — not a Bearer — is what\nauthenticates the subscription.",
+        "operationId": "create_stream",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Stream created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateStreamResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/streams/{id}": {
+      "get": {
+        "tags": [
+          "streams"
+        ],
+        "summary": "SSE subscription. Returns 401 on a missing/expired/forged token, otherwise an\nevent stream.",
+        "operationId": "subscribe_stream",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Stream id from POST /streams",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Signed subscription token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE event stream",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "401": {
+            "description": "Missing/expired/invalid token"
+          }
+        }
+      }
     }
   },
   "components": {

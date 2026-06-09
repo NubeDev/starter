@@ -64,9 +64,15 @@ path = "src/bin/openapi.rs"
 [dev-dependencies]
 reqwest.workspace = true
 sqlx.workspace = true
-tokio = { workspace = true, features = ["test-util"] }
+tokio = { workspace = true, features = ["test-util", "io-util"] }
+tokio-util = { workspace = true, features = ["io"] }
+futures.workspace = true
 starter-store-postgres.workspace = true
 
 [[test]]
 name = "routes_query_run"
 path = "tests/routes/query/run_test.rs"
+
+[[test]]
+name = "routes_streams_subscribe"
+path = "tests/routes/streams/subscribe_test.rs"

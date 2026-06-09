@@ -6,12 +6,28 @@
 
 use std::time::Duration;
 
+use nexus_api::middleware::StreamTokenSigner;
 use nexus_api::serve;
 use nexus_api::state::AppState;
+use nexus_engine::LiveRunner;
 use nexus_store::QueryGuards;
 use serde_json::json;
 use starter_server::testing::TestApp;
 use starter_store_postgres::testing::with_database;
+
+fn test_state(pool: &sqlx::PgPool) -> AppState {
+    AppState {
+        datasource: pool.clone(),
+        guards: QueryGuards {
+            statement_timeout: Duration::from_secs(5),
+            max_rows: 1000,
+            max_bytes: 8 * 1024 * 1024,
+        },
+        live: LiveRunner::new().expect("engine init"),
+        stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
+        stream_token_ttl: Duration::from_secs(60),
+    }
+}
 
 #[tokio::test]
 #[ignore = "requires docker"]
@@ -26,14 +42,7 @@ async fn post_query_returns_real_rows() {
         .await
         .unwrap();
 
-    let state = AppState {
-        datasource: pool.sqlx().clone(),
-        guards: QueryGuards {
-            statement_timeout: Duration::from_secs(5),
-            max_rows: 1000,
-            max_bytes: 8 * 1024 * 1024,
-        },
-    };
+    let state = test_state(pool.sqlx());
     let app = TestApp::spawn(serve::router(state)).await;
 
     let resp = reqwest::Client::new()
@@ -68,14 +77,7 @@ async fn post_query_rejects_a_write_with_400() {
         .await
         .unwrap();
 
-    let state = AppState {
-        datasource: pool.sqlx().clone(),
-        guards: QueryGuards {
-            statement_timeout: Duration::from_secs(5),
-            max_rows: 1000,
-            max_bytes: 8 * 1024 * 1024,
-        },
-    };
+    let state = test_state(pool.sqlx());
     let app = TestApp::spawn(serve::router(state)).await;
 
     let resp = reqwest::Client::new()

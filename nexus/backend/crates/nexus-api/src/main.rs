@@ -7,8 +7,10 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
+use nexus_api::middleware::StreamTokenSigner;
 use nexus_api::serve;
 use nexus_api::state::AppState;
+use nexus_engine::LiveRunner;
 use nexus_store::QueryGuards;
 
 #[tokio::main]
@@ -25,10 +27,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| "127.0.0.1:8080".into())
         .parse()?;
 
+    // The stream-token signing key. Required: a forged or absent key would let
+    // anyone open SSE subscriptions, so the server refuses to start without it.
+    let stream_key = std::env::var("NEXUS_STREAM_TOKEN_KEY")
+        .map_err(|_| "NEXUS_STREAM_TOKEN_KEY must be set (the SSE token signing key)")?;
+    if stream_key.len() < 32 {
+        return Err("NEXUS_STREAM_TOKEN_KEY must be at least 32 bytes".into());
+    }
+
     let datasource = sqlx::PgPool::connect(&datasource_url).await?;
     let state = AppState {
         datasource,
         guards: default_guards(),
+        live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,
+        stream_signer: StreamTokenSigner::new(stream_key.into_bytes()),
+        stream_token_ttl: Duration::from_secs(60),
     };
 
     tracing::info!(%bind, "nexus-api listening");

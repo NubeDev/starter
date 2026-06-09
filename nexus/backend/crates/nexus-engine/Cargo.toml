@@ -36,3 +36,7 @@ serde_json.workspace = true
 [[test]]
 name = "runner_query"
 path = "tests/runner/query_test.rs"
+
+[[test]]
+name = "runner_live"
+path = "tests/runner/live_test.rs"
