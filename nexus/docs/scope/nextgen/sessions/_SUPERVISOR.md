@@ -84,3 +84,10 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   template.rs touched <3 min ago. Lock HELD (kernel-owned), no STOP. Build red = same live WIP as
   13:13 (uncommitted) — no action per refined check #3. Only open TODO is the ✅ RESOLVED WS-03 one.
   WS commits: 7→8 (8th is a supervisor log commit, not a WS). No worker repair needed.
+- 2026-06-09 13:23 — Healthy, WATCHING two things. Cron firing (20:10/15/20). WS-07 🔵, wake PID
+  136336 ALIVE ~18 min (within WS-04's 25-min envelope). No alerting src touched in 4 min + subagent
+  0% CPU → likely in final verify/commit phase (not a stall yet; threshold is ~25 min / no-commit-3-
+  firings). Other session committed 5075c389 (nexus-ai/agents/skills) — touched
+  tests/routes/alerts/alert_e2e_test.rs (+1), a cross-lane nudge into WS-07's area; flagging as a
+  possible commit-conflict risk for WS-07. NO action (WS-07 alive, lock kernel-held). NEXT WAKE:
+  if WS-07 still 🔵 with no commit (~23+ min) → approaching stall, inspect harder. Real WS commits: 5.
