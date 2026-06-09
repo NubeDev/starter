@@ -25,14 +25,24 @@ export function AppSidebar() {
   return (
     <Sidebar variant={variant} collapsible={collapsible}>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-1 py-1.5">
-          <span className="ring-glow grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
-            <LayoutDashboard className="size-4" />
-          </span>
-          <span className="truncate text-base font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-            Nexus
-          </span>
-        </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            {/* Brand rendered as a menu button so it inherits the same
+                icon-mode centering as the nav items below — otherwise the
+                logo sits left-aligned and looks offset when collapsed. */}
+            <SidebarMenuButton
+              size="lg"
+              className="gap-2 hover:bg-transparent active:bg-transparent"
+            >
+              <span className="ring-glow grid size-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
+                <LayoutDashboard className="size-4" />
+              </span>
+              <span className="truncate text-base font-semibold tracking-tight">
+                Nexus
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
