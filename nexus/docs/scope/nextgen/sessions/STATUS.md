@@ -2,7 +2,7 @@
 
 > Single source of truth for the orchestration loop. The loop reads this file on every wake.
 > Each session updates its own row when it starts, blocks, or finishes.
-> All work lands on branch **`nexus-backend`** (sequential — one WS at a time, no worktrees).
+> All work lands on branch **`nexus-gaps`** (sequential — one WS at a time, no worktrees).
 
 **Legend:** ⬜ pending · 🔵 in-progress · ✅ done (build+tests green, committed) · ⛔ blocked (see [TODOs.md](./TODOs.md))
 
@@ -13,7 +13,7 @@ session always finds its dependencies already committed in the working tree.
 
 | Order | WS | Title | Status | Started | Finished | Commit | Notes |
 |------:|----|-------|:------:|---------|----------|--------|-------|
-| 1 | WS-03 | Query Authoring + Macro Engine (C2 binder) | ⬜ | | | | unblocks 01/02/10 |
+| 1 | WS-03 | Query Authoring + Macro Engine (C2 binder) | ✅ | 2026-06-09 11:58 | 2026-06-09 12:21 | ac76c1de | binder+history; B/C pre-shipped; unblocks 01/02/10 |
 | 2 | WS-04 | Panel Editor & Viz Config | ⬜ | | | | renderers ready |
 | 3 | WS-07 | Alerting depth | ⬜ | | | | mostly independent |
 | 4 | WS-10 | Kinds — declarative extensibility | ⬜ | | | | reuses WS-03 binder |
@@ -29,3 +29,5 @@ session always finds its dependencies already committed in the working tree.
 ## Loop log (append one line per wake)
 
 <!-- Format: `YYYY-MM-DD HH:MM — <action taken>` -->
+2026-06-09 11:58 — Loop start. Queue empty → spawned WS-03 (first in dependency order) on nexus-gaps.
+2026-06-09 12:21 — WS-03 done (commits 855db5ba, ac76c1de). C2 binder + query history landed; Scope B/C were already shipped at base (drift recorded). cargo test + pnpm build/test green; pnpm typecheck blocked only by a pre-existing out-of-lane starter-ui-authz error (TODOs.md). Next: WS-04.
