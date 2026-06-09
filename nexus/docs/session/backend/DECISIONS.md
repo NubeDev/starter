@@ -3,6 +3,27 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D5 — R4 query-guard scope: read-only enforced server-side; shared-DB predicate deferred with config
+
+The R4 guards split into what the control plane *enforces* and what the datasource *owner
+configures*:
+
+- **Enforced server-side, proven by test:** every datasource query runs in a `READ ONLY`
+  Postgres transaction (a write/DDL is rejected by Postgres, not by string-matching — see the
+  `read_only_guard_rejects_writes` test), with a `SET LOCAL statement_timeout` and a row/byte
+  cap that stops the cursor (no unbounded buffer).
+- **Datasource-owner's responsibility:** the *read-only DB role*. The control plane connects with
+  the credentials the datasource config supplies; it cannot manufacture a least-privilege role
+  inside someone else's database. The product guidance is that a datasource secret should be a
+  read-only DB user; the `READ ONLY` transaction is defense-in-depth on top of that, so a
+  misconfigured read-write user still cannot write through the query path.
+- **Deferred (needs config, not in v1):** the per-tenant predicate for a datasource DB **shared
+  across tenants**. v1 models one datasource as one tenant's data (the datasource row is
+  tenant-owned and RLS-isolated in the metadata DB), so there is no shared-DB case to filter yet.
+  Injecting a per-tenant `WHERE` requires a datasource-level tenant-column mapping in the
+  datasource config — that lands when a shared-datasource connector does, not before. Building the
+  predicate machinery now would be speculative config with no consumer.
+
 ## D4 — SQL datasource query path runs on sqlx, not ArkFlow's `sql` input
 
 A consequence of D3: the connector trim removed ArkFlow's `sql` input (the one
