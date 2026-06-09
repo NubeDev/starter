@@ -81,6 +81,25 @@ session's package mid-flight, the admin route is deferred. Re-add `<AuthzAdmin /
 that package's unused import is cleaned up (one-line fix, owned by the authz package), or
 gate dependency types out of our build. Tracked, not dropped.
 
+### D9 — Use the canonical shadcn `Sidebar`, vendored, not the kit's slim one
+Product owner wants the **floating / rounded / minimisable** sidebar (the shadcn-admin
+look in `test-ui/`). The kit's `@nube/starter-ui-kit` sidebar is a *slimmer custom*
+component with only `collapsible` — no `floating`/`inset` variants, no `SidebarTrigger`/
+`SidebarInset`/`SidebarRail`, no runtime minimise. So we vendor the **full upstream shadcn
+`Sidebar`** (the 728-line component, the same one `test-ui` ships) into
+`nexus/ui/src/components/ui/sidebar.tsx`, rewiring its sub-imports to the kit's primitives
+(`button`/`input`/`sheet`/`tooltip`/`skeleton`/`separator`) and `useIsMobile` from
+`starter-ui-core/layout`. F11 still holds for the *primitives* — only the sidebar shell
+itself is the upstream component, because the kit doesn't provide an equivalent. The file
+exceeds the 400-line limit but is **vendored library code (FILE-LAYOUT §4 exemption)** —
+not hand-authored; re-sync from upstream shadcn rather than refactor.
+
+A `LayoutProvider` (cookie-persisted) drives `variant` (floating default) + `collapsible`
+(icon default), and a `LayoutSwitcher` dropdown lets the user change both at runtime —
+mirroring shadcn-admin's config drawer. The sidebar reads its own `--sidebar-*` token
+family, pinned to the Nexus OLED palette so it matches the shell; the floating panel gets
+a soft elevation shadow so it reads as detached against the near-black background.
+
 ## Backend blockers (build what we can; wire when unblocked)
 
 > Per the session lead: do what's possible now, record blockers here rather than stalling.

@@ -53,6 +53,19 @@
   --chart-4: hsl(38 95% 56%);
   --chart-5: hsl(0 72% 55%);
 
+  /* The shadcn sidebar reads its own token family. Pin it to the Nexus
+     OLED palette: a surface lifted just above the background so the
+     floating variant visibly detaches, an emerald active item, and a
+     brighter border so the rounded panel edge reads against the black. */
+  --sidebar: hsl(222 38% 9%);
+  --sidebar-foreground: hsl(210 40% 98%);
+  --sidebar-primary: hsl(152 76% 44%);
+  --sidebar-primary-foreground: hsl(152 80% 6%);
+  --sidebar-accent: hsl(152 60% 16%);
+  --sidebar-accent-foreground: hsl(152 76% 70%);
+  --sidebar-border: hsl(210 40% 100% / 0.08);
+  --sidebar-ring: hsl(152 76% 44%);
+
   color-scheme: dark;
 }
 
@@ -60,6 +73,15 @@ body {
   font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* The floating/inset sidebar panel lifts off the OLED black with a soft
+   shadow and a faint emerald edge glow, so the rounded "detached" look
+   reads clearly against the near-black background. */
+[data-slot="sidebar-container"] [data-sidebar="sidebar"] {
+  box-shadow:
+    0 18px 50px -24px hsl(222 60% 2% / 0.9),
+    inset 0 0 0 1px hsl(210 40% 100% / 0.04);
 }
 
 /* Ambient aurora backdrop — gives the OLED black depth without noise. */

@@ -216,9 +216,15 @@ importers:
       '@nube/starter-ui-kit':
         specifier: workspace:*
         version: link:../../packages/starter-ui-kit
+      '@radix-ui/react-slot':
+        specifier: ^1.1.2
+        version: 1.2.4(@types/react@19.2.14)(react@19.1.0)
       '@tanstack/react-query':
         specifier: ^5.59.0
         version: 5.100.11(react@19.1.0)
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
       echarts:
         specifier: ^5.5.1
         version: 5.6.0

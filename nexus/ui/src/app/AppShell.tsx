@@ -1,24 +1,30 @@
 import { Outlet } from "react-router-dom";
-import { SidebarProvider } from "@nube/starter-ui-kit/components/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar";
 
 import { AppSidebar } from "@/app/AppSidebar";
-import { Topbar } from "@/app/Topbar";
+import { Header } from "@/app/Header";
+import { LayoutProvider } from "@/app/LayoutProvider";
+import { getCookie } from "@/lib/cookie";
 
-// App frame: the kit's collapsible sidebar beside a content region with
-// a glass topbar and the routed outlet. The aurora backdrop (index.css)
-// sits behind everything; surfaces are glass so the depth reads through.
+// App frame on the canonical shadcn sidebar: a floating, minimisable
+// sidebar beside a `SidebarInset` content region with a glass header and
+// the routed outlet. The aurora backdrop (index.css) sits behind it all.
 export function AppShell() {
+  const defaultOpen = getCookie("sidebar_state") !== "false";
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+    <LayoutProvider>
+      <SidebarProvider defaultOpen={defaultOpen}>
         <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar title="Dashboards" />
+        <SidebarInset>
+          <Header title="Dashboards" />
           <main className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-6">
             <Outlet />
           </main>
-        </div>
-      </div>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </LayoutProvider>
   );
 }
