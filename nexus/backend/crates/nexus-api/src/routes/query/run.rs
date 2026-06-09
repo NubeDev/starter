@@ -28,7 +28,7 @@ pub async fn run_query(
     Json(req): Json<QueryRequest>,
 ) -> Result<Json<QueryResponse>, IntoResponse> {
     let identity = nexus_store::QueryIdentity::default();
-    let result = crate::kinds::run(&state, &state.datasource, &req, &identity)
+    let result = crate::cache::run_cached(&state, &state.datasource, &req, &identity, "dev")
         .await
         .map_err(IntoResponse)?;
     Ok(Json(result))

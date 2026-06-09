@@ -16,6 +16,7 @@ use starter_spi::units::{StaticRegistry, UnitRegistry};
 
 use crate::openapi::document;
 use crate::prefs::NexusPrefsResolver;
+use crate::ratelimit::rate_limit_layer;
 use crate::routes::product_router;
 use crate::state::AppState;
 
@@ -54,7 +55,11 @@ where
     // the resolver reads is already present when it runs.
     let registry: Arc<dyn UnitRegistry + Send + Sync> = Arc::new(StaticRegistry::new());
     let resolver: Arc<dyn PrefsResolverFor> = Arc::new(NexusPrefsResolver::new(&state.prefs));
-    let product = product_router().layer(accept_units_layer(registry, resolver));
+    // The rate-limit layer wraps the product router *inside* the principal layer
+    // so the `Principal` it keys on is already in request extensions, and outside
+    // the units layer so a throttled request does no preference resolution.
+    let product = rate_limit_layer(product_router(), state.rate_limiter.clone())
+        .layer(accept_units_layer(registry, resolver));
     let protected = with_principal(product, authenticator.clone());
     let authz = with_principal(authz, authenticator.clone());
     let tenants = with_principal(tenants, authenticator);

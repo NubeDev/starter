@@ -15,11 +15,14 @@ use nexus_store::QueryGuards;
 use sqlx::PgPool;
 use starter_spi::authz::PolicyEngine;
 
+use crate::cache::QueryCache;
 use crate::changelog::ChangelogHandles;
 use crate::datasource_pools::DatasourcePools;
 use crate::kinds::Registry as KindRegistry;
 use crate::middleware::StreamTokenSigner;
 use crate::prefs::NexusPrefs;
+use crate::quota::TenantQuotas;
+use crate::ratelimit::TenantRateLimiter;
 
 /// Cloneable handle bundle for the control plane.
 #[derive(Clone)]
@@ -68,4 +71,16 @@ pub struct AppState {
     /// cursor. Per-request tenant-pinned logs/recorders are built from these plus
     /// the metadata pool; the audit and undo routes go through them.
     pub changelog: ChangelogHandles,
+    /// Query result cache (WS-09 P1): an in-process TTL cache keyed by the full
+    /// C3 tuple, with single-flight coalescing so a dashboard's refresh burst of
+    /// identical panel queries makes one database round-trip per key per tick.
+    pub query_cache: QueryCache,
+    /// Per-tenant query concurrency caps (WS-09 P1): a query is admitted through
+    /// the calling tenant's semaphore before it runs, so one tenant's fan-out
+    /// cannot exhaust the pool and starve others.
+    pub quotas: TenantQuotas,
+    /// Per-tenant request rate limiter (WS-09 P1): the token-bucket the
+    /// rate-limit middleware applies. Held on state so `serve::assemble` mounts
+    /// the same instance tests can drive.
+    pub rate_limiter: TenantRateLimiter,
 }

@@ -66,6 +66,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         kinds: std::sync::Arc::new(kinds),
         prefs,
         changelog,
+        query_cache: nexus_api::cache::CacheConfig::from_env().build(),
+        quotas: nexus_api::quota::TenantQuotas::new(nexus_api::quota::QuotaConfig::from_env()),
+        rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
+            nexus_api::ratelimit::RateLimitConfig::from_env(),
+        ),
     };
 
     // The alert scheduler runs for the process's lifetime, evaluating due rules

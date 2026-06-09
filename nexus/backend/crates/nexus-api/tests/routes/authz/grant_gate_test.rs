@@ -48,6 +48,11 @@ fn state(pool: &sqlx::PgPool, engine: Arc<dyn PolicyEngine>) -> AppState {
             pool.clone(),
             Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
         ),
+        query_cache: nexus_api::cache::CacheConfig::default().build(),
+        quotas: nexus_api::quota::TenantQuotas::new(nexus_api::quota::QuotaConfig::default()),
+        rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
+            nexus_api::ratelimit::RateLimitConfig::default(),
+        ),
     }
 }
 

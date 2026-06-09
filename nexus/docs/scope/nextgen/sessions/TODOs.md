@@ -223,3 +223,52 @@ updated only to add the `NewDashboard` fields this WS introduced (`folder_id`; `
   are now unreferenced (the builder's "Raw JSON" tab supersedes them). Left in place — authored by an
   earlier flows slice, not WS-06's to delete. A cleanup pass can remove them once nothing else imports
   them.
+
+---
+
+## WS-09 (Production Hardening) — follow-ups
+
+Landed this session: P1 query result cache (C3-keyed, single-flight coalescing, hit/miss/coalesced
+metrics, `units_locale_tz` placeholder per D4), per-tenant query concurrency caps, and per-tenant
+token-bucket rate limiting — all in `nexus-api/src/{cache,quota,ratelimit}/**` + the `serve.rs`
+middleware mount. Deferred:
+
+- **P0 login-hang fix (argon2 off the async runtime).** Re-verified: the synchronous argon2 work is
+  in **`crates/starter-auth-users`** (`password/verify.rs`, `password/hash.rs`), called from
+  `routes/login.rs:110` and `token/verify.rs:33` inside async fns. **Not implemented here:** this is
+  a **shared crate used by every app on the platform**, outside WS-09's `nexus-api` ownership lane,
+  and the spec itself states it "needs an upstream PR + sign-off, not a nexus-local patch." Per the
+  unattended-run rule (a shared-crate change needing sign-off is a TODO, not a guess), it is logged.
+  **Fix:** wrap the `verify`/`hash` call sites in `tokio::task::spawn_blocking` (or a small dedicated
+  blocking pool) so CPU-bound argon2 cannot starve the executor; add the concurrent-login load test
+  the spec asks for (in `starter-auth-users`). Needs a human/upstream owner to approve the shared
+  edit.
+- **P2 OpenTelemetry traces.** Not started. Needs `tracing-opentelemetry` + an OTLP exporter wired in
+  `main.rs`, and trace-id propagation through the query + alert paths. Touches `main.rs`/`serve.rs`
+  plumbing broadly; left as a focused follow-up.
+- **P3 multi-node / HA.** Not started (explicitly "its own sub-project" in the spec): the SSE shared
+  bus (NATS/Redis pub/sub) for cross-node live fan-out, the FlowManager leader/partition story, the
+  alert-scheduler multi-replica documentation, and stream-lifecycle hardening (heartbeat, `Lagged`
+  policy, `Last-Event-ID` resume). The in-process broadcast is a deliberate v1 boundary (NEXUS.md
+  §5.3).
+- **`with_metrics` wiring so cache counters reach `/metrics`.** Nexus' `serve.rs` builds a bare
+  `ServerBuilder` and does **not** call `.with_metrics(...)`, so nexus exposes no `/metrics` endpoint
+  today (the capability lives in `starter-server`). The cache's hit/miss/coalesced counters are
+  exposed as atomics (`QueryCache::stats()`, exercised by unit tests) but are not yet registered on a
+  prometheus `Registry`. Wiring `with_metrics` (a `main.rs`/`serve.rs` change) and registering the
+  counters is the remaining step to scrape them in prod.
+- **Explicit per-request cache bypass (`refresh=off` / "run").** The spec wants an explicit bypass on
+  a manual run. The cache is currently always-on with a short TTL (a manual refresh sends a fresh
+  `to` instant, which busts the key naturally, so correctness holds), but a first-class bypass needs
+  a flag on the C7 `QueryRequest` DTO — a **single-owner (WS-03) shared-contract append**, not a
+  WS-09-local edit. Add `cache: Option<bool>` (or `no_cache`) to `QueryRequest` via a small reviewed
+  PR against WS-03's DTO, then honour it in `cache::run_cached`.
+- **Two-layer canonical@tenant / converted@user cache scope (WS-11).** The cache key carries the
+  `units_locale_tz` placeholder so enabling WS-11 cannot serve a cross-unit-poisoned entry, but the
+  rubix two-layer scheme (cache the canonical DB result at tenant scope, the converted output at user
+  scope) is not built — it lands with WS-11's series-conversion-at-the-query-edge work.
+- **C6 audit/undo for WS-09 privileged actions.** WS-09 added no persisted mutable kind (cache/quota/
+  rate-limit state is in-process, env-configured), so there is no rate-limit/quota/cache-purge
+  *mutation API* to record yet. When a tenant-override API for these is added (not in this slice), it
+  must emit a `ChangeDraft` via the C6 `record_if_reversible` convention per the spec's acceptance
+  item.

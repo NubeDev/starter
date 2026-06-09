@@ -80,7 +80,7 @@ pub async fn query_datasource(
         tenant_id: Some(tenant.clone()),
         user_id: Some(caller_principal.subject.clone()),
     };
-    let result = crate::kinds::run(&state, &pool, &req, &identity).await;
+    let result = crate::cache::run_cached(&state, &pool, &req, &identity, &id.to_string()).await;
     // History records what the caller ran: a kind invocation by name, or the raw
     // SQL. A kind-mode request has no author-written SQL to store.
     let recorded = match &req.kind {
