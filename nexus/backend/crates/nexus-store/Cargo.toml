@@ -41,3 +41,7 @@ testcontainers-modules.workspace = true
 [[test]]
 name = "query_run"
 path = "tests/query/run_test.rs"
+
+[[test]]
+name = "tenant_pool_leak"
+path = "tests/tenant/pool_leak_test.rs"
