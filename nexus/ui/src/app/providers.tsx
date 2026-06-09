@@ -1,14 +1,12 @@
 import type { ReactNode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import {
-  AuthProvider,
-  StarterClientProvider,
-} from "@nube/starter-client-react";
+import { StarterClientProvider } from "@nube/starter-client-react";
 import { ExtensionHostProvider } from "@nube/starter-ext-ui";
 
 import { getNexusClient } from "@/api/client";
 import { getExtensionHost } from "@/extensions/host";
 import { createNexusQueryClient } from "@/app/queryClient";
+import { AuthProvider } from "@/auth/AuthProvider";
 import { LoginRoute } from "@/auth/LoginRoute";
 import { ExtensionAutoLoader } from "@/extensions/AutoLoader";
 import { ThemeProvider } from "@/theme";

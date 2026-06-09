@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useAuth } from "@nube/starter-client-react";
+import { useAuth } from "@/auth/AuthProvider";
 import { bootstrapExtensions } from "@nube/starter-ext-ui";
 
 import { getExtensionHost } from "@/extensions/host";

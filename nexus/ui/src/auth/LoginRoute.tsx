@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "@nube/starter-client-react";
+import { useAuth } from "@/auth/AuthProvider";
 import { StarterError } from "@nube/starter-client-ts";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import {
