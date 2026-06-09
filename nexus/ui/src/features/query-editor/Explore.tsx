@@ -5,6 +5,7 @@ import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 
+import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import type { QueryResponse } from "@/api/types";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
@@ -23,10 +24,14 @@ export function Explore() {
   const [sql, setSql] = useState("");
 
   const run = useMutation<QueryResponse, Error>({
-    mutationFn: () => runQuery(client, { sql }),
+    mutationFn: () =>
+      datasourceId
+        ? queryDatasource(client, datasourceId, { sql })
+        : runQuery(client, { sql }),
   });
 
-  const canRun = sql.trim().length > 0 && !run.isPending;
+  // A datasource must be chosen before running — the query is scoped to it.
+  const canRun = sql.trim().length > 0 && !!datasourceId && !run.isPending;
 
   return (
     <div className="flex h-full flex-col gap-4">

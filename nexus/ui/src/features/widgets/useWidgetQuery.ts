@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
 
+import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import { toWidgetData } from "@/api/query/toWidgetData";
 import type { Widget } from "@/data/types";
@@ -13,14 +14,20 @@ import type { WidgetState } from "@/features/widgets/WidgetCard";
 //
 // The query body is the panel's SQL only — the server applies every
 // safety bound and (today) targets its configured datasource; the panel
-// config's `datasourceId` is carried for when per-request routing lands.
+// config's `datasourceId` routes the query to that datasource; a panel
+// with no datasource falls back to the server's default query route.
 export function useWidgetQuery(widget: Widget): WidgetState {
   const client = useStarterClient();
   const sql = widget.config.query.sql;
+  const datasourceId = widget.config.query.datasourceId;
 
   const result = useQuery({
-    queryKey: ["nexus", "query", widget.config.query.datasourceId, sql],
-    queryFn: () => runQuery(client, { sql }).then(toWidgetData),
+    queryKey: ["nexus", "query", datasourceId, sql],
+    queryFn: () =>
+      (datasourceId
+        ? queryDatasource(client, datasourceId, { sql })
+        : runQuery(client, { sql })
+      ).then(toWidgetData),
     // A panel without SQL hasn't been authored yet — don't fire a query.
     enabled: sql.trim().length > 0,
   });
