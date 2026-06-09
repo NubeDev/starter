@@ -9,15 +9,17 @@ use super::record::{NewRule, RulePatch, RuleRecord, RuleState};
 use crate::tenant_tx;
 
 const RULE_COLS: &str = "id, tenant_id, name, datasource_id, query, op, threshold, \
-     for_secs, interval_secs, enabled, channel_ids";
+     for_secs, interval_secs, enabled, channel_ids, conditions, combinator, \
+     no_data_policy, exec_error_policy, message_template";
 
 /// Insert a rule. A duplicate name in the tenant is a `Conflict`.
 pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewRule) -> Result<RuleRecord, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(
         "INSERT INTO nexus_alert_rules \
-         (tenant_id, name, datasource_id, query, op, threshold, for_secs, interval_secs, enabled, channel_ids) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id",
+         (tenant_id, name, datasource_id, query, op, threshold, for_secs, interval_secs, enabled, channel_ids, \
+          conditions, combinator, no_data_policy, exec_error_policy, message_template) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id",
     )
     .bind(tenant_id)
     .bind(&new.name)
@@ -29,6 +31,11 @@ pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewRule) -> Result<Rul
     .bind(new.interval_secs)
     .bind(new.enabled)
     .bind(&new.channel_ids)
+    .bind(&new.conditions)
+    .bind(&new.combinator)
+    .bind(&new.no_data_policy)
+    .bind(&new.exec_error_policy)
+    .bind(&new.message_template)
     .fetch_one(&mut *tx)
     .await
     .map_err(conflict_or_internal)?;
@@ -58,6 +65,11 @@ pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewRule) -> Result<Rul
         interval_secs: new.interval_secs,
         enabled: new.enabled,
         channel_ids: new.channel_ids.clone(),
+        conditions: new.conditions.clone(),
+        combinator: new.combinator.clone(),
+        no_data_policy: new.no_data_policy.clone(),
+        exec_error_policy: new.exec_error_policy.clone(),
+        message_template: new.message_template.clone(),
     })
 }
 
@@ -98,14 +110,19 @@ pub async fn update(
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let done = sqlx::query(
         "UPDATE nexus_alert_rules SET \
-           name          = COALESCE($2, name), \
-           query         = COALESCE($3, query), \
-           op            = COALESCE($4, op), \
-           threshold     = COALESCE($5, threshold), \
-           for_secs      = COALESCE($6, for_secs), \
-           interval_secs = COALESCE($7, interval_secs), \
-           enabled       = COALESCE($8, enabled), \
-           channel_ids   = COALESCE($9, channel_ids) \
+           name              = COALESCE($2, name), \
+           query             = COALESCE($3, query), \
+           op                = COALESCE($4, op), \
+           threshold         = COALESCE($5, threshold), \
+           for_secs          = COALESCE($6, for_secs), \
+           interval_secs     = COALESCE($7, interval_secs), \
+           enabled           = COALESCE($8, enabled), \
+           channel_ids       = COALESCE($9, channel_ids), \
+           conditions        = COALESCE($10, conditions), \
+           combinator        = COALESCE($11, combinator), \
+           no_data_policy    = COALESCE($12, no_data_policy), \
+           exec_error_policy = COALESCE($13, exec_error_policy), \
+           message_template  = COALESCE($14, message_template) \
          WHERE id = $1",
     )
     .bind(id)
@@ -117,6 +134,11 @@ pub async fn update(
     .bind(patch.interval_secs)
     .bind(patch.enabled)
     .bind(patch.channel_ids.as_deref())
+    .bind(&patch.conditions)
+    .bind(&patch.combinator)
+    .bind(&patch.no_data_policy)
+    .bind(&patch.exec_error_policy)
+    .bind(&patch.message_template)
     .execute(&mut *tx)
     .await
     .map_err(internal)?;
@@ -205,6 +227,11 @@ fn row_to_rule(row: &sqlx::postgres::PgRow) -> RuleRecord {
         interval_secs: row.get::<i32, _>("interval_secs"),
         enabled: row.get::<bool, _>("enabled"),
         channel_ids: row.get::<Vec<Uuid>, _>("channel_ids"),
+        conditions: row.get::<Option<serde_json::Value>, _>("conditions"),
+        combinator: row.get::<String, _>("combinator"),
+        no_data_policy: row.get::<String, _>("no_data_policy"),
+        exec_error_policy: row.get::<String, _>("exec_error_policy"),
+        message_template: row.get::<Option<String>, _>("message_template"),
     }
 }
 

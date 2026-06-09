@@ -4,6 +4,86 @@
  */
 
 export interface paths {
+    "/api/v1/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_agents"];
+        put?: never;
+        post: operations["create_agent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_agent_session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/sessions/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["subscribe_agent_session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_agent"];
+        put: operations["update_agent"];
+        post?: never;
+        delete: operations["delete_agent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/{id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_agent_sessions"];
+        put?: never;
+        post: operations["create_agent_session"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts/channels": {
         parameters: {
             query?: never;
@@ -489,6 +569,43 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * @description A configured agent in full. `config` is opaque JSON on the wire — the
+         *     provider/agent-specific knobs the nexus-ai facade interprets at run time.
+         */
+        AgentDetail: {
+            /** @description The facade backend: an inference provider hint or a coding-agent backend. */
+            backend: string;
+            config: unknown;
+            /** Format: uuid */
+            id: string;
+            /** @description Concrete model id or a size alias ("small"/"medium"/"large"). */
+            model: string;
+            name: string;
+            system_prompt?: string | null;
+        };
+        /**
+         * @description An agent as it appears in the list: identity and backend/model, without the
+         *     config blob (that comes from the detail endpoint).
+         */
+        AgentSummary: {
+            backend: string;
+            /** Format: uuid */
+            id: string;
+            model: string;
+            name: string;
+        };
+        /** @description One condition of an alert rule. */
+        AlertCondition: {
+            /** @description Comparison operator: gt|gte|lt|lte|eq|ne. */
+            op: string;
+            /** @description The query whose reduced first column is the evaluated value. */
+            query: string;
+            /** @description How the query's rows collapse to one value: last|min|max|avg|sum|count. */
+            reducer?: string;
+            /** Format: double */
+            threshold: number;
+        };
+        /**
          * @description One recorded transition: when a rule fired or resolved, the value that
          *     triggered it, and whether it was silenced / actually notified.
          */
@@ -510,16 +627,25 @@ export interface components {
         /** @description An alert rule in full. */
         AlertRuleDetail: {
             channel_ids: string[];
+            combinator: string;
+            /**
+             * @description The multi-condition list, when the rule uses one. `None` for a legacy
+             *     single-condition rule (its single condition is the top-level fields).
+             */
+            conditions?: components["schemas"]["AlertCondition"][] | null;
             /** Format: uuid */
             datasource_id?: string | null;
             enabled: boolean;
+            exec_error_policy: string;
             /** Format: int32 */
             for_secs: number;
             /** Format: uuid */
             id: string;
             /** Format: int32 */
             interval_secs: number;
+            message_template?: string | null;
             name: string;
+            no_data_policy: string;
             op: string;
             query: string;
             /** Format: double */
@@ -541,14 +667,34 @@ export interface components {
             type: components["schemas"]["ResultColumnType"];
         };
         /**
-         * @description Create an alert rule: a query whose first numeric cell is compared to a
-         *     threshold on a cadence. `op` is one of gt|gte|lt|lte|eq|ne.
+         * @description Create an agent. `backend` selects the facade tier/provider, `model` is a
+         *     concrete id or size alias. `config` carries provider-specific knobs and is
+         *     validated when a session runs, not here. `model` defaults to `large`.
+         */
+        CreateAgentRequest: {
+            backend: string;
+            config?: unknown;
+            model?: string | null;
+            name: string;
+            system_prompt?: string | null;
+        };
+        /**
+         * @description Create an alert rule. A rule is either a legacy single condition (the
+         *     top-level `query`/`op`/`threshold`) or a multi-condition rule (`conditions`
+         *     combined by `combinator`). `no_data_policy`/`exec_error_policy` say how a
+         *     missing or failed evaluation resolves (`ok`|`alerting`|`keep_last`).
          */
         CreateAlertRuleRequest: {
             channel_ids?: string[] | null;
+            /** @description How conditions combine: `and`|`or` (default `and`). */
+            combinator?: string | null;
+            /** @description Multi-condition list; when set it supersedes the single `query`/`op`. */
+            conditions?: components["schemas"]["AlertCondition"][] | null;
             /** Format: uuid */
             datasource_id?: string | null;
             enabled?: boolean | null;
+            /** @description Execution-error policy: `ok`|`alerting`|`keep_last` (default `ok`). */
+            exec_error_policy?: string | null;
             /**
              * Format: int32
              * @description Pending dwell in seconds before firing (0 = fire on first breach).
@@ -559,7 +705,11 @@ export interface components {
              * @description Evaluation cadence in seconds.
              */
             interval_secs?: number | null;
+            /** @description Optional notification message template; omitted uses the default. */
+            message_template?: string | null;
             name: string;
+            /** @description No-data policy: `ok`|`alerting`|`keep_last` (default `ok`). */
+            no_data_policy?: string | null;
             op: string;
             query: string;
             /** Format: double */
@@ -638,6 +788,29 @@ export interface components {
             title: string;
             /** @description Visualization kind; defaults to `table` when omitted. */
             viz?: string | null;
+        };
+        /**
+         * @description Open a session against an agent by sending its opening prompt. The agent's
+         *     system prompt (if any) is prepended by the server; the caller supplies only
+         *     the user message. The response carries the session id whose SSE feed streams
+         *     the run.
+         */
+        CreateSessionRequest: {
+            /** @description The opening user message. */
+            prompt: string;
+        };
+        /**
+         * @description The response to opening a session: the session id (now `running`) plus a
+         *     short-lived signed token to connect its SSE feed at
+         *     `GET /api/v1/agents/sessions/{id}/events?token=…`. A browser `EventSource`
+         *     cannot set an auth header, so the token rides the query string.
+         */
+        CreateSessionResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            /** @description Signed token for the SSE subscription. */
+            token: string;
         };
         /**
          * @description Create a silence. `rule_id = None` silences every rule in the tenant for the
@@ -1023,6 +1196,17 @@ export interface components {
             /** @description The Postgres schema the table lives in (e.g. `public`). */
             schema: string;
         };
+        /** @description One session against an agent. */
+        SessionDetail: {
+            /** Format: uuid */
+            agent_id: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Lifecycle: pending | running | completed | failed | cancelled. */
+            status: string;
+            /** @description The message transcript: an array of `{role, content}` objects. */
+            transcript: unknown;
+        };
         /**
          * @description Body for `PUT …/tags` — the complete tag set to persist on an entity. This
          *     is a full replace: tags not listed are removed, so the client sends the
@@ -1099,15 +1283,28 @@ export interface components {
             message?: string | null;
             ok: boolean;
         };
+        /** @description Partially update an agent; omitted fields are left unchanged. */
+        UpdateAgentRequest: {
+            backend?: string | null;
+            config?: unknown;
+            model?: string | null;
+            name?: string | null;
+            system_prompt?: string | null;
+        };
         /** @description Partially update an alert rule; omitted fields are unchanged. */
         UpdateAlertRuleRequest: {
             channel_ids?: string[] | null;
+            combinator?: string | null;
+            conditions?: components["schemas"]["AlertCondition"][] | null;
             enabled?: boolean | null;
+            exec_error_policy?: string | null;
             /** Format: int32 */
             for_secs?: number | null;
             /** Format: int32 */
             interval_secs?: number | null;
+            message_template?: string | null;
             name?: string | null;
+            no_data_policy?: string | null;
             op?: string | null;
             query?: string | null;
             /** Format: double */
@@ -1171,6 +1368,318 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_agents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"][];
+                };
+            };
+        };
+    };
+    create_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+        };
+    };
+    get_agent_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDetail"];
+                };
+            };
+            /** @description Not allowed to view this session */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    subscribe_agent_session: {
+        parameters: {
+            query: {
+                /** @description Signed session token from create_agent_session */
+                token: string;
+            };
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Missing/expired/invalid token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session run already finished */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agent */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+            /** @description Not allowed to view this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+            /** @description Not allowed to edit this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_agent_sessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDetail"][];
+                };
+            };
+            /** @description Not allowed to view this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agent not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_agent_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Session started */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateSessionResponse"];
+                };
+            };
+            /** @description Not allowed to run this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agent not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_channels: {
         parameters: {
             query?: never;

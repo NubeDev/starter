@@ -13,7 +13,11 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use super::compare::breaches;
+use super::condition::{self, Combinator, Condition, ConditionOutcome};
 use super::notify::{self, Notification};
+use super::policy::{self, Policy};
+use super::reduce;
+use super::template::{self, TemplateContext};
 use super::transition::{step, State, Transition};
 use crate::datasource_pools::DatasourcePools;
 
@@ -56,15 +60,18 @@ async fn try_evaluate(ctx: &EvalContext<'_>, tenant: &str, id: Uuid) -> Result<(
         .map_err(stringify)?
         .map(|s| s.since);
 
-    // Run the rule's query under the same guards panels use, against the rule's
-    // own datasource, and read the first numeric cell. No row is "no data" — a
-    // non-breaching reading that must not flap the rule to firing.
+    // Run each of the rule's conditions under the same guards panels use, against
+    // the rule's own datasource. Each condition reduces its result set to one
+    // value and compares it; the combinator and the no-data/error policy then
+    // resolve the single `breaching` boolean the pure state machine consumes — the
+    // machine itself stays untouched. A legacy single-condition rule (no explicit
+    // `conditions`) is the one-element case, so it behaves exactly as before.
     let datasource = resolve_pool(ctx, tenant, &rule).await?;
-    let value = evaluate_value(&datasource, &rule.query, guards).await?;
-    let breaching = match value {
-        Some(v) => breaches(v, &rule.op, rule.threshold)?,
-        None => false,
-    };
+    let conditions = conditions_of(&rule);
+    let prior_firing = state == State::Firing;
+    let resolution = resolve_breaching(&datasource, &rule, &conditions, guards, prior_firing).await;
+    let breaching = resolution.breaching;
+    let value = resolution.value;
 
     // The dwell has elapsed when the rule has been pending at least `for_secs`.
     let dwell_elapsed = match (state, since) {
@@ -94,6 +101,115 @@ async fn try_evaluate(ctx: &EvalContext<'_>, tenant: &str, id: Uuid) -> Result<(
     Ok(())
 }
 
+/// The conditions a rule evaluates. If the rule carries an explicit `conditions`
+/// array it is used; otherwise the legacy single condition is reconstructed from
+/// the top-level `query`/`op`/`threshold` (reducer `last`, matching the historical
+/// "first row, first column" behaviour) so old rules evaluate unchanged.
+fn conditions_of(rule: &RuleRecord) -> Vec<Condition> {
+    if let Some(raw) = &rule.conditions {
+        if let Ok(parsed) = serde_json::from_value::<Vec<Condition>>(raw.clone()) {
+            if !parsed.is_empty() {
+                return parsed;
+            }
+        }
+    }
+    vec![Condition {
+        query: rule.query.clone(),
+        reducer: "last".to_string(),
+        op: rule.op.clone(),
+        threshold: rule.threshold,
+    }]
+}
+
+/// The combined result of evaluating every condition of a rule: the breaching
+/// boolean (after combinator + no-data/error policy) and a representative value
+/// for the event record and the notification template (the first condition's
+/// reduced value).
+struct Resolution {
+    breaching: bool,
+    value: Option<f64>,
+}
+
+/// Evaluate every condition, combine them, and apply the no-data/error policies.
+/// A query error routes through `exec_error_policy`; an empty result through
+/// `no_data_policy`. Both stay pure given `prior_firing` (the input to
+/// `keep_last`), so the state machine never sees policy logic.
+async fn resolve_breaching(
+    datasource: &PgPool,
+    rule: &RuleRecord,
+    conditions: &[Condition],
+    guards: nexus_store::QueryGuards,
+    prior_firing: bool,
+) -> Resolution {
+    let mut outcomes = Vec::with_capacity(conditions.len());
+    let mut first_value = None;
+    for cond in conditions {
+        match evaluate_condition(datasource, cond, guards).await {
+            Ok(outcome) => {
+                if first_value.is_none() {
+                    first_value = outcome.value;
+                }
+                outcomes.push(outcome);
+            }
+            Err(e) => {
+                // A query that errored cannot contribute a value; the error
+                // policy decides the whole rule's breaching, short-circuiting.
+                tracing::warn!(rule_id = %rule.id, error = %e, "alert condition query failed");
+                let breaching =
+                    policy::resolve(Policy::parse(&rule.exec_error_policy), prior_firing);
+                return Resolution {
+                    breaching,
+                    value: first_value,
+                };
+            }
+        }
+    }
+
+    // A missing input makes the combined result undefined → the no-data policy.
+    if condition::any_no_data(&outcomes) {
+        let breaching = policy::resolve(Policy::parse(&rule.no_data_policy), prior_firing);
+        return Resolution {
+            breaching,
+            value: first_value,
+        };
+    }
+
+    let breaching = condition::combine(&outcomes, Combinator::parse(&rule.combinator));
+    Resolution {
+        breaching,
+        value: first_value,
+    }
+}
+
+/// Evaluate one condition: run its query, reduce the rows to a value, and compare.
+/// An empty result is the no-data case (`had_data == false`, non-breaching here —
+/// the rule-level policy decides what that means for the whole rule).
+async fn evaluate_condition(
+    datasource: &PgPool,
+    cond: &Condition,
+    guards: nexus_store::QueryGuards,
+) -> Result<ConditionOutcome, String> {
+    let resp = nexus_store::run_query(datasource, &cond.query, guards)
+        .await
+        .map_err(stringify)?;
+    let reduced = reduce::reduce(&resp.rows, condition::reducer_of(cond));
+    match reduced {
+        Some(v) => {
+            let breaching = breaches(v, &cond.op, cond.threshold)?;
+            Ok(ConditionOutcome {
+                breaching,
+                had_data: true,
+                value: Some(v),
+            })
+        }
+        None => Ok(ConditionOutcome {
+            breaching: false,
+            had_data: false,
+            value: None,
+        }),
+    }
+}
+
 /// The pool the rule's query runs against: its named datasource (resolved under
 /// the tenant's RLS and cached after first build), or the dev pool when the rule
 /// carries no datasource id. The audit actor is the rule id — the decrypt log
@@ -116,33 +232,9 @@ async fn resolve_pool(
         .map_err(stringify)
 }
 
-/// Run the query and pull the first row's first column as f64. Returns `None`
-/// when the query yields no rows (no data).
-async fn evaluate_value(
-    datasource: &PgPool,
-    query: &str,
-    guards: nexus_store::QueryGuards,
-) -> Result<Option<f64>, String> {
-    let resp = nexus_store::run_query(datasource, query, guards)
-        .await
-        .map_err(stringify)?;
-    let Some(first) = resp.rows.first() else {
-        return Ok(None);
-    };
-    let obj = first
-        .as_object()
-        .ok_or_else(|| "alert query row is not an object".to_string())?;
-    let cell = obj
-        .values()
-        .next()
-        .ok_or_else(|| "alert query returned no columns".to_string())?;
-    cell.as_f64()
-        .ok_or_else(|| "alert query first column is not numeric".to_string())
-        .map(Some)
-}
-
 /// Write the transition event, and — unless an active silence covers the rule —
-/// deliver it to each channel, recording whether delivery succeeded.
+/// deliver it to each channel with retry/backoff, recording the per-channel
+/// outcome (delivered, or failed after N attempts) on the event.
 async fn record_and_notify(
     metadata: &PgPool,
     tenant: &str,
@@ -157,25 +249,32 @@ async fn record_and_notify(
     let mut notified = false;
     let mut detail: Option<String> = None;
     if !silenced {
+        let message = render_message(rule, transition, value);
         let notification = Notification {
             rule_name: rule.name.clone(),
             transition: transition.as_str().to_string(),
             value,
             threshold: rule.threshold,
             op: rule.op.clone(),
+            message,
         };
         let channels = channel::by_ids(metadata, tenant, &rule.channel_ids)
             .await
             .map_err(stringify)?;
-        let mut failures = Vec::new();
+        let mut notes = Vec::new();
         for ch in &channels {
-            match notify::deliver(ch, &notification).await {
-                Ok(()) => notified = true,
-                Err(e) => failures.push(format!("{}: {e}", ch.name)),
+            let outcome = notify::deliver_with_retry(ch, &notification).await;
+            if outcome.succeeded() {
+                notified = true;
+                if outcome.attempts > 1 {
+                    notes.push(format!("{}: delivered after {} attempts", ch.name, outcome.attempts));
+                }
+            } else if let Some(err) = outcome.last_error {
+                notes.push(format!("{}: failed after {} attempts ({err})", ch.name, outcome.attempts));
             }
         }
-        if !failures.is_empty() {
-            detail = Some(failures.join("; "));
+        if !notes.is_empty() {
+            detail = Some(notes.join("; "));
         }
     }
 
@@ -194,6 +293,25 @@ async fn record_and_notify(
     .await
     .map_err(stringify)?;
     Ok(())
+}
+
+/// Render the notification text from the rule's template (or the default),
+/// safely substituting the fixed token set with this transition's values.
+fn render_message(rule: &RuleRecord, transition: Transition, value: Option<f64>) -> String {
+    let template = rule
+        .message_template
+        .as_deref()
+        .unwrap_or(template::DEFAULT_TEMPLATE);
+    template::render(
+        template,
+        &TemplateContext {
+            rule_name: &rule.name,
+            state: transition.as_str(),
+            op: &rule.op,
+            threshold: rule.threshold,
+            value,
+        },
+    )
 }
 
 fn stringify(e: impl std::fmt::Display) -> String {

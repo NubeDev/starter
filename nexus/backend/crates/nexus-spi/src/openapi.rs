@@ -19,8 +19,8 @@ use crate::dto::datasource::{
     RedactedConnection, SchemaColumn, SchemaTable, TestDatasourceResponse, UpdateDatasourceRequest,
 };
 use crate::dto::alert::{
-    AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest, CreateChannelRequest,
-    CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
+    AlertCondition, AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest,
+    CreateChannelRequest, CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
 };
 use crate::dto::flow::{CreateFlowRequest, FlowDetail, FlowSummary, UpdateFlowRequest};
 use crate::dto::me::MeResponse;
@@ -73,6 +73,7 @@ use crate::Problem;
     FlowDetail,
     CreateFlowRequest,
     UpdateFlowRequest,
+    AlertCondition,
     AlertRuleDetail,
     CreateAlertRuleRequest,
     UpdateAlertRuleRequest,

@@ -4,7 +4,12 @@ use chrono::{DateTime, Utc};
 use serde_json::Value;
 use uuid::Uuid;
 
-/// A saved alert rule: a query compared to a threshold on a cadence.
+/// A saved alert rule: one or more conditions compared to thresholds on a
+/// cadence. The top-level `query`/`op`/`threshold` describe the legacy single
+/// condition; `conditions` (when present) is the multi-condition list combined
+/// by `combinator`. `no_data_policy`/`exec_error_policy` say how a missing or
+/// failed evaluation resolves; `message_template` overrides the default notify
+/// text.
 #[derive(Debug, Clone)]
 pub struct RuleRecord {
     pub id: Uuid,
@@ -18,6 +23,11 @@ pub struct RuleRecord {
     pub interval_secs: i32,
     pub enabled: bool,
     pub channel_ids: Vec<Uuid>,
+    pub conditions: Option<Value>,
+    pub combinator: String,
+    pub no_data_policy: String,
+    pub exec_error_policy: String,
+    pub message_template: Option<String>,
 }
 
 /// A new rule to insert.
@@ -32,6 +42,11 @@ pub struct NewRule {
     pub interval_secs: i32,
     pub enabled: bool,
     pub channel_ids: Vec<Uuid>,
+    pub conditions: Option<Value>,
+    pub combinator: String,
+    pub no_data_policy: String,
+    pub exec_error_policy: String,
+    pub message_template: Option<String>,
 }
 
 /// A partial rule update; `None` fields are unchanged.
@@ -45,6 +60,11 @@ pub struct RulePatch {
     pub interval_secs: Option<i32>,
     pub enabled: Option<bool>,
     pub channel_ids: Option<Vec<Uuid>>,
+    pub conditions: Option<Value>,
+    pub combinator: Option<String>,
+    pub no_data_policy: Option<String>,
+    pub exec_error_policy: Option<String>,
+    pub message_template: Option<String>,
 }
 
 /// The persisted state-machine memory for one rule.

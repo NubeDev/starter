@@ -4,8 +4,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-/// Create an alert rule: a query whose first numeric cell is compared to a
-/// threshold on a cadence. `op` is one of gt|gte|lt|lte|eq|ne.
+use super::condition::AlertCondition;
+
+/// Create an alert rule. A rule is either a legacy single condition (the
+/// top-level `query`/`op`/`threshold`) or a multi-condition rule (`conditions`
+/// combined by `combinator`). `no_data_policy`/`exec_error_policy` say how a
+/// missing or failed evaluation resolves (`ok`|`alerting`|`keep_last`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct CreateAlertRuleRequest {
     pub name: String,
@@ -24,6 +28,21 @@ pub struct CreateAlertRuleRequest {
     pub enabled: Option<bool>,
     #[serde(default)]
     pub channel_ids: Option<Vec<Uuid>>,
+    /// Multi-condition list; when set it supersedes the single `query`/`op`.
+    #[serde(default)]
+    pub conditions: Option<Vec<AlertCondition>>,
+    /// How conditions combine: `and`|`or` (default `and`).
+    #[serde(default)]
+    pub combinator: Option<String>,
+    /// No-data policy: `ok`|`alerting`|`keep_last` (default `ok`).
+    #[serde(default)]
+    pub no_data_policy: Option<String>,
+    /// Execution-error policy: `ok`|`alerting`|`keep_last` (default `ok`).
+    #[serde(default)]
+    pub exec_error_policy: Option<String>,
+    /// Optional notification message template; omitted uses the default.
+    #[serde(default)]
+    pub message_template: Option<String>,
 }
 
 /// Partially update an alert rule; omitted fields are unchanged.
@@ -45,6 +64,16 @@ pub struct UpdateAlertRuleRequest {
     pub enabled: Option<bool>,
     #[serde(default)]
     pub channel_ids: Option<Vec<Uuid>>,
+    #[serde(default)]
+    pub conditions: Option<Vec<AlertCondition>>,
+    #[serde(default)]
+    pub combinator: Option<String>,
+    #[serde(default)]
+    pub no_data_policy: Option<String>,
+    #[serde(default)]
+    pub exec_error_policy: Option<String>,
+    #[serde(default)]
+    pub message_template: Option<String>,
 }
 
 /// An alert rule in full.
@@ -60,4 +89,11 @@ pub struct AlertRuleDetail {
     pub interval_secs: i32,
     pub enabled: bool,
     pub channel_ids: Vec<Uuid>,
+    /// The multi-condition list, when the rule uses one. `None` for a legacy
+    /// single-condition rule (its single condition is the top-level fields).
+    pub conditions: Option<Vec<AlertCondition>>,
+    pub combinator: String,
+    pub no_data_policy: String,
+    pub exec_error_policy: String,
+    pub message_template: Option<String>,
 }

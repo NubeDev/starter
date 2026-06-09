@@ -183,6 +183,188 @@ async fn rule_fires_through_a_webhook_then_resolves() {
     drop(app);
 }
 
+/// A webhook sink that records the JSON body of each POST it receives, so a test
+/// can assert the rendered notification message, not just the hit count.
+async fn recording_sink() -> (String, Arc<std::sync::Mutex<Vec<Value>>>) {
+    let bodies = Arc::new(std::sync::Mutex::new(Vec::<Value>::new()));
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let bodies_in = bodies.clone();
+    tokio::spawn(async move {
+        loop {
+            let Ok((mut sock, _)) = listener.accept().await else {
+                break;
+            };
+            let mut buf = vec![0u8; 4096];
+            let n = sock.read(&mut buf).await.unwrap_or(0);
+            let req = String::from_utf8_lossy(&buf[..n]);
+            if let Some(idx) = req.find("\r\n\r\n") {
+                let body = &req[idx + 4..];
+                if let Ok(v) = serde_json::from_str::<Value>(body) {
+                    bodies_in.lock().unwrap().push(v);
+                }
+            }
+            let _ = sock
+                .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n")
+                .await;
+            let _ = sock.flush().await;
+        }
+    });
+    (format!("http://{addr}/"), bodies)
+}
+
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn multi_condition_and_rule_fires_only_when_all_conditions_breach() {
+    let (admin, _guard) = with_database().await;
+    let pool = runtime_pool(admin.sqlx()).await;
+
+    // Two gauges: the AND rule fires only when both breach. Start with only one
+    // breaching, then push the second over to drive the firing transition.
+    sqlx::query("CREATE TABLE g1 (v double precision)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("CREATE TABLE g2 (v double precision)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO g1 VALUES (99)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO g2 VALUES (1)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("GRANT SELECT ON g1, g2 TO nexus_runtime")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+
+    let (hook_url, bodies) = recording_sink().await;
+
+    let state = test_state(&pool);
+    let router = serve::router(state.clone()).layer(Extension(acme_admin()));
+    let app = TestApp::spawn(router).await;
+    let client = reqwest::Client::new();
+
+    let channel: Value = client
+        .post(format!("{}/api/v1/alerts/channels", app.base_url))
+        .json(&json!({ "name": "ops", "kind": "webhook", "config": { "url": hook_url } }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let channel_id = channel["id"].as_str().unwrap();
+
+    // A two-condition AND rule with a custom template. The top-level query/op are
+    // ignored when `conditions` is set, but the contract still requires them.
+    client
+        .post(format!("{}/api/v1/alerts/rules", app.base_url))
+        .json(&json!({
+            "name": "both-high",
+            "query": "SELECT 0",
+            "op": "gt",
+            "threshold": 0.0,
+            "for_secs": 0,
+            "interval_secs": 1,
+            "combinator": "and",
+            "conditions": [
+                { "query": "SELECT v FROM g1", "reducer": "last", "op": "gt", "threshold": 90.0 },
+                { "query": "SELECT v FROM g2", "reducer": "last", "op": "gt", "threshold": 90.0 }
+            ],
+            "message_template": "{{rule_name}} -> {{state}}",
+            "channel_ids": [channel_id]
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    // Pass 1: only g1 breaches → AND is false → no fire.
+    schedule::run_once(&state).await.expect("pass 1");
+    assert_eq!(bodies.lock().unwrap().len(), 0, "AND not satisfied → silent");
+
+    // Push g2 over the threshold; now both breach → fire.
+    sqlx::query("UPDATE g2 SET v = 99")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_millis(1100)).await;
+    schedule::run_once(&state).await.expect("pass 2");
+
+    let captured = bodies.lock().unwrap();
+    assert_eq!(captured.len(), 1, "both conditions breach → one notify");
+    // The rendered template flows through to the webhook payload.
+    let msg = captured[0]["message"].as_str().unwrap();
+    assert_eq!(msg, "both-high -> firing");
+
+    drop(app);
+}
+
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn no_data_policy_alerting_fires_when_the_query_returns_no_rows() {
+    let (admin, _guard) = with_database().await;
+    let pool = runtime_pool(admin.sqlx()).await;
+
+    // An empty table: the query returns no rows, so the reducer yields no value.
+    // With no_data_policy = alerting, that absence must itself fire.
+    sqlx::query("CREATE TABLE empties (v double precision)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("GRANT SELECT ON empties TO nexus_runtime")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+
+    let (hook_url, hits) = webhook_sink().await;
+
+    let state = test_state(&pool);
+    let router = serve::router(state.clone()).layer(Extension(acme_admin()));
+    let app = TestApp::spawn(router).await;
+    let client = reqwest::Client::new();
+
+    let channel: Value = client
+        .post(format!("{}/api/v1/alerts/channels", app.base_url))
+        .json(&json!({ "name": "ops", "kind": "webhook", "config": { "url": hook_url } }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let channel_id = channel["id"].as_str().unwrap();
+
+    client
+        .post(format!("{}/api/v1/alerts/rules", app.base_url))
+        .json(&json!({
+            "name": "missing-data",
+            "query": "SELECT v FROM empties",
+            "op": "gt",
+            "threshold": 0.0,
+            "for_secs": 0,
+            "interval_secs": 1,
+            "no_data_policy": "alerting",
+            "channel_ids": [channel_id]
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    schedule::run_once(&state).await.expect("pass");
+    assert_eq!(
+        hits.load(Ordering::SeqCst),
+        1,
+        "no rows + no_data_policy=alerting → fires"
+    );
+
+    drop(app);
+}
+
 #[tokio::test]
 #[ignore = "requires docker"]
 async fn rule_evaluates_against_its_named_datasource_not_the_dev_pool() {

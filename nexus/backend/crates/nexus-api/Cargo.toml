@@ -47,8 +47,12 @@ hmac.workspace = true
 sha2.workspace = true
 base64.workspace = true
 
-# Alert webhook notification delivery.
+# Alert webhook + Slack notification delivery.
 reqwest.workspace = true
+
+# Alert email (SMTP) notification delivery. rustls TLS keeps the build free of a
+# system OpenSSL dependency.
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls-tls", "pool", "hostname"] }
 
 [features]
 # Pulls in the starter-server test harness (TestApp) and the testcontainers

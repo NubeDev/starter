@@ -8,7 +8,11 @@
 //! query path, keeping the engine free of any of this (R2).
 
 pub mod compare;
+pub mod condition;
 pub mod evaluate;
 pub mod notify;
+pub mod policy;
+pub mod reduce;
 pub mod schedule;
+pub mod template;
 pub mod transition;
