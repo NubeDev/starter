@@ -17,7 +17,7 @@ session always finds its dependencies already committed in the working tree.
 | 2 | WS-04 | Panel Editor & Viz Config | ✅ | 2026-06-09 12:40 | 2026-06-09 20:05 | d27f293f | full editor + transforms + field config |
 | 3 | WS-07 | Alerting depth | ✅ | 2026-06-09 13:05 | 2026-06-09 13:30 | f52d6b38 | multi-condition + no-data/error policy + slack/email + templating + retry |
 | 4 | WS-10 | Kinds — declarative extensibility | ✅ | 2026-06-09 13:30 | 2026-06-09 13:55 | dd4687ae | registry+loader+lints+pack(4)+kind-mode dispatch+catalogue route+UI picker; reuses WS-03 binder |
-| 5 | WS-08 | Connector breadth (MQTT/Modbus/…) | ⛔ | 2026-06-09 14:00 | 2026-06-09 21:20 | | pre-save `/datasources/test` landed+GREEN; connectors blocked on WS-10 datasource-kind format + gated-deps decision (TODOs.md) |
+| 5 | WS-08 | Connector breadth (MQTT/Modbus/…) | ⛔ | 2026-06-09 14:00 | 2026-06-09 21:20 | 00e40609 | pre-save `/datasources/test` landed+GREEN; connectors blocked on WS-10 datasource-kind format + gated-deps decision (TODOs.md) |
 | 6 | WS-01 | Time Range & Auto-Refresh | ⬜ | | | | needs WS-03 macros |
 | 7 | WS-02 | Variables & Templating | ⬜ | | | | needs WS-03 macros |
 | 8 | WS-11 | Units & datetime prefs | ⬜ | | | | needs WS-04 + WS-10 |
