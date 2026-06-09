@@ -1,0 +1,65 @@
+@import "@nube/starter-ui-kit/styles.css";
+
+/* Nexus is dark-only premium OLED. The starter kit ships light+dark
+   oklch tokens; we override the dark surface ramp toward near-black
+   slate and pin the signal accent to emerald, then add the ambient
+   aurora + glass surfaces that define the Nexus look. Tokens stay in
+   the kit's `--token` namespace so primitives pick them up unchanged. */
+.dark {
+  --background: oklch(0.16 0.02 250);
+  --foreground: oklch(0.98 0.005 250);
+  --card: oklch(0.2 0.02 250);
+  --card-foreground: oklch(0.98 0.005 250);
+  --popover: oklch(0.18 0.02 250);
+  --popover-foreground: oklch(0.98 0.005 250);
+  --primary: oklch(0.76 0.16 158);
+  --primary-foreground: oklch(0.2 0.06 158);
+  --secondary: oklch(0.27 0.02 250);
+  --secondary-foreground: oklch(0.96 0.005 250);
+  --muted: oklch(0.25 0.02 250);
+  --muted-foreground: oklch(0.66 0.02 250);
+  --accent: oklch(0.32 0.06 158);
+  --accent-foreground: oklch(0.82 0.12 158);
+  --destructive: oklch(0.62 0.2 22);
+  --border: oklch(0.3 0.02 250);
+  --input: oklch(0.3 0.02 250);
+  --ring: oklch(0.76 0.16 158);
+
+  /* ECharts series palette — read by widget themes (F6), not hardcoded
+     in chart files. emerald / cyan / violet / amber / rose. */
+  --chart-1: oklch(0.76 0.16 158);
+  --chart-2: oklch(0.72 0.13 220);
+  --chart-3: oklch(0.62 0.19 295);
+  --chart-4: oklch(0.79 0.16 75);
+  --chart-5: oklch(0.66 0.2 16);
+}
+
+/* Ambient aurora backdrop — gives the OLED black depth without noise. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 12% -10%, oklch(0.76 0.16 158 / 0.1), transparent 60%),
+    radial-gradient(50rem 36rem at 110% 0%, oklch(0.72 0.13 220 / 0.08), transparent 55%),
+    radial-gradient(46rem 40rem at 50% 120%, oklch(0.62 0.19 295 / 0.06), transparent 60%);
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+  /* Frosted panel surface used across cards/sidebar. */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      oklch(0.22 0.02 250 / 0.72),
+      oklch(0.18 0.02 250 / 0.72)
+    );
+    backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid oklch(1 0 0 / 0.06);
+  }
+}
