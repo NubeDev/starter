@@ -21,6 +21,7 @@ use utoipa::OpenApi;
         crate::routes::datasources::create::create_datasource,
         crate::routes::datasources::list::list_datasources,
         crate::routes::datasources::get::get_datasource,
+        crate::routes::datasources::update::update_datasource,
         crate::routes::datasources::delete::delete_datasource,
         crate::routes::datasources::query::query_datasource,
         crate::routes::datasources::test::test_datasource,

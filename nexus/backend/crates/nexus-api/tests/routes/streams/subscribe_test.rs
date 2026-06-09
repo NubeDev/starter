@@ -27,9 +27,15 @@ use starter_store_postgres::testing::with_database;
 use tokio::io::AsyncReadExt;
 
 fn test_state(pool: &sqlx::PgPool) -> AppState {
+    state_with_dev(pool, pool.clone())
+}
+
+/// Build state with an explicit dev `datasource` pool, so a test can prove a path
+/// no longer relies on it by passing a dead one.
+fn state_with_dev(metadata: &sqlx::PgPool, dev: sqlx::PgPool) -> AppState {
     AppState {
-        metadata: pool.clone(),
-        datasource: pool.clone(),
+        metadata: metadata.clone(),
+        datasource: dev,
         datasource_pools: Default::default(),
         envelope: Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
         guards: QueryGuards {
@@ -78,6 +84,12 @@ async fn live_panel_streams_real_sql_rows_without_a_bearer_header() {
         .execute(admin.sqlx())
         .await
         .unwrap();
+
+    // The datasource points at the real container with its own credentials sealed,
+    // so the live poll connects *through the datasource*, not the dev pool. (The
+    // dev `state.datasource` below is deliberately a dead lazy pool to prove the
+    // stream no longer falls back to it.)
+    let port = admin.sqlx().connect_options().as_ref().get_port();
     let ds = datasource::insert(
         &pool,
         &Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
@@ -85,17 +97,21 @@ async fn live_panel_streams_real_sql_rows_without_a_bearer_header() {
         &NewDatasource {
             name: "local".into(),
             kind: "postgres".into(),
-            host: "localhost".into(),
-            port: 5432,
-            database: "d".into(),
-            db_user: "u".into(),
-            secret: "p".into(),
+            host: "127.0.0.1".into(),
+            port: port as i32,
+            database: "postgres".into(),
+            db_user: "postgres".into(),
+            secret: "postgres".into(),
         },
     )
     .await
     .expect("datasource");
 
-    let router = serve::router(test_state(&pool)).layer(Extension(acme_member()));
+    // A dead dev pool: if the live path still used `state.datasource`, the poll
+    // would error instead of streaming the row, failing this test.
+    let dead = sqlx::PgPool::connect_lazy("postgres://nope:nope@127.0.0.1:1/none").unwrap();
+    let router =
+        serve::router(state_with_dev(&pool, dead)).layer(Extension(acme_member()));
     let app = TestApp::spawn(router).await;
     let client = reqwest::Client::new();
 

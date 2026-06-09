@@ -7,6 +7,8 @@ pub mod delete;
 pub mod get;
 pub mod list;
 pub mod query;
+pub mod test;
+pub mod update;
 
 use axum::routing::{get as http_get, post};
 use axum::Router;
@@ -22,10 +24,16 @@ pub fn router() -> Router<AppState> {
         )
         .route(
             "/api/v1/datasources/{id}",
-            http_get(get::get_datasource).delete(delete::delete_datasource),
+            http_get(get::get_datasource)
+                .put(update::update_datasource)
+                .delete(delete::delete_datasource),
         )
         .route(
             "/api/v1/datasources/{id}/query",
             post(query::query_datasource),
+        )
+        .route(
+            "/api/v1/datasources/{id}/test",
+            post(test::test_datasource),
         )
 }

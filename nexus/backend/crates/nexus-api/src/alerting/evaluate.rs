@@ -7,6 +7,7 @@
 //! testable, and this composes them for one rule under its tenant's RLS context.
 
 use chrono::Utc;
+use nexus_store::datasource::Envelope;
 use nexus_store::alert::{channel, event, rule, silence, NewEvent, RuleRecord};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -14,30 +15,34 @@ use uuid::Uuid;
 use super::compare::breaches;
 use super::notify::{self, Notification};
 use super::transition::{step, State, Transition};
+use crate::datasource_pools::DatasourcePools;
 
-/// Evaluate the rule `id` for `tenant`. `metadata` is the control-plane pool
-/// (rules/state/events); `datasource` is the pool the rule's query runs against
-/// under the standard guards. Errors are logged and swallowed per rule so one
-/// bad rule never stalls the scheduler.
-pub async fn evaluate_rule(
-    metadata: &PgPool,
-    datasource: &PgPool,
-    guards: nexus_store::QueryGuards,
-    tenant: &str,
-    id: Uuid,
-) {
-    if let Err(e) = try_evaluate(metadata, datasource, guards, tenant, id).await {
+/// The handles one rule evaluation needs to reach its datasource: the
+/// control-plane pool (where the datasource records live), the secret envelope,
+/// the per-datasource pool cache, and the dev fallback pool for rules that carry
+/// no datasource id. Bundled so the signature stays readable as the evaluator
+/// resolves the rule's *own* datasource rather than querying a single shared one.
+pub struct EvalContext<'a> {
+    pub metadata: &'a PgPool,
+    pub envelope: &'a Envelope,
+    pub pools: &'a DatasourcePools,
+    pub dev_pool: &'a PgPool,
+    pub guards: nexus_store::QueryGuards,
+}
+
+/// Evaluate the rule `id` for `tenant`. The rule's query runs against the
+/// datasource the rule names (resolved through the cache, under the standard
+/// guards); a rule with no datasource falls back to the dev pool. Errors are
+/// logged and swallowed per rule so one bad rule never stalls the scheduler.
+pub async fn evaluate_rule(ctx: &EvalContext<'_>, tenant: &str, id: Uuid) {
+    if let Err(e) = try_evaluate(ctx, tenant, id).await {
         tracing::warn!(tenant, rule_id = %id, error = %e, "alert evaluation failed");
     }
 }
 
-async fn try_evaluate(
-    metadata: &PgPool,
-    datasource: &PgPool,
-    guards: nexus_store::QueryGuards,
-    tenant: &str,
-    id: Uuid,
-) -> Result<(), String> {
+async fn try_evaluate(ctx: &EvalContext<'_>, tenant: &str, id: Uuid) -> Result<(), String> {
+    let metadata = ctx.metadata;
+    let guards = ctx.guards;
     let Some(rule) = rule::get(metadata, tenant, id).await.map_err(stringify)? else {
         return Ok(()); // deleted between claim and evaluate — nothing to do
     };
@@ -51,10 +56,11 @@ async fn try_evaluate(
         .map_err(stringify)?
         .map(|s| s.since);
 
-    // Run the rule's query under the same guards panels use, and read the first
-    // numeric cell. No row is "no data" — a non-breaching reading that must not
-    // flap the rule to firing.
-    let value = evaluate_value(datasource, &rule.query, guards).await?;
+    // Run the rule's query under the same guards panels use, against the rule's
+    // own datasource, and read the first numeric cell. No row is "no data" — a
+    // non-breaching reading that must not flap the rule to firing.
+    let datasource = resolve_pool(ctx, tenant, &rule).await?;
+    let value = evaluate_value(&datasource, &rule.query, guards).await?;
     let breaching = match value {
         Some(v) => breaches(v, &rule.op, rule.threshold)?,
         None => false,
@@ -86,6 +92,28 @@ async fn try_evaluate(
         record_and_notify(metadata, tenant, &rule, transition, value).await?;
     }
     Ok(())
+}
+
+/// The pool the rule's query runs against: its named datasource (resolved under
+/// the tenant's RLS and cached after first build), or the dev pool when the rule
+/// carries no datasource id. The audit actor is the rule id — the decrypt log
+/// then points at which rule triggered the connection.
+async fn resolve_pool(
+    ctx: &EvalContext<'_>,
+    tenant: &str,
+    rule: &RuleRecord,
+) -> Result<PgPool, String> {
+    let Some(ds_id) = rule.datasource_id else {
+        return Ok(ctx.dev_pool.clone());
+    };
+    let record = nexus_store::datasource::get(ctx.metadata, tenant, ds_id)
+        .await
+        .map_err(stringify)?
+        .ok_or_else(|| format!("rule names datasource {ds_id}, not visible to {tenant}"))?;
+    ctx.pools
+        .get_or_connect(ctx.metadata, ctx.envelope, tenant, &rule.id.to_string(), &record)
+        .await
+        .map_err(stringify)
 }
 
 /// Run the query and pull the first row's first column as f64. Returns `None`

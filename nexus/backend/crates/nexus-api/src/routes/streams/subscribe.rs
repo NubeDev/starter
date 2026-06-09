@@ -119,17 +119,61 @@ fn open_subscription(state: &AppState, claims: &StreamClaims) -> Option<nexus_en
             // the window closed.
             let spec = pending::take(&run_id, Instant::now())?;
             let token = CancellationToken::new();
-            let pool = state.datasource.clone();
+
+            // The poll runs against the *subscriber's* datasource, not a shared
+            // dev pool: each tick resolves the datasource record and gets (or
+            // builds) its cached pool through the audited decrypt boundary, so a
+            // live panel streams the database it actually points at. The id and
+            // tenant come from the verified token, which `create_stream` already
+            // gated on the `view` grant.
+            let metadata = state.metadata.clone();
+            let envelope = state.envelope.clone();
+            let pools = state.datasource_pools.clone();
+            let tenant = claims.tenant_id.clone();
+            let actor = claims.datasource_id.clone();
+            let ds_id = claims.datasource_id.clone();
             let guards = state.guards;
             let sql = spec.sql.clone();
             nexus_engine::runner::poll::spawn(&run_id, spec.interval, token.clone(), move || {
-                let pool = pool.clone();
-                let sql = sql.clone();
-                async move { run_one(&pool, &sql, guards).await }
+                let (metadata, envelope, pools) =
+                    (metadata.clone(), envelope.clone(), pools.clone());
+                let (tenant, actor, ds_id, sql) =
+                    (tenant.clone(), actor.clone(), ds_id.clone(), sql.clone());
+                async move {
+                    let pool = resolve_pool(&metadata, &envelope, &pools, &tenant, &actor, &ds_id)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    run_one(&pool, &sql, guards).await
+                }
             });
             Some(register(key, run_id, token))
         }
     }
+}
+
+/// Resolve the datasource's connection pool for one poll tick: parse the id from
+/// the token, load its record under the tenant's RLS, then get (or build, once)
+/// the cached pool. After the first tick the cache returns the same pool, so the
+/// per-tick cost is a single redacted-record read.
+async fn resolve_pool(
+    metadata: &sqlx::PgPool,
+    envelope: &nexus_store::datasource::Envelope,
+    pools: &crate::datasource_pools::DatasourcePools,
+    tenant: &str,
+    actor: &str,
+    datasource_id: &str,
+) -> Result<sqlx::PgPool, starter_spi::Error> {
+    let id = uuid::Uuid::parse_str(datasource_id).map_err(|e| starter_spi::Error::Invalid {
+        message: format!("stream carries a malformed datasource id: {e}"),
+    })?;
+    let record = nexus_store::datasource::get(metadata, tenant, id)
+        .await?
+        .ok_or_else(|| starter_spi::Error::NotFound {
+            what: format!("datasource {id}"),
+        })?;
+    pools
+        .get_or_connect(metadata, envelope, tenant, actor, &record)
+        .await
 }
 
 /// One poll: run the guarded query and hand back just its rows for the event.

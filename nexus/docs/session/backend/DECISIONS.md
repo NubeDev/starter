@@ -3,6 +3,35 @@
 Decisions made during the autonomous backend build. Each is a one-liner with the
 rationale that justified it. Newest first.
 
+## D11 — Live panels and alert rules query their own datasource, not the shared dev pool
+
+D10 wired the per-datasource pool cache into the new query route only; live panels
+([streams/subscribe.rs]) and alert evaluation ([alerting/evaluate.rs]) still ran their
+SQL against the hardcoded dev `state.datasource`. That was a latent correctness bug —
+a live panel or alert over a real datasource queried the *wrong database*, masked in
+tests only because the dev pool and the test datasource happened to be the same
+container. Closed by routing both through the same `DatasourcePools` cache:
+
+- **The poll loop resolves the datasource per tick.** A live stream's verified token
+  already carries the datasource id; `open_subscription` now resolves the record
+  (under the tenant's RLS) and gets-or-builds its cached pool inside the poll closure,
+  so after the first tick the cost is one redacted-record read. The stream-subscribe
+  test now points its datasource at the real container and runs with a *dead* dev pool
+  — if the path still fell back to `state.datasource` the poll would error instead of
+  streaming the row, so the test actually proves the datasource is used.
+- **The evaluator takes an `EvalContext`, not a single pool.** It resolves
+  `rule.datasource_id` (already on `RuleRecord`) to that rule's pool; a rule with no
+  datasource falls back to the dev pool, keeping existing rules working. A new alert
+  test proves a rule with a datasource fires with a dead dev pool. The decrypt audit
+  actor is the rule id, so the log points at which rule opened the connection.
+- **`PUT /datasources/:id` lands (the CRUD gap), and evicts the cached pool.** Update
+  re-seals a rotated secret via the store's existing `DatasourcePatch` path, gates on
+  the `edit` grant, and drops any cached pool so the next query rebuilds against the
+  changed host/credentials rather than a stale connection.
+
+The dev `POST /query` against `state.datasource` is intentionally left as the dev
+shortcut; every *product* path (query/live/alerts) now goes through a real datasource.
+
 ## D10 — M4 extensibility = postgres as a real queryable datasource + folder-per-connector, not a speculative file source
 
 The SCOPE names M4's deliverable a "DataFusion file/federation source", but the

@@ -578,6 +578,52 @@
           }
         }
       },
+      "put": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "update_datasource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Datasource id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDatasourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to edit this datasource"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
       "delete": {
         "tags": [
           "datasources"

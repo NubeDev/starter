@@ -40,15 +40,15 @@ pub async fn run_once(state: &AppState) -> Result<(), String> {
     let due = claim_due(&state.metadata, BATCH)
         .await
         .map_err(|e| e.to_string())?;
+    let ctx = super::evaluate::EvalContext {
+        metadata: &state.metadata,
+        envelope: &state.envelope,
+        pools: &state.datasource_pools,
+        dev_pool: &state.datasource,
+        guards: state.guards,
+    };
     for rule in due {
-        super::evaluate::evaluate_rule(
-            &state.metadata,
-            &state.datasource,
-            state.guards,
-            &rule.tenant_id,
-            rule.id,
-        )
-        .await;
+        super::evaluate::evaluate_rule(&ctx, &rule.tenant_id, rule.id).await;
     }
     Ok(())
 }

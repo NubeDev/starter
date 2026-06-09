@@ -27,9 +27,15 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
 fn test_state(pool: &sqlx::PgPool) -> AppState {
+    state_with_dev(pool, pool.clone())
+}
+
+/// State with an explicit dev `datasource` pool, so a test can prove evaluation
+/// reads through a rule's own datasource by passing a dead dev pool.
+fn state_with_dev(metadata: &sqlx::PgPool, dev: sqlx::PgPool) -> AppState {
     AppState {
-        metadata: pool.clone(),
-        datasource: pool.clone(),
+        metadata: metadata.clone(),
+        datasource: dev,
         datasource_pools: Default::default(),
         envelope: Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
         guards: QueryGuards {
@@ -173,5 +179,91 @@ async fn rule_fires_through_a_webhook_then_resolves() {
     assert!(transitions.contains(&"resolved"));
 
     let _ = rule_id;
+    drop(app);
+}
+
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn rule_evaluates_against_its_named_datasource_not_the_dev_pool() {
+    use nexus_store::datasource::{self, NewDatasource};
+
+    let (admin, _guard) = with_database().await;
+    let port = admin.sqlx().connect_options().as_ref().get_port();
+    let pool = runtime_pool(admin.sqlx()).await;
+
+    sqlx::query("CREATE TABLE gauge (v double precision)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO gauge VALUES (99)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("GRANT SELECT ON gauge TO nexus_runtime")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+
+    // The datasource the rule names — pointing at the container with its creds
+    // sealed. The dev pool is dead, so a fire proves the query ran through the
+    // datasource, not the shared fallback.
+    let ds = datasource::insert(
+        &pool,
+        &Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
+        "acme",
+        &NewDatasource {
+            name: "gauge-db".into(),
+            kind: "postgres".into(),
+            host: "127.0.0.1".into(),
+            port: port as i32,
+            database: "postgres".into(),
+            db_user: "postgres".into(),
+            secret: "postgres".into(),
+        },
+    )
+    .await
+    .expect("datasource");
+
+    let (hook_url, hits) = webhook_sink().await;
+    let dead = sqlx::PgPool::connect_lazy("postgres://nope:nope@127.0.0.1:1/none").unwrap();
+    let state = state_with_dev(&pool, dead);
+    let router = serve::router(state.clone()).layer(Extension(acme_admin()));
+    let app = TestApp::spawn(router).await;
+    let client = reqwest::Client::new();
+
+    let channel: Value = client
+        .post(format!("{}/api/v1/alerts/channels", app.base_url))
+        .json(&json!({ "name": "ops", "kind": "webhook", "config": { "url": hook_url } }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let channel_id = channel["id"].as_str().unwrap();
+
+    client
+        .post(format!("{}/api/v1/alerts/rules", app.base_url))
+        .json(&json!({
+            "name": "high-gauge",
+            "datasource_id": ds.id,
+            "query": "SELECT v FROM gauge",
+            "op": "gt",
+            "threshold": 90.0,
+            "for_secs": 0,
+            "interval_secs": 1,
+            "channel_ids": [channel_id]
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    schedule::run_once(&state).await.expect("pass");
+    assert_eq!(
+        hits.load(Ordering::SeqCst),
+        1,
+        "the rule queried its datasource (dev pool is dead) and fired"
+    );
+
     drop(app);
 }
