@@ -14,5 +14,5 @@ pub use get::DatasourceDetail;
 pub use list::DatasourceSummary;
 pub use schema::{DatasourceSchema, SchemaColumn, SchemaTable};
 pub use shared::{DatasourceKind, RedactedConnection};
-pub use test::TestDatasourceResponse;
+pub use test::{TestConnectionRequest, TestDatasourceResponse};
 pub use update::UpdateDatasourceRequest;

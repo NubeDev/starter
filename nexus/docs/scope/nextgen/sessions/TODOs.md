@@ -27,6 +27,47 @@
 
 <!-- newest first -->
 
+### [2026-06-09 21:20] WS-08 — connector breadth blocked on the WS-10 datasource-kind format + a gated-deps decision
+- **What I was doing:** wiring the actual non-Postgres connectors (MQTT/Modbus first, per the WS-08
+  priority order) so a live panel/flow ingests from a device source.
+- **The blocker (three coupled, genuinely undecidable-here problems):**
+  1. **The vendored ArkFlow is connector-trimmed.** `vendor/arkflow-plugin/Cargo.toml:14-16` and
+     `src/input/` show the heavy upstream inputs (MQTT/Modbus/Kafka via `modbus`/`rdkafka`/…) are
+     *deliberately removed* — only `memory`/`generate` remain. So MQTT/Modbus are **not** "register the
+     ArkFlow input"; they need a nexus-authored `Input` impl against a **new gated client dep**
+     (`rumqttc` for MQTT, `tokio-modbus` for Modbus). Adding a default-on heavy dep / choosing the
+     feature-gating is exactly the "ask, don't guess" call HOW-TO-CODE §9 reserves.
+  2. **The datasource record is Postgres-shaped** (`host/port/database/db_user/secret`). MQTT needs
+     topic/QoS; Modbus needs unit-id/register map. Carrying kind-specific config requires either
+     reshaping `NewDatasource`/`DatasourceRecord` or adding a JSON-config column (migration `1301`).
+     **That config shape is the WS-10 datasource-kind declaration format — Wave 2, NOT YET BUILT**
+     (WS-10 shipped only query-kinds). WS-08's own header says "WS-10 owns the declaration format; this
+     WS supplies the builders." Inventing the format here would redefine a shared contract I don't own.
+  3. *Query* connectors (HTTP-REST/Prometheus) additionally need the deeply `PgPool`-typed query core
+     (`nexus-store/src/query/run.rs`, `datasource_pools` → `PgPool`) reshaped to be source-polymorphic
+     — that reaches into WS-03's binder/runner, out of WS-08's lane.
+  - The "ingests from MQTT/Modbus end-to-end" acceptance criterion also needs a live broker/device to
+    verify, which an unattended run can't stand up verifiably.
+- **Options I see:**
+  - (a) Run **WS-10 datasource-kinds (Wave 2)** first to fix the declaration format, decide the
+    gated-deps policy, then re-run WS-08 to author the builders against it. *Clean; correct ordering
+    per the roadmap; defers connectors.*
+  - (b) Let WS-08 add a `kind`-specific JSON-config column + `DatasourceKind::Mqtt` now with a
+    nexus-authored `rumqttc` input behind a `mqtt` feature, **pre-empting** the WS-10 format. *Faster
+    to a demo, but bakes a config shape WS-10 may have to migrate — the collision the roadmap warns
+    against.*
+  - (c) Ship only HTTP-REST as a *query* connector. *Rejected: requires the PgPool→polymorphic query
+    reshape (WS-03's lane) — bigger and more cross-lane than the device connectors.*
+- **My recommendation:** (a). The roadmap already sequences WS-10 datasource-kinds in Wave 2 ahead of
+  the WS-08 builders; honour it. Make the gated-deps decision (`rumqttc`/`tokio-modbus`, feature-gated
+  off by default) at the same time.
+- **What I did instead:** landed the **pre-save `POST /datasources/test`** acceptance criterion in full
+  (DTO + store probe + thin route + UI form button + mirrored tests; all gates green) — it closes the
+  documented "test only works after save" gap and already dispatches on `kind`, so a future connector
+  adds one match arm. Logged this blocker; marked WS-08 row partial in STATUS.md.
+- **To unblock me:** confirm the WS-10 datasource-kind declaration format (config-schema/secret-fields/
+  test-query/dialect) and the gated-deps decision, then re-run WS-08 to author the builders.
+
 ### ✅ RESOLVED [2026-06-09 12:25] — dead `TenantRail`/`TenantChildren` removed in commit `0d8131f3`; `pnpm typecheck` is green workspace-wide. No longer blocks any session.
 
 ### [2026-06-09 12:40] WS-03 — pre-existing `pnpm typecheck` failure in `starter-ui-authz` (out of lane)

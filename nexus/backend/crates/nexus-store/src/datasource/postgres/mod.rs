@@ -3,5 +3,7 @@
 //! folder, additive, with no edit to this one.
 
 mod connect;
+mod probe;
 
 pub use connect::connect;
+pub use probe::{probe, ProbeParams};

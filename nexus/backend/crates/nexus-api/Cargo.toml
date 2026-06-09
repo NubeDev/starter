@@ -101,6 +101,10 @@ name = "routes_datasources_update_e2e"
 path = "tests/routes/datasources/update_e2e_test.rs"
 
 [[test]]
+name = "routes_datasources_test_connection_e2e"
+path = "tests/routes/datasources/test_connection_e2e_test.rs"
+
+[[test]]
 name = "routes_streams_subscribe"
 path = "tests/routes/streams/subscribe_test.rs"
 

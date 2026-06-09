@@ -17,6 +17,9 @@ serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 futures.workspace = true
+# A pre-save connection probe bounds its round-trip with `tokio::time::timeout`
+# so a black-holed host can't hang the "Test connection" request indefinitely.
+tokio.workspace = true
 
 async-trait.workspace = true
 thiserror.workspace = true
@@ -59,6 +62,11 @@ path = "tests/datasource/crud_test.rs"
 [[test]]
 name = "datasource_postgres_connect"
 path = "tests/datasource/postgres/connect_test.rs"
+
+# The closed-port probe case needs no database, so it is not behind `testing`.
+[[test]]
+name = "datasource_postgres_probe"
+path = "tests/datasource/postgres/probe_test.rs"
 
 [[test]]
 name = "dashboard_crud"

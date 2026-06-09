@@ -261,6 +261,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/datasources/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["test_connection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/datasources/{id}": {
         parameters: {
             query?: never;
@@ -1328,6 +1344,23 @@ export interface components {
             kind: components["schemas"]["TaggableKind"];
         };
         /**
+         * @description Body for a *pre-save* connection probe. Carries the same connection fields as
+         *     a create request, including the write-only secret, so the "Test connection"
+         *     affordance works before the datasource is persisted (and before a secret is
+         *     sealed). The secret is used transiently to connect and never stored or echoed.
+         */
+        TestConnectionRequest: {
+            database: string;
+            host: string;
+            /** @description Which connector to probe. */
+            kind: components["schemas"]["DatasourceKind"];
+            /** @description Write-only secret used only to open the probe connection. */
+            password: string;
+            /** Format: int32 */
+            port: number;
+            user: string;
+        };
+        /**
          * @description Outcome of a connection probe. `ok` is the headline; on failure `message`
          *     carries the redacted reason (driver errors are sanitized so they never leak
          *     the connection secret).
@@ -2261,6 +2294,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DatasourceDetail"];
                 };
+            };
+        };
+    };
+    test_connection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestConnectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Probe outcome (ok=false on a failed probe) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDatasourceResponse"];
+                };
+            };
+            /** @description Connector kind cannot be probed pre-save */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

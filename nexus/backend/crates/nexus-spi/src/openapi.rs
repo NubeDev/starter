@@ -16,7 +16,8 @@ use crate::dto::dashboard::{
 };
 use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceSchema, DatasourceSummary,
-    RedactedConnection, SchemaColumn, SchemaTable, TestDatasourceResponse, UpdateDatasourceRequest,
+    RedactedConnection, SchemaColumn, SchemaTable, TestConnectionRequest, TestDatasourceResponse,
+    UpdateDatasourceRequest,
 };
 use crate::dto::alert::{
     AlertCondition, AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest,
@@ -56,6 +57,7 @@ use crate::Problem;
     CreateDatasourceRequest,
     UpdateDatasourceRequest,
     TestDatasourceResponse,
+    TestConnectionRequest,
     DatasourceKind,
     RedactedConnection,
     DatasourceSchema,

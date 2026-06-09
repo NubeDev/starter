@@ -11,8 +11,15 @@ import {
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
 
-import type { CreateDatasourceRequest } from "@/api/types";
-import { useCreateDatasource } from "@/features/datasources/useDatasourceMutations";
+import type {
+  CreateDatasourceRequest,
+  TestConnectionRequest,
+  TestDatasourceResponse,
+} from "@/api/types";
+import {
+  useCreateDatasource,
+  useTestConnection,
+} from "@/features/datasources/useDatasourceMutations";
 
 // Connection form for a new datasource. v1 ships Postgres only (the kind
 // enum has one value), so kind is fixed rather than a picker. The password
@@ -25,6 +32,7 @@ export function DatasourceFormDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const create = useCreateDatasource();
+  const test = useTestConnection();
   const [form, setForm] = useState({
     name: "",
     host: "",
@@ -34,13 +42,16 @@ export function DatasourceFormDialog({
     password: "",
   });
 
-  const set = (k: keyof typeof form) => (v: string) =>
+  const set = (k: keyof typeof form) => (v: string) => {
+    // A field edit invalidates the last probe result so a stale green tick can't
+    // imply the freshly-changed credentials were tested.
+    test.reset();
     setForm((f) => ({ ...f, [k]: v }));
+  };
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const body: CreateDatasourceRequest = {
-      name: form.name.trim(),
+  // The raw config the probe and the create call both submit.
+  function connectionBody(): TestConnectionRequest {
+    return {
       kind: "postgres",
       host: form.host.trim(),
       port: Number(form.port) || 5432,
@@ -48,9 +59,22 @@ export function DatasourceFormDialog({
       user: form.user.trim(),
       password: form.password,
     };
+  }
+
+  function onTest() {
+    test.mutate(connectionBody());
+  }
+
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const body: CreateDatasourceRequest = {
+      name: form.name.trim(),
+      ...connectionBody(),
+    };
     create.mutate(body, {
       onSuccess: () => {
         onOpenChange(false);
+        test.reset();
         setForm({ name: "", host: "", port: "5432", database: "", user: "", password: "" });
       },
     });
@@ -86,7 +110,20 @@ export function DatasourceFormDialog({
               Couldn't create the datasource.
             </p>
           ) : null}
+          <ProbeResult
+            pending={test.isPending}
+            failed={test.isError}
+            result={test.data}
+          />
           <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onTest}
+              disabled={test.isPending || !form.host || !form.user}
+            >
+              {test.isPending ? "Testing…" : "Test connection"}
+            </Button>
             <Button type="submit" disabled={create.isPending}>
               {create.isPending ? "Connecting…" : "Create"}
             </Button>
@@ -94,6 +131,41 @@ export function DatasourceFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Shows the pre-save probe outcome below the form. A transport failure and a
+// failed probe (`ok:false`) both read as "couldn't connect"; a successful probe
+// reports latency so the user sees the connection is live before saving.
+export function ProbeResult({
+  pending,
+  failed,
+  result,
+}: {
+  pending: boolean;
+  failed: boolean;
+  result: TestDatasourceResponse | undefined;
+}) {
+  if (pending) return null;
+  if (failed) {
+    return (
+      <p role="status" className="text-sm text-destructive">
+        Couldn't reach the database.
+      </p>
+    );
+  }
+  if (!result) return null;
+  if (result.ok) {
+    return (
+      <p role="status" className="text-sm text-emerald-600 dark:text-emerald-400">
+        Connected{result.latency_ms != null ? ` in ${result.latency_ms}ms` : ""}.
+      </p>
+    );
+  }
+  return (
+    <p role="status" className="text-sm text-destructive">
+      {result.message ?? "Connection failed."}
+    </p>
   );
 }
 

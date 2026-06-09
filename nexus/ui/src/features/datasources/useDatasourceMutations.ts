@@ -3,7 +3,13 @@ import { useStarterClient } from "@nube/starter-client-react";
 
 import { createDatasource } from "@/api/datasources/create";
 import { removeDatasource } from "@/api/datasources/remove";
-import type { CreateDatasourceRequest, DatasourceDetail } from "@/api/types";
+import { testConnection } from "@/api/datasources/test-connection";
+import type {
+  CreateDatasourceRequest,
+  DatasourceDetail,
+  TestConnectionRequest,
+  TestDatasourceResponse,
+} from "@/api/types";
 
 const DATASOURCES_KEY = ["nexus", "datasources"] as const;
 
@@ -17,6 +23,18 @@ export function useCreateDatasource() {
     mutationFn: (body) => createDatasource(client, body),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: DATASOURCES_KEY }),
+  });
+}
+
+// Probe a raw connection config before saving. Unlike the saved-datasource
+// test, this carries the typed-in credentials so the user can validate them in
+// the create form before committing. A failed probe is a normal result
+// (`ok:false` with a message), not a mutation error, so the hook only rejects on
+// a transport failure.
+export function useTestConnection() {
+  const client = useStarterClient();
+  return useMutation<TestDatasourceResponse, Error, TestConnectionRequest>({
+    mutationFn: (body) => testConnection(client, body),
   });
 }
 

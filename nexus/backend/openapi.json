@@ -920,6 +920,39 @@
         }
       }
     },
+    "/api/v1/datasources/test": {
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "test_connection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestConnectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Probe outcome (ok=false on a failed probe)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestDatasourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Connector kind cannot be probed pre-save"
+          }
+        }
+      }
+    },
     "/api/v1/datasources/{id}": {
       "get": {
         "tags": [
@@ -3321,6 +3354,42 @@
           },
           "kind": {
             "$ref": "#/components/schemas/TaggableKind"
+          }
+        }
+      },
+      "TestConnectionRequest": {
+        "type": "object",
+        "description": "Body for a *pre-save* connection probe. Carries the same connection fields as\na create request, including the write-only secret, so the \"Test connection\"\naffordance works before the datasource is persisted (and before a secret is\nsealed). The secret is used transiently to connect and never stored or echoed.",
+        "required": [
+          "kind",
+          "host",
+          "port",
+          "database",
+          "user",
+          "password"
+        ],
+        "properties": {
+          "database": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind",
+            "description": "Which connector to probe."
+          },
+          "password": {
+            "type": "string",
+            "description": "Write-only secret used only to open the probe connection."
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "user": {
+            "type": "string"
           }
         }
       },

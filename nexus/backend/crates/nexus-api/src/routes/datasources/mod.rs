@@ -6,9 +6,11 @@ pub mod create;
 pub mod delete;
 pub mod get;
 pub mod list;
+pub mod probe_outcome;
 pub mod query;
 pub mod schema;
 pub mod test;
+pub mod test_connection;
 pub mod update;
 
 use axum::routing::{get as http_get, post};
@@ -22,6 +24,10 @@ pub fn router() -> Router<AppState> {
         .route(
             "/api/v1/datasources",
             post(create::create_datasource).get(list::list_datasources),
+        )
+        .route(
+            "/api/v1/datasources/test",
+            post(test_connection::test_connection),
         )
         .route(
             "/api/v1/datasources/{id}",
