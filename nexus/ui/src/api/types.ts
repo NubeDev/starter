@@ -64,3 +64,8 @@ export type Tag = S["Tag"];
 export type TaggableKind = S["TaggableKind"];
 export type SetTagsRequest = S["SetTagsRequest"];
 export type TaggedEntity = S["TaggedEntity"];
+
+export type VariableDetail = S["VariableDetail"];
+export type VariableKind = S["VariableKind"];
+export type CreateVariableRequest = S["CreateVariableRequest"];
+export type UpdateVariableRequest = S["UpdateVariableRequest"];

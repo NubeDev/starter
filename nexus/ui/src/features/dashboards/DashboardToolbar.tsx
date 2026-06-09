@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, Pencil, Plus, Share2 } from "lucide-react";
+import { Braces, Eye, Pencil, Plus, Share2 } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
 import type { Dashboard } from "@/data/types";
@@ -8,6 +8,7 @@ import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { ShareDashboardDialog } from "@/features/dashboards/ShareDashboardDialog";
 import { TimeRangePicker } from "@/features/time/TimeRangePicker";
 import { RefreshControl } from "@/features/time/RefreshControl";
+import { VariableEditorDialog } from "@/features/variables/VariableEditorDialog";
 
 // The dashboard's header strip: its name, the global time-range picker +
 // refresh control, an Add-panel action (edit mode only), and the view/edit
@@ -20,6 +21,7 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
   const toggle = useUiStore((s) => s.toggleEditMode);
   const [adding, setAdding] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [editingVars, setEditingVars] = useState(false);
 
   return (
     <div className="flex items-center justify-between gap-3">
@@ -30,15 +32,26 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         <TimeRangePicker />
         <RefreshControl />
         {editing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => setAdding(true)}
-          >
-            <Plus className="size-4" />
-            Add panel
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setAdding(true)}
+            >
+              <Plus className="size-4" />
+              Add panel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setEditingVars(true)}
+            >
+              <Braces className="size-4" />
+              Variables
+            </Button>
+          </>
         ) : null}
         <Button
           variant="outline"
@@ -68,6 +81,11 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         dashboardId={dashboard.id}
         open={sharing}
         onOpenChange={setSharing}
+      />
+      <VariableEditorDialog
+        slug={dashboard.slug}
+        open={editingVars}
+        onOpenChange={setEditingVars}
       />
     </div>
   );

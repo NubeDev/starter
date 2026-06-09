@@ -9,6 +9,7 @@ import type { Widget } from "@/data/types";
 import type { WidgetState } from "@/features/widgets/WidgetCard";
 import { useTimeStore } from "@/store/time";
 import { resolveTimeRange, intervalSecs } from "@/store/time";
+import { useVariableStore, toQueryVariables } from "@/store/variables";
 
 // Runs a panel's query and adapts the TanStack Query result into the
 // `WidgetState` the card renders (loading / error / ready). This is the
@@ -32,19 +33,31 @@ export function useWidgetQuery(widget: Widget): WidgetState {
   const now = useTimeStore((s) => s.now);
   const tick = useTimeStore((s) => s.tick);
 
+  // Resolved dashboard variables (WS-02): the bar's current selections,
+  // shaped as `QueryVariable[]` the server-side binder expands ($var /
+  // ${var:csv} / $__sqlIn). `revision` bumps once per selection change, so
+  // keying on it re-queries exactly the affected panels (item 7 / C3)
+  // without busting cache on every render. A panel whose SQL references no
+  // variable is unaffected — the binder ignores unreferenced values.
+  const resolvedVars = useVariableStore((s) => s.resolved);
+  const varRevision = useVariableStore((s) => s.revision);
+  const variables = toQueryVariables(resolvedVars);
+
   const resolved = resolveTimeRange(range, now);
   const interval = intervalSecs(resolved);
   const request: QueryRequest = {
     sql,
     time_range: { from: resolved.from.toISOString(), to: resolved.to.toISOString() },
     interval_secs: interval,
+    ...(variables.length > 0 ? { variables } : {}),
   };
 
   const result = useQuery({
     // `tick` snaps the cache to the refresh tick (C3): the resolved instants
     // change every render for a relative range, so keying on them directly
     // would bust cache constantly; keying on `tick` busts once per refresh.
-    queryKey: ["nexus", "query", datasourceId, sql, tick, interval],
+    // `varRevision` does the same for variable selections.
+    queryKey: ["nexus", "query", datasourceId, sql, tick, interval, varRevision],
     queryFn: () =>
       (datasourceId
         ? queryDatasource(client, datasourceId, request)

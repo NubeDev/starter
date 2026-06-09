@@ -17,6 +17,7 @@ import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
 import { useAutoRefresh } from "@/features/time/useAutoRefresh";
 import { useTimeUrlSync } from "@/features/time/useTimeUrlSync";
+import { VariableBar } from "@/features/variables/VariableBar";
 
 // A single dashboard: loads it by slug, renders the toolbar (view/edit
 // toggle) and the canvas. The page is a thin shell — data lives in
@@ -77,6 +78,10 @@ export function DashboardPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <DashboardToolbar dashboard={dashboard} />
+      {/* The variable bar (WS-02): one control per dashboard variable, above
+          the canvas. Renders nothing when the dashboard has no variables, so
+          a plain board is visually unchanged. */}
+      <VariableBar slug={slug ?? ""} />
       <div className="flex min-h-0 flex-1 gap-4">
         <div className="min-h-0 flex-1">
           {showGrid ? (

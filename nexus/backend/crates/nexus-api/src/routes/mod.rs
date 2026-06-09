@@ -10,6 +10,7 @@ pub mod me;
 pub mod query;
 pub mod streams;
 pub mod tags;
+pub mod variables;
 
 use axum::Router;
 
@@ -29,4 +30,5 @@ pub fn product_router() -> Router<AppState> {
         .merge(alerts::router())
         .merge(tags::router())
         .merge(agents::router())
+        .merge(variables::router())
 }

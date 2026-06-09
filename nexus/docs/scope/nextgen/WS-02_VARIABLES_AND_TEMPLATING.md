@@ -3,7 +3,7 @@
 > **Status:** Not started · **Wave:** 2 · **Owner:** _unassigned_
 > **Depends on:** C2 macro engine (WS-03), C1 JSON model, C3 URL-state (Wave 0) · pairs with WS-01
 > **Migration:** block `07xx` (e.g. `0701_variables.sql`; may be unneeded if vars live in dashboard JSON) · **Read first:** GAP_ANALYSIS §2.2, ROADMAP §0 + §6
-> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+> **Verified:** `72ae8e12` on 2026-06-09 — re-grepped this WS's file:line claims.
 
 ## Goal
 Grafana-class **dashboard variables**: one dashboard, parameterised. A variable bar lets the user
@@ -12,9 +12,17 @@ deep-link via URL. This is the feature that lets **one dashboard serve a whole f
 hand-authoring one per site — directly serving the energy/water/HVAC vision.
 
 ## Current state (evidence)
-- **No variables at all.** A vestigial `PanelQuery.params` positional array exists
-  (`ui/src/data/types.ts:37-39`) but is never populated or surfaced.
-- No interpolation, dropdowns, multi-select, or cascading anywhere.
+- **No variables (UI/persistence) yet.** A vestigial `PanelQuery.params` positional array
+  exists (`ui/src/data/types.ts:37-38`) but is never populated or surfaced.
+- No dropdowns, multi-select, cascading, or variable persistence anywhere.
+- **SQL-side interpolation is already shipped by WS-03** (re-verify, drift in our favour):
+  the C7 `QueryRequest.variables: Vec<QueryVariable>` field
+  (`nexus-spi/src/dto/query/run.rs`) and the binder's `$var`/`${var:csv}`/
+  `${var:singlequote}`/`$__sqlIn(var)` expansion (`nexus-store/src/query/bind/vars.rs`,
+  lowered by `request.rs`) exist and are injection-safe by construction (every value binds
+  as a `$N` arg). So WS-02 supplies the variable *definitions*, *resolution* (incl.
+  cascading), the *UI*, and the *wiring of resolved values into the query body* — the
+  interpolation engine itself is WS-03's and is not rebuilt here.
 
 ## Scope
 1. **Variable model** (DTO `nexus-spi/src/dto/variable/**` + UI type in `data/types.ts`, C1):

@@ -19,7 +19,7 @@ session always finds its dependencies already committed in the working tree.
 | 4 | WS-10 | Kinds — declarative extensibility | ✅ | 2026-06-09 13:30 | 2026-06-09 13:55 | dd4687ae | registry+loader+lints+pack(4)+kind-mode dispatch+catalogue route+UI picker; reuses WS-03 binder |
 | 5 | WS-08 | Connector breadth (MQTT/Modbus/…) | ⛔ | 2026-06-09 14:00 | 2026-06-09 21:20 | 00e40609 | pre-save `/datasources/test` landed+GREEN; connectors blocked on WS-10 datasource-kind format + gated-deps decision (TODOs.md) |
 | 6 | WS-01 | Time Range & Auto-Refresh | ✅ | 2026-06-09 14:20 | 2026-06-09 21:35 | 8e5a2cdf | UI-only: backend passthrough pre-shipped by WS-03; picker+refresh+URL+query wiring; zoom-by-drag deferred (TODOs.md) |
-| 7 | WS-02 | Variables & Templating | 🔵 | 2026-06-09 14:40 | | | needs WS-03 macros (✅ committed) |
+| 7 | WS-02 | Variables & Templating | ✅ | 2026-06-09 14:40 | 2026-06-09 22:10 | | defns table(0701,RLS)+CRUD routes+resolution(cascade+cycle-detect)+bar/editor+URL+folded into useWidgetQuery; cargo build/test + pnpm typecheck/test(197)/build GREEN; repeat-render→WS-05 |
 | 8 | WS-11 | Units & datetime prefs | ⬜ | | | | needs WS-04 + WS-10 |
 | 9 | WS-12 | Audit log + undo/redo | ⬜ | | | | changelog substrate |
 | 10 | WS-05 | Folders/Rows/Repeat/JSON/Versioning | ⬜ | | | | repeat needs WS-02 |

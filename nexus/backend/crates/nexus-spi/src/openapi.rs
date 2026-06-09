@@ -33,6 +33,9 @@ use crate::dto::query::{
 };
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
+use crate::dto::variable::{
+    CreateVariableRequest, UpdateVariableRequest, VariableDetail, VariableKind,
+};
 use crate::Problem;
 
 /// Aggregates every nexus DTO into a schema-only OpenAPI document.
@@ -97,5 +100,9 @@ use crate::Problem;
     CreateSessionRequest,
     CreateSessionResponse,
     SessionDetail,
+    VariableDetail,
+    VariableKind,
+    CreateVariableRequest,
+    UpdateVariableRequest,
 )))]
 pub struct Schemas;

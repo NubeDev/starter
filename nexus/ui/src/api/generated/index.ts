@@ -244,6 +244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboards/{slug}/variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_variables"];
+        put?: never;
+        post: operations["create_variable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/datasources": {
         parameters: {
             query?: never;
@@ -600,6 +616,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/variables/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_variable"];
+        options?: never;
+        head?: never;
+        patch: operations["update_variable"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -895,6 +927,25 @@ export interface components {
             subscribe_url: string;
             /** @description Signed token to pass as `?token=` when opening the SSE connection. */
             token: string;
+        };
+        /**
+         * @description Create a dashboard variable. `name` is unique within the dashboard; a
+         *     duplicate is a conflict. The kind-specific authoring input rides in
+         *     `options_config` (opaque, shape owned by the UI).
+         */
+        CreateVariableRequest: {
+            current?: string[];
+            hidden?: boolean;
+            include_all?: boolean;
+            kind: components["schemas"]["VariableKind"];
+            label?: string | null;
+            multi?: boolean;
+            /** @description Reference name without the `$`, unique per dashboard. */
+            name: string;
+            /** @description Kind-specific authoring config; defaults to an empty object. */
+            options_config?: unknown;
+            /** Format: int32 */
+            sort_order?: number;
         };
         /**
          * @description Full dashboard view: identity plus its ordered panels. The slug resolves to
@@ -1450,6 +1501,71 @@ export interface components {
             title?: string | null;
             viz?: string | null;
         };
+        /**
+         * @description Partial update. Every field is optional — `None` leaves the stored value
+         *     untouched. Changing `current` alone is the common case (the user picked a new
+         *     value in the bar); changing the rest is the variable editor.
+         */
+        UpdateVariableRequest: {
+            current?: string[] | null;
+            hidden?: boolean | null;
+            include_all?: boolean | null;
+            kind?: null | components["schemas"]["VariableKind"];
+            label?: string | null;
+            multi?: boolean | null;
+            name?: string | null;
+            options_config?: unknown;
+            /** Format: int32 */
+            sort_order?: number | null;
+        };
+        /**
+         * @description A dashboard variable definition. `options_config` carries the kind-specific
+         *     authoring input (the custom list, the option SQL + datasource, the interval
+         *     steps, or the datasource-kind filter); it is opaque on the wire because its
+         *     shape varies by `kind` and the UI owns each shape. `current` holds the
+         *     selected value(s); the binder receives these (resolved) as `QueryVariable`.
+         */
+        VariableDetail: {
+            /**
+             * @description Currently selected value(s). One entry for a single-select; several for a
+             *     multi-select / "All" expansion. The binder binds each as its own arg.
+             */
+            current?: string[];
+            /**
+             * Format: uuid
+             * @description The dashboard this variable scopes.
+             */
+            dashboard_id: string;
+            /** @description Whether the variable is hidden from the bar (constants usually are). */
+            hidden?: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description Whether an "All" option is offered (expands to every resolved option). */
+            include_all?: boolean;
+            kind: components["schemas"]["VariableKind"];
+            /** @description Human label for the variable bar; falls back to `name` when absent. */
+            label?: string | null;
+            /** @description Whether multiple values may be selected at once. */
+            multi?: boolean;
+            /** @description The reference name without the `$` (e.g. `region`). Unique per dashboard. */
+            name: string;
+            /** @description Kind-specific authoring config (opaque; shape owned by the UI per kind). */
+            options_config: unknown;
+            /**
+             * Format: int32
+             * @description Display/resolution order within the dashboard's variable bar; lower
+             *     sorts first. Ties break by creation order.
+             */
+            sort_order?: number;
+        };
+        /**
+         * @description The kind of a dashboard variable — what populates its option list and how its
+         *     value is sourced. Mirrors Grafana's templating types; the UI resolves the
+         *     options for each kind, the binder only ever sees the *resolved* string
+         *     value(s) (WS-03's `$var`/`$__sqlIn` expansion).
+         * @enum {string}
+         */
+        VariableKind: "constant" | "custom" | "query" | "datasource" | "interval" | "textbox";
     };
     responses: never;
     parameters: never;
@@ -2246,6 +2362,77 @@ export interface operations {
             };
             /** @description Dashboard not found in this tenant */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_variables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug (route alias) */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Variables in bar order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableDetail"][];
+                };
+            };
+            /** @description Dashboard not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_variable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug (route alias) */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVariableRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableDetail"];
+                };
+            };
+            /** @description Dashboard not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Variable name already used on this dashboard */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3150,6 +3337,75 @@ export interface operations {
         responses: {
             /** @description Tags replaced */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_variable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Variable id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_variable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Variable id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVariableRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableDetail"];
+                };
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Variable name already used on this dashboard */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

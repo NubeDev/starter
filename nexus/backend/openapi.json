@@ -868,6 +868,88 @@
         }
       }
     },
+    "/api/v1/dashboards/{slug}/variables": {
+      "get": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "list_variables",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug (route alias)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Variables in bar order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VariableDetail"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dashboard not found in this tenant"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "create_variable",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug (route alias)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVariableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dashboard not found in this tenant"
+          },
+          "409": {
+            "description": "Variable name already used on this dashboard"
+          }
+        }
+      }
+    },
     "/api/v1/datasources": {
       "get": {
         "tags": [
@@ -1875,6 +1957,80 @@
           }
         }
       }
+    },
+    "/api/v1/variables/{id}": {
+      "delete": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "delete_variable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Variable id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "update_variable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Variable id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVariableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          },
+          "409": {
+            "description": "Variable name already used on this dashboard"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2531,6 +2687,51 @@
           "token": {
             "type": "string",
             "description": "Signed token to pass as `?token=` when opening the SSE connection."
+          }
+        }
+      },
+      "CreateVariableRequest": {
+        "type": "object",
+        "description": "Create a dashboard variable. `name` is unique within the dashboard; a\nduplicate is a conflict. The kind-specific authoring input rides in\n`options_config` (opaque, shape owned by the UI).",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "current": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "include_all": {
+            "type": "boolean"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/VariableKind"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string",
+            "description": "Reference name without the `$`, unique per dashboard."
+          },
+          "options_config": {
+            "description": "Kind-specific authoring config; defaults to an empty object."
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -3674,6 +3875,144 @@
             ]
           }
         }
+      },
+      "UpdateVariableRequest": {
+        "type": "object",
+        "description": "Partial update. Every field is optional — `None` leaves the stored value\nuntouched. Changing `current` alone is the common case (the user picked a new\nvalue in the bar); changing the rest is the variable editor.",
+        "properties": {
+          "current": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "include_all": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VariableKind"
+              }
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options_config": {},
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "VariableDetail": {
+        "type": "object",
+        "description": "A dashboard variable definition. `options_config` carries the kind-specific\nauthoring input (the custom list, the option SQL + datasource, the interval\nsteps, or the datasource-kind filter); it is opaque on the wire because its\nshape varies by `kind` and the UI owns each shape. `current` holds the\nselected value(s); the binder receives these (resolved) as `QueryVariable`.",
+        "required": [
+          "id",
+          "dashboard_id",
+          "name",
+          "kind",
+          "options_config"
+        ],
+        "properties": {
+          "current": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Currently selected value(s). One entry for a single-select; several for a\nmulti-select / \"All\" expansion. The binder binds each as its own arg."
+          },
+          "dashboard_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The dashboard this variable scopes."
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Whether the variable is hidden from the bar (constants usually are)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "include_all": {
+            "type": "boolean",
+            "description": "Whether an \"All\" option is offered (expands to every resolved option)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/VariableKind"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human label for the variable bar; falls back to `name` when absent."
+          },
+          "multi": {
+            "type": "boolean",
+            "description": "Whether multiple values may be selected at once."
+          },
+          "name": {
+            "type": "string",
+            "description": "The reference name without the `$` (e.g. `region`). Unique per dashboard."
+          },
+          "options_config": {
+            "description": "Kind-specific authoring config (opaque; shape owned by the UI per kind)."
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Display/resolution order within the dashboard's variable bar; lower\nsorts first. Ties break by creation order."
+          }
+        }
+      },
+      "VariableKind": {
+        "type": "string",
+        "description": "The kind of a dashboard variable — what populates its option list and how its\nvalue is sourced. Mirrors Grafana's templating types; the UI resolves the\noptions for each kind, the binder only ever sees the *resolved* string\nvalue(s) (WS-03's `$var`/`$__sqlIn` expansion).",
+        "enum": [
+          "constant",
+          "custom",
+          "query",
+          "datasource",
+          "interval",
+          "textbox"
+        ]
       }
     }
   }

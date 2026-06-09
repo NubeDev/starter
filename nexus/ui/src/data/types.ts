@@ -257,6 +257,48 @@ export interface Dashboard {
   updatedAt: string;
 }
 
+/** The kinds of dashboard variable (WS-02), mirroring the wire
+ *  `VariableKind`. Each kind sources its option list differently; the
+ *  resolver (`features/variables/resolve.ts`) populates options per kind
+ *  and the binder only ever receives the *resolved* string values. */
+export type VariableKind =
+  | "constant"
+  | "custom"
+  | "query"
+  | "datasource"
+  | "interval"
+  | "textbox";
+
+/** One selectable option in a variable's list: a display `text` and the
+ *  `value` bound into the query. For most kinds text === value; a query
+ *  variable can project a separate `__text` column for the label. */
+export interface VariableOption {
+  text: string;
+  value: string;
+}
+
+/** A resolved variable, as the bar renders it and the query layer reads
+ *  it: the definition plus its computed option list and current
+ *  selection. The selection is always an array (single-select has one
+ *  entry) so multi/All expansion is uniform downstream. */
+export interface ResolvedVariable {
+  id: string;
+  name: string;
+  label?: string;
+  kind: VariableKind;
+  options: ReadonlyArray<VariableOption>;
+  /** The raw, kind-specific authoring config (opaque). Carried through so
+   *  the editor can reseed its fields and the dependency pass can read a
+   *  query variable's SQL without a refetch. */
+  optionsConfig: unknown;
+  /** Currently selected value(s). Multi/All expands to several. */
+  current: ReadonlyArray<string>;
+  multi: boolean;
+  includeAll: boolean;
+  hidden: boolean;
+  sortOrder: number;
+}
+
 /** One result row, keyed by query-result column name. The widget reads
  *  the columns named in its field mapping (`x` for the axis, each
  *  series' `value`). This is the raw `POST /query` row shape — no widget

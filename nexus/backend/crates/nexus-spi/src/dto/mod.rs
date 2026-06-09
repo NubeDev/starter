@@ -18,3 +18,4 @@ pub mod query;
 pub mod query_history;
 pub mod stream;
 pub mod tag;
+pub mod variable;
