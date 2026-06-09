@@ -13,7 +13,11 @@ import { useCallback, useRef, useState } from "react";
 import { streamJson } from "@nube/starter-client-ts";
 import { useStarterClient } from "@nube/starter-client-react";
 
-import { agentSessionEventsUrl, createAgentSession } from "@/api/agents";
+import {
+  agentSessionEventsUrl,
+  createAgentSession,
+  getAgentSession,
+} from "@/api/agents";
 
 /** A unified agent event as emitted by the backend SSE feed. Mirrors the
  * nexus-ai `Event` enum: a tagged union on `kind`. */
@@ -83,9 +87,15 @@ export function useChat(agentId: string | undefined): UseChat {
       const patchReply = (fn: (msg: ChatMessage) => ChatMessage) =>
         setMessages((m) => m.map((msg) => (msg.id === replyId ? fn(msg) : msg)));
 
+      let sessionId: string | undefined;
       try {
         const session = await createAgentSession(client, agentId, { prompt });
+        sessionId = session.id;
         const url = agentSessionEventsUrl(client, session.id, session.token);
+        // A terminal event (`done` or an error `raw`) ends the turn. We must stop
+        // iterating AND abort, because a browser EventSource auto-reconnects on
+        // any stream close — without aborting it would re-open the feed in a loop.
+        let terminal = false;
         for await (const ev of streamJson<AgentEvent>(client, url, {
           signal: ctrl.signal,
         })) {
@@ -99,26 +109,41 @@ export function useChat(agentId: string | undefined): UseChat {
                 content: ev.text.length > 0 ? ev.text : msg.content,
                 streaming: false,
               }));
+              terminal = true;
               break;
             case "raw":
               if (typeof ev.error === "string") {
                 patchReply((msg) => ({ ...msg, error: ev.error as string, streaming: false }));
+                terminal = true;
               }
               break;
             // tool_call / progress: not surfaced in the v1 chat UI.
             default:
               break;
           }
+          if (terminal) {
+            ctrl.abort(); // close the EventSource so it doesn't reconnect
+            break;
+          }
         }
-        // Stream closed without an explicit done (e.g. completed): mark settled.
-        patchReply((msg) => (msg.streaming ? { ...msg, streaming: false } : msg));
+        // The stream ended without a terminal event (the run finished faster than
+        // we attached, or closed empty). The transcript is the durable source of
+        // truth — fetch it so the reply is never silently empty.
+        if (!terminal) {
+          await settleFromSession(client, sessionId, patchReply);
+        }
       } catch (err) {
         if (ctrl.signal.aborted) return;
-        patchReply((msg) => ({
-          ...msg,
-          streaming: false,
-          error: err instanceof Error ? err.message : "The agent run failed.",
-        }));
+        // A transport error mid-stream: fall back to the persisted session before
+        // surfacing a raw error, so a completed run still shows its answer.
+        const settled = await settleFromSession(client, sessionId, patchReply);
+        if (!settled) {
+          patchReply((msg) => ({
+            ...msg,
+            streaming: false,
+            error: err instanceof Error ? err.message : "The agent run failed.",
+          }));
+        }
       } finally {
         if (abort.current === ctrl) abort.current = null;
         setBusy(false);
@@ -128,4 +153,49 @@ export function useChat(agentId: string | undefined): UseChat {
   );
 
   return { messages, busy, send, reset };
+}
+
+/** Settle the streaming reply from the persisted session (the durable source of
+ * truth) when the SSE stream produced no terminal event. Returns true if it
+ * applied a final state (answer or error). Best-effort: a fetch failure returns
+ * false so the caller can fall back to surfacing the stream error. */
+async function settleFromSession(
+  client: ReturnType<typeof useStarterClient>,
+  sessionId: string | undefined,
+  patchReply: (fn: (msg: ChatMessage) => ChatMessage) => void,
+): Promise<boolean> {
+  if (!sessionId) return false;
+  try {
+    const session = await getAgentSession(client, sessionId);
+    if (session.status === "failed" || session.status === "cancelled") {
+      patchReply((msg) => ({
+        ...msg,
+        streaming: false,
+        error: `The agent run ${session.status}.`,
+      }));
+      return true;
+    }
+    const text = assistantText(session.transcript);
+    patchReply((msg) => ({
+      ...msg,
+      content: text && text.length > 0 ? text : msg.content,
+      streaming: false,
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Pull the assistant turn's content from a persisted `[{role,content},…]`
+ * transcript (the SessionDetail.transcript is opaque JSON). */
+function assistantText(transcript: unknown): string | undefined {
+  if (!Array.isArray(transcript)) return undefined;
+  for (let i = transcript.length - 1; i >= 0; i--) {
+    const m = transcript[i] as { role?: unknown; content?: unknown };
+    if (m && m.role === "assistant" && typeof m.content === "string") {
+      return m.content;
+    }
+  }
+  return undefined;
 }
