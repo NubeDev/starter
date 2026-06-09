@@ -39,8 +39,13 @@ placement, reshape, flow-draft — per F10); `pnpm typecheck` + `build` clean; F
 |---|---|---|---|
 | B4 | Load extensions | `nexus-api` to serve the extensions manifest + `remoteEntry.js` | host + slots wired; one base-path change |
 | — | Test datasource connection | the test endpoint (`TestDatasourceResponse` exists, no route) | one binding + a button |
-| — | F10 integration tests | stable dev `nexus-api` (Playwright/testcontainers) | screens proven live manually; automated suite next |
+
+**F10 integration suite** — `src/api/integration.test.ts` runs the bindings against a real
+nexus-api (login → /me → register datasource → real query → cleanup → alert rules). Opt-in via
+`NEXUS_E2E_URL=http://127.0.0.1:8080 pnpm test`; skips cleanly without it so CI stays green.
+Passing 4/4 live.
 
 **Resolved this session:** auth path mismatch (Nexus AuthProvider), B5 (PATCH layout-save),
-B6 (alerts shipped), per-datasource query, B7 (flow editor). The backend is up and the full
-product round-trips against it.
+B6 (alerts shipped), per-datasource query, B7 (flow editor), F10 integration suite. The
+backend is up and the full product round-trips against it — verified by the integration suite,
+not just by hand.
