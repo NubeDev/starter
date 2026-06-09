@@ -1,7 +1,8 @@
-//! The two custom ArkFlow output sinks and the caps they enforce.
+//! The custom ArkFlow output sinks and the caps they enforce.
 
 pub mod broadcast_store;
 pub mod cap;
 pub mod collector;
+pub mod postgres;
 pub mod sse;
 pub mod store;

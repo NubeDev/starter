@@ -27,8 +27,14 @@ thiserror.workspace = true
 tracing.workspace = true
 starter-spi.workspace = true
 
+# Flow connectors: an http-poll input fetches an upstream API on an interval; a
+# postgres output writes the shaped rows to a datasource DB. Both are registered
+# ArkFlow builders, so a saved flow is config, not code.
+reqwest.workspace = true
+sqlx.workspace = true
+
 [dev-dependencies]
-tokio = { workspace = true, features = ["test-util"] }
+tokio = { workspace = true, features = ["test-util", "net", "io-util"] }
 serde_json.workspace = true
 
 # Integration tests mirror src/ one-to-one; cargo only auto-discovers top-level
@@ -40,3 +46,11 @@ path = "tests/runner/query_test.rs"
 [[test]]
 name = "runner_live"
 path = "tests/runner/live_test.rs"
+
+[[test]]
+name = "flow_manager"
+path = "tests/flow/manager_test.rs"
+
+[[test]]
+name = "source_http_poll"
+path = "tests/source/http_poll_test.rs"

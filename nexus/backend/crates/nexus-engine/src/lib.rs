@@ -9,11 +9,15 @@
 //! dependency, never forked.
 
 pub mod arrow_json;
+pub mod flow;
 pub mod registry;
 pub mod runner;
 pub mod sink;
+pub mod source;
 pub mod stream_registry;
+pub mod time;
 
+pub use flow::FlowManager;
 pub use registry::register_all;
 pub use runner::{LiveRunner, QueryOutcome, QueryRunner};
 pub use sink::cap::Caps;
