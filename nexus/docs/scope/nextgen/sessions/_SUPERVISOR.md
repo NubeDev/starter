@@ -224,3 +224,15 @@ If `.loop.STOP` exists AND its content mentions a guarded PID (e.g. "protect in-
   consumers (flows/, PanelEditor.tsx) — benign codegen churn from regenerating shared
   generated/index.ts; verify WS-08b commits only its own logic hunks next wake. Lock kernel-held, no
   STOP, no real blockers. 11/12 ✅; WS-08b last item, near commit. NEXT WAKE likely = ALL DONE.
+- 2026-06-10 01:18 — ✅✅ RUN COMPLETE — ALL 13 QUEUE ROWS DONE (0 incomplete). The loop wrote its own
+  "RUN COMPLETE" line at 18:15 and stopped. WS-08b ✅ committed clean (a16185a1 — datasource-kind
+  declaration format + feature-gated MQTT connector; Modbus dropped; rumqttc off-by-default — exactly
+  the human decision). FINAL VERIFY (lock free): cargo check --workspace GREEN in 22s + backend lib
+  test suite GREEN (106+ passing, 0 failed). 27 WS code/finalize commits across the run.
+  SHIPPED: WS-03 binder/history · WS-04 panel editor · WS-07 alerting · WS-10 query-kinds ·
+  WS-01 time range · WS-02 variables · WS-11 units/prefs(backend) · WS-12 audit/undo · WS-05
+  folders/JSON · WS-06 flows builder · WS-09 cache/quota/ratelimit · WS-08b datasource-kinds+MQTT.
+  ACTION TAKEN: stopped the cron (install-cron.sh remove) so it doesn't fire no-ops overnight; the
+  supervisor /loop will be stopped too. The whole next-gen dashboarding platform is built on
+  nexus-gaps, all green, one branch. DEFERRED FOLLOW-UPS (in TODOs, none are blockers) + sign-off
+  items below in the human report. SUPERVISOR SIGNING OFF.
