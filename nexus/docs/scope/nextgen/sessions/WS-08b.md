@@ -3,6 +3,7 @@
 > Status: Done
 > Started: 2026-06-10 (UTC)
 > Finished: 2026-06-09 18:13 (UTC)
+> Commit: a16185a1
 > Branch: `nexus-gaps` · Migration block: `13xx` (none needed — manifest-only kinds, no schema)
 
 The human-unblocked successor to WS-08. HUMAN DECISION (2026-06-09): build the WS-10
