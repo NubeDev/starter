@@ -40,6 +40,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         live: LiveRunner::new().expect("engine init"),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
+        engine: id.engine.clone(),
     };
     let router = serve::assemble(state, id.auth, id.authz, id.authenticator);
     TestApp::spawn(router).await

@@ -59,6 +59,24 @@ pub async fn list_for_dashboard(
     Ok(rows.iter().map(row_to_record).collect())
 }
 
+/// The dashboard a panel belongs to, within the tenant. `Ok(None)` when no such
+/// panel is visible — used to authorize a panel mutation against its owning
+/// dashboard's grant before the delete runs.
+pub async fn dashboard_id_of(
+    pool: &PgPool,
+    tenant_id: &str,
+    id: Uuid,
+) -> Result<Option<Uuid>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let row = sqlx::query("SELECT dashboard_id FROM nexus_panels WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(row.map(|r| r.get::<Uuid, _>("dashboard_id")))
+}
+
 /// Delete a panel within the tenant. Returns whether a row was removed.
 pub async fn delete(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<bool, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;

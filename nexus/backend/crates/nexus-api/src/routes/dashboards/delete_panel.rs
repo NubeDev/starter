@@ -9,7 +9,8 @@ use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 use uuid::Uuid;
 
-use crate::middleware::tenant::tenant_of;
+use crate::authz::{self, ACTION_EDIT, KIND_DASHBOARD};
+use crate::middleware::tenant::caller;
 use crate::state::AppState;
 
 #[utoipa::path(
@@ -28,10 +29,29 @@ pub async fn delete_panel(
     principal: Option<Extension<Principal>>,
     Path(id): Path<Uuid>,
 ) -> axum::response::Response {
-    let tenant = match tenant_of(&principal) {
-        Ok(t) => t,
+    let (caller, tenant) = match caller(&principal) {
+        Ok(c) => c,
         Err(resp) => return resp,
     };
+    // Removing a panel mutates its dashboard — authorize `edit` on the owning
+    // dashboard. A panel not visible to the tenant is a 404 (RLS hid it).
+    let dashboard_id = match dashboard::panel::dashboard_id_of(&state.metadata, &tenant, id).await {
+        Ok(Some(d)) => d,
+        Ok(None) => return (StatusCode::NOT_FOUND, "not found").into_response(),
+        Err(e) => return IntoResponse(e).into_response(),
+    };
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_EDIT,
+        KIND_DASHBOARD,
+        &dashboard_id.to_string(),
+        &tenant,
+    )
+    .await
+    {
+        return resp;
+    }
     match dashboard::panel::delete(&state.metadata, &tenant, id).await {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         Ok(false) => (StatusCode::NOT_FOUND, "not found").into_response(),

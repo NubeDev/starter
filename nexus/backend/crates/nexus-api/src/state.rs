@@ -6,12 +6,14 @@
 //! single `datasource` handle as more connectors land. `AppState` is cloneable
 //! (all fields are cheap handles) so axum can share it across requests.
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use nexus_engine::LiveRunner;
 use nexus_store::datasource::Envelope;
 use nexus_store::QueryGuards;
 use sqlx::PgPool;
+use starter_spi::authz::PolicyEngine;
 
 use crate::middleware::StreamTokenSigner;
 
@@ -34,4 +36,9 @@ pub struct AppState {
     pub stream_signer: StreamTokenSigner,
     /// Lifetime granted to a freshly-minted stream token.
     pub stream_token_ttl: Duration,
+    /// Grant-check engine. In the running server this is the very
+    /// `DbPolicyEngine` the `/v1/authz/*` router writes to, so a grant created
+    /// through the API is visible to the next handler check; tests can swap in
+    /// `AllowAll`/`DenyAll` to assert a route is gated.
+    pub engine: Arc<dyn PolicyEngine>,
 }

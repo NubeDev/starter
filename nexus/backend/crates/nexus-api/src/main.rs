@@ -43,6 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,
         stream_signer: StreamTokenSigner::new(cfg.stream_key.into_bytes()),
         stream_token_ttl: Duration::from_secs(60),
+        engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
     };
 
     let router = serve::assemble(state, identity.auth, identity.authz, identity.authenticator);

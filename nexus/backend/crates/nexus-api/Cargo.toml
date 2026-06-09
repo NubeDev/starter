@@ -49,7 +49,7 @@ base64.workspace = true
 # Pulls in the starter-server test harness (TestApp) and the testcontainers
 # Postgres helper for HTTP integration tests. Off by default so production
 # builds stay lean.
-testing = ["starter-server/testing", "starter-store-postgres/testing"]
+testing = ["starter-server/testing", "starter-store-postgres/testing", "nexus-store/testing"]
 
 [[bin]]
 name = "nexus-api"
@@ -80,3 +80,7 @@ path = "tests/routes/streams/subscribe_test.rs"
 [[test]]
 name = "routes_identity_wiring"
 path = "tests/routes/identity/wiring_test.rs"
+
+[[test]]
+name = "routes_authz_grant_gate"
+path = "tests/routes/authz/grant_gate_test.rs"
