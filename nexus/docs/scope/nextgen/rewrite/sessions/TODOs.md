@@ -108,6 +108,11 @@ Format per entry:
   `retry_after` on `IngestError::Full` — reusing RW-09's channel/backpressure seam
   rather than introducing a second path. The host stamps tenant from the install
   identity (never the payload), exactly as the spec requires.
+- **✅ RESOLVED (RW-07b):** `nexus-api/src/extensions/ingest.rs::write` resolves the
+  named source via `state.flows.ingest()` and calls `IngestChannels::try_push`,
+  returning `retry_after_secs` on `IngestError::Full` — exactly the RW-09 seam, no
+  second path. Tenant stamped from `caller.tenant_id` (the supervisor binds it from
+  the install), overwriting any payload `tenant_id`.
 
 ## 2026-06-10 RW-09 — Zenoh store-side connect probe not implemented (RW-04 lane)
 - **Type:** follow-up
@@ -192,6 +197,41 @@ Format per entry:
   at, mirroring the channel/backpressure design in the engine's existing bounded-source path.
   Additive manifest fields only — if any needed `starter-ext-spi`/supervisor change is breaking,
   that is a blocker entry here, not a guess (per the spec's Non-goals).
+- **✅ RESOLVED (RW-07b):** items 2 (sources/sinks manifest fields + `ingest.write`), 3 (engine
+  source seam), and 4 (`ingest.*` authz) shipped. Additive contracts:
+  `Contributes.sources[]`/`sinks[]` + `ContributeSource`/`ContributeSink`/`IngestDirection`,
+  `Capability::Ingest { names }`, and the `ingest::{IngestWriteRequest,IngestWriteResponse,
+  IngestReadBatchRequest,IngestReadBatchResponse}` DTOs in `starter-ext-spi`. Supervisor gate:
+  `("ingest","ingest")` in `CAPABILITY_HOST_METHODS` + `Capability::Ingest => "ingest"` in
+  `category_of`; host `capability_matches` + wasm `from_capability` arms added (additive). Host
+  method `ingest.write` in `nexus-api/src/extensions/ingest.rs` (tenant-stamp from caller,
+  backpressure via the RW-09 `IngestChannels` seam). The engine "extension source node" is the
+  existing per-flow `http_ingest` source keyed by flow id (RW-09) — a stopped flow's source
+  deregisters its channel, so a push afterward returns `NotRunning` (the "errors cleanly after
+  purge/disable" acceptance). Acceptance bullets closed: channel-full retry_after unit test,
+  tenant-stamp docker e2e, and the hello-purge docker e2e (`InsightCleanupProvider`).
+  **Still open:** the *sink* direction `ingest.read_batch` (host→extension drain) — see the
+  RW-07b follow-up below.
+
+## 2026-06-10 RW-07b — Sink direction `ingest.read_batch` (host→extension drain) deferred
+- **Type:** follow-up (RW-07 scope item 2, sink half)
+- **What:** The data-plane *source* direction (`ingest.write`) is fully shipped. The *sink*
+  direction — a flow sink whose batches an extension long-polls via `ingest.read_batch` — is
+  NOT implemented. Its additive contracts ARE landed (`ContributeSink`, `IngestReadBatch{Request,
+  Response}`, the `ingest` capability category), so the remaining work is purely engine-side:
+    - an engine `nexus-engine/src/sink/extension.rs` node that writes each batch into a bounded
+      per-sink output queue (the symmetric dual of `IngestChannels`, e.g. `IngestOutputs` on
+      `FlowManager`), back-pressuring the flow when the extension is not draining;
+    - a `nexus-api` `ingest.read_batch` host method that long-polls that queue under the caller's
+      capability/tenant gate and returns up to `max_rows` rows.
+- **Why:** Unlike `ingest.write` (which reuses RW-09's existing `http_ingest` push channel), the
+  sink drain has no existing seam to reuse — it is a second self-contained data-plane (engine
+  queue + flow wiring + long-poll method). Shipping it half-done would mean a stub host method
+  that pretends to drain. Per the charter (no stubs in shipped paths) it is deferred whole.
+- **Proposed:** A focused RW-07c (or reopened RW-07b) adds the `IngestOutputs` queue +
+  `sink/extension.rs` + `ingest.read_batch` against the already-landed contracts, mirroring the
+  `IngestChannels`/`http_ingest`/`ingest.write` shape exactly. No new SPI/supervisor change is
+  needed — the contracts are in place.
 
 ---
 

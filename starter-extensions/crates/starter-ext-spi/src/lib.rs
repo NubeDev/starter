@@ -26,6 +26,7 @@ pub mod fs_ext;
 pub mod http_out;
 pub mod id;
 pub mod identity;
+pub mod ingest;
 pub mod issue;
 pub mod jsonrpc;
 pub mod lifecycle;
@@ -43,6 +44,9 @@ pub use error::{Error, Result};
 pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use id::ExtensionId;
 pub use identity::{CallerIdentity, FrameMeta};
+pub use ingest::{
+    IngestReadBatchRequest, IngestReadBatchResponse, IngestWriteRequest, IngestWriteResponse,
+};
 pub use issue::{ExtensionIssue, IssueCode, IssueSource, Severity};
 pub use jsonrpc::{
     flow_node_error_codes, stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification,
@@ -52,9 +56,10 @@ pub use jsonrpc::{
 pub use lifecycle::LifecycleState;
 pub use manifest::{
     AuthGate, Backoff, CliStreaming, ContributeAnomalyRule, ContributeCli, ContributeGrpc,
-    ContributeNode, ContributeRest, ContributeSkillsDir, ContributeTool, ContributeUi,
-    ContributeUiExpose, ContributeWarehouseTable, ContributeWarehouseTemplate, ContributeWorker,
-    Contributes, HealthConfig, Manifest, ManifestRequires, OnErrorPolicy, PermissionGate, Require,
+    ContributeNode, ContributeRest, ContributeSink, ContributeSkillsDir, ContributeSource,
+    ContributeTool, ContributeUi, ContributeUiExpose, ContributeWarehouseTable,
+    ContributeWarehouseTemplate, ContributeWorker, Contributes, HealthConfig, IngestDirection,
+    Manifest, ManifestRequires, OnErrorPolicy, PermissionGate, Require,
     RestStreaming, RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision, TableColumn,
     MANIFEST_VERSION,
 };

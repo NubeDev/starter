@@ -40,6 +40,7 @@ pub mod config;
 pub mod contribute;
 pub mod contribute_insights;
 pub mod host_methods;
+pub mod ingest;
 pub mod post_install;
 pub mod router;
 

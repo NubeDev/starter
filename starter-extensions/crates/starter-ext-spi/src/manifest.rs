@@ -414,6 +414,91 @@ pub struct Contributes {
     /// field — like every other contribution it is additive and defaults empty.
     #[serde(default)]
     pub insights: Vec<ContributeInsight>,
+    /// Data-plane source contributions — named inputs the extension feeds via
+    /// the `ingest.write` host method. Each entry declares a flow source the
+    /// host wires to a bounded channel; the extension pushes rows into it. See
+    /// [`ContributeSource`].
+    ///
+    /// Additive and empty by default: a host without a data-plane ignores it,
+    /// exactly like every other contribution field.
+    #[serde(default)]
+    pub sources: Vec<ContributeSource>,
+    /// Data-plane sink contributions — named outputs the extension drains via
+    /// the `ingest.read_batch` host method. Each entry declares a flow sink whose
+    /// batches the host buffers for the extension to long-poll. See
+    /// [`ContributeSink`].
+    #[serde(default)]
+    pub sinks: Vec<ContributeSink>,
+}
+
+/// Direction of a data-plane contribution — whether the extension produces data
+/// into the host (`Source`) or consumes data the host produced (`Sink`).
+///
+/// Carried on both [`ContributeSource`] and [`ContributeSink`] so a single
+/// admin/catalog surface can list them uniformly; the field is redundant with
+/// the contribution list it appears in (a `sources[]` entry is always
+/// inbound) but explicit so the wire shape is self-describing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum IngestDirection {
+    /// Extension → host: rows pushed in via `ingest.write`.
+    Inbound,
+    /// Host → extension: rows drained out via `ingest.read_batch`.
+    Outbound,
+}
+
+/// One `contributes.sources[]` entry — a named data-plane input the extension
+/// pushes rows into via `ingest.write`.
+///
+/// The host materialises this as an `http_ingest`-style bounded source on the
+/// flow named `name` (R4 namespace ownership applies); the extension declares
+/// the row shape it sends via `config_schema` (advisory — the host coerces via
+/// `json_to_arrow` regardless). `direction` is always [`IngestDirection::Inbound`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSource {
+    /// Source name. Must be the extension id or a dotted descendant (R4).
+    pub name: String,
+    /// Optional path (relative to bundle root) to a JSON Schema describing the
+    /// rows the extension pushes. Advisory — the host shapes rows via Arrow
+    /// inference regardless. Omitted ⇒ no schema surfaced.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_schema: Option<String>,
+    /// Always [`IngestDirection::Inbound`] for a source; explicit for a uniform
+    /// catalog. Defaults to inbound when omitted.
+    #[serde(default = "inbound")]
+    pub direction: IngestDirection,
+}
+
+/// One `contributes.sinks[]` entry — a named data-plane output the extension
+/// drains via `ingest.read_batch`.
+///
+/// The host buffers the batches the flow's sink produces in a bounded output
+/// queue keyed by `name`; the extension long-polls them. `direction` is always
+/// [`IngestDirection::Outbound`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSink {
+    /// Sink name. Must be the extension id or a dotted descendant (R4).
+    pub name: String,
+    /// Optional path (relative to bundle root) to a JSON Schema describing the
+    /// rows the host hands back. Advisory. Omitted ⇒ no schema surfaced.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_schema: Option<String>,
+    /// Always [`IngestDirection::Outbound`] for a sink; explicit for a uniform
+    /// catalog. Defaults to outbound when omitted.
+    #[serde(default = "outbound")]
+    pub direction: IngestDirection,
+}
+
+/// Default `direction` for a `sources[]` entry.
+fn inbound() -> IngestDirection {
+    IngestDirection::Inbound
+}
+
+/// Default `direction` for a `sinks[]` entry.
+fn outbound() -> IngestDirection {
+    IngestDirection::Outbound
 }
 
 /// One `contributes.insights[]` entry — a named, sandboxed post-query transform
@@ -1599,6 +1684,67 @@ contributes:
   insights:
     - name: com.acme.weather.z
       script_file: insights/z.rhai
+      bogus: 1
+"#;
+        assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
+    }
+
+    #[test]
+    fn contributes_sources_and_sinks_parse() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: process, bin: weatherd }
+contributes:
+  sources:
+    - name: com.acme.weather.in
+      config_schema: schemas/in.json
+    - name: com.acme.weather.raw
+  sinks:
+    - name: com.acme.weather.out
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.sources.len(), 2);
+        assert_eq!(m.contributes.sources[0].name, "com.acme.weather.in");
+        assert_eq!(
+            m.contributes.sources[0].config_schema.as_deref(),
+            Some("schemas/in.json")
+        );
+        // Direction defaults per list: sources are inbound, sinks outbound.
+        assert_eq!(m.contributes.sources[0].direction, IngestDirection::Inbound);
+        assert!(m.contributes.sources[1].config_schema.is_none());
+        assert_eq!(m.contributes.sinks.len(), 1);
+        assert_eq!(m.contributes.sinks[0].direction, IngestDirection::Outbound);
+    }
+
+    #[test]
+    fn contributes_sources_default_to_empty() {
+        let yaml = r#"
+v: 1
+id: com.acme.none
+version: 0.0.1
+display_name: "None"
+runtime: { kind: builtin, crate_name: none }
+contributes: {}
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(m.contributes.sources.is_empty());
+        assert!(m.contributes.sinks.is_empty());
+    }
+
+    #[test]
+    fn contributes_source_rejects_unknown_field() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: process, bin: weatherd }
+contributes:
+  sources:
+    - name: com.acme.weather.in
       bogus: 1
 "#;
         assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());

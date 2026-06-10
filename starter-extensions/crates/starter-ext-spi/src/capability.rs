@@ -175,6 +175,23 @@ pub enum Capability {
         kinds: Vec<String>,
     },
 
+    /// Feed data into / drain data out of a host data-plane flow via the
+    /// `ingest.*` host methods (`ingest.write` / `ingest.read_batch`). The grant
+    /// enumerates the contributed source/sink names (from
+    /// `contributes.sources[]` / `contributes.sinks[]`) the extension may push
+    /// into or drain. An empty vec is the neutralised form: the extension loads,
+    /// every ingest call is denied.
+    ///
+    /// Tenancy is never the extension's to choose — the host stamps the caller's
+    /// tenant onto every written row, so this grant gates *which named flows* an
+    /// extension may reach, not *whose data* it may write.
+    Ingest {
+        /// Allowed contributed source/sink names. Cross-checked against the
+        /// `source`/`sink` field of each `ingest.*` request at the host backend.
+        #[serde(default)]
+        names: Vec<String>,
+    },
+
     /// An opaque, host-defined capability. Used as the escape hatch for
     /// consumer-specific grants the kernel does not know about.
     Custom {
