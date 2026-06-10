@@ -98,6 +98,7 @@ async fn grant_system_membership(
         tenant_id: SYSTEM_TENANT_ID.to_string(),
         user_id: user_id.to_string(),
         role: "admin".to_string(),
+        email: None,
     };
     match tenants.add_member(&row).await {
         Ok(()) => {
