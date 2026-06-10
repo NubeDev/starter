@@ -14,7 +14,7 @@ async fn typed_batch() -> datafusion::arrow::array::RecordBatch {
         json!({ "city": "madrid", "temp_c": 33 }).to_string(),
         json!({ "city": "berlin", "temp_c": 21 }).to_string(),
     ];
-    let json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
+    let mut json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
     json.process(json_carrier_batch(&docs))
         .await
         .unwrap()
@@ -24,7 +24,7 @@ async fn typed_batch() -> datafusion::arrow::array::RecordBatch {
 
 #[tokio::test]
 async fn select_shapes_and_orders_rows() {
-    let proc = SqlProcessor::from_config(&json!({
+    let mut proc = SqlProcessor::from_config(&json!({
         "type": "sql",
         "query": "SELECT city, temp_c FROM flow ORDER BY city",
     }))
@@ -40,7 +40,7 @@ async fn select_shapes_and_orders_rows() {
 
 #[tokio::test]
 async fn empty_batch_is_a_noop() {
-    let proc = SqlProcessor::from_config(&json!({
+    let mut proc = SqlProcessor::from_config(&json!({
         "type": "sql",
         "query": "SELECT * FROM flow",
     }))
@@ -57,7 +57,7 @@ async fn empty_batch_is_a_noop() {
 
 #[tokio::test]
 async fn dml_is_rejected() {
-    let proc = SqlProcessor::from_config(&json!({
+    let mut proc = SqlProcessor::from_config(&json!({
         "type": "sql",
         "query": "DELETE FROM flow",
     }))
@@ -69,7 +69,7 @@ async fn dml_is_rejected() {
 
 #[tokio::test]
 async fn custom_table_name_is_honoured() {
-    let proc = SqlProcessor::from_config(&json!({
+    let mut proc = SqlProcessor::from_config(&json!({
         "type": "sql",
         "query": "SELECT temp_c FROM readings",
         "table_name": "readings",

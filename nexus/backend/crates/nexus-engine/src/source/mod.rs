@@ -1,14 +1,14 @@
-//! Pipeline sources: the ArkFlow inputs nexus registers, and their native ports
-//! onto the RW-01 [`crate::core::Source`] trait (additive while RW-02 runs; the
-//! ArkFlow versions stay until RW-03 cuts the runners over).
+//! Pipeline sources over the [`crate::core::Source`] trait: a finite `memory`
+//! replay and `generate` ticker for tests and the live seam, an `http_poll`
+//! input for light ingestion flows, and a `simulator` of synthetic device
+//! telemetry. `interval` and `sim` are the shared cadence parser and row builder
+//! the polling and simulator sources compose.
 
 pub mod generate;
-pub mod http_poll;
 pub mod http_poll_source;
 pub mod interval;
 pub mod memory;
 pub mod sim;
-pub mod simulator;
 pub mod simulator_source;
 
 pub use generate::GenerateSource;

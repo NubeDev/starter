@@ -17,12 +17,12 @@ pub enum NodeCategory {
     Output,
 }
 
-/// A node type the engine can build, described for the editor: its ArkFlow
+/// A node type the engine can build, described for the editor: its engine
 /// `type` discriminant, palette grouping, labels, and a JSON Schema for its
 /// config so the editor can render a schema-driven form instead of raw JSON.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct NodeType {
-    /// The ArkFlow `type` value the serialised graph node carries.
+    /// The engine `type` value the serialised graph node carries.
     pub kind: String,
     /// Palette group.
     pub category: NodeCategory,

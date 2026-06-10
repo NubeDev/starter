@@ -3919,7 +3919,7 @@
       },
       "CreateFlowRequest": {
         "type": "object",
-        "description": "Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
+        "description": "Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
         "required": [
           "name",
           "input",
@@ -4409,7 +4409,7 @@
       },
       "DatasourceKind": {
         "type": "string",
-        "description": "The kind of datasource, which selects the ArkFlow input builder. v1 ships\nSQL-over-Postgres as the first connector; the enum is the extension point as\nmore `register_input_builder` connectors land.",
+        "description": "The kind of datasource, which selects the engine's input builder. v1 ships\nSQL-over-Postgres as the first connector; the enum is the extension point as\nmore registry input builders land.",
         "enum": [
           "postgres"
         ]
@@ -4624,7 +4624,7 @@
       },
       "FlowExport": {
         "type": "object",
-        "description": "A self-contained, importable flow: its name plus the ArkFlow config blobs.",
+        "description": "A self-contained, importable flow: its name plus the engine config blobs.",
         "required": [
           "schema_version",
           "name",
@@ -4633,16 +4633,16 @@
         ],
         "properties": {
           "input": {
-            "description": "ArkFlow input component (`{type, ...config}`), secrets redacted."
+            "description": "Engine input component (`{type, ...config}`), secrets redacted."
           },
           "name": {
             "type": "string"
           },
           "output": {
-            "description": "ArkFlow output component (`{type, ...config}`), secrets redacted."
+            "description": "Engine output component (`{type, ...config}`), secrets redacted."
           },
           "pipeline": {
-            "description": "ArkFlow processor list (a JSON array of `{type, ...config}`)."
+            "description": "Engine processor list (a JSON array of `{type, ...config}`)."
           },
           "redacted": {
             "type": "boolean",
@@ -4967,7 +4967,7 @@
       },
       "NodeType": {
         "type": "object",
-        "description": "A node type the engine can build, described for the editor: its ArkFlow\n`type` discriminant, palette grouping, labels, and a JSON Schema for its\nconfig so the editor can render a schema-driven form instead of raw JSON.",
+        "description": "A node type the engine can build, described for the editor: its engine\n`type` discriminant, palette grouping, labels, and a JSON Schema for its\nconfig so the editor can render a schema-driven form instead of raw JSON.",
         "required": [
           "kind",
           "category",
@@ -4989,7 +4989,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "The ArkFlow `type` value the serialised graph node carries."
+            "description": "The engine `type` value the serialised graph node carries."
           },
           "label": {
             "type": "string",

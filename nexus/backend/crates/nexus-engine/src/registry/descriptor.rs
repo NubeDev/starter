@@ -1,14 +1,14 @@
-//! The registry describing itself: a metadata layer alongside the builder
-//! registrations so the node palette can be generated from the same source of
-//! truth that builds the streams.
+//! The registry describing itself: a metadata layer alongside the native node
+//! builders so the node palette can be generated from the same source of truth
+//! that builds the pipelines.
 //!
-//! ArkFlow's builder registries only know how to *construct* a component from a
-//! config `Value`; they carry no description of the config they accept. The
-//! visual flow builder needs the opposite — to *describe* each node so it can
-//! offer a palette and a schema-driven config form. Rather than introduce a
-//! second registry that could drift from the builders, this module hand-keeps a
-//! descriptor next to each registered node; adding a node means registering its
-//! builder ([`super::inputs`]/[`super::outputs`]) and adding its descriptor here.
+//! The native registry ([`crate::native_registry`]) only knows how to *construct*
+//! a node from a config `Value`; it carries no description of the config it
+//! accepts. The visual flow builder needs the opposite — to *describe* each node
+//! so it can offer a palette and a schema-driven config form. Rather than
+//! introduce a second registry that could drift from the builders, this module
+//! hand-keeps a descriptor next to each registered node; adding a node means
+//! registering its builder in `native_registry` and adding its descriptor here.
 
 use serde_json::{json, Value};
 
@@ -16,11 +16,11 @@ use serde_json::{json, Value};
 /// groups the editor presents.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeCategory {
-    /// A flow source (ArkFlow input).
+    /// A flow source.
     Input,
-    /// A pipeline transform (ArkFlow processor).
+    /// A pipeline transform.
     Processor,
-    /// A flow sink (ArkFlow output).
+    /// A flow sink.
     Output,
 }
 
@@ -36,12 +36,12 @@ impl NodeCategory {
 }
 
 /// A described node type: enough for the editor to render a palette entry and a
-/// config form, and to serialise the graph back to the ArkFlow `{type, ...}`
-/// config the engine builds. `config_schema` is a JSON Schema (draft 2020-12)
-/// for the node's config object.
+/// config form, and to serialise the graph back to the `{type, ...}` config the
+/// engine builds. `config_schema` is a JSON Schema (draft 2020-12) for the
+/// node's config object.
 #[derive(Debug, Clone)]
 pub struct NodeDescriptor {
-    /// The ArkFlow `type` discriminant, e.g. `http_poll`, `sql`, `postgres`.
+    /// The node `type` discriminant, e.g. `http_poll`, `sql`, `postgres`.
     pub kind: &'static str,
     /// Which palette group the node belongs to.
     pub category: NodeCategory,
@@ -54,16 +54,15 @@ pub struct NodeDescriptor {
 }
 
 /// Every registered node, described. The order is palette order: inputs, then
-/// processors, then outputs. Kept in lockstep with the builder registrations in
-/// [`super::inputs`] and [`super::outputs`] (and the vendored ArkFlow
-/// processors `sql`/`json_to_arrow`/`arrow_to_json`).
+/// processors, then outputs. Kept in lockstep with the native builder
+/// registrations in [`crate::native_registry`] — one descriptor per buildable
+/// node `type`, no more.
 pub fn describe() -> Vec<NodeDescriptor> {
     vec![
         http_poll(),
         simulator(),
         sql_processor(),
         json_to_arrow(),
-        arrow_to_json(),
         collector(),
         sse(),
         postgres(),
@@ -150,16 +149,6 @@ fn json_to_arrow() -> NodeDescriptor {
     }
 }
 
-fn arrow_to_json() -> NodeDescriptor {
-    NodeDescriptor {
-        kind: "arrow_to_json",
-        category: NodeCategory::Processor,
-        label: "Arrow → JSON",
-        description: "Render an Arrow record batch back to JSON-document rows.",
-        config_schema: json!({ "type": "object", "additionalProperties": true }),
-    }
-}
-
 fn collector() -> NodeDescriptor {
     NodeDescriptor {
         kind: "collector",
@@ -225,7 +214,6 @@ mod tests {
             "simulator",
             "sql",
             "json_to_arrow",
-            "arrow_to_json",
             "collector",
             "sse",
             "postgres",

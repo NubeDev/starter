@@ -14,7 +14,7 @@ fn processor() -> JsonToArrow {
 
 #[tokio::test]
 async fn parses_documents_into_typed_columns() {
-    let proc = processor();
+    let mut proc = processor();
     let batch = json_carrier_batch(&[json!({ "city": "berlin", "temp_c": 21 }).to_string()]);
 
     let out = proc.process(batch).await.expect("process");
@@ -32,7 +32,7 @@ async fn parses_documents_into_typed_columns() {
 
 #[tokio::test]
 async fn empty_carrier_batch_yields_no_output() {
-    let proc = processor();
+    let mut proc = processor();
     let batch = json_carrier_batch(&[]);
     let out = proc.process(batch).await.expect("process");
     assert!(out.is_empty(), "an empty batch produces nothing downstream");
@@ -40,7 +40,7 @@ async fn empty_carrier_batch_yields_no_output() {
 
 #[tokio::test]
 async fn schema_is_fixed_from_the_first_batch() {
-    let proc = processor();
+    let mut proc = processor();
 
     // First batch fixes `temp_c` as an integer column.
     let first = json_carrier_batch(&[json!({ "temp_c": 21 }).to_string()]);
@@ -59,7 +59,7 @@ async fn schema_is_fixed_from_the_first_batch() {
 
 #[tokio::test]
 async fn declared_schema_pins_columns_up_front() {
-    let proc = JsonToArrow::from_config(&json!({
+    let mut proc = JsonToArrow::from_config(&json!({
         "type": "json_to_arrow",
         "schema": { "fields": [
             { "name": "temp_c", "type": "float" },

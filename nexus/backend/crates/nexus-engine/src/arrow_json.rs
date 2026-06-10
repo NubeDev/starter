@@ -20,8 +20,8 @@ use serde_json::Value;
 /// hand a typed Arrow batch downstream — it does not know the schema. Instead it
 /// emits a single Utf8 column of JSON-document strings under this name, and
 /// [`super::processor::json_to_arrow`] infers a schema and parses it into a typed
-/// batch. This mirrors ArkFlow's binary-value-field convention so a stored flow
-/// that pipes a JSON source into `json_to_arrow` keeps working unchanged.
+/// batch. The single-value-field convention keeps a stored flow that pipes a
+/// JSON source into `json_to_arrow` working unchanged.
 pub const JSON_VALUE_FIELD: &str = "__value__";
 
 /// One batch converted to JSON: the rows and their serialized byte size (used

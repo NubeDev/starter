@@ -1,11 +1,11 @@
 //! Per-instance node registry: maps a config `type` name to the builder that
 //! constructs the node from its JSON config.
 //!
-//! Unlike the ArkFlow registries (process-global, register-once), this is a
-//! plain instance with no static state — it will live on `AppState` so a test or
-//! a tenant can hold its own set of builders. The builder names match ArkFlow's
-//! (`"memory"`, `"generate"`, `"sql"`, `"json_to_arrow"`, plus nexus customs) so
-//! stored flow configs keep parsing without migration once RW-02/03 cut over.
+//! A plain instance with no static state — each runner and the flow manager hold
+//! their own, so a test or a tenant can carry its own set of builders. The
+//! builder names (`"memory"`, `"generate"`, `"sql"`, `"json_to_arrow"`, plus
+//! nexus customs) match what stored flow configs already use, so a saved flow
+//! parses and runs without migration.
 
 use std::collections::HashMap;
 

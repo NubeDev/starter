@@ -4,13 +4,11 @@ version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "Nexus engine bridge — ArkFlow sinks, runners, registry, Arrow→JSON. The keystone."
+description = "Nexus native pipeline engine — sources, processors, sinks, runners, registry, Arrow→JSON. The keystone."
 
 [dependencies]
 nexus-spi.workspace = true
 
-arkflow-core.workspace = true
-arkflow-plugin.workspace = true
 datafusion.workspace = true
 
 tokio.workspace = true
@@ -28,8 +26,8 @@ tracing.workspace = true
 starter-spi.workspace = true
 
 # Flow connectors: an http-poll input fetches an upstream API on an interval; a
-# postgres output writes the shaped rows to a datasource DB. Both are registered
-# ArkFlow builders, so a saved flow is config, not code.
+# postgres output writes the shaped rows to a datasource DB. Both are registry
+# builders, so a saved flow is config, not code.
 reqwest.workspace = true
 sqlx.workspace = true
 
@@ -76,6 +74,10 @@ path = "tests/source/simulator_test.rs"
 [[test]]
 name = "native_pipeline"
 path = "tests/native/pipeline_test.rs"
+
+[[test]]
+name = "native_stored_config_parity"
+path = "tests/native/stored_config_parity_test.rs"
 
 [[test]]
 name = "processor_json_to_arrow"

@@ -21,16 +21,31 @@ pub trait Source: Send {
     /// Read the next batch. `Ok(None)` signals clean end-of-stream; `Ok(Some)`
     /// hands the next batch downstream; `Err` aborts the run.
     async fn read(&mut self) -> EngineResult<Option<RecordBatch>>;
+
+    /// Acknowledge that the batches read so far have been written by the sink.
+    ///
+    /// The "no silent data loss" contract (roadmap §6 delivery semantics): a
+    /// QoS-capable source (MQTT, a queue) MUST NOT commit upstream delivery until
+    /// the batch has actually landed in the sink, so the pipeline calls `commit`
+    /// after each successful sink write. The default is a no-op — pull-only
+    /// sources (memory, generate, HTTP poll, simulator) have no upstream offset to
+    /// advance and are documented at-most-once for an in-flight batch; only a
+    /// source that can defer an ack overrides this.
+    async fn commit(&mut self) -> EngineResult<()> {
+        Ok(())
+    }
 }
 
-/// A stateless-per-call batch transform. One input batch may fan out to zero or
-/// more output batches (a filter that drops everything yields an empty `Vec`; a
-/// split yields several). Taking `&self` keeps processors shareable across the
-/// chain without interior mutability in the common case.
+/// A batch transform applied sequentially in the pipeline. One input batch may
+/// fan out to zero or more output batches (a filter that drops everything yields
+/// an empty `Vec`; a split yields several). Takes `&mut self` so a stateful
+/// transform — windowing, dedupe, schema-locking — keeps its state inline without
+/// interior mutability; the pipeline owns the chain on one task and applies each
+/// processor in order, so exclusive access costs nothing.
 #[async_trait]
-pub trait Processor: Send + Sync {
+pub trait Processor: Send {
     /// Transform one batch into zero or more batches. `Err` aborts the run.
-    async fn process(&self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>>;
+    async fn process(&mut self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>>;
 }
 
 /// A pipeline output. `write` is called once per batch in arrival order; `close`

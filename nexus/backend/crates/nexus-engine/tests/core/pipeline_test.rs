@@ -94,7 +94,7 @@ struct Identity;
 
 #[async_trait]
 impl Processor for Identity {
-    async fn process(&self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>> {
+    async fn process(&mut self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>> {
         Ok(vec![batch])
     }
 }

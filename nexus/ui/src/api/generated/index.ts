@@ -1325,7 +1325,7 @@ export interface components {
             user: string;
         };
         /**
-         * @description Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the
+         * @description Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the
          *     FlowManager validates them when it builds the stream, so a malformed config
          *     surfaces on start, not here. `enabled` defaults to false so a flow can be
          *     created and reviewed before it runs.
@@ -1565,9 +1565,9 @@ export interface components {
             name: string;
         };
         /**
-         * @description The kind of datasource, which selects the ArkFlow input builder. v1 ships
+         * @description The kind of datasource, which selects the engine's input builder. v1 ships
          *     SQL-over-Postgres as the first connector; the enum is the extension point as
-         *     more `register_input_builder` connectors land.
+         *     more registry input builders land.
          * @enum {string}
          */
         DatasourceKind: "postgres";
@@ -1688,14 +1688,14 @@ export interface components {
             /** @description Whether the FlowManager currently has it running on this node. */
             running: boolean;
         };
-        /** @description A self-contained, importable flow: its name plus the ArkFlow config blobs. */
+        /** @description A self-contained, importable flow: its name plus the engine config blobs. */
         FlowExport: {
-            /** @description ArkFlow input component (`{type, ...config}`), secrets redacted. */
+            /** @description Engine input component (`{type, ...config}`), secrets redacted. */
             input: unknown;
             name: string;
-            /** @description ArkFlow output component (`{type, ...config}`), secrets redacted. */
+            /** @description Engine output component (`{type, ...config}`), secrets redacted. */
             output: unknown;
-            /** @description ArkFlow processor list (a JSON array of `{type, ...config}`). */
+            /** @description Engine processor list (a JSON array of `{type, ...config}`). */
             pipeline?: unknown;
             /**
              * @description Whether [`redact_secrets`] blanked any field on export, so the UI can
@@ -1875,7 +1875,7 @@ export interface components {
          */
         NodeCategory: "input" | "processor" | "output";
         /**
-         * @description A node type the engine can build, described for the editor: its ArkFlow
+         * @description A node type the engine can build, described for the editor: its engine
          *     `type` discriminant, palette grouping, labels, and a JSON Schema for its
          *     config so the editor can render a schema-driven form instead of raw JSON.
          */
@@ -1886,7 +1886,7 @@ export interface components {
             config_schema: unknown;
             /** @description One-line description. */
             description: string;
-            /** @description The ArkFlow `type` value the serialised graph node carries. */
+            /** @description The engine `type` value the serialised graph node carries. */
             kind: string;
             /** @description Human label for the palette. */
             label: string;

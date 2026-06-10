@@ -1,8 +1,6 @@
 # Nexus backend — its own cargo workspace (a sibling of the root starter
-# workspace, excluded from it). It pins ArkFlow to an exact git rev because the
-# cancellation-token `Stream::run` signature the live/query runners depend on
-# exists only on git HEAD, not the crates.io release. Keeping a separate lockfile
-# means an ArkFlow bump here never perturbs the root workspace's resolution.
+# workspace, excluded from it). The separate lockfile keeps the backend's
+# DataFusion/Arrow resolution from perturbing the root workspace.
 [workspace]
 resolver = "2"
 members = [
@@ -58,13 +56,9 @@ starter-ext-server     = { path = "../../starter-extensions/crates/starter-ext-s
 starter-ext-supervisor = { path = "../../starter-extensions/crates/starter-ext-supervisor" }
 starter-ext-store-pg   = { path = "../../starter-extensions/crates/starter-ext-store-pg" }
 
-# ArkFlow — the only external dependency, pinned to an exact rev (R3). The same
-# rev the POC proved the Collector seam against.
-arkflow-core   = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
-arkflow-plugin = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
-
-# DataFusion / Arrow pinned to the versions ArkFlow resolves at that rev, so the
-# `RecordBatch` the collector sink receives is byte-identical to the engine's.
+# DataFusion / Arrow — the engine's vectorised core. Pinned to 47 (the version
+# the native pipeline was cut over against). Free to bump post-cutover, before
+# federation (RW-05) leans on newer sqlparser fixes.
 datafusion = "47"
 
 # Web + async stack — versions matched to the starter crates so the shared axum
@@ -112,10 +106,3 @@ testcontainers         = "0.23"
 testcontainers-modules = { version = "0.11", features = ["postgres"] }
 reqwest                = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 tracing-subscriber     = { version = "0.3", features = ["env-filter"] }
-
-# Redirect upstream `arkflow-plugin` to the connector-trimmed copy in vendor/.
-# Upstream registers every connector unconditionally (DuckDB, Kafka, PyO3, …);
-# the vendored copy keeps only the pure-DataFusion modules the query/live seam
-# uses. The engine crate (`arkflow-core`) is consumed unpatched.
-[patch."https://github.com/arkflow-rs/arkflow"]
-arkflow-plugin = { path = "vendor/arkflow-plugin" }

@@ -1,9 +1,9 @@
 //! `FlowManager` — run and stop saved ingestion flows.
 //!
-//! A flow is a long-lived ArkFlow `Stream` (input → pipeline → output) the
-//! control plane runs on the tenant's behalf — e.g. poll weather, shape it,
-//! write it to a datasource table. Unlike the live runner (one stream per
-//! subscription, torn down when subscribers leave), a flow is named and runs
+//! A flow is a long-lived native [`crate::core::Pipeline`] (input → pipeline →
+//! output) the control plane runs on the tenant's behalf — e.g. poll weather,
+//! shape it, write it to a datasource table. Unlike the live runner (one stream
+//! per subscription, torn down when subscribers leave), a flow is named and runs
 //! until explicitly stopped, so the manager keys running flows by id and holds
 //! each one's cancellation token to stop it on demand.
 //!
@@ -15,11 +15,11 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use arkflow_core::stream::StreamConfig;
 use serde_json::{json, Value};
 use tokio_util::sync::CancellationToken;
 
-use crate::registry::register_all;
+use crate::core::{Pipeline, PipelineConfig, Registry};
+use crate::native_registry;
 use crate::time::now_rfc3339;
 
 /// Per-flow run state the manager observes directly: when the current/most
@@ -34,24 +34,26 @@ pub struct FlowStats {
     pub last_error: Option<String>,
 }
 
-/// Runs saved flows as background ArkFlow streams. Cheap to clone — the running
-/// set is shared behind an `Arc`.
+/// Runs saved flows as background native pipelines. Cheap to clone — the running
+/// set and the node registry are shared behind `Arc`s.
 #[derive(Clone)]
 pub struct FlowManager {
     running: Arc<Mutex<HashMap<String, CancellationToken>>>,
     /// Last-run state per flow id, retained across stop/restart so the flows
     /// list can show the last error after a run ends.
     stats: Arc<Mutex<HashMap<String, FlowStats>>>,
+    /// The native node registry every flow pipeline is built from.
+    registry: Arc<Registry>,
 }
 
 impl FlowManager {
-    /// Construct a manager, ensuring the engine builders (incl. the flow
-    /// connectors) are registered.
+    /// Construct a manager holding the native node registry, shared across every
+    /// flow it starts.
     pub fn new() -> Result<Self, String> {
-        register_all()?;
         Ok(Self {
             running: Arc::new(Mutex::new(HashMap::new())),
             stats: Arc::new(Mutex::new(HashMap::new())),
+            registry: Arc::new(native_registry()),
         })
     }
 
@@ -87,12 +89,12 @@ impl FlowManager {
 
         let config = json!({
             "input": input,
-            "pipeline": { "thread_num": 1, "processors": processors },
+            "pipeline": { "processors": processors },
             "output": output,
         });
-        let cfg: StreamConfig =
-            serde_json::from_value(config).map_err(|e| format!("invalid flow config: {e}"))?;
-        let mut stream = cfg.build().map_err(|e| e.to_string())?;
+        let cfg = PipelineConfig::from_value(config)
+            .map_err(|e| format!("invalid flow config: {e}"))?;
+        let pipeline = Pipeline::build(&self.registry, &cfg).map_err(|e| e.to_string())?;
 
         let token = CancellationToken::new();
         self.running
@@ -113,7 +115,7 @@ impl FlowManager {
         let stats = self.stats.clone();
         let id_owned = id.to_string();
         tokio::spawn(async move {
-            if let Err(e) = stream.run(token).await {
+            if let Err(e) = pipeline.run(token).await {
                 tracing::warn!(flow_id = %id_owned, error = %e, "flow ended with error");
                 if let Some(s) = stats.lock().unwrap().get_mut(&id_owned) {
                     s.last_error = Some(e.to_string());

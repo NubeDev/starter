@@ -1,8 +1,8 @@
 //! The native `http_poll` source: GET a JSON endpoint on a fixed interval and
 //! emit each response as a carrier batch.
 //!
-//! The native port of [`super::http_poll`] onto the RW-01 [`Source`] trait, same
-//! behaviour: the first poll fires immediately, later polls wait the interval,
+//! On the [`Source`] trait: the first poll fires immediately, later polls wait
+//! the interval,
 //! and each response body — a JSON object or array — is emitted as a carrier
 //! batch for `json_to_arrow` to shape. An array body becomes one document per
 //! element so a scalar and an array response both flow uniformly. It never ends

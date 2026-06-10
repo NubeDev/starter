@@ -5,8 +5,7 @@
 //! (`flow` by default — the name stored flow configs and the `SELECT … FROM
 //! flow` query convention already use), executes the statement, and returns the
 //! result. DDL, DML, and bare statements are rejected so a flow's SQL is a pure
-//! read over its own batch, never a side-effecting command — the same guard
-//! ArkFlow applied.
+//! read over its own batch, never a side-effecting command.
 
 use std::sync::Arc;
 
@@ -56,7 +55,7 @@ impl SqlProcessor {
 
 #[async_trait::async_trait]
 impl Processor for SqlProcessor {
-    async fn process(&self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>> {
+    async fn process(&mut self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>> {
         if batch.num_rows() == 0 {
             return Ok(Vec::new());
         }

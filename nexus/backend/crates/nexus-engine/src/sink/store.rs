@@ -1,10 +1,10 @@
 //! Process-global registry mapping a run id to the bounded buffer its collector
 //! sink appends to.
 //!
-//! ArkFlow builds the collector output from a config `Value`, so the only way to
-//! connect a running sink to the runner that wants its rows is out of band: the
-//! runner reserves a [`RunSink`] under a fresh id, writes that id into the
-//! output config, and drains the same id once the stream finishes.
+//! The collector sink is built from a config `Value`, so the only way to connect
+//! a running sink to the runner that wants its rows is out of band: the runner
+//! reserves a [`RunSink`] under a fresh id, writes that id into the output
+//! config, and drains the same id once the run finishes.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};

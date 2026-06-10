@@ -1,8 +1,8 @@
 //! The native `generate` source: emit a fixed JSON document on an interval, for
 //! tests and dry runs.
 //!
-//! Mirrors ArkFlow's `generate` input: the first read fires immediately, later
-//! reads wait `interval`; each read emits `batch_size` copies of the `context`
+//! The first read fires immediately, later reads wait `interval`; each read
+//! emits `batch_size` copies of the `context`
 //! document as one carrier batch. An optional `count` bounds the total documents
 //! — once reached `read` returns `None`, so a finite flow test terminates; with
 //! no `count` the source runs until its cancellation token fires.
@@ -64,8 +64,8 @@ impl GenerateSource {
 impl Source for GenerateSource {
     async fn read(&mut self) -> EngineResult<Option<RecordBatch>> {
         if let Some(count) = self.count {
-            // End before a partial batch would overshoot the requested count,
-            // matching ArkFlow's all-or-nothing batch semantics.
+            // End before a partial batch would overshoot the requested count —
+            // all-or-nothing batch semantics.
             if self.emitted + self.batch_size > count {
                 return Ok(None);
             }

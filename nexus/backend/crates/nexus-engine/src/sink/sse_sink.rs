@@ -1,12 +1,11 @@
 //! The native `sse` sink: fan each batch out to a broadcast channel for live
 //! SSE subscribers.
 //!
-//! The native port of [`super::sse`] onto the RW-01 [`Sink`] trait. It finds its
-//! broadcast channel by the `run_id` the live runner reserved (see
-//! [`super::broadcast_store`]) and publishes each batch's rows through the same
-//! [`broadcast_store::LiveChannel`] the ArkFlow sink uses — so the monotonic
-//! sequence numbers a reconnecting client resumes from with `Last-Event-ID` are
-//! assigned identically. Only the trait surface changes.
+//! On the [`Sink`] trait. It finds its broadcast channel by the `run_id` the
+//! live runner reserved (see [`super::broadcast_store`]) and publishes each
+//! batch's rows through a [`broadcast_store::LiveChannel`], which assigns the
+//! monotonic sequence numbers a reconnecting client resumes from with
+//! `Last-Event-ID`.
 
 use serde::Deserialize;
 use serde_json::Value;

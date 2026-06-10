@@ -1,10 +1,9 @@
 //! The native `simulator` source: emit synthetic device telemetry on an
 //! interval — test data with no upstream.
 //!
-//! The native port of [`super::simulator`] onto the RW-01 [`Source`] trait,
-//! reusing the shared [`super::sim`] row builder so the three device profiles
-//! (`hvac`, `energy`, `door`) emit identical shapes. Like the original it never
-//! ends on its own; the flow's cancellation token stops it. Output is
+//! Built on the [`Source`] trait over the shared [`super::sim`] row builder, so
+//! the three device profiles (`hvac`, `energy`, `door`) emit identical shapes. It
+//! never ends on its own; the flow's cancellation token stops it. Output is
 //! deterministic for a given `seed`.
 
 use std::sync::atomic::AtomicU64;

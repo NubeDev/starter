@@ -1,13 +1,12 @@
 //! The native `postgres` sink: insert each batch's rows into a table in a
 //! datasource Postgres.
 //!
-//! The native port of [`super::postgres`] onto the RW-01 [`Sink`] trait, same
-//! behaviour: each row is converted to a JSON object via the shared Arrow→JSON
-//! bridge and inserted with bound parameters (see [`super::pg_insert`]), never
-//! string-concatenated. The native trait has no `connect`, so the pool is opened
-//! lazily on the first write and closed on `close`. The connection string comes
-//! from the flow config (the datasource secret, decrypted by the caller at build
-//! time), never from a request.
+//! On the [`Sink`] trait: each row is converted to a JSON object via the shared
+//! Arrow→JSON bridge and inserted with bound parameters (see
+//! [`super::pg_insert`]), never string-concatenated. The pool is opened lazily on
+//! the first write and closed on `close`. The connection string comes from the
+//! flow config (the datasource secret, decrypted by the caller at build time),
+//! never from a request.
 
 use serde::Deserialize;
 use serde_json::Value;

@@ -1,6 +1,6 @@
 //! End-to-end parity for the native pipeline: a `memory → json_to_arrow → sql →
 //! collector` run over the native registry returns the same rows, columns, and
-//! truncation behaviour the ArkFlow query seam does (see
+//! truncation behaviour the query seam does (see
 //! `tests/runner/query_test.rs`), proving the RW-02 ports compose.
 
 use nexus_engine::core::{Pipeline, PipelineConfig, RunOutcome};

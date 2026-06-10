@@ -5,7 +5,7 @@
 //! "processors": [<node>…], "buffer_capacity"? }, "output": <node> }`. Each
 //! `<node>` is an object with a `"type"` string naming a registry builder; the
 //! whole node object (including `type`) is passed to the builder as its config,
-//! matching how ArkFlow nodes read their own `type` siblings.
+//! so a builder may read siblings of `type` without re-plumbing.
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -16,6 +16,15 @@ use super::error::{EngineError, EngineResult};
 /// not set `pipeline.buffer_capacity`. Small enough to exert backpressure on a
 /// fast source, large enough to amortise per-batch handoff cost.
 pub const DEFAULT_BUFFER_CAPACITY: usize = 64;
+
+/// Default per-batch row ceiling when the config omits `pipeline.max_batch_rows`.
+///
+/// The bounded channel caps batch *count*, not bytes, so one fat batch can defeat
+/// backpressure (roadmap §6 batch-size bound). The pipeline slices any batch
+/// wider than this — zero-copy via `RecordBatch::slice` — at the source and
+/// processor-output boundary before it enters the channel, so the channel depth
+/// times this value bounds the in-flight row count.
+pub const DEFAULT_MAX_BATCH_ROWS: usize = 8192;
 
 /// One node: its builder `type` name and the full config object handed to the
 /// builder. The config retains the `type` key so a builder may read siblings
@@ -40,6 +49,9 @@ pub struct PipelineConfig {
     pub output: NodeSpec,
     /// Bounded channel capacity between the source task and the sink loop.
     pub buffer_capacity: usize,
+    /// Per-batch row ceiling; batches wider than this are sliced before the
+    /// channel so the channel depth bounds in-flight rows, not just batch count.
+    pub max_batch_rows: usize,
 }
 
 /// The raw JSON envelope before node specs are extracted.
@@ -57,6 +69,8 @@ struct RawPipeline {
     processors: Vec<Value>,
     /// Optional override of [`DEFAULT_BUFFER_CAPACITY`].
     buffer_capacity: Option<usize>,
+    /// Optional override of [`DEFAULT_MAX_BATCH_ROWS`].
+    max_batch_rows: Option<usize>,
 }
 
 impl PipelineConfig {
@@ -79,12 +93,18 @@ impl PipelineConfig {
             .buffer_capacity
             .unwrap_or(DEFAULT_BUFFER_CAPACITY)
             .max(1);
+        let max_batch_rows = raw
+            .pipeline
+            .max_batch_rows
+            .unwrap_or(DEFAULT_MAX_BATCH_ROWS)
+            .max(1);
 
         Ok(Self {
             input,
             processors,
             output,
             buffer_capacity,
+            max_batch_rows,
         })
     }
 }

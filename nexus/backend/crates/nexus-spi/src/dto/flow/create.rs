@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use utoipa::ToSchema;
 
-/// Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the
+/// Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the
 /// FlowManager validates them when it builds the stream, so a malformed config
 /// surfaces on start, not here. `enabled` defaults to false so a flow can be
 /// created and reviewed before it runs.

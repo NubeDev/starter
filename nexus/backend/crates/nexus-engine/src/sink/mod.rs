@@ -1,16 +1,16 @@
-//! Pipeline sinks: the custom ArkFlow output sinks and the caps they enforce,
-//! plus their native ports onto the RW-01 [`crate::core::Sink`] trait (additive
-//! while RW-02 runs; the ArkFlow versions stay until RW-03 cuts over).
+//! Pipeline sinks over the [`crate::core::Sink`] trait, and the caps they
+//! enforce: a bounded `collector` for one-shot queries, an `sse` broadcast for
+//! live streams, a `postgres` writer for ingestion flows, plus `drop`/`stdout`.
+//! `store`/`broadcast_store` are the run-id registries the collector and sse
+//! sinks resolve their buffer/channel through; `pg_insert` is the shared
+//! bound-parameter row insert.
 
 pub mod broadcast_store;
 pub mod cap;
-pub mod collector;
 pub mod collector_sink;
 pub mod drop_sink;
 pub mod pg_insert;
-pub mod postgres;
 pub mod postgres_sink;
-pub mod sse;
 pub mod sse_sink;
 pub mod stdout;
 pub mod store;

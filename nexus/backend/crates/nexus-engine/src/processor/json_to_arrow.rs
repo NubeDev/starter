@@ -5,8 +5,8 @@
 //! [`crate::arrow_json::JSON_VALUE_FIELD`]); this processor turns each document
 //! into typed columns the `sql` processor can query.
 //!
-//! Schema stability (roadmap §6): ArkFlow re-inferred a schema per batch, which
-//! lets column types drift mid-stream — an accident, not a contract. This
+//! Schema stability (roadmap §6): re-inferring a schema per batch would let
+//! column types drift mid-stream — an accident, not a contract. This
 //! implementation locks the schema once: a `schema` declared in config wins;
 //! otherwise the first non-empty batch's inferred schema becomes the stream
 //! schema. Every later batch is parsed against that fixed schema, so a document
@@ -14,7 +14,7 @@
 //! type change downstream.
 
 use std::io::Cursor;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use datafusion::arrow::array::RecordBatch;
 use datafusion::arrow::datatypes::SchemaRef;
@@ -32,8 +32,10 @@ pub struct JsonToArrow {
     /// warehouse sink gets a stable schema even before the first batch arrives.
     declared: Option<SchemaRef>,
     /// The schema locked in from the first non-empty batch when none was
-    /// declared. `None` until the first batch is seen.
-    inferred: Mutex<Option<SchemaRef>>,
+    /// declared. `None` until the first batch is seen. The pipeline applies a
+    /// processor with `&mut self` exclusively, so no lock is needed to keep this
+    /// stable across calls.
+    inferred: Option<SchemaRef>,
 }
 
 impl JsonToArrow {
@@ -44,7 +46,7 @@ impl JsonToArrow {
     pub fn from_config(config: &Value) -> EngineResult<Self> {
         Ok(Self {
             declared: declared_schema::parse(config)?,
-            inferred: Mutex::new(None),
+            inferred: None,
         })
     }
 
@@ -52,23 +54,22 @@ impl JsonToArrow {
     /// already-locked inferred schema, else infer from `docs` and lock it. The
     /// returned schema is used for every column of the output batch, so all
     /// batches in one stream share it.
-    fn stream_schema(&self, docs: &[String]) -> EngineResult<SchemaRef> {
+    fn stream_schema(&mut self, docs: &[String]) -> EngineResult<SchemaRef> {
         if let Some(schema) = &self.declared {
             return Ok(schema.clone());
         }
-        let mut guard = self.inferred.lock().expect("json_to_arrow schema lock");
-        if let Some(schema) = guard.as_ref() {
+        if let Some(schema) = &self.inferred {
             return Ok(schema.clone());
         }
         let schema = infer_schema(docs)?;
-        *guard = Some(schema.clone());
+        self.inferred = Some(schema.clone());
         Ok(schema)
     }
 }
 
 #[async_trait::async_trait]
 impl Processor for JsonToArrow {
-    async fn process(&self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>> {
+    async fn process(&mut self, batch: RecordBatch) -> EngineResult<Vec<RecordBatch>> {
         let docs = json_carrier_docs(&batch).map_err(EngineError::Processor)?;
         if docs.is_empty() {
             return Ok(Vec::new());

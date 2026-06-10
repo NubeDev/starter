@@ -1,12 +1,11 @@
 //! Build a [`core::Registry`] populated with every native node builder.
 //!
-//! The factory that wires the RW-02 source/processor/sink ports into the RW-01
-//! registry under the same string names the stored flow configs already use
-//! (`"memory"`, `"generate"`, `"http_poll"`, `"simulator"`, `"json_to_arrow"`,
-//! `"sql"`, `"collector"`, `"sse"`, `"postgres"`, `"drop"`, `"stdout"`). A flow
-//! built against this registry runs the native pipeline with no config change.
-//! RW-03 hands this registry to the runners in place of the ArkFlow stream
-//! build; until then it lives alongside the ArkFlow registrations.
+//! The factory that wires the source/processor/sink built-ins into a registry
+//! under the string names stored flow configs already use (`"memory"`,
+//! `"generate"`, `"http_poll"`, `"simulator"`, `"json_to_arrow"`, `"sql"`,
+//! `"collector"`, `"sse"`, `"postgres"`, `"drop"`, `"stdout"`). A flow built
+//! against this registry runs the native pipeline with no config change; the
+//! runners and the flow manager each hold one, shared across every run.
 
 use crate::core::Registry;
 use crate::processor::{JsonToArrow, SqlProcessor};

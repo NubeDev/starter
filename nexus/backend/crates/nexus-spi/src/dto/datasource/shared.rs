@@ -3,13 +3,13 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-/// The kind of datasource, which selects the ArkFlow input builder. v1 ships
+/// The kind of datasource, which selects the engine's input builder. v1 ships
 /// SQL-over-Postgres as the first connector; the enum is the extension point as
-/// more `register_input_builder` connectors land.
+/// more registry input builders land.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum DatasourceKind {
-    /// A SQL database queried through ArkFlow's `sql` input (driver: postgres).
+    /// A SQL database queried through the `sql` input (driver: postgres).
     Postgres,
 }
 

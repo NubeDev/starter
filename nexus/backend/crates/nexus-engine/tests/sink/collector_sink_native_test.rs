@@ -1,6 +1,6 @@
 //! Native `collector` sink: it absorbs batches into the reserved bounded buffer
 //! and trips the truncation flag (and cancels the run token) on the first
-//! over-cap batch — identical accounting to the ArkFlow collector.
+//! over-cap batch.
 
 use nexus_engine::arrow_json::json_carrier_batch;
 use nexus_engine::core::Processor;
@@ -15,7 +15,7 @@ use tokio_util::sync::CancellationToken;
 /// Shape `rows` into one typed batch through `json_to_arrow`.
 async fn typed(rows: &[Value]) -> datafusion::arrow::array::RecordBatch {
     let docs: Vec<String> = rows.iter().map(|r| r.to_string()).collect();
-    let json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
+    let mut json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
     json.process(json_carrier_batch(&docs))
         .await
         .unwrap()

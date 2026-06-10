@@ -1,10 +1,10 @@
 //! Parse the cadence strings native sources accept (`"5ms"`, `"30s"`, `"15m"`,
 //! `"1h"`).
 //!
-//! The native sources extend [`crate::time::parse_interval`] with a millisecond
-//! unit, which the `generate` source needs for its fast test cadences (`"5ms"`).
-//! Kept here, in the source lane, so the shared `time::parse_interval` used by
-//! the still-live ArkFlow sources stays untouched while RW-02 runs additively.
+//! The sources extend [`crate::time::parse_interval`] with a millisecond unit,
+//! which the `generate` source needs for its fast test cadences (`"5ms"`). Kept
+//! here, in the source lane, so the shared `time::parse_interval` stays a plain
+//! second/minute/hour parser.
 
 use std::time::Duration;
 

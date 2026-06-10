@@ -1,12 +1,11 @@
 //! The native `collector` sink: capture rows in memory for a one-shot run,
 //! bounded by per-run caps.
 //!
-//! The native port of [`super::collector`] onto the RW-01 [`Sink`] trait. It
-//! looks its bounded buffer up by the `run_id` the runner reserved (see
-//! [`super::store`]) and absorbs each batch through the same [`store::RunSink`]
-//! the ArkFlow collector uses — so caps, the truncation flag, and the run-token
-//! cancellation on a breached cap stay bit-identical. The only change is the
-//! trait surface; the accounting is untouched.
+//! On the [`Sink`] trait. It looks its bounded buffer up by the `run_id` the
+//! runner reserved (see [`super::store`]) and absorbs each batch through a
+//! [`store::RunSink`], so caps, the truncation flag, and the run-token
+//! cancellation on a breached cap are enforced in one place shared with the
+//! runner that drains the buffer.
 
 use serde::Deserialize;
 use serde_json::Value;

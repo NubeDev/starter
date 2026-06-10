@@ -1,6 +1,5 @@
 //! Native `sse` sink: each written batch is published as the next event with a
-//! monotonic sequence number, so a `Last-Event-ID` resume sees no gap — the same
-//! seq behaviour as the ArkFlow sse sink.
+//! monotonic sequence number, so a `Last-Event-ID` resume sees no gap.
 
 use nexus_engine::arrow_json::json_carrier_batch;
 use nexus_engine::core::Sink;
@@ -20,7 +19,7 @@ async fn publishes_batches_with_monotonic_sequence_numbers() {
         .expect("resolve reserved channel");
 
     // Shape two single-row batches and publish each.
-    let json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
+    let mut json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
     for value in [json!({ "sensor": "a", "value": 1 }), json!({ "sensor": "b", "value": 2 })] {
         let typed = json
             .process(json_carrier_batch(&[value.to_string()]))

@@ -1,7 +1,7 @@
 //! FlowManager lifecycle: a saved flow starts, is tracked as running, start is
 //! idempotent, and stop tears it down. The flow here drains a finite `generate`
 //! input to the `drop` output — no external dependency — so the test exercises
-//! the manager's bookkeeping and the real ArkFlow stream build, not a connector.
+//! the manager's bookkeeping and the real native pipeline build, not a connector.
 
 use std::time::Duration;
 
