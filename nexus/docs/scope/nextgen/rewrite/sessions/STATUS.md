@@ -18,6 +18,7 @@
 | 6 | RW-06 | nexus-insights: Polars + Rhai sandbox + query stage | ⬜ | | | | migration 18xx; DTO-first |
 | 7 | RW-07 | Extension data-plane: sources/sinks/insights contributions | ⬜ | | | | ingest.write host method |
 | 8 | RW-08 | Backpressure hardening + soak + flow metrics | ⬜ | | | | BACKPRESSURE.md + make soak |
+| 9 | RW-09 | Transport breadth: http_ingest + Zenoh source | ⬜ | | | | human-added 2026-06-10; zenoh feature-gated OFF |
 
 ## Loop log (append one line per wake)
 
