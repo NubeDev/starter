@@ -1,0 +1,38 @@
+[package]
+name = "nexus-insights"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Sandboxed post-query compute: a curated vectorized surface (DataFusion) driven by a Rhai script. The script orchestrates, the engine computes."
+
+[dependencies]
+# The DataFrame primitives run over DataFusion's SessionContext — the same Arrow
+# stack the engine and federation already use, so an insight consumes the query
+# result's RecordBatch with no copy across a second Arrow fork.
+datafusion.workspace = true
+
+# The sandboxed scripting surface. Limits (operations, depth, sizes) and the
+# wall-clock deadline are configured per execution in `sandbox.rs`.
+rhai.workspace = true
+
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }
+
+[[test]]
+name = "api_primitives"
+path = "tests/api_primitives_test.rs"
+
+[[test]]
+name = "sandbox_limits"
+path = "tests/sandbox_limits_test.rs"
+
+[[test]]
+name = "run_insight"
+path = "tests/run_insight_test.rs"

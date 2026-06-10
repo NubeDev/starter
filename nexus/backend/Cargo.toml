@@ -6,6 +6,7 @@ resolver = "2"
 members = [
     "crates/nexus-spi",
     "crates/nexus-engine",
+    "crates/nexus-insights",
     "crates/nexus-store",
     "crates/nexus-api",
     "crates/nexus-ai",
@@ -19,8 +20,9 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 # In-repo nexus crates (path deps within this workspace).
-nexus-spi    = { path = "crates/nexus-spi" }
-nexus-engine = { path = "crates/nexus-engine" }
+nexus-spi      = { path = "crates/nexus-spi" }
+nexus-engine   = { path = "crates/nexus-engine" }
+nexus-insights = { path = "crates/nexus-insights" }
 nexus-store  = { path = "crates/nexus-store" }
 nexus-ai     = { path = "crates/nexus-ai" }
 nexus-skills = { path = "crates/nexus-skills" }
@@ -87,6 +89,12 @@ chrono     = { version = "0.4", default-features = false, features = ["serde", "
 async-trait = "0.1"
 thiserror   = "1"
 tracing     = "0.1"
+
+# Sandboxed insight scripting (RW-06). `sync` makes the engine + scope `Send` so a
+# script can run inside an async handler; `no_closure` removes the one Rhai feature
+# (shared captured state) that complicates the per-execution sandbox model — every
+# insight is one fresh engine with no cross-call state by design.
+rhai = { version = "1.20", default-features = false, features = ["sync", "std"] }
 
 # MQTT client for the optional `mqtt` datasource connector (WS-08b). Pulled in
 # only when the `mqtt` feature is enabled — OFF by default per HOW-TO-CODE §9, so
