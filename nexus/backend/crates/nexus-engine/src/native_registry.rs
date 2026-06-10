@@ -9,7 +9,7 @@
 
 use crate::core::Registry;
 use crate::processor::{JsonToArrow, SqlProcessor};
-use crate::sink::{CollectorSink, DropSink, PostgresSink, SseSink, StdoutSink};
+use crate::sink::{CollectorSink, DatasourceSink, DropSink, PostgresSink, SseSink, StdoutSink};
 use crate::source::{GenerateSource, HttpPollSource, MemorySource, SimulatorSource};
 
 /// Construct a registry holding every native built-in. Last-wins registration
@@ -51,6 +51,10 @@ pub fn native_registry() -> Registry {
     registry.register_sink(
         "postgres",
         Box::new(|c| Ok(Box::new(PostgresSink::from_config(c)?))),
+    );
+    registry.register_sink(
+        "datasource",
+        Box::new(|c| Ok(Box::new(DatasourceSink::from_config(c)?))),
     );
     registry.register_sink("drop", Box::new(|_| Ok(Box::new(DropSink::new()))));
     registry.register_sink("stdout", Box::new(|_| Ok(Box::new(StdoutSink::new()))));

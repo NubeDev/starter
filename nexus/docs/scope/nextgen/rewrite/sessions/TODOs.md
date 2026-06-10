@@ -51,6 +51,22 @@ Format per entry:
   add the slice + commit hook to `core::pipeline.rs` and flip the trait to `&mut self`. RW-02's
   nodes compile unchanged under `&mut self` and gain a default-no-op `commit()`.
 
+## 2026-06-10 RW-04 — `datasource` sink has no flow-builder palette descriptor (RW-03 lane)
+- **Type:** follow-up
+- **What:** The new `datasource` output sink is registered and runs end-to-end, but it has
+  no entry in `nexus-engine/src/registry/descriptor.rs::describe()`, so `GET
+  /api/v1/flows/node-types` does not surface it for the visual flow builder. A user can
+  still author a datasource-targeted flow via raw config (`{type:datasource, datasource:id,
+  table}`), which the start handler resolves; only the palette is missing.
+- **Why:** `registry/**` is RW-03's lane (ROADMAP §4); RW-04 owns `sink/datasource.rs`,
+  not the descriptor table, and the charter forbids editing another RW's lane. The feature
+  is fully functional without the palette entry, so this is a usability follow-up, not a
+  blocker.
+- **Proposed:** Whoever next touches `registry/descriptor.rs` (an RW-03 fix pass, or RW-07
+  when it adds extension-contributed sinks to the palette) adds a `datasource()`
+  descriptor: category Output, config_schema `{kind, datasource(id), table, batch_rows?,
+  batch_ms?}`, and extends the `describes_every_registered_node` test.
+
 ## 2026-06-10 RW-02 — Native `sql` omits ArkFlow's JSON UDFs (confirm before vendor delete)
 - **Type:** follow-up
 - **What:** ArkFlow's vendored `sql` processor registers `datafusion_functions_json` + a custom

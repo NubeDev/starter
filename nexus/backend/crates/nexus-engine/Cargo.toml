@@ -102,3 +102,11 @@ path = "tests/sink/sse_sink_native_test.rs"
 [[test]]
 name = "sink_collector_native"
 path = "tests/sink/collector_sink_native_test.rs"
+
+[[test]]
+name = "sink_datasource"
+path = "tests/sink/datasource_sink_test.rs"
+
+[[test]]
+name = "sink_datasource_registry"
+path = "tests/sink/datasource_registry_test.rs"

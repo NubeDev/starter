@@ -17,6 +17,7 @@ mod kind;
 mod lint;
 mod load;
 mod manifest;
+mod resolve_output;
 mod validate;
 
 use std::collections::BTreeMap;
@@ -25,6 +26,7 @@ use std::path::Path;
 pub use error::DatasourceKindError;
 pub use kind::DatasourceKind;
 pub use manifest::{Surface, TestSpec};
+pub use resolve_output::resolve_flow_output;
 
 /// An immutable, source-agnostic set of registered datasource-kinds keyed by
 /// name.

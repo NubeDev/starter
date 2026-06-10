@@ -1,13 +1,18 @@
 # RW-04 — Any-DB store: sinks target a datasource id
 
-> Verified: 2026-06-10 against master (6b6f16d2). §0: re-grep every file:line below first.
+> Verified: 2026-06-10 against nexus-rewrite (post-RW-03). §0: re-grep every file:line below first.
 > Depends on RW-03 (native engine at HEAD). Builds on WS-08b datasource-kinds
 > (`nexus-api/src/datasource_kinds/**`, `nexus-api/datasource-kinds/` pack).
+>
+> Path drift fixed 2026-06-10 (RW-04 session): RW-02/03 renamed the postgres sink. The
+> hardwired sink is `nexus-engine/src/sink/postgres_sink.rs`; its interpolated-table /
+> quoted-column INSERT primitive is `nexus-engine/src/sink/pg_insert.rs` ~16-25.
 
 ## Current state
 
-- `sink/postgres.rs` is hardwired to Postgres: config carries connection info, rows go
-  Arrow→JSON→parameterized INSERT one batch at a time.
+- `sink/postgres_sink.rs` is hardwired to Postgres: config carries a connection `uri`
+  (decrypted by the caller at build time), rows go Arrow→JSON→parameterized INSERT one
+  row at a time via `sink/pg_insert.rs`.
 - Datasources already exist as tenant records with envelope-encrypted creds
   (`nexus-store/src/datasource/secret.rs` ~63-89 — `Envelope::seal/open`) and a
   declarative kind format from WS-08b (postgres query / mqtt stream kinds).
@@ -30,7 +35,7 @@
      session log. Keep the existing Arrow→param mapping rules; fall back to multi-row
      INSERT only for types COPY can't carry.
    - **SQL identifier safety (acceptance item):** the current sink interpolates the table
-     name and JSON-derived column names into SQL (`sink/postgres.rs` ~84-95 — quoting
+     name and JSON-derived column names into SQL (`sink/pg_insert.rs` ~16-25 — quoting
      alone is not validation). The datasource writer must validate table + column
      identifiers through a strict allowlisted-shape check, reusing the precedent in
      `nexus-store/src/query/bind/identifier.rs` (the binder's one text-path guard).

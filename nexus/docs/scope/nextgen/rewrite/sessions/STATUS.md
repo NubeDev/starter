@@ -13,7 +13,7 @@
 | 1 | RW-01 | Engine core: native pipeline loop, node traits, registry | ✅ | 2026-06-10 02:20 UTC | 2026-06-10 02:58 UTC | 9757df7c | additive only; ArkFlow stays compiling; 5 core tests green |
 | 2 | RW-02 | Port nodes onto core (DataFusion direct) | ✅ | 2026-06-10 02:30 UTC | 2026-06-10 03:25 UTC | 6b25bb7d | behavior parity, same registry names; 40 engine tests green |
 | 3 | RW-03 | Cutover: runners on native engine; delete ArkFlow | ✅ | 2026-06-10 02:55 UTC | 2026-06-10 04:35 UTC | 8d679c5b | grep-zero arkflow; vendor/ gone; 207 tests green |
-| 4 | RW-04 | Any-DB store: datasource-id sinks, batched writes | 🔵 | 2026-06-10 03:25 UTC | | | postgres + file(parquet) writers |
+| 4 | RW-04 | Any-DB store: datasource-id sinks, batched writes | ✅ | 2026-06-10 03:25 UTC | 2026-06-10 03:47 UTC | (pending) | postgres COPY + file(parquet) writers; audited resolve |
 | 5 | RW-05 | Federation: DataFusion across datasources + file kinds | ⬜ | | | | push-down path untouched |
 | 6 | RW-06 | nexus-insights: Polars + Rhai sandbox + query stage | ⬜ | | | | migration 18xx; DTO-first |
 | 7 | RW-07 | Extension data-plane: sources/sinks/insights contributions | ⬜ | | | | ingest.write host method |
@@ -30,3 +30,4 @@
 2026-06-10 02:55 — RW-03 picked (first pending, no RW in progress); marked 🔵, spawning subagent.
 2026-06-10 04:35 — RW-03 done: runners (query/live/flow-manager) + registry cut over to core::Pipeline; core §6 deltas landed (Processor::process(&mut self), Source::commit() no-op hook, max_batch_rows zero-copy slice); ArkFlow git deps + [patch] block + vendor/arkflow-plugin/ (35 files) + every arkflow source file deleted; grep -ri arkflow over backend .rs/.toml/.lock + openapi.json = zero; stored-config parity test proves old-engine flows run unchanged; 207 workspace tests green, 0 failed. openapi.json + FE client regenerated (description-only). Marked ✅.
 2026-06-10 03:25 — RW-04 picked (first pending, no RW in progress); marked 🔵, spawning subagent.
+2026-06-10 03:47 — RW-04 done: `datasource` sink (sink/datasource/: writer trait, postgres COPY writer via sqlx PgCopyIn text format, parquet rotating part-files, batch accumulator flush-on-rows-or-timer, strict identifier guard) registered in native_registry; secret resolution stays in store (resolve_sink_config, audited open_secret) + api (resolve_flow_output) with flows/start.rs as the thin transport seam — engine keeps zero nexus-store dep. Legacy postgres sink configs still build (parity test). e2e docker flow lands rows via COPY; parquet read back via DataFusion. Full engine suite + workspace green, clippy clean. No migration/DTO/codegen needed. Palette-descriptor follow-up logged to TODOs.md (RW-03 registry/ lane). Marked ✅.

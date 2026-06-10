@@ -58,12 +58,24 @@ pub async fn start_flow(
 
     // The stored pipeline is a JSON array of processor configs.
     let processors: Vec<Value> = rec.pipeline.as_array().cloned().unwrap_or_default();
-    if let Err(e) = state.flows.start(
-        &id.to_string(),
-        rec.input.clone(),
-        processors,
+    // A `datasource`-typed output names a datasource by id; resolve it to the
+    // engine's connection material (audited decrypt) before the pipeline builds.
+    // Any other output passes through unchanged.
+    let output = match crate::datasource_kinds::resolve_flow_output(
+        &state,
+        &tenant,
+        &caller.subject,
         rec.output.clone(),
-    ) {
+    )
+    .await
+    {
+        Ok(o) => o,
+        Err(e) => return IntoResponse(e).into_response(),
+    };
+    if let Err(e) = state
+        .flows
+        .start(&id.to_string(), rec.input.clone(), processors, output)
+    {
         return (StatusCode::BAD_REQUEST, e).into_response();
     }
     // Persist the intent so the flow is known-enabled for a future resume.
