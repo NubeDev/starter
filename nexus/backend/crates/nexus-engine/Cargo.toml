@@ -72,3 +72,31 @@ path = "tests/source/http_poll_test.rs"
 [[test]]
 name = "source_simulator"
 path = "tests/source/simulator_test.rs"
+
+[[test]]
+name = "native_pipeline"
+path = "tests/native/pipeline_test.rs"
+
+[[test]]
+name = "processor_json_to_arrow"
+path = "tests/processor/json_to_arrow_test.rs"
+
+[[test]]
+name = "processor_sql"
+path = "tests/processor/sql_test.rs"
+
+[[test]]
+name = "source_memory_native"
+path = "tests/source/memory_native_test.rs"
+
+[[test]]
+name = "source_generate_native"
+path = "tests/source/generate_native_test.rs"
+
+[[test]]
+name = "sink_sse_native"
+path = "tests/sink/sse_sink_native_test.rs"
+
+[[test]]
+name = "sink_collector_native"
+path = "tests/sink/collector_sink_native_test.rs"

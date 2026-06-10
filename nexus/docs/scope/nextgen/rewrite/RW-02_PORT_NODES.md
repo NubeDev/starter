@@ -1,6 +1,9 @@
 # RW-02 — Port nodes onto the core engine (DataFusion direct)
 
-> Verified: 2026-06-10 against master (6b6f16d2). §0: re-grep every file:line below first.
+> Verified: 2026-06-10 against nexus-rewrite (9757df7c, RW-01). §0 re-grep done: the
+> "Current state" file:line claims below all hold. Note RW-01 froze `Processor::process`
+> with `&self` (not the `&mut self` the roadmap §6 first sketched), so the ported
+> processors are `&self`; that is the committed contract.
 > Depends on RW-01 (core traits committed — read `nexus-engine/src/core/node.rs` first).
 
 ## Current state

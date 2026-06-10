@@ -11,6 +11,8 @@
 pub mod arrow_json;
 pub mod core;
 pub mod flow;
+pub mod native_registry;
+pub mod processor;
 pub mod registry;
 pub mod runner;
 pub mod sink;
@@ -19,6 +21,7 @@ pub mod stream_registry;
 pub mod time;
 
 pub use flow::{FlowManager, FlowStats};
+pub use native_registry::native_registry;
 pub use registry::{describe, register_all, NodeCategory, NodeDescriptor};
 pub use runner::{LiveRunner, QueryOutcome, QueryRunner};
 pub use sink::cap::Caps;
