@@ -100,18 +100,38 @@ tab is hidden/disabled for those flows.
       (`elec 740 / water 739`); **read-only guard rejects `DROP TABLE`**, table
       intact. No datasource setup, no retyping the table name.
 
-### Phase 2 — Unified node-click pivot
-- [ ] Click a node on the debug canvas → bottom panel focuses that node's live
-      samples; clicking the **sink** node also surfaces the Table query inline.
-- [ ] One gesture to pivot stream ↔ table on the same node.
+### Phase 2 — Unified node-click pivot ✅ DONE (2026-06-10)
+- [x] Tabs are controlled (`tab` state). Clicking a node on the debug canvas
+      (`onNodeClick`) selects it and pivots the bottom panel: the **sink**
+      (output) node → the Table tab; any other node → its live Values. One
+      gesture to pivot stream ↔ table. (`DebugDrawer.tsx`.) Per-node table row
+      click still just selects (you're already reading that table). Typechecks.
 
-### Phase 3 — Transform tab (dry-run sandbox)
-- [ ] UI: pipeline editor (the flow's `pipeline`, editable) bound to
-      `/flows/{id}/dry-run`; show **input sample → transformed output** side by
-      side, no DB write, running flow untouched.
-- [ ] "Apply to flow" promotes the edited pipeline via the flow update endpoint
-      (explicit, never silent).
-- [ ] Test: add a `sql` processor step, dry-run, see the output columns change.
+### Phase 3 — Transform tab (dry-run sandbox) ✅ DONE (2026-06-10)
+- [x] UI: `TransformTab` — editable pipeline JSON (left) bound to the existing
+      `/flows/dry-run` via `useDryRun()`; transformed output (right) via the
+      existing `DryRunResult`. Uses the flow's real `input`; runs against a
+      bounded collector, **no DB write, running flow untouched**. Parse-error
+      gating on the JSON.
+- [x] "Apply to flow" — explicit, separate button via `useUpdateFlow()`; only
+      enabled when the JSON is valid and changed; notes that a restart is needed
+      for the live run to pick it up. Never silent.
+- [x] Verified live: dry-run of `zenoh → json_to_arrow` returned a 3-row typed
+      sample (`error: None`), and the sink table did **not** grow from the
+      dry-run (collector sink, not postgres). Typechecks + builds.
+
+---
+
+## Result — the workbench is complete
+
+From a running flow's Debug drawer you now **never leave the panel** to:
+- **Stream** — watch per-node counters + sampled rows + logs (canvas + tabs).
+- **Table** — query the flow's own sink table (prefilled, read-only); reach it in
+  one click on the sink node.
+- **Transform** — edit the pipeline and dry-run input→output with no write, then
+  Apply explicitly.
+
+One flow context; streaming, the database, and transformations side by side.
 
 ---
 

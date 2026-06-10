@@ -28,8 +28,9 @@ import {
 import { Badge } from "@nube/starter-ui-kit/components/badge";
 import { ScrollArea } from "@nube/starter-ui-kit/components/scroll-area";
 
-import { useFlow } from "@/features/flows/useFlows";
-import { useNodeTypes } from "@/features/flows/builder/useBuilder";
+import { useFlow, useUpdateFlow } from "@/features/flows/useFlows";
+import { useNodeTypes, useDryRun } from "@/features/flows/builder/useBuilder";
+import { DryRunResult } from "@/features/flows/builder/DryRunResult";
 import { parseGraph } from "@/features/flows/builder/parse";
 import { DebugCanvas } from "@/features/flows/DebugCanvas";
 import {
@@ -82,6 +83,7 @@ function DebugBody({ flowId }: { flowId: string }) {
   const nodeTypes = useNodeTypes();
   const debug = useFlowDebug(flowId, true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
+  const [tab, setTab] = useState("nodes");
 
   const graph = useMemo(() => {
     if (!flow.data || !nodeTypes.data) return null;
@@ -116,6 +118,15 @@ function DebugBody({ flowId }: { flowId: string }) {
     debug: debug.byNode.get(i),
   }));
 
+  // Clicking a node pivots the bottom panel to the right view: the sink (output)
+  // node → the Table tab (what landed), any other node → its live Values. This
+  // is the stream↔table pivot in one gesture (Workbench phase 2).
+  const onNodeClick = (i: number) => {
+    setSelectedIndex(i);
+    const isSink = graph.nodes[i]?.category === "output";
+    setTab(isSink && sinkTable ? "table" : "values");
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <ConnectionBar connection={debug.connection} error={debug.error} />
@@ -125,11 +136,15 @@ function DebugBody({ flowId }: { flowId: string }) {
           graph={graph}
           byNode={debug.byNode}
           selectedIndex={selectedIndex}
-          onSelect={setSelectedIndex}
+          onSelect={onNodeClick}
         />
       </div>
 
-      <Tabs defaultValue="nodes" className="flex h-64 min-h-0 flex-col">
+      <Tabs
+        value={tab}
+        onValueChange={setTab}
+        className="flex h-64 min-h-0 flex-col"
+      >
         <TabsList>
           <TabsTrigger value="nodes">Per-node</TabsTrigger>
           <TabsTrigger value="values">
@@ -137,6 +152,7 @@ function DebugBody({ flowId }: { flowId: string }) {
             {selectedNode ? ` · ${orderedNodes[selectedIndex ?? 0]?.label}` : ""}
           </TabsTrigger>
           {sinkTable ? <TabsTrigger value="table">Table</TabsTrigger> : null}
+          <TabsTrigger value="transform">Transform</TabsTrigger>
           <TabsTrigger value="logs">
             Logs{debug.logs.length ? ` (${debug.logs.length})` : ""}
           </TabsTrigger>
@@ -157,6 +173,13 @@ function DebugBody({ flowId }: { flowId: string }) {
             <TableTab flowId={flowId} table={sinkTable} />
           </TabsContent>
         ) : null}
+        <TabsContent value="transform" className="min-h-0 flex-1">
+          <TransformTab
+            flowId={flowId}
+            input={flow.data.input}
+            pipeline={flow.data.pipeline}
+          />
+        </TabsContent>
         <TabsContent value="logs" className="min-h-0 flex-1">
           <LogList logs={debug.logs} />
         </TabsContent>
@@ -397,6 +420,104 @@ function TableTab({ flowId, table }: { flowId: string; table: string }) {
         ) : (
           <p className="p-3 text-xs text-muted-foreground">
             Run the query to see what landed in the table.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Edit the pipeline and dry-run it: input rows → transformed output, against
+// the flow's real input connector, with NO write to the sink and NO change to
+// the running flow (the engine swaps in a bounded collector). "Apply to flow"
+// is an explicit, separate step that saves the edited pipeline. (Workbench
+// phase 3.)
+function TransformTab({
+  flowId,
+  input,
+  pipeline,
+}: {
+  flowId: string;
+  input: unknown;
+  pipeline: unknown;
+}) {
+  const initial = useMemo(
+    () => JSON.stringify(pipeline ?? [], null, 2),
+    [pipeline],
+  );
+  const [text, setText] = useState(initial);
+  const dryRun = useDryRun();
+  const update = useUpdateFlow();
+
+  // Parse the edited pipeline; a parse error gates Run/Apply with a clear message.
+  const parsed = useMemo(() => {
+    try {
+      return { value: JSON.parse(text) as unknown, error: null as string | null };
+    } catch (e) {
+      return { value: null, error: e instanceof Error ? e.message : "invalid JSON" };
+    }
+  }, [text]);
+
+  const dirty = text.trim() !== initial.trim();
+
+  return (
+    <div className="flex h-full min-h-0 gap-3">
+      <div className="flex w-1/2 min-w-0 flex-col gap-2">
+        <Textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          spellCheck={false}
+          className="min-h-0 flex-1 resize-none font-mono text-xs"
+          aria-label="Pipeline JSON"
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() =>
+              parsed.value !== null &&
+              dryRun.mutate({ input: input as never, pipeline: parsed.value as never })
+            }
+            disabled={!!parsed.error || dryRun.isPending}
+          >
+            <Play className="size-3.5" aria-hidden />
+            {dryRun.isPending ? "Running…" : "Dry-run"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              parsed.value !== null &&
+              update.mutate({ id: flowId, body: { pipeline: parsed.value as never } })
+            }
+            disabled={!!parsed.error || !dirty || update.isPending}
+            title={!dirty ? "No pipeline changes to apply" : "Save the edited pipeline to the flow"}
+          >
+            {update.isPending ? "Applying…" : "Apply to flow"}
+          </Button>
+          {parsed.error ? (
+            <span className="text-xs text-destructive">{parsed.error}</span>
+          ) : (
+            <span className="text-[11px] text-muted-foreground">
+              Dry-run is read-only: no DB write, running flow untouched.
+            </span>
+          )}
+        </div>
+        {update.isSuccess && !dirty ? (
+          <p className="text-[11px] text-[color:var(--chart-1)]">
+            Pipeline saved. Restart the flow for it to take effect on the live run.
+          </p>
+        ) : null}
+      </div>
+      <div className="min-h-0 w-1/2 overflow-hidden">
+        {dryRun.data ? (
+          <DryRunResult result={dryRun.data} />
+        ) : dryRun.isError ? (
+          <p role="alert" className="p-3 text-xs text-destructive">
+            {dryRun.error.message}
+          </p>
+        ) : (
+          <p className="p-3 text-xs text-muted-foreground">
+            Dry-run to see the transformed output for the current pipeline.
           </p>
         )}
       </div>
