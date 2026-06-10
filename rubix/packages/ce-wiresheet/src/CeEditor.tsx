@@ -1731,7 +1731,8 @@ function Inner({ base }: { base: string }) {
   // Promote edges to loopback. Per the OpenAPI: `loopBack` may only be set to
   // `true` — once an edge is marked loopback, the engine never clears it
   // automatically and there's no API to clear it either. The only way out is
-  // to delete the edge. Reload after so the dotted-grey style picks up.
+  // to delete the edge. Patch the dotted-grey loopback style in place for the
+  // edges that succeeded — no full reload just to repaint a few edges.
   const setEdgesLoopBack = useCallback(async (ids: number[]) => {
     if (ids.length === 0) return;
     const results = await Promise.allSettled(
@@ -1739,8 +1740,22 @@ function Inner({ base }: { base: string }) {
     );
     const failed = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
     if (failed) setError((failed.reason as Error).message);
-    await reload();
-  }, [reload]);
+    const ok = ids.filter((_, i) => results[i].status === "fulfilled");
+    if (ok.length === 0) return;
+    const okSet = new Set(ok.map(String));
+    const st = useStructural.getState();
+    for (const uid of ok) {
+      const e = st.edges.get(uid);
+      if (e) st.upsertEdge({ ...e, loopBack: true });
+    }
+    setEdges((es) =>
+      es.map((e) =>
+        okSet.has(e.id)
+          ? { ...e, style: { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } }
+          : e,
+      ),
+    );
+  }, []);
 
   // Drag-to-move → PATCH on drag-stop only. Also drag-along any ghost
   // sub-nodes anchored to the moving component so cross-folder edge stubs
@@ -2540,6 +2555,14 @@ function PaneContextMenu({
 }) {
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState("");
+  const [highlight, setHighlight] = useState(0);
+  const hlRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setHighlight(0);
+  }, [filter, adding]);
+  useEffect(() => {
+    hlRef.current?.scrollIntoView({ block: "nearest" });
+  }, [highlight]);
 
   useEffect(() => {
     const dismiss = (e: MouseEvent) => {
@@ -2624,6 +2647,32 @@ function PaneContextMenu({
               autoFocus
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  onClose();
+                  return;
+                }
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setHighlight((h) => Math.min(h + 1, Math.max(0, filtered.length - 1)));
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setHighlight((h) => Math.max(0, h - 1));
+                  return;
+                }
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const c = filtered[highlight];
+                  if (c) {
+                    onAdd(c.type);
+                    onClose();
+                  }
+                  return;
+                }
+                e.stopPropagation();
+              }}
               placeholder="Filter components…"
               style={{ ...acInput, flex: 1 }}
             />
@@ -2632,14 +2681,16 @@ function PaneContextMenu({
             {filtered.length === 0 ? (
               <div style={{ color: "#5a6172", padding: "6px 8px" }}>no matches</div>
             ) : (
-              filtered.map((c) => (
+              filtered.map((c, i) => (
                 <button
                   key={c.type}
+                  ref={i === highlight ? hlRef : undefined}
+                  onMouseEnter={() => setHighlight(i)}
                   onClick={() => {
                     onAdd(c.type);
                     onClose();
                   }}
-                  style={acBtn}
+                  style={{ ...acBtn, background: i === highlight ? "#2c3a55" : "transparent" }}
                 >
                   <span>{c.name}</span>
                   <span style={{ color: "#5a6172", fontSize: 10 }}>{c.group}</span>

@@ -475,7 +475,24 @@ function ConnectPicker({
   // an existing one. Needs the editor's component types + create action.
   const ctx = useContext(CeWiresheetContext);
   const [creatingNew, setCreatingNew] = useState(false);
-  const [newFilter, setNewFilter] = useState("");
+  // After picking a type in New mode, the freshly-created component is parked
+  // here so the user can choose WHICH of its matching props to connect to,
+  // instead of auto-wiring the first one.
+  const [pendingNew, setPendingNew] = useState<Component | null>(null);
+  // Keyboard navigation: index of the highlighted row (a property in Existing /
+  // pick-input mode, a type in New mode). The filter is SHARED across Existing
+  // and New, so switching (Tab / the +New button) keeps whatever you typed.
+  const [highlight, setHighlight] = useState(0);
+  const hlRef = useRef<HTMLButtonElement>(null);
+  // Reset the highlight to the top whenever the candidate list changes (new
+  // filter text, switching Existing↔New, or entering pick-input).
+  useEffect(() => {
+    setHighlight(0);
+  }, [filter, creatingNew, pendingNew]);
+  // Keep the highlighted row scrolled into view while arrowing through it.
+  useEffect(() => {
+    hlRef.current?.scrollIntoView({ block: "nearest" });
+  }, [highlight, creatingNew]);
 
   // Dismiss on outside-click / Escape. Capture-phase pointerdown so React Flow's
   // pane (which stopImmediatePropagation's on press) can't swallow it. The
@@ -563,17 +580,26 @@ function ConnectPicker({
     componentName: string;
     path: string;
     sibling: boolean; // true when this component shares the source's parent
+    isParent: boolean; // the source's own container (feed-through target)
+    isChild: boolean; // nested inside the source component
     props: Candidate[];
   }
 
   // Look up the source component's parent so we can flag siblings. Use the
   // current view's structural cache — the source is always in scope there.
-  const sourceParent = useStructural.getState().components.get(sourceComponentUid)?.parent;
+  const sourceComp = useStructural.getState().components.get(sourceComponentUid);
+  const sourceParent = sourceComp?.parent;
+  const sourceName = sourceComp?.name || "component";
 
   const groups: CompGroup[] = [];
   const componentList = allComponents ?? [];
   for (const c of componentList) {
     if (c.uid === sourceComponentUid) continue;
+    // Parent / children are grouped + labelled distinctly, but they connect like
+    // any other target: a normal opposite-category edge (the engine supports
+    // cross-folder edges). Feed-through (same-category) edges aren't used.
+    const isParent = sourceParent !== undefined && c.uid === sourceParent;
+    const isChild = c.parent === sourceComponentUid;
     const props: Candidate[] = [];
     for (const [name, p] of Object.entries(c.properties)) {
       if (p.category !== wantCategory) continue;
@@ -588,39 +614,53 @@ function ConnectPicker({
       componentName: c.name || c.type,
       path: c.path,
       sibling: sourceParent !== undefined && c.parent === sourceParent,
+      isParent,
+      isChild,
       props,
     });
   }
-  // Siblings first (alphabetical by name), then everything else (alphabetical
-  // by path). Splitting the list this way puts the most likely targets at the
-  // top while still surfacing cross-folder options without scrolling past
-  // them.
+  // Parent (feed-through) first, then siblings (alphabetical by name), then
+  // everything else (alphabetical by path). Puts the most likely targets at the
+  // top while still surfacing cross-folder options without scrolling past them.
+  // Tier order: parent (0) → same level (1) → children (2) → everything else (3).
+  const tierOf = (g: CompGroup) => (g.isParent ? 0 : g.sibling ? 1 : g.isChild ? 2 : 3);
   groups.sort((a, b) => {
-    if (a.sibling !== b.sibling) return a.sibling ? -1 : 1;
-    if (a.sibling) return a.componentName.localeCompare(b.componentName);
-    return a.path.localeCompare(b.path);
+    const ta = tierOf(a);
+    const tb = tierOf(b);
+    if (ta !== tb) return ta - tb;
+    // Within "other" sort by path; otherwise by name.
+    return ta === 3
+      ? a.path.localeCompare(b.path)
+      : a.componentName.localeCompare(b.componentName);
   });
 
   const f = filter.trim().toLowerCase();
-  // When filtering, expand any group with a matching component name, path, OR
-  // prop name. Filter the props within those groups too, so the user sees
-  // only what they typed. Path match means a user can type "folder/" to scope
-  // the picker to a subtree.
-  const filteredGroups: CompGroup[] = f
+  // A path-style filter ("add1/add2/ad") splits at the LAST slash into a folder
+  // SCOPE ("add1/add2") that the component's path must contain, and a TERM
+  // ("ad") matched against the component name or the path tail BELOW that scope.
+  // So it finds matches in that folder AND deeper — not just direct children —
+  // and the term doesn't accidentally match folder names in the scope itself.
+  const slash = f.lastIndexOf("/");
+  const pathScope = slash >= 0 ? f.slice(0, slash) : "";
+  const term = slash >= 0 ? f.slice(slash + 1) : f;
+
+  const filteredGroups: CompGroup[] = !f
     ? groups
+    : groups
         .map((g) => {
-          const nameMatch =
-            g.componentName.toLowerCase().includes(f) || g.path.toLowerCase().includes(f);
-          if (nameMatch) return g; // whole group qualifies
-          const props = g.props.filter((p) => p.propName.toLowerCase().includes(f));
+          const path = g.path.toLowerCase();
+          if (pathScope && !path.includes(pathScope)) return null;
+          if (!term) return g; // pure folder scope → whole group qualifies
+          const tail = pathScope ? path.slice(path.indexOf(pathScope) + pathScope.length) : path;
+          if (g.componentName.toLowerCase().includes(term) || tail.includes(term)) return g;
+          const props = g.props.filter((p) => p.propName.toLowerCase().includes(term));
           return props.length > 0 ? { ...g, props } : null;
         })
-        .filter((g): g is CompGroup => g !== null)
-    : groups;
+        .filter((g): g is CompGroup => g !== null);
 
   const create = async (target: { componentUid: number; propUid: number }) => {
     // Engine convention: source = output side, target = input side. Flip based
-    // on which end the user right-clicked from.
+    // on which end the user is wiring from.
     const payload =
       sourceCategory === "output"
         ? {
@@ -655,10 +695,21 @@ function ConnectPicker({
   const allFilteredProps = filteredGroups.flatMap((g) =>
     g.props.map((p) => ({ componentUid: g.componentUid, propUid: p.propUid })),
   );
+  // Flat-index offset of each group's first prop, so one highlight index can
+  // address the whole accordion. A group auto-opens when the highlight lands
+  // inside it (see render), so arrowing down walks open groups for you.
+  const groupPropOffsets: number[] = [];
+  {
+    let acc = 0;
+    for (const g of filteredGroups) {
+      groupPropOffsets.push(acc);
+      acc += g.props.length;
+    }
+  }
 
   // "New" flow: create a component of `type` in the current folder, then connect
   // the source to its first matching-category property.
-  const createAndConnect = async (type: string) => {
+  const createNew = async (type: string) => {
     if (!ctx) return;
     // Connecting FROM an output → the new node is downstream (place it right);
     // FROM an input → the new node is upstream (place it left of the source).
@@ -668,14 +719,38 @@ function ConnectPicker({
       onClose();
       return;
     }
-    const prop = Object.values(c.properties ?? {}).find((p) => p.category === wantCategory);
-    if (prop) await create({ componentUid: c.uid, propUid: prop.uid });
-    else onClose();
+    const matching = Object.entries(c.properties ?? {})
+      .filter(
+        ([, p]) =>
+          p.category === wantCategory && (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL,
+      )
+      .map(([name, p]) => ({ uid: p.uid, name }));
+    if (matching.length === 0) {
+      onClose(); // nothing connectable — leave the new node placed
+    } else if (matching.length === 1) {
+      await create({ componentUid: c.uid, propUid: matching[0].uid }); // one option → wire it
+    } else {
+      // Multiple candidates → let the user pick which prop to connect to.
+      setPendingNew(c);
+      setFilter("");
+    }
   };
-  const nf = newFilter.trim().toLowerCase();
+  const nf = filter.trim().toLowerCase();
   const newTypes = (ctx?.componentTypes ?? []).filter(
     (t) => !nf || t.name.toLowerCase().includes(nf) || t.type.toLowerCase().includes(nf),
   );
+  // Props of the just-created component the user can pick from (pick-input mode).
+  const newProps = pendingNew
+    ? Object.entries(pendingNew.properties ?? {})
+        .filter(
+          ([, p]) =>
+            p.category === wantCategory && (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL,
+        )
+        .map(([name, p]) => ({ uid: p.uid, name }))
+    : [];
+  const newPropsFiltered = nf
+    ? newProps.filter((p) => p.name.toLowerCase().includes(nf))
+    : newProps;
 
   // Position to the right of the parent menu where possible; clamp so it doesn't
   // run off-screen. The parent menu is at (x, y) and ~180px wide.
@@ -707,7 +782,27 @@ function ConnectPicker({
     >
       <div style={{ padding: "6px 8px", borderBottom: "1px solid #2c313c" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-          {creatingNew ? (
+          {pendingNew ? (
+            <>
+              <button
+                onClick={() => setPendingNew(null)}
+                title="Back to component types"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#9ecbff",
+                  cursor: "pointer",
+                  fontSize: 13,
+                  padding: 0,
+                }}
+              >
+                ‹
+              </button>
+              <span style={{ color: "#8892a0", fontSize: 10, flex: 1 }}>
+                {pendingNew.name} → pick {wantCategory === CATEGORY_INPUT ? "input" : "output"}
+              </span>
+            </>
+          ) : creatingNew ? (
             <>
               <button
                 onClick={() => setCreatingNew(false)}
@@ -753,16 +848,55 @@ function ConnectPicker({
         </div>
         <input
           autoFocus
-          value={creatingNew ? newFilter : filter}
-          onChange={(e) => (creatingNew ? setNewFilter(e.target.value) : setFilter(e.target.value))}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Escape") onClose();
-            else if (!creatingNew && e.key === "Enter" && allFilteredProps.length === 1) {
-              create(allFilteredProps[0]);
+            if (e.key === "Escape") {
+              onClose();
+              return;
+            }
+            // Tab: from pick-input, go back to the type list; otherwise toggle
+            // Existing ↔ New, keeping the typed filter.
+            if (e.key === "Tab") {
+              e.preventDefault();
+              if (pendingNew) setPendingNew(null);
+              else if (ctx) setCreatingNew((v) => !v);
+              return;
+            }
+            const len = pendingNew
+              ? newPropsFiltered.length
+              : creatingNew
+                ? newTypes.length
+                : allFilteredProps.length;
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setHighlight((h) => Math.min(h + 1, Math.max(0, len - 1)));
+              return;
+            }
+            if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setHighlight((h) => Math.max(0, h - 1));
+              return;
+            }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (pendingNew) {
+                const p = newPropsFiltered[highlight];
+                if (p) void create({ componentUid: pendingNew.uid, propUid: p.uid });
+              } else if (creatingNew) {
+                const t = newTypes[highlight];
+                if (t) void createNew(t.type);
+              } else {
+                const p = allFilteredProps[highlight];
+                if (p) void create(p);
+              }
+              return;
             }
             e.stopPropagation();
           }}
-          placeholder={creatingNew ? "filter types…" : "filter…"}
+          placeholder={
+            pendingNew ? "filter inputs…" : creatingNew ? "filter types…   ⇥ existing" : "filter…   ⇥ new"
+          }
           style={{
             width: "100%",
             background: "#0f1115",
@@ -778,22 +912,55 @@ function ConnectPicker({
         />
       </div>
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {creatingNew ? (
+        {pendingNew ? (
+          newPropsFiltered.length === 0 ? (
+            <div style={{ padding: "10px 8px", color: "#5a6172", fontSize: 11 }}>
+              no matching {wantCategory === CATEGORY_INPUT ? "inputs" : "outputs"}
+            </div>
+          ) : (
+            newPropsFiltered.map((p, i) => (
+              <button
+                key={p.uid}
+                ref={i === highlight ? hlRef : undefined}
+                onClick={() => create({ componentUid: pendingNew.uid, propUid: p.uid })}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "5px 8px",
+                  background: i === highlight ? "#2c3a55" : "transparent",
+                  color: "#e6e8eb",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 11,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#232733")}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = i === highlight ? "#2c3a55" : "transparent")
+                }
+              >
+                {p.name}
+              </button>
+            ))
+          )
+        ) : creatingNew ? (
           newTypes.length === 0 ? (
             <div style={{ padding: "10px 8px", color: "#5a6172", fontSize: 11 }}>
               {ctx ? "no matching types" : "unavailable"}
             </div>
           ) : (
-            newTypes.map((t) => (
+            newTypes.map((t, i) => (
               <button
                 key={t.type}
-                onClick={() => createAndConnect(t.type)}
+                ref={i === highlight ? hlRef : undefined}
+                onClick={() => createNew(t.type)}
                 style={{
                   display: "flex",
                   width: "100%",
                   textAlign: "left",
                   padding: "5px 8px",
-                  background: "transparent",
+                  background: i === highlight ? "#2c3a55" : "transparent",
                   color: "#e6e8eb",
                   border: "none",
                   cursor: "pointer",
@@ -804,7 +971,9 @@ function ConnectPicker({
                   gap: 6,
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "#232733")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = i === highlight ? "#2c3a55" : "transparent")
+                }
               >
                 <span>{t.name}</span>
                 <span style={{ color: "#5a6172", fontSize: 9 }}>{t.group}</span>
@@ -818,21 +987,33 @@ function ConnectPicker({
         ) : (
           filteredGroups.map((g, idx) => {
             // Under an active filter every visible group is auto-expanded —
-            // user already pre-narrowed, no need to make them click again.
-            const isOpen = f ? true : expanded === g.componentUid;
-            // Insert a thin divider when transitioning from sibling section
-            // to other-folder section. The list is already sorted siblings
-            // first, so this is just a boundary check.
+            // user already pre-narrowed, no need to make them click again. Also
+            // auto-open the group the keyboard highlight currently sits in, so
+            // arrowing down reveals props as you reach them.
+            const base = groupPropOffsets[idx];
+            const containsHl = highlight >= base && highlight < base + g.props.length;
+            const isOpen = f ? true : expanded === g.componentUid || containsHl;
+            // Section header whenever the tier changes (parent / same level /
+            // inside <source> / other folders).
             const prev = idx > 0 ? filteredGroups[idx - 1] : null;
-            const sectionBreak = prev !== null && prev.sibling && !g.sibling;
-            // The parent-path subtitle for cross-folder candidates. Drop the
-            // component's own name segment so what's shown is the folder
-            // chain, not the component itself.
-            const parentPath = g.path.replace(/\/[^/]*$/, "");
-            const showPath = !g.sibling && parentPath && parentPath !== "root";
+            const tier = tierOf(g);
+            const showSection = tier !== (prev ? tierOf(prev) : -1);
+            const sectionLabel =
+              tier === 0
+                ? "parent"
+                : tier === 1
+                  ? "same level"
+                  : tier === 2
+                    ? `inside ${sourceName}`
+                    : "other folders";
+            // Folder-chain subtitle for "other folders" rows. Drop the
+            // component's own name segment, then the leading "root" so
+            // root/add1 reads as /add1.
+            const folderPath = g.path.replace(/\/[^/]*$/, "").replace(/^root/, "");
+            const showPath = tier === 3 && folderPath !== "";
             return (
               <div key={g.componentUid}>
-                {sectionBreak && (
+                {showSection && (
                   <div
                     style={{
                       padding: "6px 8px 2px 8px",
@@ -840,11 +1021,11 @@ function ConnectPicker({
                       fontSize: 9,
                       textTransform: "uppercase",
                       letterSpacing: 0.4,
-                      borderTop: "1px solid #2c313c",
-                      marginTop: 2,
+                      borderTop: idx > 0 ? "1px solid #2c313c" : "none",
+                      marginTop: idx > 0 ? 2 : 0,
                     }}
                   >
-                    other folders
+                    {sectionLabel}
                   </div>
                 )}
                 <button
@@ -889,6 +1070,23 @@ function ConnectPicker({
                       }}
                     >
                       {g.componentName}
+                      {g.isParent && (
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            fontSize: 8,
+                            textTransform: "uppercase",
+                            letterSpacing: 0.4,
+                            color: "#ffd479",
+                            border: "1px solid #5a4a2a",
+                            background: "#2a2418",
+                            borderRadius: 3,
+                            padding: "0 4px",
+                          }}
+                        >
+                          parent
+                        </span>
+                      )}
                     </span>
                     {showPath && (
                       <span
@@ -901,7 +1099,7 @@ function ConnectPicker({
                         }}
                         title={g.path}
                       >
-                        {parentPath}
+                        {folderPath}
                       </span>
                     )}
                   </span>
@@ -909,28 +1107,36 @@ function ConnectPicker({
                 </button>
                 {isOpen && (
                   <div style={{ paddingBottom: 2 }}>
-                    {g.props.map((p) => (
-                      <button
-                        key={p.propUid}
-                        onClick={() => create({ componentUid: g.componentUid, propUid: p.propUid })}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "3px 8px 3px 28px",
-                          background: "transparent",
-                          color: "#e6e8eb",
-                          border: "none",
-                          cursor: "pointer",
-                          fontSize: 11,
-                          fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "#2c313c")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                      >
-                        {p.propName}
-                      </button>
-                    ))}
+                    {g.props.map((p, pi) => {
+                      const isHl = base + pi === highlight;
+                      return (
+                        <button
+                          key={p.propUid}
+                          ref={isHl ? hlRef : undefined}
+                          onClick={() =>
+                            create({ componentUid: g.componentUid, propUid: p.propUid })
+                          }
+                          style={{
+                            display: "block",
+                            width: "100%",
+                            textAlign: "left",
+                            padding: "3px 8px 3px 28px",
+                            background: isHl ? "#2c3a55" : "transparent",
+                            color: "#e6e8eb",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 11,
+                            fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "#2c313c")}
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background = isHl ? "#2c3a55" : "transparent")
+                          }
+                        >
+                          {p.propName}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

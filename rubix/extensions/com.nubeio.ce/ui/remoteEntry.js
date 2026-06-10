@@ -14515,7 +14515,15 @@ function ConnectPicker({
   const [expanded, setExpanded] = useState(null);
   const ctx = useContext(CeWiresheetContext);
   const [creatingNew, setCreatingNew] = useState(false);
-  const [newFilter, setNewFilter] = useState("");
+  const [pendingNew, setPendingNew] = useState(null);
+  const [highlight, setHighlight] = useState(0);
+  const hlRef = useRef(null);
+  useEffect(() => {
+    setHighlight(0);
+  }, [filter, creatingNew, pendingNew]);
+  useEffect(() => {
+    hlRef.current?.scrollIntoView({ block: "nearest" });
+  }, [highlight, creatingNew]);
   useEffect(() => {
     const dismiss = (e) => {
       const el = e.target;
@@ -14569,11 +14577,15 @@ function ConnectPicker({
       if (e.targetPropertyUid != null) takenInputUids.add(e.targetPropertyUid);
     }
   }
-  const sourceParent = useStructural.getState().components.get(sourceComponentUid)?.parent;
+  const sourceComp = useStructural.getState().components.get(sourceComponentUid);
+  const sourceParent = sourceComp?.parent;
+  const sourceName = sourceComp?.name || "component";
   const groups = [];
   const componentList = allComponents ?? [];
   for (const c of componentList) {
     if (c.uid === sourceComponentUid) continue;
+    const isParent = sourceParent !== void 0 && c.uid === sourceParent;
+    const isChild = c.parent === sourceComponentUid;
     const props = [];
     for (const [name, p] of Object.entries(c.properties)) {
       if (p.category !== wantCategory) continue;
@@ -14588,21 +14600,31 @@ function ConnectPicker({
       componentName: c.name || c.type,
       path: c.path,
       sibling: sourceParent !== void 0 && c.parent === sourceParent,
+      isParent,
+      isChild,
       props
     });
   }
+  const tierOf = (g) => g.isParent ? 0 : g.sibling ? 1 : g.isChild ? 2 : 3;
   groups.sort((a, b) => {
-    if (a.sibling !== b.sibling) return a.sibling ? -1 : 1;
-    if (a.sibling) return a.componentName.localeCompare(b.componentName);
-    return a.path.localeCompare(b.path);
+    const ta = tierOf(a);
+    const tb = tierOf(b);
+    if (ta !== tb) return ta - tb;
+    return ta === 3 ? a.path.localeCompare(b.path) : a.componentName.localeCompare(b.componentName);
   });
   const f = filter.trim().toLowerCase();
-  const filteredGroups = f ? groups.map((g) => {
-    const nameMatch = g.componentName.toLowerCase().includes(f) || g.path.toLowerCase().includes(f);
-    if (nameMatch) return g;
-    const props = g.props.filter((p) => p.propName.toLowerCase().includes(f));
+  const slash = f.lastIndexOf("/");
+  const pathScope = slash >= 0 ? f.slice(0, slash) : "";
+  const term = slash >= 0 ? f.slice(slash + 1) : f;
+  const filteredGroups = !f ? groups : groups.map((g) => {
+    const path = g.path.toLowerCase();
+    if (pathScope && !path.includes(pathScope)) return null;
+    if (!term) return g;
+    const tail = pathScope ? path.slice(path.indexOf(pathScope) + pathScope.length) : path;
+    if (g.componentName.toLowerCase().includes(term) || tail.includes(term)) return g;
+    const props = g.props.filter((p) => p.propName.toLowerCase().includes(term));
     return props.length > 0 ? { ...g, props } : null;
-  }).filter((g) => g !== null) : groups;
+  }).filter((g) => g !== null);
   const create = async (target) => {
     const payload = sourceCategory === "output" ? {
       sourceUid: sourceComponentUid,
@@ -14630,7 +14652,15 @@ function ConnectPicker({
   const allFilteredProps = filteredGroups.flatMap(
     (g) => g.props.map((p) => ({ componentUid: g.componentUid, propUid: p.propUid }))
   );
-  const createAndConnect = async (type) => {
+  const groupPropOffsets = [];
+  {
+    let acc = 0;
+    for (const g of filteredGroups) {
+      groupPropOffsets.push(acc);
+      acc += g.props.length;
+    }
+  }
+  const createNew = async (type) => {
     if (!ctx) return;
     const side = sourceCategory === "output" ? "right" : "left";
     const c = await ctx.createComponent(type, { nearUid: sourceComponentUid, side });
@@ -14638,14 +14668,26 @@ function ConnectPicker({
       onClose();
       return;
     }
-    const prop = Object.values(c.properties ?? {}).find((p) => p.category === wantCategory);
-    if (prop) await create({ componentUid: c.uid, propUid: prop.uid });
-    else onClose();
+    const matching = Object.entries(c.properties ?? {}).filter(
+      ([, p]) => p.category === wantCategory && (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL
+    ).map(([name, p]) => ({ uid: p.uid, name }));
+    if (matching.length === 0) {
+      onClose();
+    } else if (matching.length === 1) {
+      await create({ componentUid: c.uid, propUid: matching[0].uid });
+    } else {
+      setPendingNew(c);
+      setFilter("");
+    }
   };
-  const nf = newFilter.trim().toLowerCase();
+  const nf = filter.trim().toLowerCase();
   const newTypes = (ctx?.componentTypes ?? []).filter(
     (t) => !nf || t.name.toLowerCase().includes(nf) || t.type.toLowerCase().includes(nf)
   );
+  const newProps = pendingNew ? Object.entries(pendingNew.properties ?? {}).filter(
+    ([, p]) => p.category === wantCategory && (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL
+  ).map(([name, p]) => ({ uid: p.uid, name })) : [];
+  const newPropsFiltered = nf ? newProps.filter((p) => p.name.toLowerCase().includes(nf)) : newProps;
   const PICKER_W = 240;
   const left = Math.min(x + 184, window.innerWidth - PICKER_W - 8);
   const top = Math.min(y, window.innerHeight - 320);
@@ -14674,7 +14716,29 @@ function ConnectPicker({
         },
         children: [
           /* @__PURE__ */ jsxs("div", { style: { padding: "6px 8px", borderBottom: "1px solid #2c313c" }, children: [
-            /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }, children: creatingNew ? /* @__PURE__ */ jsxs(Fragment, { children: [
+            /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }, children: pendingNew ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => setPendingNew(null),
+                  title: "Back to component types",
+                  style: {
+                    background: "transparent",
+                    border: "none",
+                    color: "#9ecbff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                    padding: 0
+                  },
+                  children: "‹"
+                }
+              ),
+              /* @__PURE__ */ jsxs("span", { style: { color: "#8892a0", fontSize: 10, flex: 1 }, children: [
+                pendingNew.name,
+                " → pick ",
+                wantCategory === CATEGORY_INPUT ? "input" : "output"
+              ] })
+            ] }) : creatingNew ? /* @__PURE__ */ jsxs(Fragment, { children: [
               /* @__PURE__ */ jsx(
                 "button",
                 {
@@ -14721,16 +14785,47 @@ function ConnectPicker({
               "input",
               {
                 autoFocus: true,
-                value: creatingNew ? newFilter : filter,
-                onChange: (e) => creatingNew ? setNewFilter(e.target.value) : setFilter(e.target.value),
+                value: filter,
+                onChange: (e) => setFilter(e.target.value),
                 onKeyDown: (e) => {
-                  if (e.key === "Escape") onClose();
-                  else if (!creatingNew && e.key === "Enter" && allFilteredProps.length === 1) {
-                    create(allFilteredProps[0]);
+                  if (e.key === "Escape") {
+                    onClose();
+                    return;
+                  }
+                  if (e.key === "Tab") {
+                    e.preventDefault();
+                    if (pendingNew) setPendingNew(null);
+                    else if (ctx) setCreatingNew((v) => !v);
+                    return;
+                  }
+                  const len = pendingNew ? newPropsFiltered.length : creatingNew ? newTypes.length : allFilteredProps.length;
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setHighlight((h) => Math.min(h + 1, Math.max(0, len - 1)));
+                    return;
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setHighlight((h) => Math.max(0, h - 1));
+                    return;
+                  }
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (pendingNew) {
+                      const p = newPropsFiltered[highlight];
+                      if (p) void create({ componentUid: pendingNew.uid, propUid: p.uid });
+                    } else if (creatingNew) {
+                      const t = newTypes[highlight];
+                      if (t) void createNew(t.type);
+                    } else {
+                      const p = allFilteredProps[highlight];
+                      if (p) void create(p);
+                    }
+                    return;
                   }
                   e.stopPropagation();
                 },
-                placeholder: creatingNew ? "filter types…" : "filter…",
+                placeholder: pendingNew ? "filter inputs…" : creatingNew ? "filter types…   ⇥ existing" : "filter…   ⇥ new",
                 style: {
                   width: "100%",
                   background: "#0f1115",
@@ -14746,16 +14841,42 @@ function ConnectPicker({
               }
             )
           ] }),
-          /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto" }, children: creatingNew ? newTypes.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 11 }, children: ctx ? "no matching types" : "unavailable" }) : newTypes.map((t) => /* @__PURE__ */ jsxs(
+          /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto" }, children: pendingNew ? newPropsFiltered.length === 0 ? /* @__PURE__ */ jsxs("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 11 }, children: [
+            "no matching ",
+            wantCategory === CATEGORY_INPUT ? "inputs" : "outputs"
+          ] }) : newPropsFiltered.map((p, i) => /* @__PURE__ */ jsx(
             "button",
             {
-              onClick: () => createAndConnect(t.type),
+              ref: i === highlight ? hlRef : void 0,
+              onClick: () => create({ componentUid: pendingNew.uid, propUid: p.uid }),
+              style: {
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                padding: "5px 8px",
+                background: i === highlight ? "#2c3a55" : "transparent",
+                color: "#e6e8eb",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 11,
+                fontFamily: "ui-monospace, SFMono-Regular, monospace"
+              },
+              onMouseEnter: (e) => e.currentTarget.style.background = "#232733",
+              onMouseLeave: (e) => e.currentTarget.style.background = i === highlight ? "#2c3a55" : "transparent",
+              children: p.name
+            },
+            p.uid
+          )) : creatingNew ? newTypes.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 11 }, children: ctx ? "no matching types" : "unavailable" }) : newTypes.map((t, i) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              ref: i === highlight ? hlRef : void 0,
+              onClick: () => createNew(t.type),
               style: {
                 display: "flex",
                 width: "100%",
                 textAlign: "left",
                 padding: "5px 8px",
-                background: "transparent",
+                background: i === highlight ? "#2c3a55" : "transparent",
                 color: "#e6e8eb",
                 border: "none",
                 cursor: "pointer",
@@ -14766,7 +14887,7 @@ function ConnectPicker({
                 gap: 6
               },
               onMouseEnter: (e) => e.currentTarget.style.background = "#232733",
-              onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+              onMouseLeave: (e) => e.currentTarget.style.background = i === highlight ? "#2c3a55" : "transparent",
               children: [
                 /* @__PURE__ */ jsx("span", { children: t.name }),
                 /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 9 }, children: t.group })
@@ -14774,13 +14895,17 @@ function ConnectPicker({
             },
             t.type
           )) : filteredGroups.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 11 }, children: allComponents == null ? "loading…" : "no candidates" }) : filteredGroups.map((g, idx) => {
-            const isOpen = f ? true : expanded === g.componentUid;
+            const base = groupPropOffsets[idx];
+            const containsHl = highlight >= base && highlight < base + g.props.length;
+            const isOpen = f ? true : expanded === g.componentUid || containsHl;
             const prev = idx > 0 ? filteredGroups[idx - 1] : null;
-            const sectionBreak = prev !== null && prev.sibling && !g.sibling;
-            const parentPath = g.path.replace(/\/[^/]*$/, "");
-            const showPath = !g.sibling && parentPath && parentPath !== "root";
+            const tier = tierOf(g);
+            const showSection = tier !== (prev ? tierOf(prev) : -1);
+            const sectionLabel = tier === 0 ? "parent" : tier === 1 ? "same level" : tier === 2 ? `inside ${sourceName}` : "other folders";
+            const folderPath = g.path.replace(/\/[^/]*$/, "").replace(/^root/, "");
+            const showPath = tier === 3 && folderPath !== "";
             return /* @__PURE__ */ jsxs("div", { children: [
-              sectionBreak && /* @__PURE__ */ jsx(
+              showSection && /* @__PURE__ */ jsx(
                 "div",
                 {
                   style: {
@@ -14789,10 +14914,10 @@ function ConnectPicker({
                     fontSize: 9,
                     textTransform: "uppercase",
                     letterSpacing: 0.4,
-                    borderTop: "1px solid #2c313c",
-                    marginTop: 2
+                    borderTop: idx > 0 ? "1px solid #2c313c" : "none",
+                    marginTop: idx > 0 ? 2 : 0
                   },
-                  children: "other folders"
+                  children: sectionLabel
                 }
               ),
               /* @__PURE__ */ jsxs(
@@ -14828,7 +14953,7 @@ function ConnectPicker({
                           overflow: "hidden"
                         },
                         children: [
-                          /* @__PURE__ */ jsx(
+                          /* @__PURE__ */ jsxs(
                             "span",
                             {
                               style: {
@@ -14837,7 +14962,26 @@ function ConnectPicker({
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap"
                               },
-                              children: g.componentName
+                              children: [
+                                g.componentName,
+                                g.isParent && /* @__PURE__ */ jsx(
+                                  "span",
+                                  {
+                                    style: {
+                                      marginLeft: 6,
+                                      fontSize: 8,
+                                      textTransform: "uppercase",
+                                      letterSpacing: 0.4,
+                                      color: "#ffd479",
+                                      border: "1px solid #5a4a2a",
+                                      background: "#2a2418",
+                                      borderRadius: 3,
+                                      padding: "0 4px"
+                                    },
+                                    children: "parent"
+                                  }
+                                )
+                              ]
                             }
                           ),
                           showPath && /* @__PURE__ */ jsx(
@@ -14851,7 +14995,7 @@ function ConnectPicker({
                                 whiteSpace: "nowrap"
                               },
                               title: g.path,
-                              children: parentPath
+                              children: folderPath
                             }
                           )
                         ]
@@ -14861,28 +15005,32 @@ function ConnectPicker({
                   ]
                 }
               ),
-              isOpen && /* @__PURE__ */ jsx("div", { style: { paddingBottom: 2 }, children: g.props.map((p) => /* @__PURE__ */ jsx(
-                "button",
-                {
-                  onClick: () => create({ componentUid: g.componentUid, propUid: p.propUid }),
-                  style: {
-                    display: "block",
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "3px 8px 3px 28px",
-                    background: "transparent",
-                    color: "#e6e8eb",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 11,
-                    fontFamily: "ui-monospace, SFMono-Regular, monospace"
+              isOpen && /* @__PURE__ */ jsx("div", { style: { paddingBottom: 2 }, children: g.props.map((p, pi) => {
+                const isHl = base + pi === highlight;
+                return /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    ref: isHl ? hlRef : void 0,
+                    onClick: () => create({ componentUid: g.componentUid, propUid: p.propUid }),
+                    style: {
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "3px 8px 3px 28px",
+                      background: isHl ? "#2c3a55" : "transparent",
+                      color: "#e6e8eb",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: 11,
+                      fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                    },
+                    onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
+                    onMouseLeave: (e) => e.currentTarget.style.background = isHl ? "#2c3a55" : "transparent",
+                    children: p.propName
                   },
-                  onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
-                  onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-                  children: p.propName
-                },
-                p.propUid
-              )) })
+                  p.propUid
+                );
+              }) })
             ] }, g.componentUid);
           }) })
         ]
@@ -17421,8 +17569,20 @@ function Inner({ base }) {
     );
     const failed = results.find((r) => r.status === "rejected");
     if (failed) setError(failed.reason.message);
-    await reload();
-  }, [reload]);
+    const ok = ids.filter((_, i) => results[i].status === "fulfilled");
+    if (ok.length === 0) return;
+    const okSet = new Set(ok.map(String));
+    const st = useStructural.getState();
+    for (const uid of ok) {
+      const e = st.edges.get(uid);
+      if (e) st.upsertEdge({ ...e, loopBack: true });
+    }
+    setEdges(
+      (es) => es.map(
+        (e) => okSet.has(e.id) ? { ...e, style: { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } } : e
+      )
+    );
+  }, []);
   const onNodesChange = useCallback((changes) => {
     setNodes((ns) => {
       const next = applyNodeChanges(changes.filter((c) => c.type !== "select"), ns);
@@ -18047,6 +18207,14 @@ function PaneContextMenu({
 }) {
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState("");
+  const [highlight, setHighlight] = useState(0);
+  const hlRef = useRef(null);
+  useEffect(() => {
+    setHighlight(0);
+  }, [filter, adding]);
+  useEffect(() => {
+    hlRef.current?.scrollIntoView({ block: "nearest" });
+  }, [highlight]);
   useEffect(() => {
     const dismiss = (e) => {
       const el = e.target;
@@ -18130,6 +18298,32 @@ function PaneContextMenu({
                   autoFocus: true,
                   value: filter,
                   onChange: (e) => setFilter(e.target.value),
+                  onKeyDown: (e) => {
+                    if (e.key === "Escape") {
+                      onClose();
+                      return;
+                    }
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setHighlight((h) => Math.min(h + 1, Math.max(0, filtered.length - 1)));
+                      return;
+                    }
+                    if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setHighlight((h) => Math.max(0, h - 1));
+                      return;
+                    }
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const c = filtered[highlight];
+                      if (c) {
+                        onAdd(c.type);
+                        onClose();
+                      }
+                      return;
+                    }
+                    e.stopPropagation();
+                  },
                   placeholder: "Filter components…",
                   style: { ...acInput, flex: 1 }
                 }
@@ -18137,14 +18331,16 @@ function PaneContextMenu({
             ]
           }
         ),
-        /* @__PURE__ */ jsx("div", { style: { overflowY: "auto", padding: 4 }, children: filtered.length === 0 ? /* @__PURE__ */ jsx("div", { style: { color: "#5a6172", padding: "6px 8px" }, children: "no matches" }) : filtered.map((c) => /* @__PURE__ */ jsxs(
+        /* @__PURE__ */ jsx("div", { style: { overflowY: "auto", padding: 4 }, children: filtered.length === 0 ? /* @__PURE__ */ jsx("div", { style: { color: "#5a6172", padding: "6px 8px" }, children: "no matches" }) : filtered.map((c, i) => /* @__PURE__ */ jsxs(
           "button",
           {
+            ref: i === highlight ? hlRef : void 0,
+            onMouseEnter: () => setHighlight(i),
             onClick: () => {
               onAdd(c.type);
               onClose();
             },
-            style: acBtn,
+            style: { ...acBtn, background: i === highlight ? "#2c3a55" : "transparent" },
             children: [
               /* @__PURE__ */ jsx("span", { children: c.name }),
               /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: c.group })
@@ -19104,7 +19300,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-10T04:58:40.616Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-10T05:54:21.245Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
