@@ -4,7 +4,7 @@
 // single place that reads/writes those shapes, with defensive parsing so a
 // malformed blob degrades to an empty config rather than throwing.
 
-import type { VariableKind } from "@/data/types";
+import type { ContextSource, VariableKind } from "@/data/types";
 
 /** `constant` — one fixed value (usually hidden). */
 export interface ConstantConfig {
@@ -50,13 +50,26 @@ export interface TextboxConfig {
   default: string;
 }
 
+/** `context` (WS-13) — read a value from the page's context. `source` names
+ *  one of the four `PageContext` slots; `key` selects within it:
+ *  - `nav` + `slug|name|path[n]` → the nav node's slug/name/ancestor
+ *  - `url` + `building` → the bare `?building=…` param
+ *  - `tag` + `building` → the dashboard's `building` tag
+ *  - `values` + `building` → the nav node's `context.values[building]`
+ *  Resolution is synchronous against the assembled `PageContext`. */
+export interface ContextConfig {
+  source: ContextSource;
+  key: string;
+}
+
 export type KindConfig =
   | ({ kind: "constant" } & ConstantConfig)
   | ({ kind: "custom" } & CustomConfig)
   | ({ kind: "query" } & QueryConfig)
   | ({ kind: "datasource" } & DatasourceConfig)
   | ({ kind: "interval" } & IntervalConfig)
-  | ({ kind: "textbox" } & TextboxConfig);
+  | ({ kind: "textbox" } & TextboxConfig)
+  | ({ kind: "context" } & ContextConfig);
 
 function asRecord(raw: unknown): Record<string, unknown> {
   return raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
@@ -96,9 +109,18 @@ export function parseKindConfig(kind: VariableKind, raw: unknown): KindConfig {
     }
     case "textbox":
       return { kind, default: str(o, "default") };
+    case "context":
+      return { kind, source: contextSource(o.source), key: str(o, "key") };
     default:
       return { kind: "custom", optionsText: "" };
   }
+}
+
+/** Coerce a stored `source` to a valid [`ContextSource`], defaulting to `url`
+ *  (the most external, deep-link-friendly source) for a missing/garbled value
+ *  so a malformed blob never throws. */
+function contextSource(raw: unknown): ContextSource {
+  return raw === "nav" || raw === "tag" || raw === "values" ? raw : "url";
 }
 
 /** Serialise a typed config back to the opaque jsonb stored in

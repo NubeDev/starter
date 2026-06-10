@@ -55,6 +55,57 @@ describe("resolveOptions: static kinds", () => {
   });
 });
 
+describe("resolveOptions: context kind", () => {
+  const ctx = {
+    nav: { nodeId: "n1", slug: "energy", name: "Building-1", path: ["Buildings"] },
+    url: { building: "b-url" },
+    tags: { building: "b-tag" },
+    values: { building: "b1" },
+  };
+
+  it("reads a values-source key and binds it as the single option", async () => {
+    expect(
+      await resolveOptions(
+        client,
+        "context",
+        { source: "values", key: "building" },
+        {},
+        ctx,
+      ),
+    ).toEqual([{ text: "b1", value: "b1" }]);
+  });
+
+  it("reads a url-source bare param", async () => {
+    expect(
+      await resolveOptions(
+        client,
+        "context",
+        { source: "url", key: "building" },
+        {},
+        ctx,
+      ),
+    ).toEqual([{ text: "b-url", value: "b-url" }]);
+  });
+
+  it("yields no option when the source/key is absent", async () => {
+    expect(
+      await resolveOptions(
+        client,
+        "context",
+        { source: "tag", key: "missing" },
+        {},
+        ctx,
+      ),
+    ).toEqual([]);
+  });
+
+  it("never fetches", async () => {
+    await resolveOptions(client, "context", { source: "nav", key: "slug" }, {}, ctx);
+    expect(queryDatasource).not.toHaveBeenCalled();
+    expect(listDatasources).not.toHaveBeenCalled();
+  });
+});
+
 describe("resolveOptions: datasource kind", () => {
   it("filters by kind and binds the id as value", async () => {
     listDatasources.mockResolvedValue([

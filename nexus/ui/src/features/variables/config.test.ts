@@ -24,10 +24,21 @@ describe("parseKindConfig", () => {
       kind: "datasource",
       kindFilter: "postgres",
     });
+    expect(parseKindConfig("context", { source: "values", key: "building" })).toEqual({
+      kind: "context",
+      source: "values",
+      key: "building",
+    });
   });
 
   it("defaults a missing/garbled blob to an empty config", () => {
     expect(parseKindConfig("custom", null)).toEqual({ kind: "custom", optionsText: "" });
+    // A garbled context source falls back to `url` (the deep-link source).
+    expect(parseKindConfig("context", { source: "bogus" })).toEqual({
+      kind: "context",
+      source: "url",
+      key: "",
+    });
     expect(parseKindConfig("interval", { steps: "oops" })).toEqual({
       kind: "interval",
       steps: [],

@@ -6750,7 +6750,8 @@
           "query",
           "datasource",
           "interval",
-          "textbox"
+          "textbox",
+          "context"
         ]
       },
       "WeekStart": {

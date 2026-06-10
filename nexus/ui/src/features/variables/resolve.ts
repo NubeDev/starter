@@ -10,8 +10,12 @@ import type { StarterClient } from "@nube/starter-client-ts";
 import { listDatasources } from "@/api/datasources/list";
 import { queryDatasource } from "@/api/datasources/query";
 import type { QueryRequest, QueryVariable } from "@/api/types";
-import type { VariableKind, VariableOption } from "@/data/types";
+import type { PageContext, VariableKind, VariableOption } from "@/data/types";
 import { parseKindConfig } from "@/features/variables/config";
+import {
+  EMPTY_PAGE_CONTEXT,
+  resolveContextValue,
+} from "@/features/variables/context";
 import { referencedVariables } from "@/features/variables/deps";
 
 /** Current selections of *already-resolved* variables, keyed by name — the
@@ -50,6 +54,7 @@ export async function resolveOptions(
   kind: VariableKind,
   optionsConfig: unknown,
   selections: ResolvedSelections,
+  pageContext: PageContext = EMPTY_PAGE_CONTEXT,
 ): Promise<VariableOption[]> {
   const cfg = parseKindConfig(kind, optionsConfig);
   switch (cfg.kind) {
@@ -62,6 +67,13 @@ export async function resolveOptions(
     case "textbox":
       // A textbox has no fixed list; its default seeds the current value.
       return cfg.default ? [{ text: cfg.default, value: cfg.default }] : [];
+    case "context": {
+      // The single option a `context` variable resolves to is its value read
+      // from the page context — synchronous, no fetch. An absent source/key
+      // yields no option (the variable resolves empty, not stale).
+      const value = resolveContextValue(cfg, pageContext);
+      return value ? [{ text: value, value }] : [];
+    }
     case "datasource": {
       const all = await listDatasources(client);
       const filtered = cfg.kindFilter

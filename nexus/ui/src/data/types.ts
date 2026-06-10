@@ -267,7 +267,36 @@ export type VariableKind =
   | "query"
   | "datasource"
   | "interval"
-  | "textbox";
+  | "textbox"
+  | "context";
+
+/** The four named sources a page's `context` is assembled from (WS-13 §1),
+ *  kept separate (not pre-flattened) so a `context` variable can address
+ *  exactly one and the precedence is explicit. A `context` variable's config
+ *  names one source + a key; resolution is synchronous (no fetch). */
+export type ContextSource = "nav" | "url" | "tag" | "values";
+
+/** The resolved view of a page's place at render time (WS-13 §1) — read-only
+ *  input to variable resolution, never a fourth persistence store. Assembled
+ *  in `features/variables/context.ts` from the nav node, the URL, the
+ *  dashboard's tags, and the nav node's `values` override. */
+export interface PageContext {
+  /** The nav node the page was opened under, if any. */
+  nav?: {
+    nodeId: string;
+    slug: string;
+    name: string;
+    /** Ancestor titles, root-first, for `nav` + `path[n]`. */
+    path: string[];
+  };
+  /** URL query params — both `var-*` (WS-02) and bare (`?building=b1`). */
+  url: Record<string, string | string[]>;
+  /** This dashboard's tags (key → value|null), with nav `context.tags`
+   *  merged over them. */
+  tags: Record<string, string | null>;
+  /** The nav node's `context.values` — explicit per-mount overrides. */
+  values: Record<string, string | string[]>;
+}
 
 /** One selectable option in a variable's list: a display `text` and the
  *  `value` bound into the query. For most kinds text === value; a query

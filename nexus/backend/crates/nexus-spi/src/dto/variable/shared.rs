@@ -26,6 +26,12 @@ pub enum VariableKind {
     Interval,
     /// A free-text box — the value is whatever the user types.
     Textbox,
+    /// Value is read from the page's context (WS-13): the nav node, the URL, the
+    /// dashboard's tags, or the nav node's `values` override. `options_config`
+    /// carries `{ source: 'nav'|'url'|'tag'|'values', key }`; resolution is
+    /// synchronous (no fetch) — the UI assembles the `PageContext` and reads it.
+    /// The binder still only sees the resolved string value, like any kind.
+    Context,
 }
 
 /// A dashboard variable definition. `options_config` carries the kind-specific

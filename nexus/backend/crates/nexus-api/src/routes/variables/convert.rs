@@ -17,6 +17,7 @@ pub fn parse_kind(s: &str) -> VariableKind {
         "query" => VariableKind::Query,
         "datasource" => VariableKind::Datasource,
         "interval" => VariableKind::Interval,
+        "context" => VariableKind::Context,
         _ => VariableKind::Textbox,
     }
 }
@@ -30,6 +31,7 @@ pub fn kind_str(kind: VariableKind) -> &'static str {
         VariableKind::Datasource => "datasource",
         VariableKind::Interval => "interval",
         VariableKind::Textbox => "textbox",
+        VariableKind::Context => "context",
     }
 }
 

@@ -2703,7 +2703,7 @@ export interface components {
          *     value(s) (WS-03's `$var`/`$__sqlIn` expansion).
          * @enum {string}
          */
-        VariableKind: "constant" | "custom" | "query" | "datasource" | "interval" | "textbox";
+        VariableKind: "constant" | "custom" | "query" | "datasource" | "interval" | "textbox" | "context";
         /**
          * @description Closed enum of week-start choices. Variants locked in stage 1.
          *     *Revisit trigger:* a locale that starts the week on Saturday (parts

@@ -12,7 +12,7 @@ import {
 } from "@nube/starter-ui-kit/components/select";
 
 import type { CreateVariableRequest, VariableDetail } from "@/api/types";
-import type { VariableKind } from "@/data/types";
+import type { ContextSource, VariableKind } from "@/data/types";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { parseKindConfig, toOptionsConfig } from "@/features/variables/config";
@@ -24,6 +24,18 @@ const KINDS: { value: VariableKind; label: string; help: string }[] = [
   { value: "interval", label: "Interval", help: "A list of durations for $__interval." },
   { value: "textbox", label: "Text box", help: "A free-text value." },
   { value: "constant", label: "Constant", help: "A fixed (usually hidden) value." },
+  {
+    value: "context",
+    label: "Context",
+    help: "A value read from the page's nav node, URL, tags, or mount values.",
+  },
+];
+
+const CONTEXT_SOURCES: { value: ContextSource; label: string; help: string }[] = [
+  { value: "values", label: "Mount values", help: "The nav node's context.values (e.g. building)." },
+  { value: "url", label: "URL param", help: "A bare ?key=… query param (deep links)." },
+  { value: "tag", label: "Dashboard tag", help: "This dashboard's tag value for the key." },
+  { value: "nav", label: "Nav node", help: "slug, name, or path[n] of the nav node." },
 ];
 
 // The authoring form for one variable (item 4): name/label, kind, the
@@ -70,6 +82,12 @@ export function VariableForm({
   const [queryDs, setQueryDs] = useState(
     seeded.kind === "query" ? seeded.datasourceId : "",
   );
+  const [contextSource, setContextSource] = useState<ContextSource>(
+    seeded.kind === "context" ? seeded.source : "values",
+  );
+  const [contextKey, setContextKey] = useState(
+    seeded.kind === "context" ? seeded.key : "",
+  );
 
   const nameValid = /^[a-zA-Z][a-zA-Z0-9_]*$/.test(name);
 
@@ -90,6 +108,12 @@ export function VariableForm({
         return toOptionsConfig({ kind, kindFilter: dsFilter || undefined });
       case "query":
         return toOptionsConfig({ kind, sql: querySql, datasourceId: queryDs });
+      case "context":
+        return toOptionsConfig({
+          kind,
+          source: contextSource,
+          key: contextKey.trim(),
+        });
     }
   }
 
@@ -232,8 +256,56 @@ export function VariableForm({
         </div>
       ) : null}
 
+      {kind === "context" ? (
+        <div className="space-y-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="vf-ctx-source">Source</Label>
+            <Select
+              value={contextSource}
+              onValueChange={(v) => setContextSource(v as ContextSource)}
+            >
+              <SelectTrigger id="vf-ctx-source">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CONTEXT_SOURCES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {CONTEXT_SOURCES.find((s) => s.value === contextSource)?.help}
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="vf-ctx-key">Key</Label>
+            <Input
+              id="vf-ctx-key"
+              value={contextKey}
+              onChange={(e) => setContextKey(e.target.value)}
+              placeholder={
+                contextSource === "nav" ? "slug · name · path[0]" : "building"
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              {contextSource === "nav"
+                ? "slug, name, or path[n] of the nav node."
+                : `The key to read from the ${
+                    contextSource === "values"
+                      ? "nav node's mount values"
+                      : contextSource === "url"
+                        ? "URL query string"
+                        : "dashboard's tags"
+                  }.`}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-4">
-        {kind !== "textbox" && kind !== "constant" ? (
+        {kind !== "textbox" && kind !== "constant" && kind !== "context" ? (
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={multi} onCheckedChange={(c) => setMulti(c === true)} />
             Allow multiple
