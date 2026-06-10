@@ -100,13 +100,16 @@ export function FlowFormDialog({
                 required
               />
             </div>
-            <label className="flex items-center gap-2 pb-2 text-sm">
+            <div className="flex items-center gap-2 pb-2 text-sm">
               <Switch
+                id="flow-form-enabled"
                 checked={draft.enabled}
                 onCheckedChange={(v) => set("enabled", v)}
               />
-              Enabled
-            </label>
+              <Label htmlFor="flow-form-enabled" className="font-normal">
+                Enabled
+              </Label>
+            </div>
           </div>
 
           <Tabs defaultValue="input">

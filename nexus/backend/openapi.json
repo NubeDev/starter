@@ -6,6 +6,376 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/v1/agents": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "list_agents",
+        "responses": {
+          "200": {
+            "description": "Agents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "create_agent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/agents/sessions/{id}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "get_agent_session",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this session"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/sessions/{id}/events": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "subscribe_agent_session",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Session id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Signed session token from create_agent_session",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE event stream",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "401": {
+            "description": "Missing/expired/invalid token"
+          },
+          "404": {
+            "description": "Session not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{id}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "get_agent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Agent id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this agent"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "update_agent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Agent id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to edit this agent"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "delete_agent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Agent id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this agent"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/agents/{id}/sessions": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "list_agent_sessions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Agent id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionDetail"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this agent"
+          },
+          "404": {
+            "description": "Agent not found in this tenant"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "operationId": "create_agent_session",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Agent id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Session started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSessionResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to run this agent"
+          },
+          "404": {
+            "description": "Agent not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/ai/assist": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "operationId": "ai_assist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Structured assistance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty prompt"
+          },
+          "403": {
+            "description": "Not allowed to view the grounding datasource"
+          },
+          "502": {
+            "description": "The model call failed"
+          }
+        }
+      }
+    },
     "/api/v1/alerts/channels": {
       "get": {
         "tags": [
@@ -335,6 +705,250 @@
         }
       }
     },
+    "/api/v1/audit": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "list_audit",
+        "parameters": [
+          {
+            "name": "actor_kind",
+            "in": "query",
+            "description": "Filter by actor kind (`\"user\"`, `\"agent\"`, `\"system\"`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "description": "Filter by actor id (principal subject or agent run id).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor_model",
+            "in": "query",
+            "description": "Filter agent actors by model.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resource_kind",
+            "in": "query",
+            "description": "Filter by `resource.kind`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "description": "Filter by `resource.id` (requires `resource_kind`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "description": "Filter by group id (load a whole transaction).",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GroupId"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Inclusive lower bound on `at`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "Exclusive upper bound on `at`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Backends MUST cap this.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor returned by a previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit page (newest first)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Not an admin / no tenant binding"
+          }
+        }
+      }
+    },
+    "/api/v1/audit/forget": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "forget_subject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Rows tombstoned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForgetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Not an admin / no tenant binding"
+          }
+        }
+      }
+    },
+    "/api/v1/audit/resources/{kind}/{id}": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "resource_history",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Resource kind, e.g. nexus.dashboard",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Resource id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Inclusive lower bound on `at` (RFC 3339).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "Exclusive upper bound on `at` (RFC 3339).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size (backend-capped).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque cursor from a previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resource history (newest first)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Not an admin / no tenant binding"
+          }
+        }
+      }
+    },
     "/api/v1/dashboards": {
       "get": {
         "tags": [
@@ -343,7 +957,7 @@
         "operationId": "list_dashboards",
         "responses": {
           "200": {
-            "description": "Dashboards",
+            "description": "Dashboards the caller may view",
             "content": {
               "application/json": {
                 "schema": {
@@ -382,6 +996,42 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/import": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "import_dashboard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported schema version"
           },
           "409": {
             "description": "Slug already used in this tenant"
@@ -493,6 +1143,77 @@
         }
       }
     },
+    "/api/v1/dashboards/{slug}/duplicate": {
+      "post": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "duplicate_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Source dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Duplicated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Source not found in this tenant"
+          },
+          "409": {
+            "description": "Derived slug already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}/export": {
+      "get": {
+        "tags": [
+          "dashboards"
+        ],
+        "operationId": "export_dashboard",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portable dashboard model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardExport"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/dashboards/{slug}/panels": {
       "post": {
         "tags": [
@@ -533,6 +1254,88 @@
           },
           "404": {
             "description": "Dashboard not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboards/{slug}/variables": {
+      "get": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "list_variables",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug (route alias)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Variables in bar order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VariableDetail"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dashboard not found in this tenant"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "create_variable",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Dashboard slug (route alias)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVariableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dashboard not found in this tenant"
+          },
+          "409": {
+            "description": "Variable name already used on this dashboard"
           }
         }
       }
@@ -585,6 +1388,60 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/kinds": {
+      "get": {
+        "tags": [
+          "datasources"
+        ],
+        "summary": "Return the datasource-kind registry's entries, name-ordered (the registry is a\n`BTreeMap`, so iteration is already sorted). A read-only catalogue.",
+        "operationId": "list_datasource_kinds",
+        "responses": {
+          "200": {
+            "description": "Registered datasource-kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceKindList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/datasources/test": {
+      "post": {
+        "tags": [
+          "datasources"
+        ],
+        "operationId": "test_connection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestConnectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Probe outcome (ok=false on a failed probe)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestDatasourceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Connector kind cannot be probed pre-save"
           }
         }
       }
@@ -874,6 +1731,94 @@
         }
       }
     },
+    "/api/v1/flows/dry-run": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Run the supplied input + pipeline against the bounded collector and return\nthe sample (or an inline build/runtime error). Principal-gated: a dry run\nexecutes a flow against real connectors, so it sits behind the same auth\nboundary as a saved flow. The pipeline defaults to empty when omitted.",
+        "operationId": "dry_run_flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DryRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dry-run sample or inline error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DryRunResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Engine failed to initialise"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/import": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "import_flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown schema_version"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/node-types": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "Return every registered node, described. A static catalogue sourced from the\nengine registry's self-description — no datasource work, no per-tenant state.",
+        "operationId": "list_node_types",
+        "responses": {
+          "200": {
+            "description": "Registered flow node types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeTypeList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/flows/{id}": {
       "get": {
         "tags": [
@@ -980,6 +1925,44 @@
         }
       }
     },
+    "/api/v1/flows/{id}/export": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "export_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portable flow model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowExport"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/flows/{id}/start": {
       "post": {
         "tags": [
@@ -1059,6 +2042,134 @@
         }
       }
     },
+    "/api/v1/folders": {
+      "get": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "list_folders",
+        "responses": {
+          "200": {
+            "description": "Folders in the tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FolderSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "create_folder",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parent folder does not exist in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/folders/{id}": {
+      "delete": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "delete_folder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Folder id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "folders"
+        ],
+        "operationId": "update_folder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Folder id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFolderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Folder updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid reparent (self-parent or absent parent)"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "tags": [
@@ -1079,6 +2190,235 @@
           },
           "401": {
             "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/me/preferences": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`GET /api/v1/me/preferences` — resolve the caller's user → org → default\npreferences for its own tenant. 401 without a tenant-bound principal.",
+        "operationId": "get_me_preferences",
+        "responses": {
+          "200": {
+            "description": "Resolved preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedPreferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`PATCH /api/v1/me/preferences` — merge a partial update into the caller's\nuser-layer row for its own tenant. Missing key leaves a field unchanged;\nexplicit `null` reverts it to inherit. 401 without a tenant-bound principal.",
+        "operationId": "patch_me_preferences",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreferencesPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved preferences after patch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedPreferences"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/nav": {
+      "get": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "list_nav",
+        "responses": {
+          "200": {
+            "description": "The caller's nav tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NavNodeDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "create_nav",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNavNodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavNodeDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dashboard target not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/nav/{id}": {
+      "get": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "get_nav",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Nav node id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The nav node",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavNodeDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this node"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "delete_nav",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Nav node id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this node"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "update_nav",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Nav node id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNavNodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavNodeDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dashboard target not found in this tenant"
+          },
+          "403": {
+            "description": "Not allowed to edit this node"
+          },
+          "404": {
+            "description": "Not found in this tenant"
           }
         }
       }
@@ -1159,7 +2499,7 @@
         "tags": [
           "query"
         ],
-        "summary": "Extract the SQL, run it under the server guards, return the rows. The guards\n(read-only, timeout, caps) live in the store; this handler only wires.",
+        "summary": "Extract the request, bind its macros/variables, run it under the server\nguards, return the rows. The dev single-datasource shortcut carries no\nprincipal, so host tokens (`$caller_tenant_id`) are absent — a query needing\nthem errors, which is correct. The guards (read-only, timeout, caps) and the\nbinder live in the store; this handler only wires.",
         "operationId": "run_query",
         "requestBody": {
           "content": {
@@ -1191,6 +2531,293 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/query-history": {
+      "get": {
+        "tags": [
+          "query"
+        ],
+        "operationId": "list_query_history",
+        "responses": {
+          "200": {
+            "description": "Recent query runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryHistoryList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/query-history/{id}/star": {
+      "post": {
+        "tags": [
+          "query"
+        ],
+        "operationId": "star_query_history",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "History row id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StarQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Star state updated"
+          },
+          "404": {
+            "description": "Not this user's history row"
+          }
+        }
+      }
+    },
+    "/api/v1/query-kinds": {
+      "get": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "list_query_kinds_admin",
+        "responses": {
+          "200": {
+            "description": "Query-kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QueryKindDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "create_query_kind",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQueryKindRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The SQL failed a save-time lint"
+          },
+          "409": {
+            "description": "Name already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/query-kinds/{id}": {
+      "get": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "get_query_kind",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Query-kind id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query-kind",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this query-kind"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "update_query_kind",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Query-kind id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQueryKindRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The merged SQL failed a save-time lint"
+          },
+          "403": {
+            "description": "Not allowed to edit this query-kind"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "delete_query_kind",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Query-kind id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this query-kind"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/query/kinds": {
+      "get": {
+        "tags": [
+          "query"
+        ],
+        "summary": "Return the file-pack kinds (the registry is a `BTreeMap`, so already sorted)\nunioned with the caller's tenant-authored kinds. A read-only catalogue — no\ndatasource work. A DB read failure or an absent tenant degrades to the file\npack alone rather than failing the picker.",
+        "operationId": "list_query_kinds",
+        "responses": {
+          "200": {
+            "description": "Available query-kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/redo": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "redo",
+        "responses": {
+          "200": {
+            "description": "Group that was redone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "No tenant binding"
+          },
+          "404": {
+            "description": "Redo stack empty"
+          },
+          "409": {
+            "description": "Stale resource version — refused"
           }
         }
       }
@@ -1385,6 +3012,12 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Not allowed to view this entity"
+          },
+          "404": {
+            "description": "Entity not found in this tenant"
           }
         }
       },
@@ -1426,6 +3059,118 @@
         "responses": {
           "204": {
             "description": "Tags replaced"
+          },
+          "403": {
+            "description": "Not allowed to edit this entity"
+          },
+          "404": {
+            "description": "Entity not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/undo": {
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "undo",
+        "responses": {
+          "200": {
+            "description": "Group that was undone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "No tenant binding"
+          },
+          "404": {
+            "description": "No undoable group for this actor"
+          },
+          "409": {
+            "description": "Stale resource version — refused"
+          }
+        }
+      }
+    },
+    "/api/v1/variables/{id}": {
+      "delete": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "delete_variable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Variable id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "variables"
+        ],
+        "operationId": "update_variable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Variable id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVariableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          },
+          "409": {
+            "description": "Variable name already used on this dashboard"
           }
         }
       }
@@ -1433,6 +3178,158 @@
   },
   "components": {
     "schemas": {
+      "Actor": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A signed-in user. `subject` matches `Principal::subject`.",
+            "required": [
+              "subject",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "user"
+                ]
+              },
+              "subject": {
+                "type": "string",
+                "description": "Subject id of the acting principal."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "An AI agent run. `run_id` is opaque to the changelog; consumers\nwith `starter-ai` join it themselves.",
+            "required": [
+              "run_id",
+              "model",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "agent"
+                ]
+              },
+              "model": {
+                "type": "string",
+                "description": "Model identifier (e.g. `\"claude-...\"`)."
+              },
+              "run_id": {
+                "type": "string",
+                "description": "Identifier of the agent run."
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A starter-internal / background actor (cron, migration).",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "system"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "Origin of a recorded change."
+      },
+      "AgentDetail": {
+        "type": "object",
+        "description": "A configured agent in full. `config` is opaque JSON on the wire — the\nprovider/agent-specific knobs the nexus-ai facade interprets at run time.",
+        "required": [
+          "id",
+          "name",
+          "backend",
+          "model",
+          "config"
+        ],
+        "properties": {
+          "backend": {
+            "type": "string",
+            "description": "The facade backend: an inference provider hint or a coding-agent backend."
+          },
+          "config": {},
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "model": {
+            "type": "string",
+            "description": "Concrete model id or a size alias (\"small\"/\"medium\"/\"large\")."
+          },
+          "name": {
+            "type": "string"
+          },
+          "system_prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AgentSummary": {
+        "type": "object",
+        "description": "An agent as it appears in the list: identity and backend/model, without the\nconfig blob (that comes from the detail endpoint).",
+        "required": [
+          "id",
+          "name",
+          "backend",
+          "model"
+        ],
+        "properties": {
+          "backend": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "model": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "AlertCondition": {
+        "type": "object",
+        "description": "One condition of an alert rule.",
+        "required": [
+          "query",
+          "op",
+          "threshold"
+        ],
+        "properties": {
+          "op": {
+            "type": "string",
+            "description": "Comparison operator: gt|gte|lt|lte|eq|ne."
+          },
+          "query": {
+            "type": "string",
+            "description": "The query whose reduced first column is the evaluated value."
+          },
+          "reducer": {
+            "type": "string",
+            "description": "How the query's rows collapse to one value: last|min|max|avg|sum|count."
+          },
+          "threshold": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "AlertEvent": {
         "type": "object",
         "description": "One recorded transition: when a rule fired or resolved, the value that\ntriggered it, and whether it was silenced / actually notified.",
@@ -1494,7 +3391,10 @@
           "for_secs",
           "interval_secs",
           "enabled",
-          "channel_ids"
+          "channel_ids",
+          "combinator",
+          "no_data_policy",
+          "exec_error_policy"
         ],
         "properties": {
           "channel_ids": {
@@ -1503,6 +3403,19 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "combinator": {
+            "type": "string"
+          },
+          "conditions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AlertCondition"
+            },
+            "description": "The multi-condition list, when the rule uses one. `None` for a legacy\nsingle-condition rule (its single condition is the top-level fields)."
           },
           "datasource_id": {
             "type": [
@@ -1513,6 +3426,9 @@
           },
           "enabled": {
             "type": "boolean"
+          },
+          "exec_error_policy": {
+            "type": "string"
           },
           "for_secs": {
             "type": "integer",
@@ -1526,7 +3442,16 @@
             "type": "integer",
             "format": "int32"
           },
+          "message_template": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
+            "type": "string"
+          },
+          "no_data_policy": {
             "type": "string"
           },
           "op": {
@@ -1538,6 +3463,188 @@
           "threshold": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "AssistRequest": {
+        "type": "object",
+        "description": "An assist request: a task, the user's natural-language intent, and optional\ngrounding context.",
+        "required": [
+          "task",
+          "prompt"
+        ],
+        "properties": {
+          "backend": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Which AI backend to run the assist against. A CLI agent backend\n(`claude`, `codex`, `gemini`, `ollama`) uses the locally-installed CLI's\nown auth — no provider API key needed. A raw provider (`anthropic`,\n`openai`, …) uses the inference tier and needs a key. Defaults to the CLI\ntier (`claude`) so assist works out of the box wherever a CLI is logged in."
+          },
+          "current_sql": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional existing SQL to edit/improve rather than write from scratch."
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional datasource the query should target; when set, the server grounds\nthe model with that datasource's table/column schema so generated SQL\nreferences real columns."
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional model override (concrete id or `small`/`medium`/`large`).\nDefaults to the service's medium tier when omitted."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The user's plain-English ask (e.g. \"average temperature per site, last 24h\")."
+          },
+          "task": {
+            "$ref": "#/components/schemas/AssistTask"
+          }
+        }
+      },
+      "AssistResponse": {
+        "type": "object",
+        "description": "The assistant's structured answer. `result` shape depends on the request task\n(see [`AssistTask`]); it is opaque JSON on the wire so the contract stays\nstable as task outputs evolve. `raw` carries the model's unparsed reply for\ndebugging / when structured parsing degrades.",
+        "required": [
+          "task",
+          "result"
+        ],
+        "properties": {
+          "raw": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The model's raw text reply, retained so the UI can fall back to showing it\nif the structured `result` is empty."
+          },
+          "result": {},
+          "task": {
+            "$ref": "#/components/schemas/AssistTask"
+          }
+        }
+      },
+      "AssistTask": {
+        "type": "string",
+        "description": "What the caller wants the assistant to produce. The task selects the system\ninstructions and the expected shape of [`AssistResponse::result`].",
+        "enum": [
+          "sql",
+          "panel",
+          "dashboard"
+        ]
+      },
+      "Change": {
+        "type": "object",
+        "description": "A typed, append-only record of a single domain mutation.\n\nFive product features collapse onto this primitive: user audit log,\nAI-agent log, undo/redo, duplicate, and copy/paste. See\n`DOCS/backend/undo-redo/SCOPE.md`.",
+        "required": [
+          "id",
+          "at",
+          "actor",
+          "resource",
+          "op",
+          "group_id"
+        ],
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/Actor",
+            "description": "Who caused the change."
+          },
+          "after": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Snapshot of the row *after* the mutation. Used for redo,\nduplicate, and paste."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the change was committed."
+          },
+          "before": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Snapshot of the row *before* the mutation. Used for undo."
+          },
+          "correlation": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TraceId",
+                "description": "Optional external trace id (HTTP request id, agent run id, …)."
+              }
+            ]
+          },
+          "group_id": {
+            "$ref": "#/components/schemas/GroupId",
+            "description": "Every change belongs to a group. Single-row mutations get a\nfresh `GroupId`; multi-row transactions share one. Undo\noperates on whole groups, so this is never `Option`."
+          },
+          "id": {
+            "$ref": "#/components/schemas/ChangeId",
+            "description": "ULID, monotonic per recorder."
+          },
+          "op": {
+            "$ref": "#/components/schemas/Op",
+            "description": "What kind of mutation occurred."
+          },
+          "patch": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional RFC 6902 patch document, as raw JSON. Kept as\n[`serde_json::Value`] so this crate does not depend on a\npatch-library crate — the backend picks one."
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ResourceRef",
+            "description": "Resource that was mutated. Kind + id (+ optional owner)."
+          },
+          "resource_version": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Optimistic-concurrency token taken at read time.\n[`super::Reversible::apply_inverse`] uses it as the `WHERE`\npredicate and returns [`crate::Error::Conflict`] if the row\nhas moved on. `None` for resources without versioning (caller\naccepts last-write-wins).",
+            "minimum": 0
+          }
+        }
+      },
+      "ChangeId": {
+        "type": "string",
+        "description": "Identifier of a single row in `starter_changes`. ULID, monotonic\nper recorder."
+      },
+      "ChangePage": {
+        "type": "object",
+        "description": "One page of changes plus the cursor for the next page.",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "Rows in descending `at` order."
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor to pass into the next [`ChangeFilter`]. `None` at end."
           }
         }
       },
@@ -1582,9 +3689,38 @@
           }
         }
       },
+      "CreateAgentRequest": {
+        "type": "object",
+        "description": "Create an agent. `backend` selects the facade tier/provider, `model` is a\nconcrete id or size alias. `config` carries provider-specific knobs and is\nvalidated when a session runs, not here. `model` defaults to `large`.",
+        "required": [
+          "name",
+          "backend"
+        ],
+        "properties": {
+          "backend": {
+            "type": "string"
+          },
+          "config": {},
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "system_prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateAlertRuleRequest": {
         "type": "object",
-        "description": "Create an alert rule: a query whose first numeric cell is compared to a\nthreshold on a cadence. `op` is one of gt|gte|lt|lte|eq|ne.",
+        "description": "Create an alert rule. A rule is either a legacy single condition (the\ntop-level `query`/`op`/`threshold`) or a multi-condition rule (`conditions`\ncombined by `combinator`). `no_data_policy`/`exec_error_policy` say how a\nmissing or failed evaluation resolves (`ok`|`alerting`|`keep_last`).",
         "required": [
           "name",
           "query",
@@ -1602,6 +3738,23 @@
               "format": "uuid"
             }
           },
+          "combinator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How conditions combine: `and`|`or` (default `and`)."
+          },
+          "conditions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AlertCondition"
+            },
+            "description": "Multi-condition list; when set it supersedes the single `query`/`op`."
+          },
           "datasource_id": {
             "type": [
               "string",
@@ -1614,6 +3767,13 @@
               "boolean",
               "null"
             ]
+          },
+          "exec_error_policy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Execution-error policy: `ok`|`alerting`|`keep_last` (default `ok`)."
           },
           "for_secs": {
             "type": [
@@ -1631,8 +3791,22 @@
             "format": "int32",
             "description": "Evaluation cadence in seconds."
           },
+          "message_template": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional notification message template; omitted uses the default."
+          },
           "name": {
             "type": "string"
+          },
+          "no_data_policy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "No-data policy: `ok`|`alerting`|`keep_last` (default `ok`)."
           },
           "op": {
             "type": "string"
@@ -1666,12 +3840,34 @@
       },
       "CreateDashboardRequest": {
         "type": "object",
-        "description": "Create a dashboard. The slug must be unique within the tenant; the server\nrejects a duplicate rather than silently aliasing.",
+        "description": "Create a dashboard. The slug must be unique within the tenant; the server\nrejects a duplicate rather than silently aliasing. Appearance (icon +\naccent) is optional — omitted fields fall back to server defaults, so older\nclients that send only name/slug keep working.",
         "required": [
           "slug",
           "name"
         ],
         "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"; defaults\nserver-side when omitted."
+          },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Folder to file the dashboard under (WS-05); omit/`null` for the root."
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "lucide icon name; defaults server-side when omitted."
+          },
           "name": {
             "type": "string"
           },
@@ -1744,6 +3940,74 @@
           "pipeline": {}
         }
       },
+      "CreateFolderRequest": {
+        "type": "object",
+        "description": "Create a folder. `parent_id` files it under another folder (in the same\ntenant); omit it for a root folder.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Parent folder id; omit/`null` for a root folder."
+          }
+        }
+      },
+      "CreateNavNodeRequest": {
+        "type": "object",
+        "description": "Create a nav node. `target` defaults to a `group` header when omitted so a\nclient can lay out structure first and bind pages later. `context` is only\nmeaningful for a `dashboard` target and is ignored (cleared) otherwise.",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavContext"
+              }
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "target": {
+            "$ref": "#/components/schemas/NavTarget"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "CreatePanelRequest": {
         "type": "object",
         "description": "Create a panel under the dashboard named in the path. The dashboard is keyed\nby its immutable id (resolved from the path slug at the request edge).",
@@ -1773,6 +4037,80 @@
               "null"
             ],
             "description": "Visualization kind; defaults to `table` when omitted."
+          }
+        }
+      },
+      "CreateQueryKindRequest": {
+        "type": "object",
+        "description": "Create a tenant-authored query-kind. `name` is a reverse-DNS id (e.g.\n`com.acme.foo`), `sql` the raw template, and `datasource_kind` the datasource\nshape it targets. `params_schema` is the kind's JSON Schema document; it and\n`tables` default to empty. The API lint-validates the SQL before insert.",
+        "required": [
+          "name",
+          "sql",
+          "datasource_kind"
+        ],
+        "properties": {
+          "datasource_binding": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datasource_kind": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "params_schema": {},
+          "sql": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateSessionRequest": {
+        "type": "object",
+        "description": "Open a session against an agent by sending its opening prompt. The agent's\nsystem prompt (if any) is prepended by the server; the caller supplies only\nthe user message. The response carries the session id whose SSE feed streams\nthe run.",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The opening user message."
+          }
+        }
+      },
+      "CreateSessionResponse": {
+        "type": "object",
+        "description": "The response to opening a session: the session id (now `running`) plus a\nshort-lived signed token to connect its SSE feed at\n`GET /api/v1/agents/sessions/{id}/events?token=…`. A browser `EventSource`\ncannot set an auth header, so the token rides the query string.",
+        "required": [
+          "id",
+          "status",
+          "token"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "Signed token for the SSE subscription."
           }
         }
       },
@@ -1857,6 +4195,51 @@
           }
         }
       },
+      "CreateVariableRequest": {
+        "type": "object",
+        "description": "Create a dashboard variable. `name` is unique within the dashboard; a\nduplicate is a conflict. The kind-specific authoring input rides in\n`options_config` (opaque, shape owned by the UI).",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "current": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "include_all": {
+            "type": "boolean"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/VariableKind"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string",
+            "description": "Reference name without the `$`, unique per dashboard."
+          },
+          "options_config": {
+            "description": "Kind-specific authoring config; defaults to an empty object."
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "DashboardDetail": {
         "type": "object",
         "description": "Full dashboard view: identity plus its ordered panels. The slug resolves to\nthe `id` at the request edge; everything below keys on the id.",
@@ -1864,9 +4247,27 @@
           "id",
           "slug",
           "name",
+          "icon",
+          "accent",
           "panels"
         ],
         "properties": {
+          "accent": {
+            "type": "string",
+            "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"."
+          },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Folder this dashboard is filed under (WS-05); `null` is the root."
+          },
+          "icon": {
+            "type": "string",
+            "description": "lucide icon name for the sidebar/page chrome."
+          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -1882,18 +4283,86 @@
           },
           "slug": {
             "type": "string"
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the dashboard is starred (WS-05)."
+          }
+        }
+      },
+      "DashboardExport": {
+        "type": "object",
+        "description": "A self-contained, importable dashboard. Identity (`slug`/`name`) plus\nappearance, its panels, and its variables.",
+        "required": [
+          "schema_version",
+          "slug",
+          "name",
+          "icon",
+          "accent",
+          "panels"
+        ],
+        "properties": {
+          "accent": {
+            "type": "string",
+            "description": "accent HSL triple string."
+          },
+          "icon": {
+            "type": "string",
+            "description": "lucide icon name."
+          },
+          "name": {
+            "type": "string"
+          },
+          "panels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PanelExport"
+            }
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Model version; must match [`DASHBOARD_SCHEMA_VERSION`] to import.",
+            "minimum": 0
+          },
+          "slug": {
+            "type": "string"
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariableExport"
+            }
           }
         }
       },
       "DashboardSummary": {
         "type": "object",
-        "description": "A dashboard in a list: identity, route alias, and display name.",
+        "description": "A dashboard in a list: identity, route alias, display name, and appearance.",
         "required": [
           "id",
           "slug",
-          "name"
+          "name",
+          "icon",
+          "accent"
         ],
         "properties": {
+          "accent": {
+            "type": "string",
+            "description": "accent colour as an HSL triple string, e.g. \"152 76% 44%\"."
+          },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Folder this dashboard is filed under (WS-05); `null` is the root."
+          },
+          "icon": {
+            "type": "string",
+            "description": "lucide icon name for the sidebar/page chrome."
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -1905,6 +4374,10 @@
           "slug": {
             "type": "string",
             "description": "Mutable route alias."
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the dashboard is starred (WS-05)."
           }
         }
       },
@@ -1940,6 +4413,71 @@
         "enum": [
           "postgres"
         ]
+      },
+      "DatasourceKindList": {
+        "type": "object",
+        "description": "The registered datasource-kinds, name-ordered.",
+        "required": [
+          "kinds"
+        ],
+        "properties": {
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DatasourceKindSummary"
+            },
+            "description": "One entry per declared connector type."
+          }
+        }
+      },
+      "DatasourceKindSummary": {
+        "type": "object",
+        "description": "One datasource-kind's catalogue entry: enough for the UI to render a config\nform and know how the connector is tested, never the connector's internals.",
+        "required": [
+          "name",
+          "surface",
+          "config_schema",
+          "secret_fields",
+          "test_mode"
+        ],
+        "properties": {
+          "config_schema": {
+            "description": "The JSON Schema the connector's config validates against — the UI builds\nits form from this."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional human description for the config form."
+          },
+          "dialect": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The SQL dialect a query connector renders time macros in; absent for a\nstream connector."
+          },
+          "name": {
+            "type": "string",
+            "description": "The kind id a datasource record stores (e.g. `postgres`, `mqtt`)."
+          },
+          "secret_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Which config fields are secrets (sealed at rest, redacted on read). The UI\nrenders these as write-only password inputs."
+          },
+          "surface": {
+            "type": "string",
+            "description": "Which query surface the connector serves: `query` (request → rows) or\n`stream` (subscribe → events for live panels/flows)."
+          },
+          "test_mode": {
+            "type": "string",
+            "description": "How connectivity is tested before save: `query` (a probe query) or\n`connect` (open + close a session)."
+          }
+        }
       },
       "DatasourceSchema": {
         "type": "object",
@@ -1978,6 +4516,74 @@
           }
         }
       },
+      "DateFormat": {
+        "type": "string",
+        "description": "Closed enum of date-format choices. Variants locked in stage 1.\n*Revisit trigger:* a locale ships that none of these three formats\nfit.",
+        "enum": [
+          "auto",
+          "YYYY-MM-DD",
+          "DD/MM/YYYY",
+          "MM/DD/YYYY"
+        ]
+      },
+      "DryRunRequest": {
+        "type": "object",
+        "description": "Test a flow's `input` + `pipeline` without persisting it or running its real\noutput. The engine swaps in the bounded collector sink, runs the stream to\nthe first breached cap (or a short wall-clock deadline), and returns the\nsample rows. `output` is intentionally absent — a dry run never writes to a\nreal sink. Optional `max_rows` lets the editor narrow the sample further\nthan the server default.",
+        "required": [
+          "input"
+        ],
+        "properties": {
+          "input": {
+            "description": "The flow's input config blob (`{type, ...}`)."
+          },
+          "max_rows": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Cap on sample rows; clamped to the server's hard maximum.",
+            "minimum": 0
+          },
+          "pipeline": {
+            "description": "The pipeline processors, in order. Defaults to an empty pipeline."
+          }
+        }
+      },
+      "DryRunResponse": {
+        "type": "object",
+        "description": "A dry run's outcome. On a build/runtime failure `error` carries the message\nand `rows` is empty; otherwise `rows`/`columns`/`stats` describe the bounded\nsample (with `stats.truncated` set when a cap stopped the stream early).",
+        "required": [
+          "columns",
+          "rows",
+          "stats"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ColumnSchema"
+            },
+            "description": "Column schema of the sample, derived from the result's Arrow schema."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A build or runtime error, surfaced before save. `None` on success."
+          },
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "The sample rows, JSON-encoded."
+          },
+          "stats": {
+            "$ref": "#/components/schemas/QueryStats",
+            "description": "Row/byte/time counters and the truncation flag for the sample."
+          }
+        }
+      },
       "FlowDetail": {
         "type": "object",
         "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
@@ -1988,7 +4594,8 @@
           "pipeline",
           "output",
           "enabled",
-          "running"
+          "running",
+          "metrics"
         ],
         "properties": {
           "enabled": {
@@ -2000,6 +4607,10 @@
             "format": "uuid"
           },
           "input": {},
+          "metrics": {
+            "$ref": "#/components/schemas/FlowMetrics",
+            "description": "Live run counters for this flow."
+          },
           "name": {
             "type": "string"
           },
@@ -2011,6 +4622,67 @@
           }
         }
       },
+      "FlowExport": {
+        "type": "object",
+        "description": "A self-contained, importable flow: its name plus the ArkFlow config blobs.",
+        "required": [
+          "schema_version",
+          "name",
+          "input",
+          "output"
+        ],
+        "properties": {
+          "input": {
+            "description": "ArkFlow input component (`{type, ...config}`), secrets redacted."
+          },
+          "name": {
+            "type": "string"
+          },
+          "output": {
+            "description": "ArkFlow output component (`{type, ...config}`), secrets redacted."
+          },
+          "pipeline": {
+            "description": "ArkFlow processor list (a JSON array of `{type, ...config}`)."
+          },
+          "redacted": {
+            "type": "boolean",
+            "description": "Whether [`redact_secrets`] blanked any field on export, so the UI can\ntell the user credentials were removed (and must be re-entered on\nimport). Skipped when false so a clean export stays minimal."
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Model version; must match [`FLOW_SCHEMA_VERSION`] to import.",
+            "minimum": 0
+          }
+        }
+      },
+      "FlowMetrics": {
+        "type": "object",
+        "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, and the error that ended the last run (if\nany). All fields reflect this node's in-process\n[`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and\nare absent once the process restarts (single-node v1). Throughput counters\nwould require instrumenting every output sink, so they are intentionally\nomitted rather than reported as zero.",
+        "required": [
+          "running"
+        ],
+        "properties": {
+          "last_error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The error that ended the most recent run, or `None` if it ended cleanly\n(or is still running)."
+          },
+          "last_started_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "RFC-3339 timestamp of when the current or most recent run started, or\n`None` if the flow has never run this process."
+          },
+          "running": {
+            "type": "boolean",
+            "description": "Whether the manager currently has the flow running on this node."
+          }
+        }
+      },
       "FlowSummary": {
         "type": "object",
         "description": "A flow as it appears in the list: identity and run state, without the config\nblobs (those come from the detail endpoint).",
@@ -2018,7 +4690,8 @@
           "id",
           "name",
           "enabled",
-          "running"
+          "running",
+          "metrics"
         ],
         "properties": {
           "enabled": {
@@ -2028,6 +4701,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "metrics": {
+            "$ref": "#/components/schemas/FlowMetrics",
+            "description": "Live run counters for this flow."
+          },
           "name": {
             "type": "string"
           },
@@ -2035,6 +4712,63 @@
             "type": "boolean"
           }
         }
+      },
+      "FolderSummary": {
+        "type": "object",
+        "description": "One folder: its immutable id, its parent (NULL = root), and display name. The\nclient assembles the tree from the flat list using `parent_id`.",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Parent folder id; `null` for a root folder."
+          }
+        }
+      },
+      "ForgetRequest": {
+        "type": "object",
+        "description": "Which user to erase from the audit ledger. Erasure tombstones the *content*\n(`before`/`after`/`patch`) of every change the subject authored, within the\ncaller's tenant; the audit fact (who/when/what op) is preserved, as a\nregulator still needs to see that an action occurred.",
+        "required": [
+          "subject"
+        ],
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "The principal subject (stable user id) whose authored changes to scrub."
+          }
+        }
+      },
+      "ForgetResponse": {
+        "type": "object",
+        "description": "Result of a forget request: how many ledger rows were tombstoned.",
+        "required": [
+          "tombstoned"
+        ],
+        "properties": {
+          "tombstoned": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of ledger rows whose payloads were nulled.",
+            "minimum": 0
+          }
+        }
+      },
+      "GroupId": {
+        "type": "string",
+        "description": "Identifier shared by every [`super::Change`] recorded inside a\nsingle [`super::ChangeRecorder::transaction`] call. Undo operates\non whole groups."
       },
       "MeResponse": {
         "type": "object",
@@ -2077,6 +4811,256 @@
           }
         }
       },
+      "NavContext": {
+        "type": "object",
+        "description": "A nav node's context payload — applied only to `dashboard` targets. EXACTLY\n`{ values?, tags? }` per the §1 merge contract: `values` become\n`PageContext.values` (explicit overrides a `context`/`values` variable\nreads), `tags` are merged *over* the dashboard's own tags. There is no\n`varOverrides` channel — a node overrides a variable's current value through\n`values` + a `context` variable on the normal WS-02 selection path.",
+        "properties": {
+          "tags": {
+            "type": "object",
+            "description": "Tag pins/overrides merged over the dashboard's own tags for this mount.\nA null value clears a tag for the mount without retagging the page.",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": "object",
+            "description": "Explicit variable-value overrides for this mount (e.g. `{ building: \"b1\" }`).",
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "NavNodeDetail": {
+        "type": "object",
+        "description": "A nav node as returned to clients. `target`/`context` are the typed shapes\nabove; `path` is not stored — the tree is built client-side from `parent_id`.",
+        "required": [
+          "id",
+          "title",
+          "sort_order",
+          "target"
+        ],
+        "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavContext",
+                "description": "Present only for `dashboard` targets."
+              }
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The parent node, or `None` for a root node."
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Position among siblings; lower sorts first."
+          },
+          "target": {
+            "$ref": "#/components/schemas/NavTarget"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display label (\"Buildings\", \"Building-1\", \"Agents\")."
+          }
+        }
+      },
+      "NavTarget": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A non-clickable organisational header.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "group"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A reusable dashboard page mounted at this node. The id is validated\nagainst a tenant-scoped lookup by the handler (a bare FK would not encode\nsame-tenant), never trusted from the client.",
+            "required": [
+              "dashboardId",
+              "kind"
+            ],
+            "properties": {
+              "dashboardId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "dashboard"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A built-in static app page, from the closed [`StaticRoute`] allow-list.",
+            "required": [
+              "route",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "route"
+                ]
+              },
+              "route": {
+                "$ref": "#/components/schemas/StaticRoute"
+              }
+            }
+          }
+        ],
+        "description": "What a nav node points at — exactly one of group / dashboard / route, an\ninternally-tagged union on `kind`. This is the wire shape of the stored\n`target` JSONB; the store persists it verbatim. A `group` is a non-clickable\nheader, a `dashboard` is a reusable page mount, a `route` is one of the app's\nbuilt-in static pages (a closed allow-list, not free-form)."
+      },
+      "NodeCategory": {
+        "type": "string",
+        "description": "Which palette group a node belongs to. The visual builder groups the palette\nby this and constrains edges (input → processor* → output).",
+        "enum": [
+          "input",
+          "processor",
+          "output"
+        ]
+      },
+      "NodeType": {
+        "type": "object",
+        "description": "A node type the engine can build, described for the editor: its ArkFlow\n`type` discriminant, palette grouping, labels, and a JSON Schema for its\nconfig so the editor can render a schema-driven form instead of raw JSON.",
+        "required": [
+          "kind",
+          "category",
+          "label",
+          "description",
+          "config_schema"
+        ],
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/NodeCategory",
+            "description": "Palette group."
+          },
+          "config_schema": {
+            "description": "JSON Schema (draft 2020-12) for the node's config object."
+          },
+          "description": {
+            "type": "string",
+            "description": "One-line description."
+          },
+          "kind": {
+            "type": "string",
+            "description": "The ArkFlow `type` value the serialised graph node carries."
+          },
+          "label": {
+            "type": "string",
+            "description": "Human label for the palette."
+          }
+        }
+      },
+      "NodeTypeList": {
+        "type": "object",
+        "description": "The full palette: every registered node, in palette order (inputs,\nprocessors, outputs).",
+        "required": [
+          "node_types"
+        ],
+        "properties": {
+          "node_types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NodeType"
+            }
+          }
+        }
+      },
+      "NumberFormat": {
+        "type": "string",
+        "description": "Closed enum of number-format choices. Variants locked in stage 1.\n*Revisit trigger:* Indian grouping (`1,23,456.78`) becomes a\nshipped requirement.",
+        "enum": [
+          "auto",
+          "1,234.56",
+          "1.234,56",
+          "1 234,56"
+        ]
+      },
+      "Op": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "New row created.",
+            "enum": [
+              "create"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "Existing row updated.",
+            "enum": [
+              "update"
+            ]
+          },
+          {
+            "type": "string",
+            "description": "Row deleted.",
+            "enum": [
+              "delete"
+            ]
+          },
+          {
+            "type": "object",
+            "description": "Domain-specific operation. `String` (not `&'static str`)\nbecause values are read back from `jsonb`.",
+            "required": [
+              "custom"
+            ],
+            "properties": {
+              "custom": {
+                "type": "string",
+                "description": "Domain-specific operation. `String` (not `&'static str`)\nbecause values are read back from `jsonb`."
+              }
+            }
+          }
+        ],
+        "description": "The operation a [`super::Change`] represents."
+      },
       "PanelDetail": {
         "type": "object",
         "description": "A panel as the canvas renders it: which datasource + query feed it, how it is\ndrawn, and where it sits on the grid.",
@@ -2116,6 +5100,191 @@
           }
         }
       },
+      "PanelExport": {
+        "type": "object",
+        "description": "One panel in the export — everything needed to re-create it bar the ids the\nimporting tenant mints fresh.",
+        "required": [
+          "title",
+          "sql",
+          "viz",
+          "layout"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Datasource this panel queries; `null` when the source dashboard had none\nor the importing tenant should re-bind it."
+          },
+          "layout": {},
+          "sql": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "viz": {
+            "type": "string"
+          }
+        }
+      },
+      "PreferencesPatch": {
+        "type": "object",
+        "description": "`PATCH` body shape — mirror of [`super::ResolvedPreferences`] with\nevery field made optional.",
+        "properties": {
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional ISO 4217 currency code or `\"auto\"`."
+          },
+          "date_format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DateFormat",
+                "description": "Optional date format."
+              }
+            ]
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional BCP-47 language subtag."
+          },
+          "length_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional length unit."
+              }
+            ]
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional BCP-47 locale tag."
+          },
+          "mass_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional mass unit."
+              }
+            ]
+          },
+          "number_format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NumberFormat",
+                "description": "Optional number format."
+              }
+            ]
+          },
+          "pressure_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional pressure unit."
+              }
+            ]
+          },
+          "speed_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional speed unit."
+              }
+            ]
+          },
+          "temperature_unit": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Unit",
+                "description": "Optional temperature unit."
+              }
+            ]
+          },
+          "theme": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Theme",
+                "description": "Optional theme. User-only field."
+              }
+            ]
+          },
+          "time_format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TimeFormat",
+                "description": "Optional time format."
+              }
+            ]
+          },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional IANA timezone identifier or `\"auto\"`."
+          },
+          "unit_system": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UnitSystem",
+                "description": "Optional `metric` / `imperial` toggle."
+              }
+            ]
+          },
+          "week_start": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WeekStart",
+                "description": "Optional week-start."
+              }
+            ]
+          }
+        }
+      },
       "Problem": {
         "type": "object",
         "description": "Machine-readable error body.\n\nMirrors RFC 7807 loosely. The `type` field is a stable string\nidentifier (`not_found`, `invalid_input`, …) that callers can\nswitch on; the HTTP status is set by the transport.",
@@ -2141,16 +5310,225 @@
           }
         }
       },
+      "QueryHistoryEntry": {
+        "type": "object",
+        "description": "A past query run, as the recall drawer shows it. The `sql` is the authored\ntext so re-running it reproduces the original query.",
+        "required": [
+          "id",
+          "sql",
+          "ran_at",
+          "starred"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The datasource queried, or absent for the dev single-source path."
+          },
+          "elapsed_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Wall-clock execution time, when the run completed."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The error message, when the run failed."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ran_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the run happened, RFC-3339."
+          },
+          "row_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Rows returned, when the run completed."
+          },
+          "sql": {
+            "type": "string",
+            "description": "The authored SQL."
+          },
+          "starred": {
+            "type": "boolean",
+            "description": "Whether the user pinned this run."
+          }
+        }
+      },
+      "QueryHistoryList": {
+        "type": "object",
+        "description": "The history list response, newest (and starred) first.",
+        "required": [
+          "entries"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryHistoryEntry"
+            }
+          }
+        }
+      },
+      "QueryKindDetail": {
+        "type": "object",
+        "description": "A tenant-authored query-kind in full, including its `sql`. Unlike the\ncatalogue's [`QueryKindSummary`](crate::dto::query::kinds::QueryKindSummary),\nwhich hides the SQL, this is the authoring view returned to the admin who\nowns the kind.",
+        "required": [
+          "id",
+          "name",
+          "sql",
+          "datasource_kind",
+          "tables",
+          "params_schema"
+        ],
+        "properties": {
+          "datasource_binding": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datasource_kind": {
+            "type": "string",
+            "description": "The datasource shape the kind targets (e.g. `postgres`)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `com.acme.foo`)."
+          },
+          "params_schema": {
+            "description": "The kind's params JSON Schema — the contract a request's `params`\nvalidates against, and what a schema-driven form renders."
+          },
+          "sql": {
+            "type": "string",
+            "description": "The raw SQL template, bound by the shared binder at run time."
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tables the kind reads."
+          }
+        }
+      },
+      "QueryKindList": {
+        "type": "object",
+        "description": "The registered query-kinds, name-ordered, for the editor's kind picker.",
+        "required": [
+          "kinds"
+        ],
+        "properties": {
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryKindSummary"
+            },
+            "description": "Every registered kind, sorted by `name`."
+          }
+        }
+      },
+      "QueryKindSummary": {
+        "type": "object",
+        "description": "One registered query-kind's descriptive surface. The `params_schema` is the\nkind's JSON Schema document, which a schema-driven form renders to collect\nthe named params the kind binds.",
+        "required": [
+          "name",
+          "datasource_kind",
+          "params_schema"
+        ],
+        "properties": {
+          "datasource_kind": {
+            "type": "string",
+            "description": "The datasource shape the kind targets (e.g. `postgres`)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human description for the picker, if the manifest declared one."
+          },
+          "name": {
+            "type": "string",
+            "description": "Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `nexus.core.meters_list`)."
+          },
+          "params_schema": {
+            "description": "The kind's params JSON Schema — the contract a kind-mode request's\n`params` validates against, and what a schema-driven form renders."
+          }
+        }
+      },
       "QueryRequest": {
         "type": "object",
-        "description": "Body of a one-shot query. The caller supplies only the SQL; every safety\nbound (read-only role, statement timeout, forced `LIMIT`, row/byte caps) is\napplied server-side and is deliberately *not* expressible here — a client\ncannot raise its own limits.",
+        "description": "Body of a one-shot query. The caller supplies the SQL plus the optional\nmacro context (time range, variables) the server-side binder substitutes;\nevery safety bound (read-only role, statement timeout, forced `LIMIT`,\nrow/byte caps) is applied server-side and is deliberately *not* expressible\nhere — a client cannot raise its own limits, and every supplied value is\n*bound* into the prepared statement, never inlined.\n\nThis is the C7 contract: a single owner (WS-03) for an endpoint several\nworkstreams feed. WS-01 fills `time_range`, WS-02 fills `variables`; both\nflow through the same binder.",
         "required": [
           "sql"
         ],
         "properties": {
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a\nbare `$__interval`.",
+            "minimum": 0
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "WS-10 kind-mode: the reverse-DNS id of a registered query-kind to run\n*instead of* `sql`. When set, the server resolves the kind, validates\n`params` against its schema, and binds the kind's own SQL — `sql` is\nignored. When absent (the default), the request is raw-SQL mode and `sql`\nruns. This keeps `QueryRequest` a single additive contract (C7): kind-mode\nis opt-in, sql-mode stays the default."
+          },
+          "params": {
+            "description": "WS-10 kind-mode named params, validated host-side against the kind's JSON\nSchema before binding. Each value binds as a `$N` arg, never inlined.\nIgnored in raw-SQL mode."
+          },
           "sql": {
             "type": "string",
-            "description": "The SQL to run against the datasource. Pushed down to the source database\nso `WHERE`/`LIMIT` execute there, not in memory."
+            "description": "The SQL to run against the datasource. May carry macros (`$__timeFilter`)\nand variable references (`$region`) the binder expands into bound args.\nPushed down to the source database so `WHERE`/`LIMIT` execute there."
+          },
+          "time_range": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/QueryTimeRange",
+                "description": "The resolved absolute time window for `$__timeFilter`/`$__timeFrom`/\n`$__timeTo`. Relative ranges (`now-6h`) are resolved client-side to\ninstants before sending so the bound query and the cache key agree."
+              }
+            ]
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryVariable"
+            },
+            "description": "Dashboard variable values, by name (without the leading `$`), expanded by\n`$var` / `${var:csv}` / `$__sqlIn(var)`."
           }
         }
       },
@@ -2215,6 +5593,47 @@
           }
         }
       },
+      "QueryTimeRange": {
+        "type": "object",
+        "description": "An absolute query window. Half-open (`from` inclusive, `to` exclusive),\nmatching the binder's `col >= from AND col < to` expansion.",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Inclusive lower bound, RFC-3339."
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Exclusive upper bound, RFC-3339."
+          }
+        }
+      },
+      "QueryVariable": {
+        "type": "object",
+        "description": "One dashboard variable's resolved value(s). A single-valued variable carries\none entry; a multi-select carries several (expanded by `$__sqlIn`/`:csv`).",
+        "required": [
+          "name",
+          "values"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variable name without the `$` (e.g. `region`)."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One or more string values. Multiple values drive list expansion; the\nbinder binds each as its own argument so values are always inert."
+          }
+        }
+      },
       "RedactedConnection": {
         "type": "object",
         "description": "Connection details safe to return over the API: everything *except* the\nsecret. The password lives only as ciphertext in the store and is never\nserialized here — `GET /datasources/:id` returns this redacted view.",
@@ -2247,6 +5666,123 @@
           "user": {
             "type": "string",
             "description": "Connecting user."
+          }
+        }
+      },
+      "ResolvedPreferences": {
+        "type": "object",
+        "description": "Fully-resolved per-principal preferences. All fields are concrete —\nthe resolver has already collapsed user → org → system → ICU\nchains, so callers can trust every value.",
+        "required": [
+          "timezone",
+          "locale",
+          "language",
+          "unit_system",
+          "temperature_unit",
+          "pressure_unit",
+          "speed_unit",
+          "length_unit",
+          "mass_unit",
+          "date_format",
+          "time_format",
+          "week_start",
+          "number_format",
+          "currency",
+          "theme"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code (e.g. `\"USD\"`, `\"EUR\"`). Never `\"auto\"`\nonce resolved."
+          },
+          "date_format": {
+            "$ref": "#/components/schemas/DateFormat",
+            "description": "Concrete date format — never `Auto` once resolved."
+          },
+          "language": {
+            "type": "string",
+            "description": "BCP-47 language subtag (e.g. `\"en\"`, `\"fr\"`). Drives i18n\nmessage catalogue lookup."
+          },
+          "length_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete length unit (one of `Meter`, `Foot`)."
+          },
+          "locale": {
+            "type": "string",
+            "description": "BCP-47 locale tag (e.g. `\"en-US\"`, `\"fr-FR\"`). Drives ICU\nformatting fallbacks."
+          },
+          "mass_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete mass unit (one of `Kilogram`, `Pound`)."
+          },
+          "number_format": {
+            "$ref": "#/components/schemas/NumberFormat",
+            "description": "Concrete number format — never `Auto` once resolved."
+          },
+          "pressure_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete pressure unit (one of `Kilopascal`, `Psi`, `Bar`)."
+          },
+          "speed_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete speed unit (one of `MeterPerSecond`,\n`KilometerPerHour`, `MilePerHour`, `Knot`)."
+          },
+          "temperature_unit": {
+            "$ref": "#/components/schemas/Unit",
+            "description": "Concrete temperature unit (one of `Celsius`, `Fahrenheit`)."
+          },
+          "theme": {
+            "$ref": "#/components/schemas/Theme",
+            "description": "UI theme (`Light`, `Dark`, or `System`). User-only field."
+          },
+          "time_format": {
+            "$ref": "#/components/schemas/TimeFormat",
+            "description": "Concrete time format — never `Auto` once resolved."
+          },
+          "timezone": {
+            "type": "string",
+            "description": "IANA timezone identifier (e.g. `\"Europe/Paris\"`,\n`\"America/New_York\"`). Never `\"auto\"` once resolved."
+          },
+          "unit_system": {
+            "$ref": "#/components/schemas/UnitSystem",
+            "description": "`metric` or `imperial`. Drives per-unit `Auto` derivation\nupstream; by the time it lands here the per-unit fields below\nare already concrete, so this value is informational."
+          },
+          "week_start": {
+            "$ref": "#/components/schemas/WeekStart",
+            "description": "Concrete week-start — never `Auto` once resolved."
+          }
+        }
+      },
+      "ResourceRef": {
+        "type": "object",
+        "description": "Reference to the object an authorization check is being made\nagainst. `id == None` is a collection-level / route-level check\n(\"may this user list flows at all?\"); `id == Some(_)` is a\nrow-level check (\"may this user update flow 42?\").\n\n`owner` is populated by the handler for row-level checks where\nownership matters — the engine can match\n`principal.subject == object.owner` without a DB round-trip from\ninside the engine. See SCOPE.md R5.",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Resource id for row-level checks. `None` for collection /\nroute-level checks."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Resource kind. Must be registered in the\n[`super::ResourceRegistry`] (e.g. `\"flows\"`, `\"users\"`,\n`\"secrets\"`)."
+          },
+          "owner": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Subject id of the resource owner, if any."
+          },
+          "tenant": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tenant the resource row belongs to (Phase 7a — R11). For\nkinds declared as `tenant_scoped = true` in the registry,\nthe engine requires\n`Some(principal.tenant_id) == Some(object.tenant)` (with\nthe super-admin sentinel `\"*\"` bypassing the predicate).\n`None` on a tenant-scoped kind is a `cross_tenant` deny —\nthe row is missing its tenancy column."
           }
         }
       },
@@ -2302,6 +5838,33 @@
           }
         }
       },
+      "SessionDetail": {
+        "type": "object",
+        "description": "One session against an agent.",
+        "required": [
+          "id",
+          "agent_id",
+          "status",
+          "transcript"
+        ],
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "description": "Lifecycle: pending | running | completed | failed | cancelled."
+          },
+          "transcript": {
+            "description": "The message transcript: an array of `{role, content}` objects."
+          }
+        }
+      },
       "SetTagsRequest": {
         "type": "object",
         "description": "Body for `PUT …/tags` — the complete tag set to persist on an entity. This\nis a full replace: tags not listed are removed, so the client sends the\nwhole set it wants, not a delta.",
@@ -2352,6 +5915,32 @@
             "format": "date-time"
           }
         }
+      },
+      "StarQueryRequest": {
+        "type": "object",
+        "description": "Body of the star toggle: the desired pinned state for one history row.",
+        "required": [
+          "starred"
+        ],
+        "properties": {
+          "starred": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StaticRoute": {
+        "type": "string",
+        "description": "The closed allow-list of built-in app pages a `route` node may point at —\nthe router table's static entries (`ui/src/app/router.tsx`). A node cannot\npoint at an arbitrary URL; this is what lets a static page be access-gated by\na nav node exactly like a dashboard mount (WS-13 §4).",
+        "enum": [
+          "dashboards",
+          "explore",
+          "datasources",
+          "flows",
+          "alerts",
+          "agents",
+          "access",
+          "audit"
+        ]
       },
       "StreamEvent": {
         "type": "object",
@@ -2423,6 +6012,42 @@
           }
         }
       },
+      "TestConnectionRequest": {
+        "type": "object",
+        "description": "Body for a *pre-save* connection probe. Carries the same connection fields as\na create request, including the write-only secret, so the \"Test connection\"\naffordance works before the datasource is persisted (and before a secret is\nsealed). The secret is used transiently to connect and never stored or echoed.",
+        "required": [
+          "kind",
+          "host",
+          "port",
+          "database",
+          "user",
+          "password"
+        ],
+        "properties": {
+          "database": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DatasourceKind",
+            "description": "Which connector to probe."
+          },
+          "password": {
+            "type": "string",
+            "description": "Write-only secret used only to open the probe connection."
+          },
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "user": {
+            "type": "string"
+          }
+        }
+      },
       "TestDatasourceResponse": {
         "type": "object",
         "description": "Outcome of a connection probe. `ok` is the headline; on failure `message`\ncarries the redacted reason (driver errors are sanitized so they never leak\nthe connection secret).",
@@ -2450,6 +6075,125 @@
           }
         }
       },
+      "Theme": {
+        "type": "string",
+        "description": "Closed enum of UI theme choices. User-only field — the org-layer\nPreferences DTO omits `theme` entirely. *Revisit trigger:* a\nconsumer needs org-enforced theming.",
+        "enum": [
+          "light",
+          "dark",
+          "system"
+        ]
+      },
+      "TimeFormat": {
+        "type": "string",
+        "description": "Closed enum of clock formats. Variants locked in stage 1.\n*Revisit trigger:* none expected.",
+        "enum": [
+          "auto",
+          "24h",
+          "12h"
+        ]
+      },
+      "TraceId": {
+        "type": "string",
+        "description": "Correlation id linking a change to an external trace (HTTP request\nid, agent run id, etc.). Opaque to the changelog."
+      },
+      "UndoResponse": {
+        "type": "object",
+        "description": "The changelog group that an undo/redo applied. The client refreshes the\nresources touched by this group (it can fetch the group's rows via the audit\nAPI if it needs the per-resource detail).",
+        "required": [
+          "group_id"
+        ],
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "description": "The `group_id` that was undone or redone."
+          }
+        }
+      },
+      "Unit": {
+        "type": "string",
+        "description": "Closed enum of unit codes for the v1 surface. Variants are locked\nin stage 1 of the Phase 0 plan.",
+        "enum": [
+          "celsius",
+          "fahrenheit",
+          "kilopascal",
+          "psi",
+          "bar",
+          "meter_per_second",
+          "kilometer_per_hour",
+          "mile_per_hour",
+          "knot",
+          "meter",
+          "foot",
+          "kilogram",
+          "pound",
+          "second",
+          "millisecond",
+          "minute",
+          "hour",
+          "day",
+          "cubic_meter",
+          "liter",
+          "milliliter",
+          "gallon_us",
+          "fluid_ounce_us",
+          "joule",
+          "kilojoule",
+          "kilowatt_hour",
+          "btu",
+          "watt",
+          "kilowatt",
+          "horsepower",
+          "square_meter",
+          "square_foot",
+          "acre",
+          "hectare",
+          "radian",
+          "degree",
+          "hertz",
+          "kilohertz",
+          "megahertz"
+        ]
+      },
+      "UnitSystem": {
+        "type": "string",
+        "description": "Closed enum of unit systems. Variants locked in stage 1 of the\nPhase 0 plan. *Revisit trigger:* none expected — US-customary vs\nImperial nuance is handled in the per-unit derivation, not by\nadding a third variant here.",
+        "enum": [
+          "metric",
+          "imperial"
+        ]
+      },
+      "UpdateAgentRequest": {
+        "type": "object",
+        "description": "Partially update an agent; omitted fields are left unchanged.",
+        "properties": {
+          "backend": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "config": {},
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "system_prompt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "UpdateAlertRuleRequest": {
         "type": "object",
         "description": "Partially update an alert rule; omitted fields are unchanged.",
@@ -2464,9 +6208,30 @@
               "format": "uuid"
             }
           },
+          "combinator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conditions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AlertCondition"
+            }
+          },
           "enabled": {
             "type": [
               "boolean",
+              "null"
+            ]
+          },
+          "exec_error_policy": {
+            "type": [
+              "string",
               "null"
             ]
           },
@@ -2484,7 +6249,19 @@
             ],
             "format": "int32"
           },
+          "message_template": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "no_data_policy": {
             "type": [
               "string",
               "null"
@@ -2513,8 +6290,34 @@
       },
       "UpdateDashboardRequest": {
         "type": "object",
-        "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned.",
+        "description": "Partial update. Renaming the slug changes only the route alias — grants and\npanel refs keep pointing at the immutable id, so nothing is orphaned. Moving\nbetween folders and starring (WS-05) ride this same patch.",
         "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "accent HSL triple string; `None` leaves it unchanged."
+          },
+          "clear_folder": {
+            "type": "boolean",
+            "description": "Re-root the dashboard (clear its folder)."
+          },
+          "folder_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Move into this folder. Ignored when `clear_folder` is true; `None` (with\n`clear_folder` false) leaves the folder unchanged."
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "lucide icon name; `None` leaves it unchanged."
+          },
           "name": {
             "type": [
               "string",
@@ -2526,6 +6329,13 @@
               "string",
               "null"
             ]
+          },
+          "starred": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Star/unstar; `None` leaves it unchanged."
           }
         }
       },
@@ -2595,6 +6405,102 @@
           "pipeline": {}
         }
       },
+      "UpdateFolderRequest": {
+        "type": "object",
+        "description": "Partial update. `name` renames. The parent is three-valued, modelled\nexplicitly so a JSON-friendly wire shape (no double-`null` ambiguity) can\ndistinguish the cases: send `parent_id` to move under a folder, set\n`clear_parent: true` to re-root, or send neither to leave the parent\nunchanged. `clear_parent` wins if both are set.",
+        "properties": {
+          "clear_parent": {
+            "type": "boolean",
+            "description": "Re-root the folder (set its parent to NULL)."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Move under this folder. Ignored when `clear_parent` is true."
+          }
+        }
+      },
+      "UpdateNavNodeRequest": {
+        "type": "object",
+        "description": "Partially update a nav node. Omitted fields are left unchanged. The\nthree-valued fields (parent, context, icon, accent) pair an optional value\nwith a `clear_*` flag so JSON can express \"leave / set / clear\" without a\nnested-`null` ambiguity: `clear_*` wins, then an explicit value, else leave.\nRe-targeting (e.g. dashboard → group) sends `target` + `clear_context: true`.",
+        "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clear_accent": {
+            "type": "boolean"
+          },
+          "clear_context": {
+            "type": "boolean",
+            "description": "Drop the context (e.g. when retargeting a dashboard mount to a group)."
+          },
+          "clear_icon": {
+            "type": "boolean"
+          },
+          "clear_parent": {
+            "type": "boolean",
+            "description": "Re-root the node (move to top level), overriding `parent_id`."
+          },
+          "context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavContext"
+              }
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavTarget"
+              }
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "UpdatePanelRequest": {
         "type": "object",
         "description": "Partial update of a panel. `None` fields are left unchanged.",
@@ -2626,6 +6532,236 @@
             ]
           }
         }
+      },
+      "UpdateQueryKindRequest": {
+        "type": "object",
+        "description": "Partially update a query-kind; omitted fields are left unchanged. `name` is\nimmutable — a kind is not renamed — so it is absent here.",
+        "properties": {
+          "datasource_binding": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datasource_kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "params_schema": {},
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tables": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "UpdateVariableRequest": {
+        "type": "object",
+        "description": "Partial update. Every field is optional — `None` leaves the stored value\nuntouched. Changing `current` alone is the common case (the user picked a new\nvalue in the bar); changing the rest is the variable editor.",
+        "properties": {
+          "current": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "include_all": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VariableKind"
+              }
+            ]
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options_config": {},
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "VariableDetail": {
+        "type": "object",
+        "description": "A dashboard variable definition. `options_config` carries the kind-specific\nauthoring input (the custom list, the option SQL + datasource, the interval\nsteps, or the datasource-kind filter); it is opaque on the wire because its\nshape varies by `kind` and the UI owns each shape. `current` holds the\nselected value(s); the binder receives these (resolved) as `QueryVariable`.",
+        "required": [
+          "id",
+          "dashboard_id",
+          "name",
+          "kind",
+          "options_config"
+        ],
+        "properties": {
+          "current": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Currently selected value(s). One entry for a single-select; several for a\nmulti-select / \"All\" expansion. The binder binds each as its own arg."
+          },
+          "dashboard_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The dashboard this variable scopes."
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Whether the variable is hidden from the bar (constants usually are)."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "include_all": {
+            "type": "boolean",
+            "description": "Whether an \"All\" option is offered (expands to every resolved option)."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/VariableKind"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human label for the variable bar; falls back to `name` when absent."
+          },
+          "multi": {
+            "type": "boolean",
+            "description": "Whether multiple values may be selected at once."
+          },
+          "name": {
+            "type": "string",
+            "description": "The reference name without the `$` (e.g. `region`). Unique per dashboard."
+          },
+          "options_config": {
+            "description": "Kind-specific authoring config (opaque; shape owned by the UI per kind)."
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Display/resolution order within the dashboard's variable bar; lower\nsorts first. Ties break by creation order."
+          }
+        }
+      },
+      "VariableExport": {
+        "type": "object",
+        "description": "One variable in the export. Mirrors the relational variable row minus its\nids; opaque `options_config` travels as-is.",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "current": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hidden": {
+            "type": "boolean"
+          },
+          "include_all": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "multi": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "options_config": {},
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "VariableKind": {
+        "type": "string",
+        "description": "The kind of a dashboard variable — what populates its option list and how its\nvalue is sourced. Mirrors Grafana's templating types; the UI resolves the\noptions for each kind, the binder only ever sees the *resolved* string\nvalue(s) (WS-03's `$var`/`$__sqlIn` expansion).",
+        "enum": [
+          "constant",
+          "custom",
+          "query",
+          "datasource",
+          "interval",
+          "textbox",
+          "context"
+        ]
+      },
+      "WeekStart": {
+        "type": "string",
+        "description": "Closed enum of week-start choices. Variants locked in stage 1.\n*Revisit trigger:* a locale that starts the week on Saturday (parts\nof MENA) surfaces as a shipped requirement.",
+        "enum": [
+          "auto",
+          "monday",
+          "sunday"
+        ]
       }
     }
   }

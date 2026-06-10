@@ -18,6 +18,18 @@ pub async fn migrate_all(pool: &Pool) -> Result<(), String> {
             migrator: &AUTHZ_POSTGRES_MIGRATOR,
         })
         .with_source(nexus_store::migrate::source())
+        // WS-14: the extension enablement table (`extensions_enablement`) is
+        // owned by the `starter-ext-store-pg` kernel crate, which ships its
+        // schema as a bare `sqlx::Migrator`. nexus runs it as its own namespaced
+        // source (`ext_store`) so the kernel stays decoupled from nexus's
+        // migration runner and version numbers never collide with the `nexus`
+        // source. The extension-contributed query-kinds table
+        // (`nexus_extension_query_kinds`, migration 1801) is owned by nexus and
+        // ships in the `nexus` source above.
+        .with_source(MigrationSource {
+            name: "ext_store",
+            migrator: &starter_ext_store_pg::MIGRATOR,
+        })
         .run()
         .await
         .map_err(|e| format!("migrations: {e}"))

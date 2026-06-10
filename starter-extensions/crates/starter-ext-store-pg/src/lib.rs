@@ -19,3 +19,15 @@
 mod store;
 
 pub use store::PgEnablementStore;
+
+/// The sqlx [`Migrator`] over this crate's `migrations/` dir.
+///
+/// Exposed so a consumer can chain the `extensions_enablement` schema into
+/// its own migration plan without re-declaring the SQL. The host owns the
+/// namespacing: wrap this in whatever migration-runner type the host uses
+/// (nexus wraps it as a `starter_store_postgres::MigrationSource` named
+/// `ext_store`). Keeping it a bare `Migrator` keeps this crate decoupled
+/// from any one host's migration-runner type.
+///
+/// [`Migrator`]: sqlx::migrate::Migrator
+pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./src/migrations");

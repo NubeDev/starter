@@ -16,6 +16,17 @@ use starter_store_postgres::Pool;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // The zag agent tier drives `claude --print` non-interactively (using the
+    // CLI's own login — no API key). zag disables print mode unless this env var
+    // is set, to stop accidental API-token spend; for the control plane that
+    // headless mode is exactly the intent, so opt in unless the operator has
+    // already chosen a value. Set before any session can spawn the CLI.
+    if std::env::var_os("ZAG_CLAUDE_ALLOW_PRINT").is_none() {
+        // SAFETY: first statement in `main`, before pools/tasks start; no other
+        // thread reads this var until a much-later session run.
+        std::env::set_var("ZAG_CLAUDE_ALLOW_PRINT", "1");
+    }
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
@@ -35,32 +46,126 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let identity = identity::build(metadata_pool).await?;
 
     let datasource = sqlx::PgPool::connect(&cfg.datasource_url).await?;
+
+    // Load the built-in query-kinds pack at boot. A malformed pack (bad schema,
+    // an undeclared `$param`, or a missing `$caller_tenant_id` predicate on a
+    // tenant-scoped table) aborts startup rather than shipping an unsafe kind.
+    let kinds = nexus_api::kinds::Registry::load_dir(&cfg.kinds_dir)?;
+    tracing::info!(count = kinds.len(), dir = %cfg.kinds_dir.display(), "loaded query-kinds");
+
+    // Load the built-in datasource-kinds pack at boot (WS-08b). A malformed
+    // declaration (bad config schema, or a secret_field that names no config
+    // property) aborts startup rather than shipping a connector that would leave
+    // a credential unsealed.
+    let datasource_kinds =
+        nexus_api::datasource_kinds::Registry::load_dir(&cfg.datasource_kinds_dir)?;
+    tracing::info!(
+        count = datasource_kinds.len(),
+        dir = %cfg.datasource_kinds_dir.display(),
+        "loaded datasource-kinds"
+    );
+
+    let prefs = nexus_api::prefs::prefs_store(metadata.clone());
+    let envelope = Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?;
+    // WS-12 audit/undo: build the reversible registry + redo cursor once at boot.
+    // Reversibles for secret-bearing kinds close over the same envelope so undo
+    // can re-seal a rotated secret through the store.
+    let changelog = nexus_api::changelog::ChangelogHandles::new(metadata.clone(), envelope.clone());
+
+    // WS-14 extensions: resolve the runtime dirs and materialise every installed
+    // extension's contributed query-kinds (the dispatcher's third source) into
+    // the provenance table, building the in-memory registry placed on AppState.
+    // This runs before AppState is built because the host-method handler the
+    // supervisors install closes over the finished AppState (which holds this
+    // registry). A bad bundle is logged + skipped inside; only a metadata-DB
+    // failure aborts boot.
+    let ext_cfg = nexus_api::extensions::ExtensionsConfig::from_env();
+    if let Err(e) = ext_cfg.ensure_writable_dirs() {
+        tracing::warn!(err = %e, "creating extension installs/pidfile dirs failed (install/reaper may degrade)");
+    }
+    let extension_kinds = std::sync::Arc::new(
+        nexus_api::extensions::load_extension_kinds(&ext_cfg, &metadata).await?,
+    );
+    tracing::info!(
+        count = extension_kinds.len(),
+        "loaded extension-contributed query-kinds"
+    );
+
     let state = AppState {
-        metadata,
+        metadata: metadata.clone(),
         datasource,
         datasource_pools: Default::default(),
-        envelope: Envelope::new(cfg.master_key.as_bytes(), 1).map_err(|e| e.to_string())?,
+        envelope,
         guards: default_guards(),
         live: LiveRunner::new().map_err(|e| format!("engine init: {e}"))?,
         flows: FlowManager::new().map_err(|e| format!("flow manager init: {e}"))?,
+        sessions: nexus_api::agents::SessionRunner::new(
+            cfg.knowledge_root.clone(),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(cfg.stream_key.into_bytes()),
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
+        kinds: std::sync::Arc::new(kinds),
+        extension_kinds: extension_kinds.clone(),
+        datasource_kinds: std::sync::Arc::new(datasource_kinds),
+        prefs,
+        changelog,
+        query_cache: nexus_api::cache::CacheConfig::from_env().build(),
+        quotas: nexus_api::quota::TenantQuotas::new(nexus_api::quota::QuotaConfig::from_env()),
+        rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
+            nexus_api::ratelimit::RateLimitConfig::from_env(),
+        ),
     };
+
+    // Now AppState exists: build nexus's host-method handler over it and boot the
+    // extension runtime (reap orphans → seal registry → spawn enabled process
+    // supervisors with host methods installed → assemble the admin handle).
+    let host_methods = nexus_api::extensions::NexusHostMethods::shared(state.clone());
+    let ext_runtime = nexus_api::extensions::boot(
+        &ext_cfg,
+        metadata.clone(),
+        host_methods,
+        extension_kinds,
+    )
+    .await?;
+    let ext_admin = ext_runtime.admin;
 
     // The alert scheduler runs for the process's lifetime, evaluating due rules
     // on its own cadence. Single-node for v1.
     nexus_api::alerting::schedule::spawn(state.clone());
+
+    // The audit-retention sweep prunes ledger rows past the retention horizon so
+    // the append-only log stays bounded. Runs for the process's lifetime.
+    nexus_api::changelog::prune::spawn(
+        state.clone(),
+        nexus_api::changelog::RetentionPolicy::from_env(),
+    );
+
+    // The extension admin router is a sibling of the authz/tenants routers: the
+    // kernel applies its own `with_principal` → `with_role(Admin)` layer, so it
+    // must NOT be wrapped in nexus's product principal layer (that would run the
+    // layer twice). `serve::assemble` merges it after the identity routers.
+    let ext_router =
+        nexus_api::extensions::router(ext_admin.clone(), identity.authenticator.clone());
 
     let router = serve::assemble(
         state,
         identity.auth,
         identity.authz,
         identity.tenants,
+        ext_router,
         identity.authenticator,
     );
     tracing::info!(bind = %cfg.bind, "nexus-api listening");
-    starter_server::builder::bind(router, cfg.bind).await?;
+
+    // On shutdown, stop every supervised extension (SIGTERM → grace → SIGKILL)
+    // so no child outlives nexus. `bind` returns when the graceful-shutdown
+    // signal fires; we then drain the supervisors.
+    let serve_result = starter_server::builder::bind(router, cfg.bind).await;
+    tracing::info!("nexus-api shutting down; stopping extension supervisors");
+    ext_admin.shutdown_all().await;
+    serve_result?;
     Ok(())
 }
 
@@ -73,6 +178,18 @@ struct Config {
     master_key: String,
     stream_key: String,
     bind: SocketAddr,
+    /// Root dir holding `skills/` and `rules/` markdown for agent prompt
+    /// injection. Optional; defaults to `./knowledge`. A missing dir just means
+    /// no knowledge is injected.
+    knowledge_root: std::path::PathBuf,
+    /// Directory holding the built-in query-kinds pack (`manifest.yaml` + the
+    /// `*.sql`/`*_params.json` files). Optional; defaults to `./kinds`. A missing
+    /// dir means no kinds are registered.
+    kinds_dir: std::path::PathBuf,
+    /// Directory holding the built-in datasource-kinds pack (`manifest.yaml` + the
+    /// `*_config.json` schema files). Optional; defaults to `./datasource-kinds`.
+    /// A missing dir means no connector type is declared.
+    datasource_kinds_dir: std::path::PathBuf,
 }
 
 impl Config {
@@ -94,6 +211,15 @@ impl Config {
                 .unwrap_or_else(|_| "127.0.0.1:4780".into())
                 .parse()
                 .map_err(|e| format!("NEXUS_BIND: {e}"))?,
+            knowledge_root: std::env::var("NEXUS_KNOWLEDGE_ROOT")
+                .unwrap_or_else(|_| "./knowledge".into())
+                .into(),
+            kinds_dir: std::env::var("NEXUS_KINDS_DIR")
+                .unwrap_or_else(|_| "./kinds".into())
+                .into(),
+            datasource_kinds_dir: std::env::var("NEXUS_DATASOURCE_KINDS_DIR")
+                .unwrap_or_else(|_| "./datasource-kinds".into())
+                .into(),
         })
     }
 }

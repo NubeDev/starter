@@ -37,6 +37,7 @@ use starter_ext_spi::{ExtensionId, LifecycleState};
 use starter_spi::auth::Principal;
 
 use crate::admin::{ExtensionAdmin, PendingInstall};
+use crate::audit::LifecycleAction;
 use crate::cleanup::CleanupItem;
 use crate::store::EnablementState;
 
@@ -108,6 +109,7 @@ pub(crate) struct UninstallQuery {
 /// long: every error path needs to clean its own staging directory.
 pub(crate) async fn install(
     State(admin): State<ExtensionAdmin>,
+    principal: Option<Extension<Principal>>,
     headers: HeaderMap,
     body: axum::body::Body,
 ) -> axum::response::Response {
@@ -306,6 +308,13 @@ pub(crate) async fn install(
         dir = %final_dir.display(),
         "extension installed; will surface on next boot",
     );
+
+    let actor = principal.as_ref().map(|Extension(p)| p);
+    admin
+        .audit_sink()
+        .record(LifecycleAction::Installed, ext_id.as_str(), actor)
+        .await;
+
     (
         StatusCode::OK,
         Json(LifecycleResponse {
@@ -384,6 +393,17 @@ pub(crate) async fn uninstall(
         purge = q.purge,
         "extension uninstalled",
     );
+
+    // Audit the removal once, covering both the purge and non-purge paths,
+    // before `principal` is consumed by the purge branch's `caller`.
+    admin
+        .audit_sink()
+        .record(
+            LifecycleAction::Uninstalled,
+            &id,
+            principal.as_ref().map(|Extension(p)| p),
+        )
+        .await;
 
     if !q.purge {
         return (

@@ -10,6 +10,8 @@ members = [
     "crates/nexus-engine",
     "crates/nexus-store",
     "crates/nexus-api",
+    "crates/nexus-ai",
+    "crates/nexus-skills",
 ]
 
 [workspace.package]
@@ -22,16 +24,39 @@ license = "Apache-2.0"
 nexus-spi    = { path = "crates/nexus-spi" }
 nexus-engine = { path = "crates/nexus-engine" }
 nexus-store  = { path = "crates/nexus-store" }
+nexus-ai     = { path = "crates/nexus-ai" }
+nexus-skills = { path = "crates/nexus-skills" }
 
 # Starter crates consumed from the root workspace via path deps. Path
 # dependencies cross workspace boundaries freely; these are NOT forked.
 starter-spi            = { path = "../../crates/starter-spi" }
 starter-server         = { path = "../../crates/starter-server" }
+starter-prefs          = { path = "../../crates/starter-prefs" }
 starter-auth-users     = { path = "../../crates/starter-auth-users" }
 starter-authz          = { path = "../../crates/starter-authz" }
 starter-store-postgres = { path = "../../crates/starter-store-postgres" }
 starter-config         = { path = "../../crates/starter-config" }
 starter-observability  = { path = "../../crates/starter-observability" }
+# WS-12 audit/undo: reuse the platform changelog read-side query API and the
+# per-actor undo service + Reversible registry. nexus ships its own tenant-aware
+# recorder/changelog over a tenant-scoped `nexus_changes` table (RLS), but the
+# `Change`/`ChangeFilter`/`ReversibleRegistry`/`UndoService`/`PgUndoCursor` types
+# are consumed unchanged.
+starter-changelog      = { path = "../../crates/starter-changelog" }
+starter-undo           = { path = "../../crates/starter-undo" }
+
+# WS-14 extensions runtime. The `starter-extensions` kernel is a separate
+# sibling cargo workspace (excluded from the root `starter` workspace), but its
+# crates are consumed here by path the same way the `starter-*` crates are.
+# These crates depend on `starter-spi`/`starter-server`/`starter-authz` via the
+# *same* physical path deps nexus uses (`../../crates/...`), so Cargo unifies
+# them to one copy and the `Authenticator`/`Role`/`Router<S>` types match across
+# the seam.
+starter-ext-spi        = { path = "../../starter-extensions/crates/starter-ext-spi" }
+starter-ext-host       = { path = "../../starter-extensions/crates/starter-ext-host" }
+starter-ext-server     = { path = "../../starter-extensions/crates/starter-ext-server" }
+starter-ext-supervisor = { path = "../../starter-extensions/crates/starter-ext-supervisor" }
+starter-ext-store-pg   = { path = "../../starter-extensions/crates/starter-ext-store-pg" }
 
 # ArkFlow — the only external dependency, pinned to an exact rev (R3). The same
 # rev the POC proved the Collector seam against.
@@ -57,12 +82,23 @@ sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio",
 
 serde      = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Declarative kind packs (WS-10): YAML manifest + JSON-Schema param validation.
+# Both versions are the ones already resolved in the graph (via zag-agent), so
+# adding them as direct deps pulls nothing new.
+serde_yaml = "0.9"
+jsonschema = { version = "0.29", default-features = false }
 uuid       = { version = "1", features = ["v4", "serde"] }
 chrono     = { version = "0.4", default-features = false, features = ["serde", "clock"] }
 
 async-trait = "0.1"
 thiserror   = "1"
 tracing     = "0.1"
+
+# MQTT client for the optional `mqtt` datasource connector (WS-08b). Pulled in
+# only when the `mqtt` feature is enabled — OFF by default per HOW-TO-CODE §9, so
+# a build without device connectors carries none of its transitive deps. `url`
+# off keeps the surface to the broker host/port/credentials nexus already models.
+rumqttc = { version = "0.24", default-features = false, features = ["use-rustls"] }
 
 # Crypto for the R6 envelope encryption and R8 stream-token signing.
 aes-gcm = "0.10"

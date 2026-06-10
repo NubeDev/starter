@@ -11,12 +11,14 @@ export function LivePanel({
   selected,
   onRemove,
   onSelect,
+  onDuplicate,
 }: {
   widget: Widget;
   editing?: boolean;
   selected?: boolean;
   onRemove?: () => void;
   onSelect?: () => void;
+  onDuplicate?: () => void;
 }) {
   const state = useLiveStream(widget);
   return (
@@ -27,6 +29,7 @@ export function LivePanel({
       selected={selected}
       onRemove={onRemove}
       onSelect={onSelect}
+      onDuplicate={onDuplicate}
     />
   );
 }

@@ -40,9 +40,23 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: nexus_engine::FlowManager::new().expect("flow manager init"),
+        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: id.engine.clone(),
+        kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
+        extension_kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
+        datasource_kinds: std::sync::Arc::new(nexus_api::datasource_kinds::Registry::empty()),
+        prefs: nexus_api::prefs::prefs_store(admin.clone()),
+        changelog: nexus_api::changelog::ChangelogHandles::new(
+            admin.clone(),
+            Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
+        ),
+        query_cache: nexus_api::cache::CacheConfig::default().build(),
+        quotas: nexus_api::quota::TenantQuotas::new(nexus_api::quota::QuotaConfig::default()),
+        rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
+            nexus_api::ratelimit::RateLimitConfig::default(),
+        ),
     };
     let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
     TestApp::spawn(router).await

@@ -3,7 +3,9 @@
 > **Status:** Not started · **Wave:** 1 (ships the macro engine that WS-01/02 need) · **Owner:** _unassigned_
 > **Depends on:** C4 OpenAPI conventions (Wave 0) · **Unblocks:** WS-01, WS-02
 > **Migration:** block `08xx` (e.g. `0801_query_history.sql`) · **Read first:** GAP_ANALYSIS §2.3, ROADMAP §0 + §6 (C2)
-> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+> **Verified:** `fbf73a5c` on 2026-06-09 — re-grepped. **Drift found:** Scope B (schema introspection)
+> and Scope C (CodeMirror editor) already shipped in the base commit `fbf73a5c` (see "Current state"
+> below). The remaining WS-03 work is **A (the C2 binder)** and **D (query history)**.
 >
 > ⚠️ **Coordinate tightly with [WS-10 (Kinds)](./WS-10_KINDS_EXTENSIBILITY.md).** The macro engine
 > below (C2) and WS-10's **query-kind param-binder are the SAME component** — one engine, two front
@@ -18,13 +20,20 @@ engine (C2)** that WS-01 (time) and WS-02 (variables) both depend on. Replace th
 with a schema-aware editor, expose datasource schema, add query history, and (phase 2) a visual
 query builder for non-SQL users.
 
-## Current state (evidence)
-- Plain `<textarea>` everywhere: `PanelProperties.tsx`, `AddWidgetDialog.tsx`,
-  `query-editor/Explore.tsx`. No autocomplete, schema, validation, or history.
-- `POST /query` = raw SQL, no templating/macros: `nexus-spi/src/dto/query/run.rs`,
-  `nexus-store/src/query/run.rs` (guards are good — reuse them).
-- Result schema *is* returned (`ColumnSchema`) and shown in `Explore` results, but there's no
-  *pre-query* schema introspection.
+## Current state (evidence — re-verified at `fbf73a5c`)
+- **Scope B (schema introspection) — ALREADY SHIPPED.** `GET /api/v1/datasources/:id/schema`
+  exists (`routes/datasources/schema.rs`), backed by `nexus_store::introspect`
+  (`nexus-store/src/query/introspect.rs`) and the `DatasourceSchema`/`SchemaTable`/`SchemaColumn`
+  DTOs (`nexus-spi/src/dto/datasource/schema.rs`). Tenant + `view`-authz + read-only guarded.
+- **Scope C (CodeMirror editor) — ALREADY SHIPPED.** `ui/src/features/sql-editor/` has
+  `SqlEditor.tsx` (CodeMirror 6 + `@codemirror/lang-sql`), `schemaCompletion.ts`,
+  `useDatasourceSchema.ts` (schema-aware autocomplete), wired into `query-editor/Explore.tsx`.
+- **Scope A (the C2 binder) — ABSENT.** No `bind()`/`BoundQuery`/`BindCtx`, no macro support
+  anywhere in `nexus-store`/`nexus-engine`. `POST /api/v1/query` and
+  `POST /api/v1/datasources/:id/query` both take `{ sql }` only (`nexus-spi/src/dto/query/run.rs`)
+  and the runner is `sqlx::query(sql)` with no arg channel (`nexus-store/src/query/run.rs:44`).
+- **Scope D (query history) — ABSENT.** No `query_history` table, store module, route, or UI.
+- Result schema *is* returned (`ColumnSchema`) and shown in `Explore` results.
 
 ## Scope
 ### A. Macro / interpolation engine (C2 — the keystone, do first)

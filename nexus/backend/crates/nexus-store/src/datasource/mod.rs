@@ -8,6 +8,7 @@ mod decrypt;
 mod delete;
 mod fetch;
 mod insert;
+pub mod mqtt;
 pub mod postgres;
 mod record;
 pub mod secret;

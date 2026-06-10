@@ -8,8 +8,9 @@ use nexus_store::tag::{self, EntityRef};
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 
+use super::authorize::authorize_write;
 use super::convert::{kind_to_stored, to_record};
-use crate::middleware::tenant::tenant_of;
+use crate::middleware::tenant::caller;
 use crate::state::AppState;
 
 #[utoipa::path(
@@ -22,7 +23,11 @@ use crate::state::AppState;
         ("id" = String, Path, description = "The entity's id"),
     ),
     request_body = SetTagsRequest,
-    responses((status = 204, description = "Tags replaced")),
+    responses(
+        (status = 204, description = "Tags replaced"),
+        (status = 403, description = "Not allowed to edit this entity"),
+        (status = 404, description = "Entity not found in this tenant"),
+    ),
 )]
 pub async fn set_tags(
     State(state): State<AppState>,
@@ -30,10 +35,15 @@ pub async fn set_tags(
     Path((kind, id)): Path<(TaggableKind, String)>,
     Json(req): Json<SetTagsRequest>,
 ) -> axum::response::Response {
-    let tenant = match tenant_of(&principal) {
-        Ok(t) => t,
+    let (caller, tenant) = match caller(&principal) {
+        Ok(c) => c,
         Err(resp) => return resp,
     };
+    // Tags are query-affecting inputs (WS-13 §3): writing them requires `edit`
+    // on the target, which must exist in-tenant. Closes the old tenant-only hole.
+    if let Err(resp) = authorize_write(&state, caller, &tenant, kind, &id).await {
+        return resp;
+    }
     let entity = EntityRef {
         entity_type: kind_to_stored(kind).into(),
         entity_id: id,

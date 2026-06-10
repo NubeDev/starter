@@ -23,6 +23,7 @@ use uuid::Uuid;
 
 use crate::authz::{self, ACTION_VIEW, KIND_DATASOURCE};
 use crate::middleware::tenant::caller;
+use crate::routes::datasources::probe_outcome::{elapsed_ms, failed};
 use crate::state::AppState;
 
 #[utoipa::path(
@@ -92,42 +93,17 @@ pub async fn test_datasource(
             latency_ms: Some(elapsed_ms(started)),
         })
         .into_response(),
-        Err(e) => Json(TestDatasourceResponse {
-            ok: false,
-            message: Some(sanitize(&e.to_string())),
-            latency_ms: None,
-        })
-        .into_response(),
+        Err(e) => Json(failed_probe(&e.to_string())).into_response(),
     }
 }
 
-fn elapsed_ms(started: Instant) -> u64 {
-    u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)
-}
-
-fn failed(e: &starter_spi::Error) -> TestDatasourceResponse {
-    TestDatasourceResponse {
-        ok: false,
-        message: Some(sanitize(&reason(e))),
-        latency_ms: None,
-    }
-}
-
-/// The user-useful reason for a probe failure. A connect failure surfaces as
-/// `Error::Internal { source }`, whose own `Display` is the fixed "internal
-/// error" — useless on a Test button. So prefer the underlying source's message
-/// (e.g. the driver's "Connection refused"), which is the whole point of the
-/// probe, and fall back to the error's own text otherwise.
-fn reason(e: &starter_spi::Error) -> String {
-    use std::error::Error as _;
-    e.source()
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| e.to_string())
-}
-
-/// Keep the headline of a driver/connect error but drop anything past the first
-/// line — connection strings and DSNs that some drivers append to multi-line
-/// errors never reach the client.
-fn sanitize(raw: &str) -> String {
-    raw.lines().next().unwrap_or("connection failed").to_string()
+/// A `SELECT 1` failure on an already-built pool: shape the sanitized driver
+/// message into the wire outcome. (The `failed` helper takes a domain error; here
+/// we already hold the driver string, so shape it directly through the same
+/// sanitizer-backed outcome.)
+fn failed_probe(driver_message: &str) -> TestDatasourceResponse {
+    let wrapped = starter_spi::Error::Invalid {
+        message: driver_message.to_string(),
+    };
+    failed(&wrapped)
 }

@@ -22,14 +22,25 @@ import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 import type { CreateAlertRuleRequest } from "@/api/types";
 import { useRuleMutations } from "@/features/alerts/useAlerts";
 
-// Comparison operators a rule evaluates its query's scalar against.
+// Comparison operators a rule evaluates its query's scalar against. The `value`
+// is the operator name the backend's comparator understands (gt/gte/lt/lte/eq/ne);
+// the label is the human-readable symbol shown in the picker.
 const OPS = [
-  { value: ">", label: "greater than" },
-  { value: ">=", label: "≥" },
-  { value: "<", label: "less than" },
-  { value: "<=", label: "≤" },
-  { value: "==", label: "equals" },
-  { value: "!=", label: "not equals" },
+  { value: "gt", label: "greater than (>)" },
+  { value: "gte", label: "at least (≥)" },
+  { value: "lt", label: "less than (<)" },
+  { value: "lte", label: "at most (≤)" },
+  { value: "eq", label: "equals (=)" },
+  { value: "ne", label: "not equals (≠)" },
+];
+
+// What state to take when the query returns no rows / fails to run. Mirrors the
+// backend per-rule no_data_policy / exec_error_policy: ok = treat as healthy,
+// alerting = treat as breaching, keep_last = hold the prior state.
+const POLICIES = [
+  { value: "ok", label: "Treat as OK" },
+  { value: "alerting", label: "Treat as alerting" },
+  { value: "keep_last", label: "Keep last state" },
 ];
 
 // Create an alert rule: a SQL query whose scalar result is compared
@@ -47,10 +58,13 @@ export function AlertRuleDialog({
   const [form, setForm] = useState({
     name: "",
     query: "",
-    op: ">",
+    op: "gt",
     threshold: "0",
     for_secs: "60",
     interval_secs: "60",
+    no_data_policy: "ok",
+    exec_error_policy: "ok",
+    message_template: "",
   });
 
   const set = (k: keyof typeof form) => (v: string) =>
@@ -58,6 +72,7 @@ export function AlertRuleDialog({
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const template = form.message_template.trim();
     const body: CreateAlertRuleRequest = {
       name: form.name.trim(),
       query: form.query.trim(),
@@ -66,6 +81,9 @@ export function AlertRuleDialog({
       for_secs: Number(form.for_secs) || 0,
       interval_secs: Number(form.interval_secs) || 60,
       enabled: true,
+      no_data_policy: form.no_data_policy,
+      exec_error_policy: form.exec_error_policy,
+      message_template: template === "" ? null : template,
     };
     create.mutate(body, { onSuccess: () => onOpenChange(false) });
   }
@@ -146,6 +164,58 @@ export function AlertRuleDialog({
                 onChange={(e) => set("interval_secs")(e.target.value)}
               />
             </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-no-data">When no data</Label>
+              <Select
+                value={form.no_data_policy}
+                onValueChange={set("no_data_policy")}
+              >
+                <SelectTrigger id="rule-no-data">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {POLICIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-exec-error">On query error</Label>
+              <Select
+                value={form.exec_error_policy}
+                onValueChange={set("exec_error_policy")}
+              >
+                <SelectTrigger id="rule-exec-error">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {POLICIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="rule-template">Message template (optional)</Label>
+            <Textarea
+              id="rule-template"
+              value={form.message_template}
+              onChange={(e) => set("message_template")(e.target.value)}
+              placeholder="Alert {{rule_name}} is {{state}} (value {{value}} {{op}} threshold {{threshold}})"
+              spellCheck={false}
+              className="min-h-16 resize-y font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Tokens: {"{{rule_name}} {{state}} {{value}} {{op}} {{threshold}}"}
+            </p>
           </div>
           {create.isError ? (
             <p role="alert" className="text-sm text-destructive">

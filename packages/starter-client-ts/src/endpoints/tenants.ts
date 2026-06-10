@@ -61,6 +61,13 @@ export interface PatchMemberBody {
   role: TenantRole;
 }
 
+/** Body for `POST /v1/tenants/{id}/users` — create a new account + add to tenant. */
+export interface CreateUserBody {
+  email: string;
+  password: string;
+  role: TenantRole;
+}
+
 /** Team row. */
 export interface TeamView {
   id: string;
@@ -90,6 +97,7 @@ declare module "../client/client.js" {
     // ----- members
     listTenantMembers(id: string): Promise<MembershipView[]>;
     addTenantMember(id: string, body: AddMemberBody): Promise<MembershipView>;
+    createTenantUser(id: string, body: CreateUserBody): Promise<MembershipView>;
     patchTenantMember(
       id: string,
       userId: string,
@@ -169,6 +177,22 @@ StarterClient.prototype.addTenantMember = function addTenantMember(
   return fetchJson<MembershipView>(
     this,
     `/v1/tenants/${encodeURIComponent(id)}/members`,
+    {
+      method: "POST",
+      headers: mutHeaders(),
+      body: JSON.stringify(body),
+    },
+  );
+};
+
+StarterClient.prototype.createTenantUser = function createTenantUser(
+  this: StarterClient,
+  id: string,
+  body: CreateUserBody,
+): Promise<MembershipView> {
+  return fetchJson<MembershipView>(
+    this,
+    `/v1/tenants/${encodeURIComponent(id)}/users`,
     {
       method: "POST",
       headers: mutHeaders(),

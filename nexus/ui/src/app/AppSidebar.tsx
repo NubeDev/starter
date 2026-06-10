@@ -1,18 +1,11 @@
-import {
-  Bell,
-  Compass,
-  Database,
-  LayoutDashboard,
-  LayoutGrid,
-  Shield,
-  Workflow,
-} from "lucide-react";
+import { Blocks, LayoutDashboard, LayoutGrid } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
@@ -25,7 +18,7 @@ import { useLayout } from "@/app/LayoutProvider";
 import { SidebarUser } from "@/app/SidebarUser";
 import { ExtensionSlot } from "@/extensions/ExtensionSlot";
 import { NewDashboardButton } from "@/features/dashboards/NewDashboardButton";
-import { SidebarDashboards } from "@/features/dashboards/SidebarDashboards";
+import { NavTree } from "@/features/nav/NavTree";
 
 // App navigation on the canonical shadcn `Sidebar`. Its variant
 // (floating/inset/sidebar) and collapse mode are driven by the layout
@@ -57,9 +50,19 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        {/* The primary navigation is the access-filtered nav tree (WS-13): one
+            place that lists dashboard mounts and static pages, gated per node.
+            It replaces the old hardcoded Dashboards/Data/Manage groups — the
+            static pages now live as `route` nodes seeded into the tree. */}
         <SidebarGroup>
-          <SidebarGroupLabel>Dashboards</SidebarGroupLabel>
-          <SidebarDashboards />
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          {/* Build/organise the tree (add groups, mount pages, manage access). */}
+          <SidebarGroupAction asChild title="Edit navigation">
+            <NavLink to="/nav" aria-label="Edit navigation">
+              <LayoutGrid />
+            </NavLink>
+          </SidebarGroupAction>
+          <NavTree />
           <SidebarMenu>
             <SidebarMenuItem>
               <NavLink to="/dashboards" end>
@@ -75,68 +78,25 @@ export function AppSidebar() {
                 )}
               </NavLink>
             </SidebarMenuItem>
+            {/* Extensions admin (WS-14). A static link like Manage dashboards —
+                `extensions` isn't a nav-tree StaticRoute, and the page itself
+                is admin-gated like Access/Audit. */}
+            <SidebarMenuItem>
+              <NavLink to="/extensions" end>
+                {({ isActive }) => (
+                  <SidebarMenuButton
+                    isActive={isActive}
+                    tooltip="Extensions"
+                    className="text-muted-foreground"
+                  >
+                    <Blocks />
+                    <span>Extensions</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
             <SidebarMenuItem>
               <NewDashboardButton />
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Data</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <NavLink to="/explore">
-                {({ isActive }) => (
-                  <SidebarMenuButton isActive={isActive} tooltip="Explore">
-                    <Compass />
-                    <span>Explore</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <NavLink to="/datasources">
-                {({ isActive }) => (
-                  <SidebarMenuButton isActive={isActive} tooltip="Datasources">
-                    <Database />
-                    <span>Datasources</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <NavLink to="/flows">
-                {({ isActive }) => (
-                  <SidebarMenuButton isActive={isActive} tooltip="Flows">
-                    <Workflow />
-                    <span>Flows</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <NavLink to="/alerts">
-                {({ isActive }) => (
-                  <SidebarMenuButton isActive={isActive} tooltip="Alerts">
-                    <Bell />
-                    <span>Alerts</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Manage</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <NavLink to="/access">
-                {({ isActive }) => (
-                  <SidebarMenuButton isActive={isActive} tooltip="Access">
-                    <Shield />
-                    <span>Access</span>
-                  </SidebarMenuButton>
-                )}
-              </NavLink>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>

@@ -15,15 +15,26 @@ export type DatasourceKind = S["DatasourceKind"];
 export type CreateDatasourceRequest = S["CreateDatasourceRequest"];
 export type UpdateDatasourceRequest = S["UpdateDatasourceRequest"];
 export type TestDatasourceResponse = S["TestDatasourceResponse"];
+export type TestConnectionRequest = S["TestConnectionRequest"];
 export type DatasourceSchema = S["DatasourceSchema"];
 export type SchemaTable = S["SchemaTable"];
 export type SchemaColumn = S["SchemaColumn"];
 
 export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];
+export type QueryKindList = S["QueryKindList"];
+export type QueryKindSummary = S["QueryKindSummary"];
+export type QueryKindDetail = S["QueryKindDetail"];
+export type CreateQueryKindRequest = S["CreateQueryKindRequest"];
 export type QueryStats = S["QueryStats"];
 export type ColumnSchema = S["ColumnSchema"];
 export type ResultColumnType = S["ResultColumnType"];
+export type QueryTimeRange = S["QueryTimeRange"];
+export type QueryVariable = S["QueryVariable"];
+
+export type QueryHistoryEntry = S["QueryHistoryEntry"];
+export type QueryHistoryList = S["QueryHistoryList"];
+export type StarQueryRequest = S["StarQueryRequest"];
 
 export type CreateStreamRequest = S["CreateStreamRequest"];
 export type CreateStreamResponse = S["CreateStreamResponse"];
@@ -33,14 +44,31 @@ export type DashboardSummary = S["DashboardSummary"];
 export type DashboardDetail = S["DashboardDetail"];
 export type CreateDashboardRequest = S["CreateDashboardRequest"];
 export type UpdateDashboardRequest = S["UpdateDashboardRequest"];
+export type DashboardExport = S["DashboardExport"];
+export type PanelExport = S["PanelExport"];
+export type VariableExport = S["VariableExport"];
 export type PanelDetail = S["PanelDetail"];
 export type CreatePanelRequest = S["CreatePanelRequest"];
 export type UpdatePanelRequest = S["UpdatePanelRequest"];
 
+// Dashboard organisation (WS-05).
+export type FolderSummary = S["FolderSummary"];
+export type CreateFolderRequest = S["CreateFolderRequest"];
+export type UpdateFolderRequest = S["UpdateFolderRequest"];
+
 export type FlowSummary = S["FlowSummary"];
 export type FlowDetail = S["FlowDetail"];
+export type FlowMetrics = S["FlowMetrics"];
 export type CreateFlowRequest = S["CreateFlowRequest"];
+// Flow visual builder (WS-06): node palette + bounded dry-run.
+export type NodeType = S["NodeType"];
+export type NodeTypeList = S["NodeTypeList"];
+export type NodeCategory = S["NodeCategory"];
+export type DryRunRequest = S["DryRunRequest"];
+export type DryRunResponse = S["DryRunResponse"];
 export type UpdateFlowRequest = S["UpdateFlowRequest"];
+// Flow portability (share/import): the self-contained, secret-redacted model.
+export type FlowExport = S["FlowExport"];
 
 export type AlertRuleDetail = S["AlertRuleDetail"];
 export type CreateAlertRuleRequest = S["CreateAlertRuleRequest"];
@@ -55,3 +83,40 @@ export type Tag = S["Tag"];
 export type TaggableKind = S["TaggableKind"];
 export type SetTagsRequest = S["SetTagsRequest"];
 export type TaggedEntity = S["TaggedEntity"];
+
+// Nav tree (WS-13): a node mounts a dashboard page (with context) or a static
+// route into the access-gated navigation tree.
+export type NavNodeDetail = S["NavNodeDetail"];
+export type NavTarget = S["NavTarget"];
+export type NavContext = S["NavContext"];
+export type StaticRoute = S["StaticRoute"];
+export type CreateNavNodeRequest = S["CreateNavNodeRequest"];
+export type UpdateNavNodeRequest = S["UpdateNavNodeRequest"];
+
+export type VariableDetail = S["VariableDetail"];
+export type VariableKind = S["VariableKind"];
+export type CreateVariableRequest = S["CreateVariableRequest"];
+export type UpdateVariableRequest = S["UpdateVariableRequest"];
+
+// Audit + undo/redo (WS-12).
+export type Change = S["Change"];
+export type ChangePage = S["ChangePage"];
+export type Actor = S["Actor"];
+export type Op = S["Op"];
+export type UndoResponse = S["UndoResponse"];
+export type ForgetRequest = S["ForgetRequest"];
+export type ForgetResponse = S["ForgetResponse"];
+
+// AI agents + sessions (agent CRUD, chatbot sessions, SSE).
+export type AgentSummary = S["AgentSummary"];
+export type AgentDetail = S["AgentDetail"];
+export type CreateAgentRequest = S["CreateAgentRequest"];
+export type UpdateAgentRequest = S["UpdateAgentRequest"];
+export type CreateSessionRequest = S["CreateSessionRequest"];
+export type CreateSessionResponse = S["CreateSessionResponse"];
+export type SessionDetail = S["SessionDetail"];
+
+// AI assist (synchronous, task-typed: SQL gen, panel/dashboard suggest).
+export type AssistRequest = S["AssistRequest"];
+export type AssistResponse = S["AssistResponse"];
+export type AssistTask = S["AssistTask"];

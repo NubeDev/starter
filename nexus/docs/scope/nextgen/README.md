@@ -29,6 +29,8 @@ Grafana/Power-BI-class dashboarding platform**, built by **multiple AI sessions 
 | [WS-10](./WS-10_KINDS_EXTENSIBILITY.md) | **"Kinds" — declarative query/datasource extensibility** | strategic — *ports the rubix `kinds/` pattern; reshapes WS-03/08/09* | 0+1+2 | WS-03 binder |
 | [WS-11](./WS-11_UNITS_AND_PREFS.md) | **Units & datetime prefs — backend-side conversion** | medium — *mostly wiring existing `starter-prefs`/`starter-spi/units`* | 1+2 | WS-04, WS-10 |
 | [WS-12](./WS-12_AUDIT_AND_UNDO.md) | **Audit log + undo/redo — one changelog substrate, for everything (SOLE audit owner)** | medium — *mostly wiring existing `starter-changelog`/`starter-undo`* | 1+2 | substrate-only (C6) |
+| [WS-13](./WS-13_NAV_AND_CONTEXT.md) | **Navigation tree, page context & access — reuse one page across a fleet; nav nodes (dashboard *or* static pages) become the single access surface, replacing per-dashboard sharing** | large — *the fleet-reuse payoff of WS-02* | 3 | WS-02, WS-05, tags + authz seam |
+| [WS-14](./WS-14_EXTENSIONS_RUNTIME.md) | **Extensions runtime — mount the `starter-extensions` kernel into nexus (host + supervisor + lifecycle + cleanup)** | medium — *integration, not build; kernel exists. FE host already wired, backend not mounted* | 2+3 | NEXUS.md §7, WS-10 (kind contrib), WS-12 (audit) |
 
 ## The one-paragraph summary
 

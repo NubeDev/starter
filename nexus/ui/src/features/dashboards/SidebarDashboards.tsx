@@ -6,6 +6,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+import { dashboardIcon } from "@/features/dashboards/appearance";
 import { useDashboards } from "@/features/dashboards/useDashboards";
 
 // The sidebar's live dashboard list from `GET /dashboards`. Renders the
@@ -43,18 +44,23 @@ export function SidebarDashboards() {
 
   return (
     <SidebarMenu>
-      {data.map((d) => (
-        <SidebarMenuItem key={d.id}>
-          <NavLink to={`/d/${d.slug}`}>
-            {({ isActive }) => (
-              <SidebarMenuButton isActive={isActive} tooltip={d.name}>
-                <LayoutDashboard />
-                <span>{d.name}</span>
-              </SidebarMenuButton>
-            )}
-          </NavLink>
-        </SidebarMenuItem>
-      ))}
+      {data.map((d) => {
+        const Icon = dashboardIcon(d.icon);
+        return (
+          <SidebarMenuItem key={d.id}>
+            <NavLink to={`/d/${d.slug}`}>
+              {({ isActive }) => (
+                <SidebarMenuButton isActive={isActive} tooltip={d.name}>
+                  {/* Tint the per-dashboard icon with its accent so the list
+                      reads at a glance; the label keeps the default colour. */}
+                  <Icon style={{ color: `hsl(${d.accent})` }} />
+                  <span>{d.name}</span>
+                </SidebarMenuButton>
+              )}
+            </NavLink>
+          </SidebarMenuItem>
+        );
+      })}
     </SidebarMenu>
   );
 }

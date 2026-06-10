@@ -112,9 +112,19 @@ async fn deleting_an_entity_sweeps_its_tags() {
     let (admin, _guard) = with_database().await;
     let pg = &runtime_pool(admin.sqlx()).await;
 
-    let d = dashboard::insert(pg, "acme", &NewDashboard { slug: "plant-1".into(), name: "P1".into() })
-        .await
-        .unwrap();
+    let d = dashboard::insert(
+        pg,
+        "acme",
+        &NewDashboard {
+            slug: "plant-1".into(),
+            name: "P1".into(),
+            icon: "Activity".into(),
+            accent: "152 76% 44%".into(),
+            folder_id: None,
+        },
+    )
+    .await
+    .unwrap();
     let e = EntityRef {
         entity_type: "dashboard".into(),
         entity_id: d.id.to_string(),

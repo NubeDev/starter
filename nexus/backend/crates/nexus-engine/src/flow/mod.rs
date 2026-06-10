@@ -2,4 +2,4 @@
 
 pub mod manager;
 
-pub use manager::FlowManager;
+pub use manager::{FlowManager, FlowStats};

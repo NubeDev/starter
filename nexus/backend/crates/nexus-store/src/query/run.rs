@@ -13,14 +13,31 @@ use sqlx::{Executor, PgPool};
 use starter_spi::Error;
 use std::time::Instant;
 
+use super::bind::{self, BindCtx, BoundQuery, SqlValue};
 use super::row_json::{columns_of, row_to_object};
 use super::QueryGuards;
 
-/// Run `sql` and collect a bounded result. Returns a domain `Error` on a
+/// Run raw `sql` (no macros/variables) and collect a bounded result. A
+/// convenience over [`run_bound_query`] for the plain path: it binds against an
+/// empty context (yielding zero args) and executes the result, so even raw SQL
+/// flows through the same prepared-statement path. Returns a domain `Error` on a
 /// rejected write, a timeout, or a malformed query.
 pub async fn run_query(
     pool: &PgPool,
     sql: &str,
+    guards: QueryGuards,
+) -> Result<QueryResponse, Error> {
+    let bound = bind::bind(sql, &BindCtx::default())?;
+    run_bound_query(pool, &bound, guards).await
+}
+
+/// Execute a [`BoundQuery`] as a prepared statement and collect a bounded
+/// result. Every value lives in `bound.args` and is bound by the driver — the
+/// SQL text carries only `$N` placeholders and vetted identifiers — so this is
+/// the single execution path for both macro-bearing and raw queries.
+pub async fn run_bound_query(
+    pool: &PgPool,
+    bound: &BoundQuery,
     guards: QueryGuards,
 ) -> Result<QueryResponse, Error> {
     let started = Instant::now();
@@ -37,11 +54,16 @@ pub async fn run_query(
         .await
         .map_err(internal)?;
 
-    // Run the user SQL directly so `WHERE`/`LIMIT` push down to Postgres. The
-    // result is bounded by stopping the cursor at the row/byte cap below rather
-    // than by wrapping the statement — wrapping only fits row-returning queries
-    // and would mask the read-only rejection a write must get.
-    let mut rows = sqlx::query(sql).fetch(&mut *tx);
+    // Bind every argument so values reach Postgres through the driver, never
+    // concatenated into the text. `WHERE`/`LIMIT` still push down to Postgres;
+    // the result is bounded by stopping the cursor at the row/byte cap below
+    // rather than by wrapping the statement — wrapping only fits row-returning
+    // queries and would mask the read-only rejection a write must get.
+    let mut query = sqlx::query(&bound.sql);
+    for arg in &bound.args {
+        query = bind_arg(query, arg);
+    }
+    let mut rows = query.fetch(&mut *tx);
     let mut columns = Vec::new();
     let mut out_rows = Vec::new();
     let mut bytes: u64 = 0;
@@ -81,6 +103,23 @@ pub async fn run_query(
             truncated,
         },
     })
+}
+
+/// Bind one [`SqlValue`] onto the query builder, mapping the binder's value set
+/// to the sqlx Postgres type the driver sends. A `Null` binds a typed `None` so
+/// the placeholder is a genuine SQL `NULL`.
+fn bind_arg<'q>(
+    query: sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments>,
+    arg: &'q SqlValue,
+) -> sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments> {
+    match arg {
+        SqlValue::Text(s) => query.bind(s),
+        SqlValue::Int(i) => query.bind(i),
+        SqlValue::Float(f) => query.bind(f),
+        SqlValue::Bool(b) => query.bind(b),
+        SqlValue::Timestamp(ts) => query.bind(ts),
+        SqlValue::Null => query.bind(Option::<String>::None),
+    }
 }
 
 /// A failed write, a syntax error, or a timeout is the caller's fault — 4xx.

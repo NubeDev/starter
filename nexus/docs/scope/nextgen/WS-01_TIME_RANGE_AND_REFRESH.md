@@ -3,7 +3,9 @@
 > **Status:** Not started · **Wave:** 2 (after WS-03 macro engine) · **Owner:** _unassigned_
 > **Depends on:** C2 macro engine (WS-03), C1 JSON model, C3 URL-state scheme (all Wave 0)
 > **Migration:** none (state is dashboard-model + URL) · **Read first:** GAP_ANALYSIS §2.1, ROADMAP §0 + §6
-> **Verified:** `82a6a19a` on 2026-06-09 — re-grep this WS's file:line claims before building (ROADMAP §0).
+> **Verified:** `2d671de0` on 2026-06-09 — re-grepped; backend/DTO claims drifted (WS-03 shipped the
+> C7 `QueryRequest` with `time_range`/`interval_secs`/`variables` + the binder). WS-01 is now pure UI:
+> resolve the range client-side, send it in the existing DTO. Drift fixes applied below.
 
 ## Goal
 A Grafana-class **global time-range picker + refresh control** at the dashboard level, whose
@@ -11,12 +13,20 @@ A Grafana-class **global time-range picker + refresh control** at the dashboard 
 state, auto-refresh, and zoom-by-drag on time-series panels. This is the **#1 user-visible gap** —
 it converts a static query grid into a live, interactive dashboard.
 
-## Current state (evidence)
-- **Nothing exists.** `grep -rniE "timerange|refresh|now-|\$__time"` over `ui/src` returns empty.
-- UI store holds only `editMode` + `selectedWidgetId` — `ui/src/store/ui.ts`.
-- Panel query is `{datasourceId, sql}` with no time bounds — `ui/src/data/types.ts:34-39`,
-  `ui/src/features/widgets/useWidgetQuery.ts`.
-- `POST /query` accepts raw `sql` only — `nexus-spi/src/dto/query/run.rs`.
+## Current state (evidence, re-verified 2026-06-09 @ 2d671de0)
+- **No UI exists.** `grep -rniE "timerange|refresh|now-|\$__time"` over `ui/src` returns nothing
+  relevant (only unrelated `refresh`-suffixed token wording).
+- UI store holds only `editMode` + `selectedWidgetId` — `ui/src/store/ui.ts` (confirmed).
+- Panel query in the model is `{datasourceId, sql, params?, kind?, kindParams?}` with no time
+  bounds — `ui/src/data/types.ts:34-50`; `useWidgetQuery.ts` sends `{ sql }` only and keys on
+  `["nexus","query",datasourceId,sql]`.
+- **DRIFT (fixed):** `POST /query` no longer accepts raw `sql` only. WS-03 shipped the C7
+  `QueryRequest` DTO with `time_range`, `interval_secs`, and `variables`
+  (`nexus-spi/src/dto/query/run.rs`) plus the binder (`nexus-store/src/query/bind/**`), and the
+  codegen'd TS type (`QueryRequest`, `QueryTimeRange`) is already in `ui/src/api/types.ts`. The
+  backend "timerange passthrough" this WS originally scoped is **already in the tree** — WS-01 is
+  therefore UI-only: resolve the relative range to absolute instants client-side and populate the
+  existing DTO fields.
 
 ## Scope (this workstream)
 1. **Time-range model + store** (`ui/src/store/time.ts`, new): `{from, to}` where each is an

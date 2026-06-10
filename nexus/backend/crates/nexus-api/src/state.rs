@@ -15,8 +15,15 @@ use nexus_store::QueryGuards;
 use sqlx::PgPool;
 use starter_spi::authz::PolicyEngine;
 
+use crate::cache::QueryCache;
+use crate::changelog::ChangelogHandles;
+use crate::datasource_kinds::Registry as DatasourceKindRegistry;
 use crate::datasource_pools::DatasourcePools;
+use crate::kinds::Registry as KindRegistry;
 use crate::middleware::StreamTokenSigner;
+use crate::prefs::NexusPrefs;
+use crate::quota::TenantQuotas;
+use crate::ratelimit::TenantRateLimiter;
 
 /// Cloneable handle bundle for the control plane.
 #[derive(Clone)]
@@ -39,6 +46,9 @@ pub struct AppState {
     pub live: LiveRunner,
     /// Runs saved ingestion flows as long-lived streams, keyed by flow id.
     pub flows: FlowManager,
+    /// Drives AI agent sessions and feeds their SSE subscribers, keyed by
+    /// session id. Wraps the nexus-ai facade.
+    pub sessions: crate::agents::SessionRunner,
     /// Signs/verifies the short-lived SSE subscription tokens.
     pub stream_signer: StreamTokenSigner,
     /// Lifetime granted to a freshly-minted stream token.
@@ -48,4 +58,47 @@ pub struct AppState {
     /// through the API is visible to the next handler check; tests can swap in
     /// `AllowAll`/`DenyAll` to assert a route is gated.
     pub engine: Arc<dyn PolicyEngine>,
+    /// Registered declarative query-kinds (WS-10), loaded from the built-in pack
+    /// at boot. A kind-mode query resolves its name here, validates params, and
+    /// binds the kind's SQL through the shared binder. Shared read-only across
+    /// requests; an empty registry means kind-mode requests 404.
+    pub kinds: Arc<KindRegistry>,
+    /// Extension-contributed query-kinds (WS-14) — the dispatcher's *third*
+    /// source, beside the file pack (`kinds`) and the per-tenant overlay
+    /// (`nexus_query_kinds`). Built at boot from the `nexus_extension_query_kinds`
+    /// provenance table: an installed extension's `warehouse_templates[]` are
+    /// materialised here so the dispatcher resolves them through the identical
+    /// validate/bind path as file kinds, with no per-request DB hit. Global
+    /// (extensions install once per deployment); an empty registry means no
+    /// extension contributes a kind. Replaced wholesale on the next boot after an
+    /// install/uninstall (the registry is sealed-by-restart, like the file pack).
+    pub extension_kinds: Arc<KindRegistry>,
+    /// Registered declarative datasource-kinds (WS-08b), loaded from the built-in
+    /// pack at boot. A connector type (`postgres`, `mqtt`) declared by manifest:
+    /// its config schema validates a config before save, its `secret_fields`
+    /// drive the seal boundary, its `test` descriptor selects the probe path. The
+    /// catalogue route reads this so the UI renders per-kind config forms. Shared
+    /// read-only across requests; an empty registry means no connector is declared.
+    pub datasource_kinds: Arc<DatasourceKindRegistry>,
+    /// User/org preference handles (WS-11): the Postgres store + system defaults
+    /// backing both `/me/preferences` and the `Accept-Units` units-conversion
+    /// middleware. `workspace_id` is the caller's tenant; storage is route-pinned
+    /// to it for isolation.
+    pub prefs: NexusPrefs,
+    /// Audit/undo substrate (WS-12): the boot-built reversible registry and redo
+    /// cursor. Per-request tenant-pinned logs/recorders are built from these plus
+    /// the metadata pool; the audit and undo routes go through them.
+    pub changelog: ChangelogHandles,
+    /// Query result cache (WS-09 P1): an in-process TTL cache keyed by the full
+    /// C3 tuple, with single-flight coalescing so a dashboard's refresh burst of
+    /// identical panel queries makes one database round-trip per key per tick.
+    pub query_cache: QueryCache,
+    /// Per-tenant query concurrency caps (WS-09 P1): a query is admitted through
+    /// the calling tenant's semaphore before it runs, so one tenant's fan-out
+    /// cannot exhaust the pool and starve others.
+    pub quotas: TenantQuotas,
+    /// Per-tenant request rate limiter (WS-09 P1): the token-bucket the
+    /// rate-limit middleware applies. Held on state so `serve::assemble` mounts
+    /// the same instance tests can drive.
+    pub rate_limiter: TenantRateLimiter,
 }

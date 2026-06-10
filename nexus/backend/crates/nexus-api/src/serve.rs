@@ -9,10 +9,14 @@ use std::sync::Arc;
 
 use axum::Router;
 use starter_server::auth::with_principal;
+use starter_server::middleware::{accept_units_layer, PrefsResolverFor};
 use starter_server::ServerBuilder;
 use starter_spi::auth::Authenticator;
+use starter_spi::units::{StaticRegistry, UnitRegistry};
 
 use crate::openapi::document;
+use crate::prefs::NexusPrefsResolver;
+use crate::ratelimit::rate_limit_layer;
 use crate::routes::product_router;
 use crate::state::AppState;
 
@@ -35,6 +39,7 @@ pub fn assemble<A>(
     auth: Router<AppState>,
     authz: Router<AppState>,
     tenants: Router<AppState>,
+    extensions: Router<AppState>,
     authenticator: Arc<A>,
 ) -> Router
 where
@@ -45,13 +50,29 @@ where
     // the product routes. The auth routes (`/auth/*`) mint the session and must
     // stay unwrapped. Each `with_principal` call adds its own layer over its
     // routes.
-    let protected = with_principal(product_router(), authenticator.clone());
+    // The Accept-Units layer resolves the caller's units once per request and
+    // threads a `UnitsCtx` into handler extensions (see `prefs/resolver.rs`). It
+    // wraps the product router *inside* the principal layer so the `Principal`
+    // the resolver reads is already present when it runs.
+    let registry: Arc<dyn UnitRegistry + Send + Sync> = Arc::new(StaticRegistry::new());
+    let resolver: Arc<dyn PrefsResolverFor> = Arc::new(NexusPrefsResolver::new(&state.prefs));
+    // The rate-limit layer wraps the product router *inside* the principal layer
+    // so the `Principal` it keys on is already in request extensions, and outside
+    // the units layer so a throttled request does no preference resolution.
+    let product = rate_limit_layer(product_router(), state.rate_limiter.clone())
+        .layer(accept_units_layer(registry, resolver));
+    let protected = with_principal(product, authenticator.clone());
     let authz = with_principal(authz, authenticator.clone());
     let tenants = with_principal(tenants, authenticator);
     ServerBuilder::<AppState>::new(state)
         .merge_router(auth)
         .merge_router(authz)
         .merge_router(tenants)
+        // The extension admin router carries its own `with_principal` +
+        // `with_role(Admin)` layer (applied by the kernel), so it merges as a
+        // sibling here — like `authz`/`tenants` — never inside `protected`'s
+        // principal layer.
+        .merge_router(extensions)
         .merge_router(protected)
         .with_openapi(document())
         .build()

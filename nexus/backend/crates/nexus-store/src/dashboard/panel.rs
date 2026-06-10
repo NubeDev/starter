@@ -40,6 +40,65 @@ pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewPanel) -> Result<Pa
     })
 }
 
+/// Insert a panel with a caller-supplied id — the **id-stable** path WS-12's
+/// undo-of-delete / redo-of-create needs: resurrecting a deleted panel must
+/// re-create it under its *original* id so the dashboard's layout JSON (which
+/// keys panels by id) still addresses it. Unlike [`insert`], the id is not
+/// minted by the DB. A duplicate id is a `Conflict` (the row already exists).
+pub async fn insert_with_id(
+    pool: &PgPool,
+    tenant_id: &str,
+    id: Uuid,
+    new: &NewPanel,
+) -> Result<PanelRecord, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    sqlx::query(
+        "INSERT INTO nexus_panels \
+         (id, tenant_id, dashboard_id, datasource_id, title, sql, viz, layout) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(new.dashboard_id)
+    .bind(new.datasource_id)
+    .bind(&new.title)
+    .bind(&new.sql)
+    .bind(&new.viz)
+    .bind(&new.layout)
+    .execute(&mut *tx)
+    .await
+    .map_err(conflict_or_internal)?;
+    tx.commit().await.map_err(internal)?;
+
+    Ok(PanelRecord {
+        id,
+        dashboard_id: new.dashboard_id,
+        datasource_id: new.datasource_id,
+        title: new.title.clone(),
+        sql: new.sql.clone(),
+        viz: new.viz.clone(),
+        layout: new.layout.clone(),
+    })
+}
+
+/// One panel by id, within the tenant. `Ok(None)` when no such panel is visible
+/// (RLS hid it, or it does not exist). This is the `before` pre-read a recording
+/// panel update/delete needs — the full pre-mutation snapshot the undo log
+/// reverts to.
+pub async fn get(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<Option<PanelRecord>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let row = sqlx::query(
+        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout \
+         FROM nexus_panels WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(row.as_ref().map(row_to_record))
+}
+
 /// List the panels of one dashboard, oldest first (canvas order).
 pub async fn list_for_dashboard(
     pool: &PgPool,
@@ -138,6 +197,19 @@ fn row_to_record(row: &sqlx::postgres::PgRow) -> PanelRecord {
         viz: row.get::<String, _>("viz"),
         layout: row.get::<serde_json::Value, _>("layout"),
     }
+}
+
+/// A unique-violation (duplicate id on the id-stable insert) is the caller's
+/// conflict; anything else is ours.
+fn conflict_or_internal(e: sqlx::Error) -> Error {
+    if let sqlx::Error::Database(db) = &e {
+        if db.is_unique_violation() {
+            return Error::Conflict {
+                message: "a panel with that id already exists".into(),
+            };
+        }
+    }
+    internal(e)
 }
 
 fn internal(e: sqlx::Error) -> Error {

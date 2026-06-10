@@ -26,6 +26,7 @@ export function DashboardGrid({
   onRemovePanel,
   onDropWidget,
   onSelectPanel,
+  onDuplicatePanel,
 }: {
   dashboard: Dashboard;
   editing: boolean;
@@ -41,6 +42,8 @@ export function DashboardGrid({
   onDropWidget?: (position: { x: number; y: number }) => void;
   /** Open a panel's properties (edit mode). */
   onSelectPanel?: (panelId: string) => void;
+  /** Duplicate a panel (edit mode). */
+  onDuplicatePanel?: (panelId: string) => void;
 }) {
   const layout = useMemo(
     () => toGridLayout(dashboard.widgets),
@@ -98,6 +101,9 @@ export function DashboardGrid({
             }
             onSelect={
               onSelectPanel ? () => onSelectPanel(widget.id) : undefined
+            }
+            onDuplicate={
+              onDuplicatePanel ? () => onDuplicatePanel(widget.id) : undefined
             }
           />
         </div>

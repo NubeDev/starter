@@ -4,15 +4,17 @@
 //! handlers live in their own modules because they have meaningfully
 //! different shapes (SSE upgrade + ETag-cached file serving).
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::Serialize;
 use starter_ext_host::ExtensionRecord;
 use starter_ext_spi::{ContributeUi, ExtensionId, LifecycleState, Manifest};
+use starter_spi::auth::Principal;
 
 use crate::admin::ExtensionAdmin;
+use crate::audit::LifecycleAction;
 use crate::store::EnablementState;
 
 // ---------------------------------------------------------------------------
@@ -242,6 +244,7 @@ pub(crate) struct ToggleResponse {
 pub(crate) async fn enable(
     State(admin): State<ExtensionAdmin>,
     Path(id): Path<String>,
+    principal: Option<Extension<Principal>>,
 ) -> Result<Json<ToggleResponse>, StatusCode> {
     let rec = admin
         .registry()
@@ -278,6 +281,14 @@ pub(crate) async fn enable(
         }
     }
 
+    // Audit after the mutation succeeds, with the acting admin. A sink failure
+    // is the sink's own concern (it logs); the toggle has already taken effect.
+    let actor = principal.as_ref().map(|Extension(p)| p);
+    admin
+        .audit_sink()
+        .record(LifecycleAction::Enabled, &id, actor)
+        .await;
+
     let state = current_state(&admin, &eid, rec.state);
     Ok(Json(ToggleResponse {
         id,
@@ -289,6 +300,7 @@ pub(crate) async fn enable(
 pub(crate) async fn disable(
     State(admin): State<ExtensionAdmin>,
     Path(id): Path<String>,
+    principal: Option<Extension<Principal>>,
 ) -> Result<Json<ToggleResponse>, StatusCode> {
     let rec = admin
         .registry()
@@ -312,6 +324,12 @@ pub(crate) async fn disable(
             tracing::warn!(err = %e.0, ext = %id, "enablement store set(disabled) failed");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
+
+    let actor = principal.as_ref().map(|Extension(p)| p);
+    admin
+        .audit_sink()
+        .record(LifecycleAction::Disabled, &id, actor)
+        .await;
 
     Ok(Json(ToggleResponse {
         id,

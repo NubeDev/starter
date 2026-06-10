@@ -22,7 +22,7 @@ use starter_auth_users::store::{
     MembershipRecord, PgTenantStore, PgUserStore, TenantRecord, TenantStore,
 };
 use starter_auth_users::Role;
-use starter_authz::store::{PolicyStore, PostgresPolicyStore, StoredAssignment};
+use starter_authz::store::{PolicyStore, PostgresPolicyStore, StoredAssignment, StoredRule};
 use starter_store_postgres::pool::connect;
 use uuid::Uuid;
 
@@ -95,6 +95,44 @@ async fn main() -> Result<(), String> {
         Ok(()) => println!("granted admin role"),
         Err(e) if is_conflict(&e.to_string()) => println!("admin grant exists"),
         Err(e) => return Err(format!("insert assignment: {e}")),
+    }
+
+    // Default navigation tree (WS-13 §6): seed one `route` node per built-in
+    // static page so the tenant has a navigable sidebar, then grant each node
+    // `tenant`-scope `view` so *non-admin* members see them too (admins already
+    // see every node via the built-in admin rule). Idempotent: re-seeding is a
+    // no-op once the tenant has any node, so re-runs add no duplicate grants.
+    let seeded = nexus_store::nav_node::seed_default_tree_if_empty(tenants.pool().sqlx(), &tenant_slug)
+        .await
+        .map_err(|e| format!("seed nav tree: {e}"))?;
+    if seeded.is_empty() {
+        println!("nav tree already present");
+    } else {
+        for node in &seeded {
+            // A tenant-wide allow on this specific node id: role `*` matches any
+            // member, tenant_id scopes it to this tenant, resource_id pins the
+            // node. `source: "grant"` so the Access drawer classifies it as a
+            // share (an admin can revoke it to hide the page).
+            let rule = StoredRule {
+                id: Uuid::new_v4().to_string(),
+                role: "*".to_string(),
+                resource: nexus_api::authz::KIND_NAV_NODE.to_string(),
+                actions: vec![nexus_api::authz::ACTION_VIEW.to_string()],
+                condition: None,
+                effect: "allow".to_string(),
+                priority: 0,
+                created_by: "seed".to_string(),
+                tenant_id: Some(tenant_slug.clone()),
+                source: "grant".to_string(),
+                resource_id: Some(node.id.to_string()),
+            };
+            match policies.insert_rule(&rule).await {
+                Ok(()) => {}
+                Err(e) if is_conflict(&e.to_string()) => {}
+                Err(e) => return Err(format!("grant nav node view: {e}")),
+            }
+        }
+        println!("seeded default nav tree ({} nodes, tenant-view granted)", seeded.len());
     }
 
     println!("seed complete — login {email}");

@@ -5,15 +5,20 @@ import type { WidgetLayout, WidgetType } from "@/data/types";
 import { useUiStore } from "@/store/ui";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { DashboardGrid } from "@/features/canvas/DashboardGrid";
+import { PanelEditor } from "@/features/canvas/PanelEditor/PanelEditor";
 import { PanelProperties } from "@/features/canvas/PanelProperties";
 import { VizPalette } from "@/features/canvas/VizPalette";
 import { DashboardToolbar } from "@/features/dashboards/DashboardToolbar";
 import { useDashboard } from "@/features/dashboards/useDashboard";
+import { useDuplicateWidget } from "@/features/dashboards/useDuplicateWidget";
 import { useRemovePanel } from "@/features/dashboards/useRemovePanel";
 import { useSaveLayout } from "@/features/dashboards/useSaveLayout";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
+import { useAutoRefresh } from "@/features/time/useAutoRefresh";
+import { useTimeUrlSync } from "@/features/time/useTimeUrlSync";
+import { VariableBar } from "@/features/variables/VariableBar";
 
 // A single dashboard: loads it by slug, renders the toolbar (view/edit
 // toggle) and the canvas. The page is a thin shell — data lives in
@@ -27,6 +32,13 @@ export function DashboardPage() {
   const selectWidget = useUiStore((s) => s.selectWidget);
   const removePanel = useRemovePanel(slug ?? "");
   const saveLayout = useSaveLayout(slug ?? "");
+  const duplicateWidget = useDuplicateWidget(slug ?? "");
+
+  // Global time-range concerns (WS-01): restore/reflect the range + refresh
+  // in the URL for shareable deep links, and drive the auto-refresh loop. Both
+  // read the shared time store the panel queries resolve against.
+  useTimeUrlSync();
+  useAutoRefresh();
 
   // Drag-to-add state: the type currently being dragged from the palette,
   // and the draft (type + dropped cell) that opens the config dialog once
@@ -36,6 +48,12 @@ export function DashboardPage() {
     type: WidgetType;
     position: WidgetLayout;
   } | null>(null);
+
+  // Whether the full-screen Panel Editor is open for the selected panel.
+  // The lightweight side panel (`PanelProperties`) opens it; the editor
+  // edits a draft and PATCHes on Save, so the canvas stays on the saved
+  // panel until then.
+  const [editorOpen, setEditorOpen] = useState(false);
 
   if (isPending) return <Loading label="Loading dashboard…" />;
   if (isError) {
@@ -62,6 +80,10 @@ export function DashboardPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <DashboardToolbar dashboard={dashboard} />
+      {/* The variable bar (WS-02): one control per dashboard variable, above
+          the canvas. Renders nothing when the dashboard has no variables, so
+          a plain board is visually unchanged. */}
+      <VariableBar slug={slug ?? ""} />
       <div className="flex min-h-0 flex-1 gap-4">
         <div className="min-h-0 flex-1">
           {showGrid ? (
@@ -76,6 +98,15 @@ export function DashboardPage() {
               }}
               onLayoutChange={(moved) => saveLayout.mutate(moved)}
               onSelectPanel={(id) => selectWidget(id)}
+              onDuplicatePanel={(id) => {
+                const source = dashboard.widgets.find((w) => w.id === id);
+                if (source) {
+                  duplicateWidget.mutate({
+                    source,
+                    widgets: dashboard.widgets,
+                  });
+                }
+              }}
               onDropWidget={(position) => {
                 if (!dragType) return;
                 setDraft({ type: dragType, position: { ...position, w: 0, h: 0 } });
@@ -99,6 +130,7 @@ export function DashboardPage() {
               widget={selected}
               slug={slug ?? ""}
               onClose={() => selectWidget(null)}
+              onOpenEditor={() => setEditorOpen(true)}
             />
           ) : (
             <VizPalette onPick={setDragType} />
@@ -120,6 +152,18 @@ export function DashboardPage() {
             : undefined
         }
       />
+
+      {/* The full-screen Panel Editor, opened from the side panel for the
+          selected panel. Keyed on the panel id so reopening on a different
+          panel re-seeds the editor draft. */}
+      {editorOpen && selected ? (
+        <PanelEditor
+          key={selected.id}
+          widget={selected}
+          slug={slug ?? ""}
+          onClose={() => setEditorOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

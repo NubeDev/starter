@@ -8,7 +8,12 @@ description = "Nexus persistence — sqlx/Postgres with RLS, tenant transactions
 
 [dependencies]
 nexus-spi.workspace = true
-starter-spi.workspace = true
+# WS-12: the `changelog` feature gates the `Change`/`Actor`/`Op`/`ChangeRecorder`
+# types the tenant-aware recorder/changelog implement.
+starter-spi = { workspace = true, features = ["changelog"] }
+# WS-12: read-side query API (`ChangeFilter`/`ChangeLog`/`ChangePage`) consumed by
+# the tenant-scoped `NexusChangeLog`.
+starter-changelog.workspace = true
 starter-store-postgres.workspace = true
 
 sqlx.workspace = true
@@ -17,6 +22,9 @@ serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 futures.workspace = true
+# A pre-save connection probe bounds its round-trip with `tokio::time::timeout`
+# so a black-holed host can't hang the "Test connection" request indefinitely.
+tokio.workspace = true
 
 async-trait.workspace = true
 thiserror.workspace = true
@@ -27,10 +35,19 @@ aes-gcm.workspace = true
 rand.workspace = true
 base64.workspace = true
 
+# WS-08b: the MQTT connector's connect-probe client. Optional + off by default so
+# a build without the `mqtt` feature carries none of rumqttc's transitive deps
+# (HOW-TO-CODE §9). With the feature off, the probe returns a clear "not enabled"
+# error rather than a fake success.
+rumqttc = { workspace = true, optional = true }
+
 [features]
 # Mirrors starter-store-postgres: gates the testcontainers harness so the heavy
 # docker-backed deps stay out of normal builds.
 testing = ["starter-store-postgres/testing"]
+# Compiles the rumqttc-backed MQTT connect probe. OFF by default; enable with
+# `--features mqtt` to build the device-telemetry connector.
+mqtt = ["dep:rumqttc"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }
@@ -41,6 +58,12 @@ testcontainers-modules.workspace = true
 [[test]]
 name = "query_run"
 path = "tests/query/run_test.rs"
+
+# Pure binder tests — no database, so deliberately not behind the `testing`
+# feature: these run in a normal `cargo test`.
+[[test]]
+name = "query_bind"
+path = "tests/query/bind_test.rs"
 
 [[test]]
 name = "tenant_pool_leak"
@@ -54,9 +77,22 @@ path = "tests/datasource/crud_test.rs"
 name = "datasource_postgres_connect"
 path = "tests/datasource/postgres/connect_test.rs"
 
+# The closed-port probe case needs no database, so it is not behind `testing`.
+[[test]]
+name = "datasource_postgres_probe"
+path = "tests/datasource/postgres/probe_test.rs"
+
 [[test]]
 name = "dashboard_crud"
 path = "tests/dashboard/crud_test.rs"
+
+[[test]]
+name = "folder_crud"
+path = "tests/folder/crud_test.rs"
+
+[[test]]
+name = "nav_node_crud"
+path = "tests/nav_node/crud_test.rs"
 
 [[test]]
 name = "flow_crud"
@@ -69,3 +105,11 @@ path = "tests/alert/crud_test.rs"
 [[test]]
 name = "tag_crud"
 path = "tests/tag/crud_test.rs"
+
+[[test]]
+name = "query_history_crud"
+path = "tests/query_history/crud_test.rs"
+
+[[test]]
+name = "variable_crud"
+path = "tests/variable/crud_test.rs"

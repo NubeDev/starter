@@ -2,6 +2,7 @@
 //! entity, addressed by `{kind}/{id}`. Each handler resolves the caller's tenant
 //! and delegates to the tenant-scoped store.
 
+mod authorize;
 mod convert;
 pub mod get;
 pub mod keys;

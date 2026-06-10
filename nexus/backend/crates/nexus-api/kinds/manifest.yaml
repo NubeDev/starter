@@ -1,0 +1,40 @@
+# Nexus built-in query-kinds pack (WS-10).
+#
+# Each entry declares one named, schema-validated, parameterized query a panel
+# invokes by id instead of pasting raw SQL. The SQL files use the host-bound
+# `$caller_tenant_id` token (the structural tenant isolation — the data side has
+# no RLS), the `$__time*` macros (fed by the time range), and `$param` references
+# the params schema declares. The loader lints every kind at boot: an undeclared
+# `$param`, a missing tenant predicate on a tenant-scoped table, or a malformed
+# schema aborts startup.
+#
+# Adding a kind is a file-drop + a manifest entry — no recompile. Removing one is
+# a deletion. Field names track the rubix `block.yaml` mental model.
+query_kinds:
+  - name: nexus.core.meters_list
+    description: List meters in the caller's tenant, optionally filtered by site.
+    params_schema: meters_list_params.json
+    sql_file: meters_list.sql
+    datasource_kind: postgres
+    tables: [meters]
+
+  - name: nexus.core.meter_get
+    description: One meter by id, scoped to the caller's tenant.
+    params_schema: meter_get_params.json
+    sql_file: meter_get.sql
+    datasource_kind: postgres
+    tables: [meters]
+
+  - name: nexus.core.usage_bucketed
+    description: Time-bucketed energy usage per site over the dashboard time range.
+    params_schema: usage_bucketed_params.json
+    sql_file: usage_bucketed.sql
+    datasource_kind: postgres
+    tables: [histories]
+
+  - name: nexus.core.top_sites_by_usage
+    description: The top N sites by total usage over the dashboard time range.
+    params_schema: top_sites_by_usage_params.json
+    sql_file: top_sites_by_usage.sql
+    datasource_kind: postgres
+    tables: [histories]

@@ -1,14 +1,22 @@
 //! HTTP route wiring. Each submodule owns one resource's routes; this module
 //! only composes them. Domain logic stays in the engine and store.
 
+pub mod agents;
+pub mod ai;
 pub mod alerts;
+pub mod audit;
 pub mod dashboards;
 pub mod datasources;
 pub mod flows;
+pub mod folders;
 pub mod me;
+pub mod nav;
 pub mod query;
+pub mod query_kinds;
 pub mod streams;
 pub mod tags;
+pub mod undo;
+pub mod variables;
 
 use axum::Router;
 
@@ -21,10 +29,18 @@ pub fn product_router() -> Router<AppState> {
     Router::new()
         .merge(me::router())
         .merge(query::router())
+        .merge(query_kinds::router())
         .merge(streams::router())
         .merge(datasources::router())
         .merge(dashboards::router())
         .merge(flows::router())
+        .merge(folders::router())
+        .merge(nav::router())
         .merge(alerts::router())
         .merge(tags::router())
+        .merge(agents::router())
+        .merge(ai::router())
+        .merge(variables::router())
+        .merge(audit::router())
+        .merge(undo::router())
 }

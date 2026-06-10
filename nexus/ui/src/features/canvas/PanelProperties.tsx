@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
-import { PlayCircle, X } from "lucide-react";
+import { PlayCircle, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
@@ -16,6 +16,7 @@ import type { Widget, WidgetType } from "@/data/types";
 import type { QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
+import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
@@ -35,10 +36,15 @@ export function PanelProperties({
   widget,
   slug,
   onClose,
+  onOpenEditor,
 }: {
   widget: Widget;
   slug: string;
   onClose: () => void;
+  /** Open the full-screen Panel Editor for this panel — the inspector with
+   *  field/override/legend/transform tabs and a live preview. This side
+   *  panel stays the quick inline editor for the common fields. */
+  onOpenEditor: () => void;
 }) {
   const update = useUpdatePanel(slug);
   const [type, setType] = useState<WidgetType>(widget.type);
@@ -110,6 +116,17 @@ export function PanelProperties({
         </button>
       </header>
 
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full gap-2"
+        onClick={onOpenEditor}
+      >
+        <SlidersHorizontal className="size-4" />
+        Open panel editor
+      </Button>
+
       <form className="space-y-3" onSubmit={onSubmit}>
         <div className="space-y-1.5">
           <Label htmlFor="prop-type">Type</Label>
@@ -143,7 +160,14 @@ export function PanelProperties({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="prop-sql">SQL</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="prop-sql">SQL</Label>
+            <AiSqlAssist
+              datasourceId={datasourceId}
+              currentSql={sql}
+              onApply={setSql}
+            />
+          </div>
           <SqlEditor
             id="prop-sql"
             value={sql}

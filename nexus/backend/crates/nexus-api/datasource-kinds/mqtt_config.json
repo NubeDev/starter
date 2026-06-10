@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MQTT datasource config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["host", "topic"],
+  "properties": {
+    "host": { "type": "string", "minLength": 1, "title": "Broker host" },
+    "port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 1883, "title": "Broker port" },
+    "topic": { "type": "string", "minLength": 1, "title": "Topic filter" },
+    "qos": { "type": "integer", "enum": [0, 1, 2], "default": 0, "title": "QoS" },
+    "client_id": { "type": "string", "title": "Client ID" },
+    "user": { "type": "string", "title": "Username" },
+    "password": { "type": "string", "title": "Password", "writeOnly": true }
+  }
+}

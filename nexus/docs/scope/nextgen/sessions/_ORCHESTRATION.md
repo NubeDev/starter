@@ -2,7 +2,11 @@
 
 > This is the script the **loop** follows on every wake. It is NOT a workstream.
 > The loop is the parent session; each workstream runs as a fresh **subagent** spawned by the loop.
-> Everything lands on branch **`nexus-backend`**, sequentially. No worktrees, no parallel writers.
+> Everything lands on branch **`nexus-gaps`**, sequentially. No worktrees, no parallel writers.
+>
+> **NOTE — another AI session may be running concurrently.** Don't stress about diffs you didn't
+> write. If a file you need to commit also has someone else's unrelated changes, commit only the
+> hunks your WS touched (`git add -p`), and never revert/clobber changes you didn't make.
 
 ## Why sequential on one branch
 Parallel agents on one branch overwrite each other. Sequential on one branch means each session
@@ -48,14 +52,30 @@ You are implementing <WS-xx> for the Nexus dashboarding platform, as one autonom
 unattended overnight build. You run to completion and return — you cannot ask the human anything.
 
 READ FIRST, IN ORDER:
-1. nexus/docs/scope/nextgen/GAP_ANALYSIS.md        (why this matters)
-2. nexus/docs/scope/nextgen/00_ROADMAP.md          (§0 re-verify, §4 your owned files, §5 your
+1. rubix/HOW-TO-CODE.md + rubix/FILE-LAYOUT.md     (the coding standard — governs every file)
+2. nexus/docs/scope/nextgen/GAP_ANALYSIS.md        (why this matters)
+3. nexus/docs/scope/nextgen/00_ROADMAP.md          (§0 re-verify, §4 your owned files, §5 your
                                                     migration block, §6 shared contracts, §8 DoD)
-3. nexus/docs/scope/nextgen/<WS-xx>_*.md           (your spec — source of truth for scope)
-4. nexus/docs/scope/nextgen/sessions/STATUS.md     (what's already done — your deps are committed)
+4. nexus/docs/scope/nextgen/<WS-xx>_*.md           (your spec — source of truth for scope)
+5. nexus/docs/scope/nextgen/sessions/STATUS.md     (what's already done — your deps are committed)
+
+CODING STANDARD (read these two FIRST — they govern every file you write):
+- rubix/HOW-TO-CODE.md  and  rubix/FILE-LAYOUT.md
+  The load-bearing rules from them:
+  - ONE RESPONSIBILITY PER FILE. ≤400 lines hard (PR-blocking), ~100 typical. Split at 300.
+    Verb-per-file folders (create.rs/update.rs/…), not noun-file-does-everything.
+  - NO `utils.rs`/`helpers.rs`/`common.rs`/`misc.rs` — name the concept. `mod.rs` is a barrel only.
+  - Transport handlers are THIN (≤20 lines): extract → call ONE domain fn → map DTO → return.
+    No SQL, no business predicates, no loops/filters on domain data in a handler. Each transport
+    file's opening doc-comment carries the `LAYER: transport (REST).` banner (HOW-TO-CODE §6).
+  - Comments explain WHY not WHAT. Doc-comment every public item. NO progress markers
+    (`// STAGE-1`, `// FIXED:`, `// Phase 0`), NO emoji. Bare TODOs forbidden — use `// TODO(loop):`.
+  - Code comments may reference `docs/design/` only — never scope/session docs or HOW-TO-CODE.md.
 
 HARD RULES (this is an unattended run — violating these poisons every later session):
-- BRANCH: work on `nexus-backend`. Do NOT create branches or worktrees. Do NOT switch branches.
+- BRANCH: work on `nexus-gaps`. Do NOT create branches or worktrees. Do NOT switch branches.
+  Another AI session may be editing the same branch — commit only YOUR hunks (`git add -p` the
+  files your WS owns), never `git add -A`, never revert changes you didn't make.
 - NO QUESTIONS: you cannot prompt the human. If you hit a genuine ambiguity or need work a
   not-yet-run session owns, you DO NOT guess and DO NOT hack/stub. Instead:
     (a) append a dated entry to nexus/docs/scope/nextgen/sessions/TODOs.md in the documented format,
@@ -86,6 +106,44 @@ concise summary of what landed and what (if anything) you logged to TODOs.md.
 ```
 
 ---
+
+## HEADLESS CRON MODE (the 100%-unattended path)
+
+The loop survives a closed editor / sleeping session only when fired by the OS, not from a chat
+window. The cron job runs **one wake per firing** with `claude -p` and exits — it is NOT the
+in-session `/loop`. Each firing executes the LOOP ALGORITHM above exactly once.
+
+**Concurrency lock (MANDATORY — prevents two firings double-spawning a WS):**
+Before doing anything, the firing must acquire an exclusive lock and skip if it can't:
+```
+exec 9>nexus/docs/scope/nextgen/sessions/.loop.lock
+flock -n 9 || { echo "$(date -u +%FT%TZ) another firing holds the lock — skip"; exit 0; }
+```
+A firing that holds the lock runs ONE wake (gate the returned WS, or spawn the next pending WS) and
+exits, releasing the lock. A WS subagent can run longer than 5 min; that's fine — subsequent firings
+see the row is 🔵 with work still committing and either (a) the subagent already returned → run the
+gate, or (b) detect no new commits + no completion in WS-xx.md for a while → treat as still-running
+and skip. **Never spawn a second WS while one is 🔵 and its WS-xx.md has no Blocked/Done line.**
+
+**Determining "subagent still running" without live process state:** headless firings can't see a
+previous firing's subagent. Use durable signals only: the WS-xx.md `Status:` line and `git log`.
+- Row 🔵 + WS-xx.md Status `In-progress` + commits advancing across firings → still working, skip.
+- Row 🔵 + WS-xx.md Status `Done`/`Blocked` → run the gate / honor the block, then advance.
+- Row 🔵 + WS-xx.md Status `In-progress` + NO new commits for ≥3 firings (~15 min) → assume the
+  subagent died; re-spawn the SAME WS fresh (it resumes from committed state — work is idempotent
+  because each WS reads STATUS + git to see what's already landed).
+
+**Heartbeat-based death detection (the precise signal):** `loop-tick.sh` writes
+`sessions/.loop.heartbeat` (`<utc> wake-start`) before the long claude call and `<utc> wake-complete`
+after. A recovering firing that holds the lock checks: if a WS row is 🔵, its WS-xx.md is still
+`In-progress`, the heartbeat reads `wake-start`, AND that timestamp is >20 min old → the prior wake
+died mid-run (machine slept / claude crashed). Re-spawn that SAME WS. If the heartbeat is recent,
+a wake is genuinely in flight — but it would also hold the lock, so a fresh firing wouldn't get here
+anyway. This file is the tie-breaker for the case where the lock was force-released by a kill.
+
+**The installer:** `sessions/install-cron.sh` writes the crontab line. To stop the run, the human
+runs `crontab -r` (or removes the line) — leave a `STOP` sentinel check too: if a file
+`sessions/.loop.STOP` exists, every firing exits immediately without spawning. That's the kill switch.
 
 ## Notes for the loop driver
 - **One subagent at a time.** Never spawn a second WS while one is 🔵 with a live subagent.

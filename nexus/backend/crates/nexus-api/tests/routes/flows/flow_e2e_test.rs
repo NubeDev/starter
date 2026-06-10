@@ -37,9 +37,23 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: FlowManager::new().expect("flow manager init"),
+        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),
+        kinds: Arc::new(nexus_api::kinds::Registry::empty()),
+        extension_kinds: Arc::new(nexus_api::kinds::Registry::empty()),
+        datasource_kinds: Arc::new(nexus_api::datasource_kinds::Registry::empty()),
+        prefs: nexus_api::prefs::prefs_store(pool.clone()),
+        changelog: nexus_api::changelog::ChangelogHandles::new(
+            pool.clone(),
+            Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap(),
+        ),
+        query_cache: nexus_api::cache::CacheConfig::default().build(),
+        quotas: nexus_api::quota::TenantQuotas::new(nexus_api::quota::QuotaConfig::default()),
+        rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
+            nexus_api::ratelimit::RateLimitConfig::default(),
+        ),
     }
 }
 

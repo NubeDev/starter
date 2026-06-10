@@ -6,7 +6,10 @@ mod convert;
 pub mod create;
 pub mod delete;
 pub mod delete_panel;
+pub mod duplicate;
+pub mod export;
 pub mod get;
+pub mod import;
 pub mod list;
 pub mod update;
 pub mod update_panel;
@@ -24,10 +27,22 @@ pub fn router() -> Router<AppState> {
             post(create::create_dashboard).get(list::list_dashboards),
         )
         .route(
+            "/api/v1/dashboards/import",
+            post(import::import_dashboard),
+        )
+        .route(
             "/api/v1/dashboards/{slug}",
             http_get(get::get_dashboard)
                 .patch(update::update_dashboard)
                 .delete(delete::delete_dashboard),
+        )
+        .route(
+            "/api/v1/dashboards/{slug}/export",
+            http_get(export::export_dashboard),
+        )
+        .route(
+            "/api/v1/dashboards/{slug}/duplicate",
+            post(duplicate::duplicate_dashboard),
         )
         .route(
             "/api/v1/dashboards/{slug}/panels",

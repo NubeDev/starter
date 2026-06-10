@@ -51,6 +51,21 @@ export NEXUS_DATASOURCE_URL   ?= $(DB_URL)
 export NEXUS_MASTER_KEY       ?= 0123456789abcdef0123456789abcdef
 export NEXUS_STREAM_TOKEN_KEY ?= 0123456789abcdef0123456789abcdef
 
+# The built-in query-kinds and datasource-kinds packs ship inside the nexus-api
+# crate. The dev targets run the server with CWD=$(BE_DIR) (`cd $(BE_DIR) &&
+# cargo run`), so the in-code defaults (`./kinds`, `./datasource-kinds`) resolve
+# to backend/kinds — which doesn't exist — and the Explore "Kind" picker shows
+# "No kinds". Point them at the real pack dirs (relative to $(BE_DIR)).
+export NEXUS_KINDS_DIR            ?= crates/nexus-api/kinds
+export NEXUS_DATASOURCE_KINDS_DIR ?= crates/nexus-api/datasource-kinds
+# WS-14 extensions runtime. Same CWD=$(BE_DIR) story as the kinds packs: point
+# the read-only in-repo pack at the real dir; the installs + pidfile dirs go to a
+# gitignored scratch dir under $(BE_DIR) so `make dev-be` can accept uploads and
+# the supervisor can write pidfiles without polluting the source tree.
+export NEXUS_EXTENSIONS_DIR          ?= crates/nexus-api/extensions
+export NEXUS_EXTENSIONS_INSTALLS_DIR ?= .nexus-ext/installs
+export NEXUS_EXTENSIONS_PIDFILE_DIR  ?= .nexus-ext/pids
+
 # Admin seed credentials (consumed by `make seed` / the seed-admin binary).
 # Dev defaults — override for any real deploy.
 export ADMIN_EMAIL    ?= admin@nexus.local

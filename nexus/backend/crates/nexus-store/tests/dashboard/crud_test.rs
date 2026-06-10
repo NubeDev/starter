@@ -13,6 +13,9 @@ fn new_dash(slug: &str) -> NewDashboard {
     NewDashboard {
         slug: slug.into(),
         name: "Plant 1".into(),
+        icon: "Activity".into(),
+        accent: "152 76% 44%".into(),
+        folder_id: None,
     }
 }
 

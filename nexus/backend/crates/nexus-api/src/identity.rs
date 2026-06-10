@@ -9,7 +9,9 @@
 use std::sync::Arc;
 
 use axum::Router;
-use starter_auth_users::routes::{auth_router, tenants_router, AuthState};
+use starter_auth_users::routes::{
+    auth_router, tenant_users_router, tenants_router, AuthState,
+};
 use starter_auth_users::store::{PgSessionStore, PgTenantStore, PgTokenStore, PgUserStore};
 use starter_auth_users::AuthAuthenticator;
 use starter_authz::instances::InstancesRegistry;
@@ -20,7 +22,10 @@ use starter_spi::auth::Authenticator;
 use starter_spi::authz::ResourceRegistry;
 use starter_store_postgres::Pool;
 
-use crate::authz::{register_nexus_resources, DashboardInstancesProvider, KIND_DASHBOARD};
+use crate::authz::{
+    register_nexus_resources, DashboardInstancesProvider, NavNodeInstancesProvider, KIND_DASHBOARD,
+    KIND_NAV_NODE,
+};
 use crate::state::AppState;
 
 /// The mounted identity surface plus the authenticator that protects the product
@@ -54,8 +59,10 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
     );
 
     // The team/member/tenant CRUD router shares the tenant store; build it before
-    // moving the store into the auth state.
-    let tenants_routes = tenants_router::<AppState>(tenants.clone());
+    // moving the store into the auth state. The create-user route needs the user
+    // store too, so it is a sibling router merged onto the same mount.
+    let tenants_routes = tenants_router::<AppState>(tenants.clone())
+        .merge(tenant_users_router::<AppState>(tenants.clone(), users.clone()));
 
     let auth_state = AuthState::new(users, sessions, tokens).with_tenants(tenants);
     let auth = auth_router::<AppState>(auth_state);
@@ -84,6 +91,16 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
     instances.register(
         KIND_DASHBOARD,
         Arc::new(DashboardInstancesProvider::new(
+            pool.sqlx().clone(),
+            policy_store_dyn.clone(),
+        )),
+    );
+    // The nav tree is the navigation + access surface (WS-13 §6): the Access UI
+    // grants `view`/`edit`/`delete` on each node. This is the kind the
+    // restructured Access section lists, replacing the per-dashboard share view.
+    instances.register(
+        KIND_NAV_NODE,
+        Arc::new(NavNodeInstancesProvider::new(
             pool.sqlx().clone(),
             policy_store_dyn,
         )),

@@ -11,14 +11,44 @@ default-run = "nexus-api"
 nexus-spi.workspace = true
 nexus-engine.workspace = true
 nexus-store.workspace = true
+# The `agent` feature pulls in the zag tier so sessions can drive the local
+# coding-agent CLIs (Claude Code, Codex, Gemini, Ollama) using their own auth —
+# no provider API key needed. The `inference` (genai) tier stays on by default
+# for raw-provider backends.
+nexus-ai = { workspace = true, features = ["agent"] }
+nexus-skills.workspace = true
 
-starter-spi.workspace = true
+# `preferences` (which pulls `units`) is enabled so handlers can name the
+# `ResolvedPreferences` / `Quantity` / `Unit` types for WS-11 units conversion.
+# `changelog` gates the `Change`/`Actor`/`Reversible` types WS-12 records with.
+starter-spi = { workspace = true, features = ["preferences", "changelog"] }
 starter-server.workspace = true
+# WS-12 audit/undo: the read-side query API + the undo service, registry,
+# `record_if_reversible` helper, undo router, and Postgres redo cursor. The
+# tenant-aware recorder/changelog live in nexus-store; these are reused as-is.
+starter-changelog.workspace = true
+starter-undo = { workspace = true, features = ["postgres"] }
+# WS-11: reuse the platform preference store (PG) + three-layer resolver rather
+# than reinventing them. `postgres` enables `PgPrefsStore`. The nexus routes pin
+# the workspace to the caller's tenant (so isolation is not the spoofable starter
+# `?org=`), so the starter `routes`/`middleware` features are deliberately off.
+starter-prefs = { workspace = true, features = ["postgres"] }
 starter-auth-users = { workspace = true, features = ["postgres"] }
 starter-authz = { workspace = true, features = ["postgres"] }
 starter-store-postgres.workspace = true
 starter-config.workspace = true
 starter-observability.workspace = true
+
+# WS-14 extensions runtime. `starter-ext-server` mounts the admin router
+# (`/extensions/*`) over nexus's `starter-server` auth stack; `-host` scans +
+# seals the manifest registry at boot; `-supervisor` keeps process-flavour
+# extensions running (+ reaper); `-store-pg` persists enablement; `-spi` carries
+# the shared `Manifest`/`ExtensionId`/`Capability` types.
+starter-ext-spi.workspace = true
+starter-ext-host.workspace = true
+starter-ext-server.workspace = true
+starter-ext-supervisor.workspace = true
+starter-ext-store-pg.workspace = true
 
 axum.workspace = true
 tower.workspace = true
@@ -32,6 +62,10 @@ futures.workspace = true
 sqlx.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# WS-10 kinds: parse the YAML pack manifest and validate caller params against
+# each kind's JSON Schema before binding.
+serde_yaml.workspace = true
+jsonschema.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 
@@ -45,8 +79,12 @@ hmac.workspace = true
 sha2.workspace = true
 base64.workspace = true
 
-# Alert webhook notification delivery.
+# Alert webhook + Slack notification delivery.
 reqwest.workspace = true
+
+# Alert email (SMTP) notification delivery. rustls TLS keeps the build free of a
+# system OpenSSL dependency.
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls-tls", "pool", "hostname"] }
 
 [features]
 # Pulls in the starter-server test harness (TestApp) and the testcontainers
@@ -91,6 +129,10 @@ name = "routes_datasources_update_e2e"
 path = "tests/routes/datasources/update_e2e_test.rs"
 
 [[test]]
+name = "routes_datasources_test_connection_e2e"
+path = "tests/routes/datasources/test_connection_e2e_test.rs"
+
+[[test]]
 name = "routes_streams_subscribe"
 path = "tests/routes/streams/subscribe_test.rs"
 
@@ -99,8 +141,20 @@ name = "routes_identity_wiring"
 path = "tests/routes/identity/wiring_test.rs"
 
 [[test]]
+name = "routes_me_preferences_e2e"
+path = "tests/routes/me/preferences_e2e_test.rs"
+
+[[test]]
 name = "routes_authz_grant_gate"
 path = "tests/routes/authz/grant_gate_test.rs"
+
+[[test]]
+name = "routes_tags_authz"
+path = "tests/routes/tags/authz_test.rs"
+
+[[test]]
+name = "routes_nav_e2e"
+path = "tests/routes/nav/nav_e2e_test.rs"
 
 [[test]]
 name = "routes_flows_e2e"
@@ -109,3 +163,11 @@ path = "tests/routes/flows/flow_e2e_test.rs"
 [[test]]
 name = "routes_alerts_e2e"
 path = "tests/routes/alerts/alert_e2e_test.rs"
+
+[[test]]
+name = "routes_agents_e2e"
+path = "tests/routes/agents/agent_e2e_test.rs"
+
+[[test]]
+name = "routes_audit_e2e"
+path = "tests/routes/audit/audit_e2e_test.rs"

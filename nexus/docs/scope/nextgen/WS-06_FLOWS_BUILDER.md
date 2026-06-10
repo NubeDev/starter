@@ -22,6 +22,9 @@ working" (verbatim user ask).
   or metrics.
 - **Tiny palette**: only `http_poll` + `simulator` inputs (`registry/inputs.rs`) and
   `collector`/`sse`/`postgres` outputs (`registry/outputs.rs`) are registered. (WS-08 adds more.)
+- **Windowing runs but is hidden**: `registry/mod.rs:29` already calls `arkflow_plugin::buffer::init()`
+  (registers `memory`/`tumbling_window`/`sliding_window`/`session_window`), yet no descriptor,
+  `NodeCategory::Buffer`, `buffer` config field, or palette group exposes it — see scope #7.
 
 ## Scope
 1. **Node-type registry endpoint** — `GET /api/v1/flows/node-types` → for each registered
@@ -46,6 +49,28 @@ working" (verbatim user ask).
    Optional `00xx_flow_runs.sql` for a run/event log.
 6. **Templates** — a few starter flow templates (e.g. `http_poll → sql transform → postgres`,
    `mqtt → sse`) selectable as a starting graph.
+7. **Buffers / time-windowing** (from the `nexus/poc` review — the engine **already runs these**,
+   nothing exposes them):
+   - The runtime already initialises all four ArkFlow buffers — `registry/mod.rs:29` calls
+     `arkflow_plugin::buffer::init()`, registering `memory`, `tumbling_window`, `sliding_window`,
+     `session_window` (`vendor/arkflow-plugin/src/buffer/{…}.rs`). But `registry/descriptor.rs`
+     describes none of them, `NodeCategory` has no `Buffer` variant, the flow record has no `buffer`
+     field, and the palette has no buffer group. The capability is wired but **unreachable**.
+   - Same self-describing-registry mechanism as scope #1: add a `NodeCategory::Buffer` (wire token
+     `"buffer"`) + a descriptor per init'd buffer with a JSON-Schema config — `memory`
+     `{capacity, timeout}`, `tumbling_window` `{interval}`, `sliding_window` `{window_size, interval}`,
+     `session_window` `{gap}`. Confirm each field against the **vendored builder** (source of truth),
+     not the POC catalog (`nexus/poc/backend/src/engine/catalog/buffers.rs`, a starting reference).
+     Extend the descriptor self-test so every buffer `buffer::init()` registers has a descriptor.
+   - **Optional, additive** `buffer` block on the flow config: ArkFlow's `StreamConfig` already
+     accepts an optional buffer between input and pipeline (the POC assembled `config.buffer` and it
+     built). Add `buffer: Option<Value>` to the flow record/DTOs and thread it through manager +
+     dry-run. **No migration** (another JSONB key); a flow without a buffer loads/runs exactly as today.
+   - **One buffer per flow** — model it as a single canvas slot between input and the processor chain
+     (like the single input/output, not the n-ary processor chain), with the same schema-driven
+     `NodeConfigForm`. Serialise to/parse from `config.buffer` in `graph.ts`/`parse.ts`.
+   - Add a windowing template (e.g. `simulator → tumbling_window(5s) → sql(avg) → postgres` — the
+     "5-minute average"); pick a short interval so a dry-run emits ≥1 closed window in the sample.
 
 ## Design notes
 - **Don't change the on-the-wire flow config** (`{input,pipeline,output}` JSONB) — the graph editor
@@ -66,9 +91,23 @@ working" (verbatim user ask).
 - [ ] "Test" runs a bounded dry-run and shows sample output rows (or a clear build error) without saving.
 - [ ] The graph round-trips to the existing JSON config; existing flows still load + run.
 - [ ] Flow list shows running state + last-error + basic throughput.
-- [ ] Tests: graph↔JSON serialisation, schema-form generation, dry-run cap enforcement.
+- [ ] The palette has a `buffer` category (`memory`/`tumbling_window`/`sliding_window`/`session_window`,
+      each schema-validated); an admin builds `simulator → tumbling_window → sql(avg) → postgres` with
+      no raw JSON, and "Test" shows ≥1 closed-window aggregate row.
+- [ ] The flow config carries an optional `buffer` block; a flow **without** a buffer loads + runs
+      exactly as before (round-trip + existing-flow regression).
+- [ ] Tests: graph↔JSON serialisation (incl. a buffer node), schema-form generation, dry-run cap
+      enforcement, buffer-descriptor coverage (every `buffer::init()` node is described), `NodeCategory`
+      includes `buffer` (Rust + generated TS).
 
 ## Out of scope (hand off)
 - Adding the actual new connectors (MQTT/Modbus/Kafka) → **WS-08** (this WS *displays* whatever is
   registered; coordinate so palette + connectors land together).
+- **Re-enabling trimmed processors** (VRL/Python/Protobuf/batch — dropped per
+  `vendor/arkflow-plugin/src/processor/mod.rs:15`): unlike buffers these are **not** runnable today;
+  needs a vendor un-trim + deps. Own slice if wanted, not v1. (POC catalogued them:
+  `nexus/poc/backend/src/engine/catalog/processors.rs`.)
+- **`join` buffer** — present in the vendor but **not** init'd and multi-input; defer until the
+  builder supports multi-input graphs (the v1 linear `input → buffer → processor* → output` can't
+  express >1 source edge).
 - Heavy ETL/CDC → explicitly out of v1 per NEXUS.md §13.

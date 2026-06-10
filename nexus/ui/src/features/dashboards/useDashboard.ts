@@ -25,10 +25,9 @@ export function useDashboard(
         id: detail.id,
         name: detail.name,
         slug: detail.slug,
-        // The backend dashboard has no icon/accent yet; the UI supplies
-        // neutral defaults rather than inventing per-dashboard branding.
-        icon: "layout-dashboard",
-        accent: "152 76% 44%",
+        // Real per-dashboard appearance now comes from the backend.
+        icon: detail.icon,
+        accent: detail.accent,
         widgets: detail.panels.map(panelToWidget),
         updatedAt: "",
       };

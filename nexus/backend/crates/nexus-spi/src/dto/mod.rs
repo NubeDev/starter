@@ -7,12 +7,20 @@
 //! Dashboards, panels, alerts, and flows arrive with their milestones (M2/M3)
 //! and extend this module add-only.
 
+pub mod agent;
+pub mod ai;
 pub mod alert;
+pub mod audit;
 pub mod dashboard;
 pub mod datasource;
 pub mod flow;
+pub mod folder;
 pub mod me;
+pub mod nav;
 pub mod panel;
 pub mod query;
+pub mod query_history;
+pub mod query_kind;
 pub mod stream;
 pub mod tag;
+pub mod variable;

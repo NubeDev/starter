@@ -1,13 +1,20 @@
 //! The guarded one-shot query path against a datasource Postgres.
 
+mod bind;
 mod introspect;
+mod request;
 mod row_json;
 mod run;
 
 use std::time::Duration;
 
+pub use bind::{
+    bind, bind_with, BindCtx, BindError, BoundQuery, Dialect, HostTokens, ParamValue, Postgres,
+    ScalarValue, SqlValue, TimeRange, VarValue,
+};
 pub use introspect::{introspect, ColumnInfo, TableInfo};
-pub use run::run_query;
+pub use request::{run_kind_request, run_request, QueryIdentity};
+pub use run::{run_bound_query, run_query};
 
 /// The server-enforced safety bounds applied to every datasource query. None of
 /// these are expressible by the caller — they are set from server config and the

@@ -3,7 +3,7 @@
 > **Status:** Proposal · **Wave:** 1 (server convert path) + 2 (panel/kind quantity tagging) · **Owner:** _unassigned_
 > **Depends on:** `starter-prefs` + `starter-spi/units` (exist; some stages incomplete) · couples with WS-04, WS-03/10, WS-09
 > **Migration:** block `15xx` (e.g. `1501_prefs.sql` — port `starter-prefs` PG schema under RLS) · **Read first:** GAP_ANALYSIS §2.11, ROADMAP §0
-> **Verified:** `82a6a19a` on 2026-06-09 — corrected: `Accept-Units`/`UnitsCtx` is **already built** in `starter-server` (§2). Re-grep before building (ROADMAP §0).
+> **Verified:** `nexus-gaps` on 2026-06-09 — corrected: `Accept-Units`/`UnitsCtx` is **already built** in `starter-server` (§2), AND the `starter-prefs` **Postgres store is NOT deferred** — `PgPrefsStore` (`store.rs`, `#[cfg(feature = "postgres")]`) + `migrations/postgres/0001_starter_prefs.sql` + `tests/postgres_store.rs` all ship. WS-11 reuses the PG store as-is; the real gap is the nexus tenancy wiring (route-pinned isolation) + mounting `Accept-Units`. Re-grep before building (ROADMAP §0).
 >
 > **Why this exists:** the user wants **values converted to the user's preferred units + date/time
 > format on the *backend*, not the client** — so every consumer (the web UI, a future mobile app,
@@ -63,7 +63,8 @@ Read these before writing anything; the design is done, much of the code is too.
 - `ResolvedPreferences` carries: `timezone`, `locale`, `language`, `unit_system`, per-quantity units
   (`temperature_unit`, `pressure_unit`, `speed_unit`, `length_unit`, `mass_unit`), and display fields
   `date_format`, `time_format`, `week_start`, `number_format`, `currency`, `theme`.
-- `PrefsStore` trait (sqlite done; **Postgres deferred** — see §5), REST `GET/PATCH /v1/me/preferences`
+- `PrefsStore` trait (**both sqlite AND Postgres done** — `PgPrefsStore` ships behind the `postgres`
+  feature, contrary to the original "deferred" note; see §5), REST `GET/PATCH /v1/me/preferences`
   + `/v1/orgs/{id}/preferences`, prefs-resolution **middleware** (stashes resolved prefs in request
   extensions). `money.rs` (minor-units + ISO 4217).
 
@@ -87,9 +88,13 @@ Plus the adapter traits `ToCanonicalSeries` / `FromCanonicalSeries` for typed st
 > `starter-prefs` is wired end-to-end on PG (see below) — re-grep before assuming.
 
 ### What is NOT yet built (the real, narrower integration gap WS-11 fills)
-- **`starter-prefs` Postgres store** is deferred (sqlite-only). nexus is Postgres+RLS → **needs the
-  PG store** (port `starter-prefs/migrations/postgres/0001_starter_prefs.sql` → a nexus migration
-  under the runtime role) + mount the prefs-resolution middleware in nexus-api.
+- **`starter-prefs` Postgres store** EXISTS (`PgPrefsStore`, tested) — the original "deferred
+  (sqlite-only)" note was stale. The real gap is **nexus tenancy wiring**: port
+  `starter-prefs/migrations/postgres/0001_starter_prefs.sql` → a nexus migration granted to the
+  runtime role, then enforce cross-tenant isolation. The store runs outside `tenant_tx` (no
+  `app.tenant_id` GUC), so isolation is **route-pinned** (`workspace_id = principal.tenant_id`), not
+  RLS-bound — nexus owns thin `/api/v1/me/preferences` routes rather than mounting the starter
+  router's spoofable `?org=` selector.
 - **Mount the (existing) `Accept-Units`/`UnitsCtx` layer** from `starter-server` in nexus-api and
   apply it at the query/stream response edge. This is *wiring an existing middleware in*, not writing
   it. If a nexus-specific gap surfaces (e.g. SSE-path conversion), scope only that delta.

@@ -1,6 +1,8 @@
 import type { EChartsOption } from "echarts";
 
 import type { Widget, WidgetData } from "@/data/types";
+import { legendFragment, yAxisFragment } from "@/features/widgets/cartesianChrome";
+import { resolveField } from "@/features/widgets/fieldConfig";
 import { chromeColor, seriesColor } from "@/features/widgets/palette";
 
 // Builds the ECharts option for a bar panel from its typed field mapping
@@ -18,7 +20,12 @@ export function buildBarOption(
     formatX?: (value: string | number) => string;
   } = {},
 ): EChartsOption {
-  const { x, series, xKind } = widget.config.fields;
+  const { x, xKind } = widget.config.fields;
+  // Resolve per-series overrides and drop hidden series (mirrors the line
+  // builder so overrides behave consistently across chart families).
+  const series = widget.config.fields.series
+    .map((field, index) => ({ field, index, resolved: resolveField(field, widget.config) }))
+    .filter((s) => !s.resolved.hidden);
   const categories = x
     ? data.points.map((p) => p[x] ?? "")
     : data.points.map((_, i) => i);
@@ -31,9 +38,7 @@ export function buildBarOption(
   return {
     grid: { left: 8, right: 14, top: multi ? 30 : 12, bottom: 6, containLabel: true },
     tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-    legend: multi
-      ? { top: 0, right: 0, type: "scroll", textStyle: { color: label }, itemWidth: 10, itemHeight: 10 }
-      : undefined,
+    legend: legendFragment(widget.config.options, multi, label),
     xAxis: {
       type: "category",
       data: categories,
@@ -42,16 +47,12 @@ export function buildBarOption(
         ? { color: label, formatter: (v: string | number) => timeFmt(v) }
         : { color: label },
     },
-    yAxis: {
-      type: "value",
-      axisLabel: { color: label },
-      splitLine: { lineStyle: { color: border, opacity: 0.4 } },
-    },
-    series: series.map((field, i) => {
-      const color = seriesColor(field, i);
+    yAxis: yAxisFragment(widget.config.options, border, label),
+    series: series.map(({ field, index, resolved }) => {
+      const color = seriesColor({ ...field, color: resolved.color ?? field.color }, index);
       return {
         type: "bar",
-        name: field.label ?? field.value,
+        name: resolved.displayName ?? field.label ?? field.value,
         itemStyle: { color, borderRadius: [3, 3, 0, 0] },
         data: data.points.map((p) => p[field.value] ?? null),
       };

@@ -53,6 +53,11 @@ pub async fn create_rule(
         interval_secs: req.interval_secs.unwrap_or(60),
         enabled: req.enabled.unwrap_or(true),
         channel_ids: req.channel_ids.unwrap_or_default(),
+        conditions: super::convert::conditions_to_json(req.conditions),
+        combinator: req.combinator.unwrap_or_else(|| "and".to_string()),
+        no_data_policy: req.no_data_policy.unwrap_or_else(|| "ok".to_string()),
+        exec_error_policy: req.exec_error_policy.unwrap_or_else(|| "ok".to_string()),
+        message_template: req.message_template,
     };
     match rule::insert(&state.metadata, &tenant, &new).await {
         Ok(r) => Json(rule_to_detail(&r)).into_response(),
@@ -108,6 +113,11 @@ pub async fn update_rule(
         interval_secs: req.interval_secs,
         enabled: req.enabled,
         channel_ids: req.channel_ids,
+        conditions: super::convert::conditions_to_json(req.conditions),
+        combinator: req.combinator,
+        no_data_policy: req.no_data_policy,
+        exec_error_policy: req.exec_error_policy,
+        message_template: req.message_template,
     };
     match rule::update(&state.metadata, &tenant, id, &patch).await {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),

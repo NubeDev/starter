@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Plus, Send, Trash2 } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import {
@@ -10,38 +10,52 @@ import {
 } from "@nube/starter-ui-kit/components/dialog";
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
-import { Textarea } from "@nube/starter-ui-kit/components/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nube/starter-ui-kit/components/select";
 
+import {
+  buildChannelConfig,
+  CHANNEL_KINDS,
+  channelKind,
+} from "@/features/alerts/channelKinds";
 import { useChannelMutations, useChannels } from "@/features/alerts/useAlerts";
-import { parseFlowSection } from "@/features/flows/flowDraft";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
 
-// Notification channels: list with kind + delete, and a create form whose
-// `config` is opaque JSON (kind-specific — webhook url, email address…),
-// validated client-side before send.
+// Notification channels: list with kind + delete, and a create form driven by a
+// kind picker plus a schema-driven set of inputs per kind (webhook/slack/email),
+// so the operator fills typed fields instead of hand-writing a config JSON blob.
+// Secret fields (Slack URL, SMTP password) are never echoed back by the API.
 export function ChannelsTab() {
   const { data, isPending, isError, error } = useChannels();
   const { create, remove } = useChannelMutations();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", kind: "webhook", config: "" });
-  const [configError, setConfigError] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [kind, setKind] = useState("webhook");
+  const [values, setValues] = useState<Record<string, string | boolean>>({});
+
+  const spec = useMemo(() => channelKind(kind), [kind]);
+
+  function reset() {
+    setName("");
+    setKind("webhook");
+    setValues({});
+  }
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setConfigError(null);
-    const parsed = parseFlowSection(form.config);
-    if (!parsed.ok) {
-      setConfigError(parsed.error);
-      return;
-    }
     create.mutate(
-      { name: form.name.trim(), kind: form.kind.trim(), config: parsed.value },
+      { name: name.trim(), kind, config: buildChannelConfig(kind, values) },
       {
         onSuccess: () => {
           setOpen(false);
-          setForm({ name: "", kind: "webhook", config: "" });
+          reset();
         },
       },
     );
@@ -65,16 +79,15 @@ export function ChannelsTab() {
       ) : (
         <ul className="flex flex-col gap-2">
           {data.map((c) => (
-            <li
-              key={c.id}
-              className="glass flex items-center gap-3 rounded-lg px-4 py-3"
-            >
+            <li key={c.id} className="glass flex items-center gap-3 rounded-lg px-4 py-3">
               <span className="grid size-9 place-items-center rounded-lg bg-primary/15 text-primary">
                 <Send className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{c.name}</p>
-                <p className="text-xs text-muted-foreground">{c.kind}</p>
+                <p className="text-xs text-muted-foreground">
+                  {channelKind(c.kind)?.label ?? c.kind}
+                </p>
               </div>
               <Button
                 variant="ghost"
@@ -101,39 +114,71 @@ export function ChannelsTab() {
               <Label htmlFor="ch-name">Name</Label>
               <Input
                 id="ch-name"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ch-kind">Kind</Label>
-              <Input
-                id="ch-kind"
-                value={form.kind}
-                onChange={(e) => setForm((f) => ({ ...f, kind: e.target.value }))}
-                placeholder="webhook"
-                required
-              />
+              <Select
+                value={kind}
+                onValueChange={(k) => {
+                  setKind(k);
+                  setValues({});
+                }}
+              >
+                <SelectTrigger id="ch-kind">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHANNEL_KINDS.map((k) => (
+                    <SelectItem key={k.kind} value={k.kind}>
+                      {k.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {spec ? (
+                <p className="text-xs text-muted-foreground">{spec.description}</p>
+              ) : null}
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="ch-config">Config (JSON)</Label>
-              <Textarea
-                id="ch-config"
-                value={form.config}
-                onChange={(e) => setForm((f) => ({ ...f, config: e.target.value }))}
-                placeholder='{ "url": "https://hooks.example.com/…" }'
-                spellCheck={false}
-                className="min-h-24 resize-y font-mono text-sm"
-              />
-            </div>
-            {configError ? (
-              <p role="alert" className="text-sm text-destructive">
-                config: {configError}
-              </p>
-            ) : null}
+
+            {spec?.fields.map((field) =>
+              field.type === "checkbox" ? (
+                <label
+                  key={field.key}
+                  className="flex items-center gap-2 text-sm text-foreground"
+                >
+                  <input
+                    type="checkbox"
+                    checked={values[field.key] === true}
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [field.key]: e.target.checked }))
+                    }
+                  />
+                  {field.label}
+                </label>
+              ) : (
+                <div key={field.key} className="space-y-1.5">
+                  <Label htmlFor={`ch-${field.key}`}>{field.label}</Label>
+                  <Input
+                    id={`ch-${field.key}`}
+                    type={field.type === "password" ? "password" : field.type}
+                    value={(values[field.key] as string) ?? ""}
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [field.key]: e.target.value }))
+                    }
+                    placeholder={field.placeholder}
+                    required={field.required}
+                    spellCheck={false}
+                  />
+                </div>
+              ),
+            )}
+
             <DialogFooter>
-              <Button type="submit" disabled={create.isPending || !form.name.trim()}>
+              <Button type="submit" disabled={create.isPending || !name.trim()}>
                 {create.isPending ? "Creating…" : "Create"}
               </Button>
             </DialogFooter>

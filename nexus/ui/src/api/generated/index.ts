@@ -4,6 +4,102 @@
  */
 
 export interface paths {
+    "/api/v1/agents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_agents"];
+        put?: never;
+        post: operations["create_agent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_agent_session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/sessions/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["subscribe_agent_session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_agent"];
+        put: operations["update_agent"];
+        post?: never;
+        delete: operations["delete_agent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/agents/{id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_agent_sessions"];
+        put?: never;
+        post: operations["create_agent_session"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/assist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ai_assist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts/channels": {
         parameters: {
             query?: never;
@@ -116,6 +212,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/forget": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["forget_subject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit/resources/{kind}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["resource_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboards": {
         parameters: {
             query?: never;
@@ -126,6 +270,22 @@ export interface paths {
         get: operations["list_dashboards"];
         put?: never;
         post: operations["create_dashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["import_dashboard"];
         delete?: never;
         options?: never;
         head?: never;
@@ -148,6 +308,38 @@ export interface paths {
         patch: operations["update_dashboard"];
         trace?: never;
     };
+    "/api/v1/dashboards/{slug}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["duplicate_dashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{slug}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["export_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboards/{slug}/panels": {
         parameters: {
             query?: never;
@@ -158,6 +350,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["add_panel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{slug}/variables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_variables"];
+        put?: never;
+        post: operations["create_variable"];
         delete?: never;
         options?: never;
         head?: never;
@@ -175,6 +383,42 @@ export interface paths {
         put?: never;
         /** Seal the secret and insert the datasource under the caller's tenant. */
         post: operations["create_datasource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/datasources/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return the datasource-kind registry's entries, name-ordered (the registry is a
+         *     `BTreeMap`, so iteration is already sorted). A read-only catalogue.
+         */
+        get: operations["list_datasource_kinds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/datasources/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["test_connection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -261,6 +505,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run the supplied input + pipeline against the bounded collector and return
+         *     the sample (or an inline build/runtime error). Principal-gated: a dry run
+         *     executes a flow against real connectors, so it sits behind the same auth
+         *     boundary as a saved flow. The pipeline defaults to empty when omitted.
+         */
+        post: operations["dry_run_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["import_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/node-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return every registered node, described. A static catalogue sourced from the
+         *     engine registry's self-description — no datasource work, no per-tenant state.
+         */
+        get: operations["list_node_types"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows/{id}": {
         parameters: {
             query?: never;
@@ -272,6 +574,22 @@ export interface paths {
         put: operations["update_flow"];
         post?: never;
         delete: operations["delete_flow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["export_flow"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -309,6 +627,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_folders"];
+        put?: never;
+        post: operations["create_folder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/folders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_folder"];
+        options?: never;
+        head?: never;
+        patch: operations["update_folder"];
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -327,6 +677,63 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * `GET /api/v1/me/preferences` — resolve the caller's user → org → default
+         *     preferences for its own tenant. 401 without a tenant-bound principal.
+         */
+        get: operations["get_me_preferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * `PATCH /api/v1/me/preferences` — merge a partial update into the caller's
+         *     user-layer row for its own tenant. Missing key leaves a field unchanged;
+         *     explicit `null` reverts it to inherit. 401 without a tenant-bound principal.
+         */
+        patch: operations["patch_me_preferences"];
+        trace?: never;
+    };
+    "/api/v1/nav": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_nav"];
+        put?: never;
+        post: operations["create_nav"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/nav/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_nav"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_nav"];
+        options?: never;
+        head?: never;
+        patch: operations["update_nav"];
         trace?: never;
     };
     "/api/v1/panels/{id}": {
@@ -355,10 +762,115 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Extract the SQL, run it under the server guards, return the rows. The guards
-         *     (read-only, timeout, caps) live in the store; this handler only wires.
+         * Extract the request, bind its macros/variables, run it under the server
+         *     guards, return the rows. The dev single-datasource shortcut carries no
+         *     principal, so host tokens (`$caller_tenant_id`) are absent — a query needing
+         *     them errors, which is correct. The guards (read-only, timeout, caps) and the
+         *     binder live in the store; this handler only wires.
          */
         post: operations["run_query"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_query_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-history/{id}/star": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["star_query_history"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_query_kinds_admin"];
+        put?: never;
+        post: operations["create_query_kind"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-kinds/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_query_kind"];
+        put: operations["update_query_kind"];
+        post?: never;
+        delete: operations["delete_query_kind"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Return the file-pack kinds (the registry is a `BTreeMap`, so already sorted)
+         *     unioned with the caller's tenant-authored kinds. A read-only catalogue — no
+         *     datasource work. A DB read failure or an absent tenant degrades to the file
+         *     pack alone rather than failing the picker.
+         */
+        get: operations["list_query_kinds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/redo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["redo"];
         delete?: never;
         options?: never;
         head?: never;
@@ -449,10 +961,96 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["undo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/variables/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_variable"];
+        options?: never;
+        head?: never;
+        patch: operations["update_variable"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Origin of a recorded change. */
+        Actor: {
+            /** @enum {string} */
+            kind: "user";
+            /** @description Subject id of the acting principal. */
+            subject: string;
+        } | {
+            /** @enum {string} */
+            kind: "agent";
+            /** @description Model identifier (e.g. `"claude-..."`). */
+            model: string;
+            /** @description Identifier of the agent run. */
+            run_id: string;
+        } | {
+            /** @enum {string} */
+            kind: "system";
+        };
+        /**
+         * @description A configured agent in full. `config` is opaque JSON on the wire — the
+         *     provider/agent-specific knobs the nexus-ai facade interprets at run time.
+         */
+        AgentDetail: {
+            /** @description The facade backend: an inference provider hint or a coding-agent backend. */
+            backend: string;
+            config: unknown;
+            /** Format: uuid */
+            id: string;
+            /** @description Concrete model id or a size alias ("small"/"medium"/"large"). */
+            model: string;
+            name: string;
+            system_prompt?: string | null;
+        };
+        /**
+         * @description An agent as it appears in the list: identity and backend/model, without the
+         *     config blob (that comes from the detail endpoint).
+         */
+        AgentSummary: {
+            backend: string;
+            /** Format: uuid */
+            id: string;
+            model: string;
+            name: string;
+        };
+        /** @description One condition of an alert rule. */
+        AlertCondition: {
+            /** @description Comparison operator: gt|gte|lt|lte|eq|ne. */
+            op: string;
+            /** @description The query whose reduced first column is the evaluated value. */
+            query: string;
+            /** @description How the query's rows collapse to one value: last|min|max|avg|sum|count. */
+            reducer?: string;
+            /** Format: double */
+            threshold: number;
+        };
         /**
          * @description One recorded transition: when a rule fired or resolved, the value that
          *     triggered it, and whether it was silenced / actually notified.
@@ -475,20 +1073,143 @@ export interface components {
         /** @description An alert rule in full. */
         AlertRuleDetail: {
             channel_ids: string[];
+            combinator: string;
+            /**
+             * @description The multi-condition list, when the rule uses one. `None` for a legacy
+             *     single-condition rule (its single condition is the top-level fields).
+             */
+            conditions?: components["schemas"]["AlertCondition"][] | null;
             /** Format: uuid */
             datasource_id?: string | null;
             enabled: boolean;
+            exec_error_policy: string;
             /** Format: int32 */
             for_secs: number;
             /** Format: uuid */
             id: string;
             /** Format: int32 */
             interval_secs: number;
+            message_template?: string | null;
             name: string;
+            no_data_policy: string;
             op: string;
             query: string;
             /** Format: double */
             threshold: number;
+        };
+        /**
+         * @description An assist request: a task, the user's natural-language intent, and optional
+         *     grounding context.
+         */
+        AssistRequest: {
+            /**
+             * @description Which AI backend to run the assist against. A CLI agent backend
+             *     (`claude`, `codex`, `gemini`, `ollama`) uses the locally-installed CLI's
+             *     own auth — no provider API key needed. A raw provider (`anthropic`,
+             *     `openai`, …) uses the inference tier and needs a key. Defaults to the CLI
+             *     tier (`claude`) so assist works out of the box wherever a CLI is logged in.
+             */
+            backend?: string | null;
+            /** @description Optional existing SQL to edit/improve rather than write from scratch. */
+            current_sql?: string | null;
+            /**
+             * @description Optional datasource the query should target; when set, the server grounds
+             *     the model with that datasource's table/column schema so generated SQL
+             *     references real columns.
+             */
+            datasource_id?: string | null;
+            /**
+             * @description Optional model override (concrete id or `small`/`medium`/`large`).
+             *     Defaults to the service's medium tier when omitted.
+             */
+            model?: string | null;
+            /** @description The user's plain-English ask (e.g. "average temperature per site, last 24h"). */
+            prompt: string;
+            task: components["schemas"]["AssistTask"];
+        };
+        /**
+         * @description The assistant's structured answer. `result` shape depends on the request task
+         *     (see [`AssistTask`]); it is opaque JSON on the wire so the contract stays
+         *     stable as task outputs evolve. `raw` carries the model's unparsed reply for
+         *     debugging / when structured parsing degrades.
+         */
+        AssistResponse: {
+            /**
+             * @description The model's raw text reply, retained so the UI can fall back to showing it
+             *     if the structured `result` is empty.
+             */
+            raw?: string | null;
+            result: unknown;
+            task: components["schemas"]["AssistTask"];
+        };
+        /**
+         * @description What the caller wants the assistant to produce. The task selects the system
+         *     instructions and the expected shape of [`AssistResponse::result`].
+         * @enum {string}
+         */
+        AssistTask: "sql" | "panel" | "dashboard";
+        /**
+         * @description A typed, append-only record of a single domain mutation.
+         *
+         *     Five product features collapse onto this primitive: user audit log,
+         *     AI-agent log, undo/redo, duplicate, and copy/paste. See
+         *     `DOCS/backend/undo-redo/SCOPE.md`.
+         */
+        Change: {
+            /** @description Who caused the change. */
+            actor: components["schemas"]["Actor"];
+            /**
+             * @description Snapshot of the row *after* the mutation. Used for redo,
+             *     duplicate, and paste.
+             */
+            after?: Record<string, never> | null;
+            /**
+             * Format: date-time
+             * @description When the change was committed.
+             */
+            at: string;
+            /** @description Snapshot of the row *before* the mutation. Used for undo. */
+            before?: Record<string, never> | null;
+            correlation?: null | components["schemas"]["TraceId"];
+            /**
+             * @description Every change belongs to a group. Single-row mutations get a
+             *     fresh `GroupId`; multi-row transactions share one. Undo
+             *     operates on whole groups, so this is never `Option`.
+             */
+            group_id: components["schemas"]["GroupId"];
+            /** @description ULID, monotonic per recorder. */
+            id: components["schemas"]["ChangeId"];
+            /** @description What kind of mutation occurred. */
+            op: components["schemas"]["Op"];
+            /**
+             * @description Optional RFC 6902 patch document, as raw JSON. Kept as
+             *     [`serde_json::Value`] so this crate does not depend on a
+             *     patch-library crate — the backend picks one.
+             */
+            patch?: Record<string, never> | null;
+            /** @description Resource that was mutated. Kind + id (+ optional owner). */
+            resource: components["schemas"]["ResourceRef"];
+            /**
+             * Format: int64
+             * @description Optimistic-concurrency token taken at read time.
+             *     [`super::Reversible::apply_inverse`] uses it as the `WHERE`
+             *     predicate and returns [`crate::Error::Conflict`] if the row
+             *     has moved on. `None` for resources without versioning (caller
+             *     accepts last-write-wins).
+             */
+            resource_version?: number | null;
+        };
+        /**
+         * @description Identifier of a single row in `starter_changes`. ULID, monotonic
+         *     per recorder.
+         */
+        ChangeId: string;
+        /** @description One page of changes plus the cursor for the next page. */
+        ChangePage: {
+            /** @description Rows in descending `at` order. */
+            items: components["schemas"]["Change"][];
+            /** @description Cursor to pass into the next [`ChangeFilter`]. `None` at end. */
+            next_cursor?: string | null;
         };
         /** @description A notification channel. */
         ChannelDetail: {
@@ -506,14 +1227,34 @@ export interface components {
             type: components["schemas"]["ResultColumnType"];
         };
         /**
-         * @description Create an alert rule: a query whose first numeric cell is compared to a
-         *     threshold on a cadence. `op` is one of gt|gte|lt|lte|eq|ne.
+         * @description Create an agent. `backend` selects the facade tier/provider, `model` is a
+         *     concrete id or size alias. `config` carries provider-specific knobs and is
+         *     validated when a session runs, not here. `model` defaults to `large`.
+         */
+        CreateAgentRequest: {
+            backend: string;
+            config?: unknown;
+            model?: string | null;
+            name: string;
+            system_prompt?: string | null;
+        };
+        /**
+         * @description Create an alert rule. A rule is either a legacy single condition (the
+         *     top-level `query`/`op`/`threshold`) or a multi-condition rule (`conditions`
+         *     combined by `combinator`). `no_data_policy`/`exec_error_policy` say how a
+         *     missing or failed evaluation resolves (`ok`|`alerting`|`keep_last`).
          */
         CreateAlertRuleRequest: {
             channel_ids?: string[] | null;
+            /** @description How conditions combine: `and`|`or` (default `and`). */
+            combinator?: string | null;
+            /** @description Multi-condition list; when set it supersedes the single `query`/`op`. */
+            conditions?: components["schemas"]["AlertCondition"][] | null;
             /** Format: uuid */
             datasource_id?: string | null;
             enabled?: boolean | null;
+            /** @description Execution-error policy: `ok`|`alerting`|`keep_last` (default `ok`). */
+            exec_error_policy?: string | null;
             /**
              * Format: int32
              * @description Pending dwell in seconds before firing (0 = fire on first breach).
@@ -524,7 +1265,11 @@ export interface components {
              * @description Evaluation cadence in seconds.
              */
             interval_secs?: number | null;
+            /** @description Optional notification message template; omitted uses the default. */
+            message_template?: string | null;
             name: string;
+            /** @description No-data policy: `ok`|`alerting`|`keep_last` (default `ok`). */
+            no_data_policy?: string | null;
             op: string;
             query: string;
             /** Format: double */
@@ -541,9 +1286,23 @@ export interface components {
         };
         /**
          * @description Create a dashboard. The slug must be unique within the tenant; the server
-         *     rejects a duplicate rather than silently aliasing.
+         *     rejects a duplicate rather than silently aliasing. Appearance (icon +
+         *     accent) is optional — omitted fields fall back to server defaults, so older
+         *     clients that send only name/slug keep working.
          */
         CreateDashboardRequest: {
+            /**
+             * @description accent colour as an HSL triple string, e.g. "152 76% 44%"; defaults
+             *     server-side when omitted.
+             */
+            accent?: string | null;
+            /**
+             * Format: uuid
+             * @description Folder to file the dashboard under (WS-05); omit/`null` for the root.
+             */
+            folder_id?: string | null;
+            /** @description lucide icon name; defaults server-side when omitted. */
+            icon?: string | null;
             name: string;
             slug: string;
         };
@@ -579,6 +1338,34 @@ export interface components {
             pipeline?: unknown;
         };
         /**
+         * @description Create a folder. `parent_id` files it under another folder (in the same
+         *     tenant); omit it for a root folder.
+         */
+        CreateFolderRequest: {
+            name: string;
+            /**
+             * Format: uuid
+             * @description Parent folder id; omit/`null` for a root folder.
+             */
+            parent_id?: string | null;
+        };
+        /**
+         * @description Create a nav node. `target` defaults to a `group` header when omitted so a
+         *     client can lay out structure first and bind pages later. `context` is only
+         *     meaningful for a `dashboard` target and is ignored (cleared) otherwise.
+         */
+        CreateNavNodeRequest: {
+            accent?: string | null;
+            context?: null | components["schemas"]["NavContext"];
+            icon?: string | null;
+            /** Format: uuid */
+            parent_id?: string | null;
+            /** Format: int32 */
+            sort_order?: number;
+            target?: components["schemas"]["NavTarget"];
+            title: string;
+        };
+        /**
          * @description Create a panel under the dashboard named in the path. The dashboard is keyed
          *     by its immutable id (resolved from the path slug at the request edge).
          */
@@ -594,6 +1381,44 @@ export interface components {
             title: string;
             /** @description Visualization kind; defaults to `table` when omitted. */
             viz?: string | null;
+        };
+        /**
+         * @description Create a tenant-authored query-kind. `name` is a reverse-DNS id (e.g.
+         *     `com.acme.foo`), `sql` the raw template, and `datasource_kind` the datasource
+         *     shape it targets. `params_schema` is the kind's JSON Schema document; it and
+         *     `tables` default to empty. The API lint-validates the SQL before insert.
+         */
+        CreateQueryKindRequest: {
+            datasource_binding?: string | null;
+            datasource_kind: string;
+            description?: string | null;
+            name: string;
+            params_schema?: unknown;
+            sql: string;
+            tables?: string[];
+        };
+        /**
+         * @description Open a session against an agent by sending its opening prompt. The agent's
+         *     system prompt (if any) is prepended by the server; the caller supplies only
+         *     the user message. The response carries the session id whose SSE feed streams
+         *     the run.
+         */
+        CreateSessionRequest: {
+            /** @description The opening user message. */
+            prompt: string;
+        };
+        /**
+         * @description The response to opening a session: the session id (now `running`) plus a
+         *     short-lived signed token to connect its SSE feed at
+         *     `GET /api/v1/agents/sessions/{id}/events?token=…`. A browser `EventSource`
+         *     cannot set an auth header, so the token rides the query string.
+         */
+        CreateSessionResponse: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            /** @description Signed token for the SSE subscription. */
+            token: string;
         };
         /**
          * @description Create a silence. `rule_id = None` silences every rule in the tenant for the
@@ -644,18 +1469,76 @@ export interface components {
             token: string;
         };
         /**
+         * @description Create a dashboard variable. `name` is unique within the dashboard; a
+         *     duplicate is a conflict. The kind-specific authoring input rides in
+         *     `options_config` (opaque, shape owned by the UI).
+         */
+        CreateVariableRequest: {
+            current?: string[];
+            hidden?: boolean;
+            include_all?: boolean;
+            kind: components["schemas"]["VariableKind"];
+            label?: string | null;
+            multi?: boolean;
+            /** @description Reference name without the `$`, unique per dashboard. */
+            name: string;
+            /** @description Kind-specific authoring config; defaults to an empty object. */
+            options_config?: unknown;
+            /** Format: int32 */
+            sort_order?: number;
+        };
+        /**
          * @description Full dashboard view: identity plus its ordered panels. The slug resolves to
          *     the `id` at the request edge; everything below keys on the id.
          */
         DashboardDetail: {
+            /** @description accent colour as an HSL triple string, e.g. "152 76% 44%". */
+            accent: string;
+            /**
+             * Format: uuid
+             * @description Folder this dashboard is filed under (WS-05); `null` is the root.
+             */
+            folder_id?: string | null;
+            /** @description lucide icon name for the sidebar/page chrome. */
+            icon: string;
             /** Format: uuid */
             id: string;
             name: string;
             panels: components["schemas"]["PanelDetail"][];
             slug: string;
+            /** @description Whether the dashboard is starred (WS-05). */
+            starred?: boolean;
         };
-        /** @description A dashboard in a list: identity, route alias, and display name. */
+        /**
+         * @description A self-contained, importable dashboard. Identity (`slug`/`name`) plus
+         *     appearance, its panels, and its variables.
+         */
+        DashboardExport: {
+            /** @description accent HSL triple string. */
+            accent: string;
+            /** @description lucide icon name. */
+            icon: string;
+            name: string;
+            panels: components["schemas"]["PanelExport"][];
+            /**
+             * Format: int32
+             * @description Model version; must match [`DASHBOARD_SCHEMA_VERSION`] to import.
+             */
+            schema_version: number;
+            slug: string;
+            variables?: components["schemas"]["VariableExport"][];
+        };
+        /** @description A dashboard in a list: identity, route alias, display name, and appearance. */
         DashboardSummary: {
+            /** @description accent colour as an HSL triple string, e.g. "152 76% 44%". */
+            accent: string;
+            /**
+             * Format: uuid
+             * @description Folder this dashboard is filed under (WS-05); `null` is the root.
+             */
+            folder_id?: string | null;
+            /** @description lucide icon name for the sidebar/page chrome. */
+            icon: string;
             /**
              * Format: uuid
              * @description Immutable id — grants and panel refs key on this.
@@ -664,6 +1547,8 @@ export interface components {
             name: string;
             /** @description Mutable route alias. */
             slug: string;
+            /** @description Whether the dashboard is starred (WS-05). */
+            starred?: boolean;
         };
         /**
          * @description Full datasource view. The connection is redacted — host/port/database/user
@@ -686,6 +1571,46 @@ export interface components {
          * @enum {string}
          */
         DatasourceKind: "postgres";
+        /** @description The registered datasource-kinds, name-ordered. */
+        DatasourceKindList: {
+            /** @description One entry per declared connector type. */
+            kinds: components["schemas"]["DatasourceKindSummary"][];
+        };
+        /**
+         * @description One datasource-kind's catalogue entry: enough for the UI to render a config
+         *     form and know how the connector is tested, never the connector's internals.
+         */
+        DatasourceKindSummary: {
+            /**
+             * @description The JSON Schema the connector's config validates against — the UI builds
+             *     its form from this.
+             */
+            config_schema: unknown;
+            /** @description Optional human description for the config form. */
+            description?: string | null;
+            /**
+             * @description The SQL dialect a query connector renders time macros in; absent for a
+             *     stream connector.
+             */
+            dialect?: string | null;
+            /** @description The kind id a datasource record stores (e.g. `postgres`, `mqtt`). */
+            name: string;
+            /**
+             * @description Which config fields are secrets (sealed at rest, redacted on read). The UI
+             *     renders these as write-only password inputs.
+             */
+            secret_fields: string[];
+            /**
+             * @description Which query surface the connector serves: `query` (request → rows) or
+             *     `stream` (subscribe → events for live panels/flows).
+             */
+            surface: string;
+            /**
+             * @description How connectivity is tested before save: `query` (a probe query) or
+             *     `connect` (open + close a session).
+             */
+            test_mode: string;
+        };
         /** @description A datasource's introspected tables, for SQL autocomplete in the editor. */
         DatasourceSchema: {
             tables: components["schemas"]["SchemaTable"][];
@@ -704,6 +1629,47 @@ export interface components {
             name: string;
         };
         /**
+         * @description Closed enum of date-format choices. Variants locked in stage 1.
+         *     *Revisit trigger:* a locale ships that none of these three formats
+         *     fit.
+         * @enum {string}
+         */
+        DateFormat: "auto" | "YYYY-MM-DD" | "DD/MM/YYYY" | "MM/DD/YYYY";
+        /**
+         * @description Test a flow's `input` + `pipeline` without persisting it or running its real
+         *     output. The engine swaps in the bounded collector sink, runs the stream to
+         *     the first breached cap (or a short wall-clock deadline), and returns the
+         *     sample rows. `output` is intentionally absent — a dry run never writes to a
+         *     real sink. Optional `max_rows` lets the editor narrow the sample further
+         *     than the server default.
+         */
+        DryRunRequest: {
+            /** @description The flow's input config blob (`{type, ...}`). */
+            input: unknown;
+            /**
+             * Format: int64
+             * @description Cap on sample rows; clamped to the server's hard maximum.
+             */
+            max_rows?: number | null;
+            /** @description The pipeline processors, in order. Defaults to an empty pipeline. */
+            pipeline?: unknown;
+        };
+        /**
+         * @description A dry run's outcome. On a build/runtime failure `error` carries the message
+         *     and `rows` is empty; otherwise `rows`/`columns`/`stats` describe the bounded
+         *     sample (with `stats.truncated` set when a cap stopped the stream early).
+         */
+        DryRunResponse: {
+            /** @description Column schema of the sample, derived from the result's Arrow schema. */
+            columns: components["schemas"]["ColumnSchema"][];
+            /** @description A build or runtime error, surfaced before save. `None` on success. */
+            error?: string | null;
+            /** @description The sample rows, JSON-encoded. */
+            rows: unknown[];
+            /** @description Row/byte/time counters and the truncation flag for the sample. */
+            stats: components["schemas"]["QueryStats"];
+        };
+        /**
          * @description A saved ingestion flow in full. The three config blobs are opaque JSON on the
          *     wire — the input connector, the processor pipeline, and the output sink the
          *     FlowManager hands to the engine.
@@ -714,10 +1680,57 @@ export interface components {
             /** Format: uuid */
             id: string;
             input: unknown;
+            /** @description Live run counters for this flow. */
+            metrics: components["schemas"]["FlowMetrics"];
             name: string;
             output: unknown;
             pipeline: unknown;
             /** @description Whether the FlowManager currently has it running on this node. */
+            running: boolean;
+        };
+        /** @description A self-contained, importable flow: its name plus the ArkFlow config blobs. */
+        FlowExport: {
+            /** @description ArkFlow input component (`{type, ...config}`), secrets redacted. */
+            input: unknown;
+            name: string;
+            /** @description ArkFlow output component (`{type, ...config}`), secrets redacted. */
+            output: unknown;
+            /** @description ArkFlow processor list (a JSON array of `{type, ...config}`). */
+            pipeline?: unknown;
+            /**
+             * @description Whether [`redact_secrets`] blanked any field on export, so the UI can
+             *     tell the user credentials were removed (and must be re-entered on
+             *     import). Skipped when false so a clean export stays minimal.
+             */
+            redacted?: boolean;
+            /**
+             * Format: int32
+             * @description Model version; must match [`FLOW_SCHEMA_VERSION`] to import.
+             */
+            schema_version: number;
+        };
+        /**
+         * @description Live run state surfaced on the flows list and detail so an admin sees a
+         *     flow's health without opening it: whether it is running, when its current
+         *     (or most recent) run started, and the error that ended the last run (if
+         *     any). All fields reflect this node's in-process
+         *     [`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and
+         *     are absent once the process restarts (single-node v1). Throughput counters
+         *     would require instrumenting every output sink, so they are intentionally
+         *     omitted rather than reported as zero.
+         */
+        FlowMetrics: {
+            /**
+             * @description The error that ended the most recent run, or `None` if it ended cleanly
+             *     (or is still running).
+             */
+            last_error?: string | null;
+            /**
+             * @description RFC-3339 timestamp of when the current or most recent run started, or
+             *     `None` if the flow has never run this process.
+             */
+            last_started_at?: string | null;
+            /** @description Whether the manager currently has the flow running on this node. */
             running: boolean;
         };
         /**
@@ -728,9 +1741,49 @@ export interface components {
             enabled: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Live run counters for this flow. */
+            metrics: components["schemas"]["FlowMetrics"];
             name: string;
             running: boolean;
         };
+        /**
+         * @description One folder: its immutable id, its parent (NULL = root), and display name. The
+         *     client assembles the tree from the flat list using `parent_id`.
+         */
+        FolderSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /**
+             * Format: uuid
+             * @description Parent folder id; `null` for a root folder.
+             */
+            parent_id?: string | null;
+        };
+        /**
+         * @description Which user to erase from the audit ledger. Erasure tombstones the *content*
+         *     (`before`/`after`/`patch`) of every change the subject authored, within the
+         *     caller's tenant; the audit fact (who/when/what op) is preserved, as a
+         *     regulator still needs to see that an action occurred.
+         */
+        ForgetRequest: {
+            /** @description The principal subject (stable user id) whose authored changes to scrub. */
+            subject: string;
+        };
+        /** @description Result of a forget request: how many ledger rows were tombstoned. */
+        ForgetResponse: {
+            /**
+             * Format: int64
+             * @description Number of ledger rows whose payloads were nulled.
+             */
+            tombstoned: number;
+        };
+        /**
+         * @description Identifier shared by every [`super::Change`] recorded inside a
+         *     single [`super::ChangeRecorder::transaction`] call. Undo operates
+         *     on whole groups.
+         */
+        GroupId: string;
         /** @description The authenticated caller's full context. */
         MeResponse: {
             /** @description Coarse role: `reader` | `writer` | `admin`. */
@@ -749,6 +1802,116 @@ export interface components {
              *     marks a super-admin that bypasses the cross-tenant predicate.
              */
             tenant_id?: string | null;
+        };
+        /**
+         * @description A nav node's context payload — applied only to `dashboard` targets. EXACTLY
+         *     `{ values?, tags? }` per the §1 merge contract: `values` become
+         *     `PageContext.values` (explicit overrides a `context`/`values` variable
+         *     reads), `tags` are merged *over* the dashboard's own tags. There is no
+         *     `varOverrides` channel — a node overrides a variable's current value through
+         *     `values` + a `context` variable on the normal WS-02 selection path.
+         */
+        NavContext: {
+            /**
+             * @description Tag pins/overrides merged over the dashboard's own tags for this mount.
+             *     A null value clears a tag for the mount without retagging the page.
+             */
+            tags?: {
+                [key: string]: string | null;
+            };
+            /** @description Explicit variable-value overrides for this mount (e.g. `{ building: "b1" }`). */
+            values?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description A nav node as returned to clients. `target`/`context` are the typed shapes
+         *     above; `path` is not stored — the tree is built client-side from `parent_id`.
+         */
+        NavNodeDetail: {
+            accent?: string | null;
+            context?: null | components["schemas"]["NavContext"];
+            icon?: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The parent node, or `None` for a root node.
+             */
+            parent_id?: string | null;
+            /**
+             * Format: int32
+             * @description Position among siblings; lower sorts first.
+             */
+            sort_order: number;
+            target: components["schemas"]["NavTarget"];
+            /** @description Display label ("Buildings", "Building-1", "Agents"). */
+            title: string;
+        };
+        /**
+         * @description What a nav node points at — exactly one of group / dashboard / route, an
+         *     internally-tagged union on `kind`. This is the wire shape of the stored
+         *     `target` JSONB; the store persists it verbatim. A `group` is a non-clickable
+         *     header, a `dashboard` is a reusable page mount, a `route` is one of the app's
+         *     built-in static pages (a closed allow-list, not free-form).
+         */
+        NavTarget: {
+            /** @enum {string} */
+            kind: "group";
+        } | {
+            /** Format: uuid */
+            dashboardId: string;
+            /** @enum {string} */
+            kind: "dashboard";
+        } | {
+            /** @enum {string} */
+            kind: "route";
+            route: components["schemas"]["StaticRoute"];
+        };
+        /**
+         * @description Which palette group a node belongs to. The visual builder groups the palette
+         *     by this and constrains edges (input → processor* → output).
+         * @enum {string}
+         */
+        NodeCategory: "input" | "processor" | "output";
+        /**
+         * @description A node type the engine can build, described for the editor: its ArkFlow
+         *     `type` discriminant, palette grouping, labels, and a JSON Schema for its
+         *     config so the editor can render a schema-driven form instead of raw JSON.
+         */
+        NodeType: {
+            /** @description Palette group. */
+            category: components["schemas"]["NodeCategory"];
+            /** @description JSON Schema (draft 2020-12) for the node's config object. */
+            config_schema: unknown;
+            /** @description One-line description. */
+            description: string;
+            /** @description The ArkFlow `type` value the serialised graph node carries. */
+            kind: string;
+            /** @description Human label for the palette. */
+            label: string;
+        };
+        /**
+         * @description The full palette: every registered node, in palette order (inputs,
+         *     processors, outputs).
+         */
+        NodeTypeList: {
+            node_types: components["schemas"]["NodeType"][];
+        };
+        /**
+         * @description Closed enum of number-format choices. Variants locked in stage 1.
+         *     *Revisit trigger:* Indian grouping (`1,23,456.78`) becomes a
+         *     shipped requirement.
+         * @enum {string}
+         */
+        NumberFormat: "auto" | "1,234.56" | "1.234,56" | "1 234,56";
+        /** @description The operation a [`super::Change`] represents. */
+        Op: "create" | "update" | "delete" | {
+            /**
+             * @description Domain-specific operation. `String` (not `&'static str`)
+             *     because values are read back from `jsonb`.
+             */
+            custom: string;
         };
         /**
          * @description A panel as the canvas renders it: which datasource + query feed it, how it is
@@ -771,6 +1934,47 @@ export interface components {
             viz: string;
         };
         /**
+         * @description One panel in the export — everything needed to re-create it bar the ids the
+         *     importing tenant mints fresh.
+         */
+        PanelExport: {
+            /**
+             * Format: uuid
+             * @description Datasource this panel queries; `null` when the source dashboard had none
+             *     or the importing tenant should re-bind it.
+             */
+            datasource_id?: string | null;
+            layout: unknown;
+            sql: string;
+            title: string;
+            viz: string;
+        };
+        /**
+         * @description `PATCH` body shape — mirror of [`super::ResolvedPreferences`] with
+         *     every field made optional.
+         */
+        PreferencesPatch: {
+            /** @description Optional ISO 4217 currency code or `"auto"`. */
+            currency?: string | null;
+            date_format?: null | components["schemas"]["DateFormat"];
+            /** @description Optional BCP-47 language subtag. */
+            language?: string | null;
+            length_unit?: null | components["schemas"]["Unit"];
+            /** @description Optional BCP-47 locale tag. */
+            locale?: string | null;
+            mass_unit?: null | components["schemas"]["Unit"];
+            number_format?: null | components["schemas"]["NumberFormat"];
+            pressure_unit?: null | components["schemas"]["Unit"];
+            speed_unit?: null | components["schemas"]["Unit"];
+            temperature_unit?: null | components["schemas"]["Unit"];
+            theme?: null | components["schemas"]["Theme"];
+            time_format?: null | components["schemas"]["TimeFormat"];
+            /** @description Optional IANA timezone identifier or `"auto"`. */
+            timezone?: string | null;
+            unit_system?: null | components["schemas"]["UnitSystem"];
+            week_start?: null | components["schemas"]["WeekStart"];
+        };
+        /**
          * @description Machine-readable error body.
          *
          *     Mirrors RFC 7807 loosely. The `type` field is a stable string
@@ -789,17 +1993,137 @@ export interface components {
             type: string;
         };
         /**
-         * @description Body of a one-shot query. The caller supplies only the SQL; every safety
-         *     bound (read-only role, statement timeout, forced `LIMIT`, row/byte caps) is
-         *     applied server-side and is deliberately *not* expressible here — a client
-         *     cannot raise its own limits.
+         * @description A past query run, as the recall drawer shows it. The `sql` is the authored
+         *     text so re-running it reproduces the original query.
+         */
+        QueryHistoryEntry: {
+            /**
+             * Format: uuid
+             * @description The datasource queried, or absent for the dev single-source path.
+             */
+            datasource_id?: string | null;
+            /**
+             * Format: int64
+             * @description Wall-clock execution time, when the run completed.
+             */
+            elapsed_ms?: number | null;
+            /** @description The error message, when the run failed. */
+            error?: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description When the run happened, RFC-3339.
+             */
+            ran_at: string;
+            /**
+             * Format: int64
+             * @description Rows returned, when the run completed.
+             */
+            row_count?: number | null;
+            /** @description The authored SQL. */
+            sql: string;
+            /** @description Whether the user pinned this run. */
+            starred: boolean;
+        };
+        /** @description The history list response, newest (and starred) first. */
+        QueryHistoryList: {
+            entries: components["schemas"]["QueryHistoryEntry"][];
+        };
+        /**
+         * @description A tenant-authored query-kind in full, including its `sql`. Unlike the
+         *     catalogue's [`QueryKindSummary`](crate::dto::query::kinds::QueryKindSummary),
+         *     which hides the SQL, this is the authoring view returned to the admin who
+         *     owns the kind.
+         */
+        QueryKindDetail: {
+            datasource_binding?: string | null;
+            /** @description The datasource shape the kind targets (e.g. `postgres`). */
+            datasource_kind: string;
+            description?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `com.acme.foo`). */
+            name: string;
+            /**
+             * @description The kind's params JSON Schema — the contract a request's `params`
+             *     validates against, and what a schema-driven form renders.
+             */
+            params_schema: unknown;
+            /** @description The raw SQL template, bound by the shared binder at run time. */
+            sql: string;
+            /** @description Tables the kind reads. */
+            tables: string[];
+        };
+        /** @description The registered query-kinds, name-ordered, for the editor's kind picker. */
+        QueryKindList: {
+            /** @description Every registered kind, sorted by `name`. */
+            kinds: components["schemas"]["QueryKindSummary"][];
+        };
+        /**
+         * @description One registered query-kind's descriptive surface. The `params_schema` is the
+         *     kind's JSON Schema document, which a schema-driven form renders to collect
+         *     the named params the kind binds.
+         */
+        QueryKindSummary: {
+            /** @description The datasource shape the kind targets (e.g. `postgres`). */
+            datasource_kind: string;
+            /** @description Human description for the picker, if the manifest declared one. */
+            description?: string | null;
+            /** @description Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `nexus.core.meters_list`). */
+            name: string;
+            /**
+             * @description The kind's params JSON Schema — the contract a kind-mode request's
+             *     `params` validates against, and what a schema-driven form renders.
+             */
+            params_schema: unknown;
+        };
+        /**
+         * @description Body of a one-shot query. The caller supplies the SQL plus the optional
+         *     macro context (time range, variables) the server-side binder substitutes;
+         *     every safety bound (read-only role, statement timeout, forced `LIMIT`,
+         *     row/byte caps) is applied server-side and is deliberately *not* expressible
+         *     here — a client cannot raise its own limits, and every supplied value is
+         *     *bound* into the prepared statement, never inlined.
+         *
+         *     This is the C7 contract: a single owner (WS-03) for an endpoint several
+         *     workstreams feed. WS-01 fills `time_range`, WS-02 fills `variables`; both
+         *     flow through the same binder.
          */
         QueryRequest: {
             /**
-             * @description The SQL to run against the datasource. Pushed down to the source database
-             *     so `WHERE`/`LIMIT` execute there, not in memory.
+             * Format: int64
+             * @description The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a
+             *     bare `$__interval`.
+             */
+            interval_secs?: number | null;
+            /**
+             * @description WS-10 kind-mode: the reverse-DNS id of a registered query-kind to run
+             *     *instead of* `sql`. When set, the server resolves the kind, validates
+             *     `params` against its schema, and binds the kind's own SQL — `sql` is
+             *     ignored. When absent (the default), the request is raw-SQL mode and `sql`
+             *     runs. This keeps `QueryRequest` a single additive contract (C7): kind-mode
+             *     is opt-in, sql-mode stays the default.
+             */
+            kind?: string | null;
+            /**
+             * @description WS-10 kind-mode named params, validated host-side against the kind's JSON
+             *     Schema before binding. Each value binds as a `$N` arg, never inlined.
+             *     Ignored in raw-SQL mode.
+             */
+            params?: unknown;
+            /**
+             * @description The SQL to run against the datasource. May carry macros (`$__timeFilter`)
+             *     and variable references (`$region`) the binder expands into bound args.
+             *     Pushed down to the source database so `WHERE`/`LIMIT` execute there.
              */
             sql: string;
+            time_range?: null | components["schemas"]["QueryTimeRange"];
+            /**
+             * @description Dashboard variable values, by name (without the leading `$`), expanded by
+             *     `$var` / `${var:csv}` / `$__sqlIn(var)`.
+             */
+            variables?: components["schemas"]["QueryVariable"][];
         };
         /**
          * @description A completed query result: column schema, rows as JSON objects keyed by
@@ -840,6 +2164,35 @@ export interface components {
             truncated: boolean;
         };
         /**
+         * @description An absolute query window. Half-open (`from` inclusive, `to` exclusive),
+         *     matching the binder's `col >= from AND col < to` expansion.
+         */
+        QueryTimeRange: {
+            /**
+             * Format: date-time
+             * @description Inclusive lower bound, RFC-3339.
+             */
+            from: string;
+            /**
+             * Format: date-time
+             * @description Exclusive upper bound, RFC-3339.
+             */
+            to: string;
+        };
+        /**
+         * @description One dashboard variable's resolved value(s). A single-valued variable carries
+         *     one entry; a multi-select carries several (expanded by `$__sqlIn`/`:csv`).
+         */
+        QueryVariable: {
+            /** @description Variable name without the `$` (e.g. `region`). */
+            name: string;
+            /**
+             * @description One or more string values. Multiple values drive list expansion; the
+             *     binder binds each as its own argument so values are always inert.
+             */
+            values: string[];
+        };
+        /**
          * @description Connection details safe to return over the API: everything *except* the
          *     secret. The password lives only as ciphertext in the store and is never
          *     serialized here — `GET /datasources/:id` returns this redacted view.
@@ -861,6 +2214,98 @@ export interface components {
             port: number;
             /** @description Connecting user. */
             user: string;
+        };
+        /**
+         * @description Fully-resolved per-principal preferences. All fields are concrete —
+         *     the resolver has already collapsed user → org → system → ICU
+         *     chains, so callers can trust every value.
+         */
+        ResolvedPreferences: {
+            /**
+             * @description ISO 4217 currency code (e.g. `"USD"`, `"EUR"`). Never `"auto"`
+             *     once resolved.
+             */
+            currency: string;
+            /** @description Concrete date format — never `Auto` once resolved. */
+            date_format: components["schemas"]["DateFormat"];
+            /**
+             * @description BCP-47 language subtag (e.g. `"en"`, `"fr"`). Drives i18n
+             *     message catalogue lookup.
+             */
+            language: string;
+            /** @description Concrete length unit (one of `Meter`, `Foot`). */
+            length_unit: components["schemas"]["Unit"];
+            /**
+             * @description BCP-47 locale tag (e.g. `"en-US"`, `"fr-FR"`). Drives ICU
+             *     formatting fallbacks.
+             */
+            locale: string;
+            /** @description Concrete mass unit (one of `Kilogram`, `Pound`). */
+            mass_unit: components["schemas"]["Unit"];
+            /** @description Concrete number format — never `Auto` once resolved. */
+            number_format: components["schemas"]["NumberFormat"];
+            /** @description Concrete pressure unit (one of `Kilopascal`, `Psi`, `Bar`). */
+            pressure_unit: components["schemas"]["Unit"];
+            /**
+             * @description Concrete speed unit (one of `MeterPerSecond`,
+             *     `KilometerPerHour`, `MilePerHour`, `Knot`).
+             */
+            speed_unit: components["schemas"]["Unit"];
+            /** @description Concrete temperature unit (one of `Celsius`, `Fahrenheit`). */
+            temperature_unit: components["schemas"]["Unit"];
+            /** @description UI theme (`Light`, `Dark`, or `System`). User-only field. */
+            theme: components["schemas"]["Theme"];
+            /** @description Concrete time format — never `Auto` once resolved. */
+            time_format: components["schemas"]["TimeFormat"];
+            /**
+             * @description IANA timezone identifier (e.g. `"Europe/Paris"`,
+             *     `"America/New_York"`). Never `"auto"` once resolved.
+             */
+            timezone: string;
+            /**
+             * @description `metric` or `imperial`. Drives per-unit `Auto` derivation
+             *     upstream; by the time it lands here the per-unit fields below
+             *     are already concrete, so this value is informational.
+             */
+            unit_system: components["schemas"]["UnitSystem"];
+            /** @description Concrete week-start — never `Auto` once resolved. */
+            week_start: components["schemas"]["WeekStart"];
+        };
+        /**
+         * @description Reference to the object an authorization check is being made
+         *     against. `id == None` is a collection-level / route-level check
+         *     ("may this user list flows at all?"); `id == Some(_)` is a
+         *     row-level check ("may this user update flow 42?").
+         *
+         *     `owner` is populated by the handler for row-level checks where
+         *     ownership matters — the engine can match
+         *     `principal.subject == object.owner` without a DB round-trip from
+         *     inside the engine. See SCOPE.md R5.
+         */
+        ResourceRef: {
+            /**
+             * @description Resource id for row-level checks. `None` for collection /
+             *     route-level checks.
+             */
+            id?: string | null;
+            /**
+             * @description Resource kind. Must be registered in the
+             *     [`super::ResourceRegistry`] (e.g. `"flows"`, `"users"`,
+             *     `"secrets"`).
+             */
+            kind: string;
+            /** @description Subject id of the resource owner, if any. */
+            owner?: string | null;
+            /**
+             * @description Tenant the resource row belongs to (Phase 7a — R11). For
+             *     kinds declared as `tenant_scoped = true` in the registry,
+             *     the engine requires
+             *     `Some(principal.tenant_id) == Some(object.tenant)` (with
+             *     the super-admin sentinel `"*"` bypassing the predicate).
+             *     `None` on a tenant-scoped kind is a `cross_tenant` deny —
+             *     the row is missing its tenancy column.
+             */
+            tenant?: string | null;
         };
         /**
          * @description The column's logical type, derived from the Arrow schema of the result.
@@ -885,6 +2330,17 @@ export interface components {
             /** @description The Postgres schema the table lives in (e.g. `public`). */
             schema: string;
         };
+        /** @description One session against an agent. */
+        SessionDetail: {
+            /** Format: uuid */
+            agent_id: string;
+            /** Format: uuid */
+            id: string;
+            /** @description Lifecycle: pending | running | completed | failed | cancelled. */
+            status: string;
+            /** @description The message transcript: an array of `{role, content}` objects. */
+            transcript: unknown;
+        };
         /**
          * @description Body for `PUT …/tags` — the complete tag set to persist on an entity. This
          *     is a full replace: tags not listed are removed, so the client sends the
@@ -905,6 +2361,18 @@ export interface components {
             /** Format: date-time */
             starts_at: string;
         };
+        /** @description Body of the star toggle: the desired pinned state for one history row. */
+        StarQueryRequest: {
+            starred: boolean;
+        };
+        /**
+         * @description The closed allow-list of built-in app pages a `route` node may point at —
+         *     the router table's static entries (`ui/src/app/router.tsx`). A node cannot
+         *     point at an arbitrary URL; this is what lets a static page be access-gated by
+         *     a nav node exactly like a dashboard mount (WS-13 §4).
+         * @enum {string}
+         */
+        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "alerts" | "agents" | "access" | "audit";
         /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
          *     id echoed in the SSE `id:` field so a reconnecting client can send
@@ -944,6 +2412,23 @@ export interface components {
             kind: components["schemas"]["TaggableKind"];
         };
         /**
+         * @description Body for a *pre-save* connection probe. Carries the same connection fields as
+         *     a create request, including the write-only secret, so the "Test connection"
+         *     affordance works before the datasource is persisted (and before a secret is
+         *     sealed). The secret is used transiently to connect and never stored or echoed.
+         */
+        TestConnectionRequest: {
+            database: string;
+            host: string;
+            /** @description Which connector to probe. */
+            kind: components["schemas"]["DatasourceKind"];
+            /** @description Write-only secret used only to open the probe connection. */
+            password: string;
+            /** Format: int32 */
+            port: number;
+            user: string;
+        };
+        /**
          * @description Outcome of a connection probe. `ok` is the headline; on failure `message`
          *     carries the redacted reason (driver errors are sanitized so they never leak
          *     the connection secret).
@@ -957,15 +2442,69 @@ export interface components {
             message?: string | null;
             ok: boolean;
         };
+        /**
+         * @description Closed enum of UI theme choices. User-only field — the org-layer
+         *     Preferences DTO omits `theme` entirely. *Revisit trigger:* a
+         *     consumer needs org-enforced theming.
+         * @enum {string}
+         */
+        Theme: "light" | "dark" | "system";
+        /**
+         * @description Closed enum of clock formats. Variants locked in stage 1.
+         *     *Revisit trigger:* none expected.
+         * @enum {string}
+         */
+        TimeFormat: "auto" | "24h" | "12h";
+        /**
+         * @description Correlation id linking a change to an external trace (HTTP request
+         *     id, agent run id, etc.). Opaque to the changelog.
+         */
+        TraceId: string;
+        /**
+         * @description The changelog group that an undo/redo applied. The client refreshes the
+         *     resources touched by this group (it can fetch the group's rows via the audit
+         *     API if it needs the per-resource detail).
+         */
+        UndoResponse: {
+            /** @description The `group_id` that was undone or redone. */
+            group_id: string;
+        };
+        /**
+         * @description Closed enum of unit codes for the v1 surface. Variants are locked
+         *     in stage 1 of the Phase 0 plan.
+         * @enum {string}
+         */
+        Unit: "celsius" | "fahrenheit" | "kilopascal" | "psi" | "bar" | "meter_per_second" | "kilometer_per_hour" | "mile_per_hour" | "knot" | "meter" | "foot" | "kilogram" | "pound" | "second" | "millisecond" | "minute" | "hour" | "day" | "cubic_meter" | "liter" | "milliliter" | "gallon_us" | "fluid_ounce_us" | "joule" | "kilojoule" | "kilowatt_hour" | "btu" | "watt" | "kilowatt" | "horsepower" | "square_meter" | "square_foot" | "acre" | "hectare" | "radian" | "degree" | "hertz" | "kilohertz" | "megahertz";
+        /**
+         * @description Closed enum of unit systems. Variants locked in stage 1 of the
+         *     Phase 0 plan. *Revisit trigger:* none expected — US-customary vs
+         *     Imperial nuance is handled in the per-unit derivation, not by
+         *     adding a third variant here.
+         * @enum {string}
+         */
+        UnitSystem: "metric" | "imperial";
+        /** @description Partially update an agent; omitted fields are left unchanged. */
+        UpdateAgentRequest: {
+            backend?: string | null;
+            config?: unknown;
+            model?: string | null;
+            name?: string | null;
+            system_prompt?: string | null;
+        };
         /** @description Partially update an alert rule; omitted fields are unchanged. */
         UpdateAlertRuleRequest: {
             channel_ids?: string[] | null;
+            combinator?: string | null;
+            conditions?: components["schemas"]["AlertCondition"][] | null;
             enabled?: boolean | null;
+            exec_error_policy?: string | null;
             /** Format: int32 */
             for_secs?: number | null;
             /** Format: int32 */
             interval_secs?: number | null;
+            message_template?: string | null;
             name?: string | null;
+            no_data_policy?: string | null;
             op?: string | null;
             query?: string | null;
             /** Format: double */
@@ -973,11 +2512,26 @@ export interface components {
         };
         /**
          * @description Partial update. Renaming the slug changes only the route alias — grants and
-         *     panel refs keep pointing at the immutable id, so nothing is orphaned.
+         *     panel refs keep pointing at the immutable id, so nothing is orphaned. Moving
+         *     between folders and starring (WS-05) ride this same patch.
          */
         UpdateDashboardRequest: {
+            /** @description accent HSL triple string; `None` leaves it unchanged. */
+            accent?: string | null;
+            /** @description Re-root the dashboard (clear its folder). */
+            clear_folder?: boolean;
+            /**
+             * Format: uuid
+             * @description Move into this folder. Ignored when `clear_folder` is true; `None` (with
+             *     `clear_folder` false) leaves the folder unchanged.
+             */
+            folder_id?: string | null;
+            /** @description lucide icon name; `None` leaves it unchanged. */
+            icon?: string | null;
             name?: string | null;
             slug?: string | null;
+            /** @description Star/unstar; `None` leaves it unchanged. */
+            starred?: boolean | null;
         };
         /**
          * @description Partial update. Every field is optional; `None` leaves the stored value
@@ -1007,6 +2561,47 @@ export interface components {
             output?: unknown;
             pipeline?: unknown;
         };
+        /**
+         * @description Partial update. `name` renames. The parent is three-valued, modelled
+         *     explicitly so a JSON-friendly wire shape (no double-`null` ambiguity) can
+         *     distinguish the cases: send `parent_id` to move under a folder, set
+         *     `clear_parent: true` to re-root, or send neither to leave the parent
+         *     unchanged. `clear_parent` wins if both are set.
+         */
+        UpdateFolderRequest: {
+            /** @description Re-root the folder (set its parent to NULL). */
+            clear_parent?: boolean;
+            name?: string | null;
+            /**
+             * Format: uuid
+             * @description Move under this folder. Ignored when `clear_parent` is true.
+             */
+            parent_id?: string | null;
+        };
+        /**
+         * @description Partially update a nav node. Omitted fields are left unchanged. The
+         *     three-valued fields (parent, context, icon, accent) pair an optional value
+         *     with a `clear_*` flag so JSON can express "leave / set / clear" without a
+         *     nested-`null` ambiguity: `clear_*` wins, then an explicit value, else leave.
+         *     Re-targeting (e.g. dashboard → group) sends `target` + `clear_context: true`.
+         */
+        UpdateNavNodeRequest: {
+            accent?: string | null;
+            clear_accent?: boolean;
+            /** @description Drop the context (e.g. when retargeting a dashboard mount to a group). */
+            clear_context?: boolean;
+            clear_icon?: boolean;
+            /** @description Re-root the node (move to top level), overriding `parent_id`. */
+            clear_parent?: boolean;
+            context?: null | components["schemas"]["NavContext"];
+            icon?: string | null;
+            /** Format: uuid */
+            parent_id?: string | null;
+            /** Format: int32 */
+            sort_order?: number | null;
+            target?: null | components["schemas"]["NavTarget"];
+            title?: string | null;
+        };
         /** @description Partial update of a panel. `None` fields are left unchanged. */
         UpdatePanelRequest: {
             /** Format: uuid */
@@ -1016,6 +2611,106 @@ export interface components {
             title?: string | null;
             viz?: string | null;
         };
+        /**
+         * @description Partially update a query-kind; omitted fields are left unchanged. `name` is
+         *     immutable — a kind is not renamed — so it is absent here.
+         */
+        UpdateQueryKindRequest: {
+            datasource_binding?: string | null;
+            datasource_kind?: string | null;
+            description?: string | null;
+            params_schema?: unknown;
+            sql?: string | null;
+            tables?: string[] | null;
+        };
+        /**
+         * @description Partial update. Every field is optional — `None` leaves the stored value
+         *     untouched. Changing `current` alone is the common case (the user picked a new
+         *     value in the bar); changing the rest is the variable editor.
+         */
+        UpdateVariableRequest: {
+            current?: string[] | null;
+            hidden?: boolean | null;
+            include_all?: boolean | null;
+            kind?: null | components["schemas"]["VariableKind"];
+            label?: string | null;
+            multi?: boolean | null;
+            name?: string | null;
+            options_config?: unknown;
+            /** Format: int32 */
+            sort_order?: number | null;
+        };
+        /**
+         * @description A dashboard variable definition. `options_config` carries the kind-specific
+         *     authoring input (the custom list, the option SQL + datasource, the interval
+         *     steps, or the datasource-kind filter); it is opaque on the wire because its
+         *     shape varies by `kind` and the UI owns each shape. `current` holds the
+         *     selected value(s); the binder receives these (resolved) as `QueryVariable`.
+         */
+        VariableDetail: {
+            /**
+             * @description Currently selected value(s). One entry for a single-select; several for a
+             *     multi-select / "All" expansion. The binder binds each as its own arg.
+             */
+            current?: string[];
+            /**
+             * Format: uuid
+             * @description The dashboard this variable scopes.
+             */
+            dashboard_id: string;
+            /** @description Whether the variable is hidden from the bar (constants usually are). */
+            hidden?: boolean;
+            /** Format: uuid */
+            id: string;
+            /** @description Whether an "All" option is offered (expands to every resolved option). */
+            include_all?: boolean;
+            kind: components["schemas"]["VariableKind"];
+            /** @description Human label for the variable bar; falls back to `name` when absent. */
+            label?: string | null;
+            /** @description Whether multiple values may be selected at once. */
+            multi?: boolean;
+            /** @description The reference name without the `$` (e.g. `region`). Unique per dashboard. */
+            name: string;
+            /** @description Kind-specific authoring config (opaque; shape owned by the UI per kind). */
+            options_config: unknown;
+            /**
+             * Format: int32
+             * @description Display/resolution order within the dashboard's variable bar; lower
+             *     sorts first. Ties break by creation order.
+             */
+            sort_order?: number;
+        };
+        /**
+         * @description One variable in the export. Mirrors the relational variable row minus its
+         *     ids; opaque `options_config` travels as-is.
+         */
+        VariableExport: {
+            current?: string[];
+            hidden?: boolean;
+            include_all?: boolean;
+            kind: string;
+            label?: string | null;
+            multi?: boolean;
+            name: string;
+            options_config?: unknown;
+            /** Format: int32 */
+            sort_order?: number;
+        };
+        /**
+         * @description The kind of a dashboard variable — what populates its option list and how its
+         *     value is sourced. Mirrors Grafana's templating types; the UI resolves the
+         *     options for each kind, the binder only ever sees the *resolved* string
+         *     value(s) (WS-03's `$var`/`$__sqlIn` expansion).
+         * @enum {string}
+         */
+        VariableKind: "constant" | "custom" | "query" | "datasource" | "interval" | "textbox" | "context";
+        /**
+         * @description Closed enum of week-start choices. Variants locked in stage 1.
+         *     *Revisit trigger:* a locale that starts the week on Saturday (parts
+         *     of MENA) surfaces as a shipped requirement.
+         * @enum {string}
+         */
+        WeekStart: "auto" | "monday" | "sunday";
     };
     responses: never;
     parameters: never;
@@ -1025,6 +2720,363 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_agents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agents */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentSummary"][];
+                };
+            };
+        };
+    };
+    create_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+        };
+    };
+    get_agent_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDetail"];
+                };
+            };
+            /** @description Not allowed to view this session */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    subscribe_agent_session: {
+        parameters: {
+            query: {
+                /** @description Signed session token from create_agent_session */
+                token: string;
+            };
+            header?: never;
+            path: {
+                /** @description Session id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Missing/expired/invalid token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Session not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agent */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+            /** @description Not allowed to view this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgentDetail"];
+                };
+            };
+            /** @description Not allowed to edit this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_agent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_agent_sessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sessions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDetail"][];
+                };
+            };
+            /** @description Not allowed to view this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agent not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_agent_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Agent id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSessionRequest"];
+            };
+        };
+        responses: {
+            /** @description Session started */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateSessionResponse"];
+                };
+            };
+            /** @description Not allowed to run this agent */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Agent not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ai_assist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistRequest"];
+            };
+        };
+        responses: {
+            /** @description Structured assistance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistResponse"];
+                };
+            };
+            /** @description Empty prompt */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to view the grounding datasource */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The model call failed */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_channels: {
         parameters: {
             query?: never;
@@ -1323,6 +3375,147 @@ export interface operations {
             };
         };
     };
+    list_audit: {
+        parameters: {
+            query?: {
+                /** @description Filter by actor kind (`"user"`, `"agent"`, `"system"`). */
+                actor_kind?: string;
+                /** @description Filter by actor id (principal subject or agent run id). */
+                actor_id?: string;
+                /** @description Filter agent actors by model. */
+                actor_model?: string;
+                /** @description Filter by `resource.kind`. */
+                resource_kind?: string;
+                /** @description Filter by `resource.id` (requires `resource_kind`). */
+                resource_id?: string;
+                /** @description Filter by group id (load a whole transaction). */
+                group_id?: components["schemas"]["GroupId"];
+                /** @description Inclusive lower bound on `at`. */
+                since?: string;
+                /** @description Exclusive upper bound on `at`. */
+                until?: string;
+                /** @description Page size. Backends MUST cap this. */
+                limit?: number;
+                /** @description Opaque cursor returned by a previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Audit page (newest first) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangePage"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an admin / no tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    forget_subject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgetRequest"];
+            };
+        };
+        responses: {
+            /** @description Rows tombstoned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgetResponse"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an admin / no tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resource_history: {
+        parameters: {
+            query?: {
+                /** @description Inclusive lower bound on `at` (RFC 3339). */
+                since?: string;
+                /** @description Exclusive upper bound on `at` (RFC 3339). */
+                until?: string;
+                /** @description Page size (backend-capped). */
+                limit?: number;
+                /** @description Opaque cursor from a previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Resource kind, e.g. nexus.dashboard */
+                kind: string;
+                /** @description Resource id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resource history (newest first) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChangePage"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not an admin / no tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_dashboards: {
         parameters: {
             query?: never;
@@ -1332,7 +3525,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Dashboards */
+            /** @description Dashboards the caller may view */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1364,6 +3557,44 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DashboardSummary"];
                 };
+            };
+            /** @description Slug already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    import_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardExport"];
+            };
+        };
+        responses: {
+            /** @description Imported */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+            /** @description Unsupported schema version */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Slug already used in this tenant */
             409: {
@@ -1473,6 +3704,73 @@ export interface operations {
             };
         };
     };
+    duplicate_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Source dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Duplicated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardSummary"];
+                };
+            };
+            /** @description Source not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Derived slug already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    export_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Portable dashboard model */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardExport"];
+                };
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     add_panel: {
         parameters: {
             query?: never;
@@ -1500,6 +3798,77 @@ export interface operations {
             };
             /** @description Dashboard not found in this tenant */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_variables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug (route alias) */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Variables in bar order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableDetail"][];
+                };
+            };
+            /** @description Dashboard not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    create_variable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Dashboard slug (route alias) */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVariableRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableDetail"];
+                };
+            };
+            /** @description Dashboard not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Variable name already used on this dashboard */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1548,6 +3917,57 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DatasourceDetail"];
                 };
+            };
+        };
+    };
+    list_datasource_kinds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registered datasource-kinds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasourceKindList"];
+                };
+            };
+        };
+    };
+    test_connection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestConnectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Probe outcome (ok=false on a failed probe) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDatasourceResponse"];
+                };
+            };
+            /** @description Connector kind cannot be probed pre-save */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1816,6 +4236,88 @@ export interface operations {
             };
         };
     };
+    dry_run_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Dry-run sample or inline error */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DryRunResponse"];
+                };
+            };
+            /** @description Engine failed to initialise */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    import_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlowExport"];
+            };
+        };
+        responses: {
+            /** @description Imported */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+            /** @description Unknown schema_version */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_node_types: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Registered flow node types */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NodeTypeList"];
+                };
+            };
+        };
+    };
     get_flow: {
         parameters: {
             query?: never;
@@ -1927,6 +4429,43 @@ export interface operations {
             };
         };
     };
+    export_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Portable flow model */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowExport"];
+                };
+            };
+            /** @description Not allowed to view this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     start_flow: {
         parameters: {
             query?: never;
@@ -2008,6 +4547,126 @@ export interface operations {
             };
         };
     };
+    list_folders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Folders in the tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderSummary"][];
+                };
+            };
+        };
+    };
+    create_folder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderSummary"];
+                };
+            };
+            /** @description Parent folder does not exist in this tenant */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_folder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Folder id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_folder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Folder id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description Folder updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderSummary"];
+                };
+            };
+            /** @description Invalid reparent (self-parent or absent parent) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_me: {
         parameters: {
             query?: never;
@@ -2028,6 +4687,242 @@ export interface operations {
             };
             /** @description Unauthenticated */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_me_preferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resolved preferences */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedPreferences"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    patch_me_preferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreferencesPatch"];
+            };
+        };
+        responses: {
+            /** @description Resolved preferences after patch */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolvedPreferences"];
+                };
+            };
+            /** @description Invalid input */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's nav tree */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"][];
+                };
+            };
+        };
+    };
+    create_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateNavNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"];
+                };
+            };
+            /** @description Dashboard target not found in this tenant */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Nav node id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The nav node */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"];
+                };
+            };
+            /** @description Not allowed to view this node */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Nav node id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this node */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Nav node id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNavNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"];
+                };
+            };
+            /** @description Dashboard target not found in this tenant */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this node */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2127,6 +5022,311 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Problem"];
                 };
+            };
+        };
+    };
+    list_query_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent query runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryHistoryList"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    star_query_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description History row id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Star state updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not this user's history row */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_query_kinds_admin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Query-kinds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"][];
+                };
+            };
+        };
+    };
+    create_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateQueryKindRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"];
+                };
+            };
+            /** @description The SQL failed a save-time lint */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Name already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Query-kind id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Query-kind */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"];
+                };
+            };
+            /** @description Not allowed to view this query-kind */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Query-kind id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateQueryKindRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"];
+                };
+            };
+            /** @description The merged SQL failed a save-time lint */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this query-kind */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Query-kind id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this query-kind */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_query_kinds: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available query-kinds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindList"];
+                };
+            };
+        };
+    };
+    redo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group that was redone */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoResponse"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Redo stack empty */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Stale resource version — refused */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -2272,6 +5472,20 @@ export interface operations {
                     "application/json": components["schemas"]["Tag"][];
                 };
             };
+            /** @description Not allowed to view this entity */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Entity not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     set_tags: {
@@ -2294,6 +5508,137 @@ export interface operations {
         responses: {
             /** @description Tags replaced */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this entity */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Entity not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    undo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group that was undone */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UndoResponse"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No tenant binding */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No undoable group for this actor */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Stale resource version — refused */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_variable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Variable id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_variable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Variable id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVariableRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableDetail"];
+                };
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Variable name already used on this dashboard */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

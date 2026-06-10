@@ -14,9 +14,15 @@ use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 use uuid::Uuid;
 
+use starter_spi::authz::ResourceRef;
+use starter_spi::changelog::Op;
+use starter_undo::ChangeDraft;
+
 use super::convert::to_panel;
-use crate::authz::{self, ACTION_EDIT, KIND_DASHBOARD};
+use crate::authz::{self, ACTION_EDIT, KIND_DASHBOARD, KIND_PANEL};
+use crate::changelog::{actor_from, record};
 use crate::middleware::tenant::caller;
+use crate::reversible::panel_snapshot_json;
 use crate::state::AppState;
 
 #[utoipa::path(
@@ -41,10 +47,12 @@ pub async fn update_panel(
         Ok(c) => c,
         Err(resp) => return resp,
     };
-    // Updating a panel mutates its dashboard — authorize `edit` on the owning
-    // dashboard. A panel not visible to the tenant is a 404 (RLS hid it).
-    let dashboard_id = match dashboard::panel::dashboard_id_of(&state.metadata, &tenant, id).await {
-        Ok(Some(d)) => d,
+    // Read the full panel up front: it is both the authz target (via its owning
+    // `dashboard_id`) and the `before` snapshot the undo log reverts to. Reading
+    // it inside the tenant tx means RLS-hidden panels read as absent → a 404, and
+    // the recorded `before` is guaranteed non-empty on a successful update.
+    let before = match dashboard::panel::get(&state.metadata, &tenant, id).await {
+        Ok(Some(p)) => p,
         Ok(None) => return (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => return IntoResponse(e).into_response(),
     };
@@ -53,7 +61,7 @@ pub async fn update_panel(
         caller,
         ACTION_EDIT,
         KIND_DASHBOARD,
-        &dashboard_id.to_string(),
+        &before.dashboard_id.to_string(),
         &tenant,
     )
     .await
@@ -68,7 +76,31 @@ pub async fn update_panel(
         layout: req.layout,
     };
     match dashboard::panel::update(&state.metadata, &tenant, id, &patch).await {
-        Ok(Some(rec)) => Json(to_panel(&rec)).into_response(),
+        Ok(Some(rec)) => {
+            // `before` was read above (pre-mutation); `after` is what we wrote.
+            // Recording both lets undo restore the prior panel state and redo
+            // re-apply the edit. Logged-not-surfaced on failure.
+            let draft = ChangeDraft {
+                resource: ResourceRef::row(KIND_PANEL, rec.id.to_string()).with_tenant(&tenant),
+                op: Op::Update,
+                before: Some(panel_snapshot_json(&before)),
+                after: Some(panel_snapshot_json(&rec)),
+                resource_version: None,
+                correlation: None,
+            };
+            if let Err(e) = record(
+                &state.changelog.registry,
+                state.metadata.clone(),
+                &tenant,
+                actor_from(caller),
+                draft,
+            )
+            .await
+            {
+                tracing::warn!(error = %e, "failed to record panel update");
+            }
+            Json(to_panel(&rec)).into_response()
+        }
         Ok(None) => (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => IntoResponse(e).into_response(),
     }

@@ -7,8 +7,11 @@ use starter_server::error::IntoResponse;
 
 use crate::state::AppState;
 
-/// Extract the SQL, run it under the server guards, return the rows. The guards
-/// (read-only, timeout, caps) live in the store; this handler only wires.
+/// Extract the request, bind its macros/variables, run it under the server
+/// guards, return the rows. The dev single-datasource shortcut carries no
+/// principal, so host tokens (`$caller_tenant_id`) are absent — a query needing
+/// them errors, which is correct. The guards (read-only, timeout, caps) and the
+/// binder live in the store; this handler only wires.
 #[utoipa::path(
     post,
     path = "/api/v1/query",
@@ -24,7 +27,8 @@ pub async fn run_query(
     State(state): State<AppState>,
     Json(req): Json<QueryRequest>,
 ) -> Result<Json<QueryResponse>, IntoResponse> {
-    let result = nexus_store::run_query(&state.datasource, &req.sql, state.guards)
+    let identity = nexus_store::QueryIdentity::default();
+    let result = crate::cache::run_cached(&state, &state.datasource, &req, &identity, "dev")
         .await
         .map_err(IntoResponse)?;
     Ok(Json(result))
