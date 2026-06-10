@@ -387,3 +387,98 @@
   honestly says PARTIAL — acceptable because the deferred scope is now a queue row, not lost.
   Self-check: supervisor job alive. Queue 7✅/4⬜ (RW-08, RW-09, RW-04b, RW-07b). Next firing
   spawns RW-08 (soak). TODOs 7.
+- 2026-06-10 05:21 — All healthy, NO action. Clean handoff #7: 05:20:01 firing spawned RW-08
+  (backpressure/soak) — fresh wake PID 1127716 ALIVE 2min, row 🔵, doc-reading phase. Lock
+  kernel-HELD, cron INSTALLED + firing, no STOP, supervisor job alive. Queue 7✅/1🔵/3⬜
+  (RW-09, RW-04b, RW-07b queued behind). TODOs 7, none new. NEXT WAKE: expect FlowMetrics
+  extension + failure-semantics impl (on_error halt|drop|dlq, source retry_backoff) +
+  BACKPRESSURE.md; the soak test itself is #[ignore]-gated so the gate runs compile + unit
+  paths, with `make soak` documented for the human.
+- 2026-06-10 05:26 — All healthy, NO action. RW-08 wake PID 1127716 ALIVE 6.5min, building a
+  clean design: flow/metrics.rs + flow/policy.rs (on_error/source_on_error semantics) +
+  flow/metered/{registry,source,sink}.rs — a DECORATOR layer (metered wrappers around nodes)
+  rather than instrumenting every node, which keeps the metrics concern out of node impls.
+  Verb-per-file, in-lane (flow/** is RW-08's). Cron firing + skipping, lock kernel-HELD, no
+  STOP, supervisor job alive. Queue 7✅/1🔵/3⬜, TODOs 7. NEXT WAKE: expect DLQ wiring +
+  fat-batch/chaos tests + BACKPRESSURE.md + soak harness.
+- 2026-06-10 05:31 — All healthy, NO action. RW-08 wake PID 1127716 ALIVE 11min: metered
+  wrappers being finalized + DTO surface landing (dto/flow/shared.rs = FlowMetrics fields,
+  routes/flows/convert.rs = surfacing on list/detail per spec item 1) + tests on BOTH layers
+  (flow/manager_test.rs + sse_sink_native_test.rs — the SSE lag/load-shed acceptance, spec
+  item 4). Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue
+  7✅/1🔵/3⬜, TODOs 7. NEXT WAKE: expect BACKPRESSURE.md + soak harness + openapi/codegen,
+  then commit+gate.
+- 2026-06-10 05:36 — All healthy, NO action. RW-08 wake PID 1127716 ALIVE 16min, FINAL
+  deliverables landing: BACKPRESSURE.md (the L1/L2/batching + failure-semantics doc) +
+  tests/soak/{backpressure_soak,rss}.rs (the #[ignore]-gated soak harness with the RSS
+  assertion via /proc/self). Cron firing + skipping, lock kernel-HELD, no STOP, supervisor
+  job alive. Queue 7✅/1🔵/3⬜, TODOs 7. NOTED out-of-lane: human/concurrent commit 723058cb
+  "fix bootstrap user on rubix" on the branch — untouched per lane rules. NEXT WAKE: expect
+  commit+gate, then RW-09 (transports) spawn.
+- 2026-06-10 05:40 — All healthy, NO action. RW-08 wake PID 1127716 ALIVE 21min with no file
+  churn — verified NOT a stall via process table: live cargo + 4 rustc children compiling
+  (fresh .cargo-lock) = the workspace test/build phase, exactly the invisible-progress case.
+  Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue 7✅/1🔵/3⬜,
+  TODOs 7. METHOD NOTE: when churn stops but the heartbeat PID lives, check ps for cargo/rustc
+  children BEFORE counting toward the stall threshold. NEXT WAKE: commit+gate expected.
+- 2026-06-10 05:45 — All healthy, NO action. RW-08 wake PID 1127716 ALIVE 25.5min, STILL in
+  verify phase: 4 cargo/rustc processes live (continuation of the test run seen at 05:40 —
+  the soak harness compiles a heavy test binary set). New TODO (8th): RW-08 found MORE
+  pre-existing test drift under `--features testing` — out of its lane, documented not
+  touched, same family as the grant_gate/wiring_test drift from the nextgen run; bundling
+  all three into one drift-fix item for the final human report. Cron firing + skipping,
+  lock kernel-HELD, no STOP, supervisor job alive. Queue 7✅/1🔵/3⬜. NEXT WAKE: commit+gate
+  genuinely expected now (verify phase has run ~10min; RW-06's was similar).
+- 2026-06-10 05:50 — All healthy, NO action. RW-08 ✅ DONE+COMMITTED (baf596e1 + b4ed279a,
+  29min): metered-wrapper FlowMetrics (6 counters), on_error halt|drop|dlq + source
+  retry_backoff, SSE lag-shed test, #[ignore] soak harness with `make soak`, BACKPRESSURE.md,
+  openapi +46 add-only. Remote 1 behind (gate-push race; the live wake pushes/reconciles —
+  verify next wake origin catches up). 05:50:01 firing already spawned the NEXT wake (PID
+  1218728, cargo already running) — picking RW-09 (transports: http_ingest + zenoh). Queue
+  8✅/3⬜. Cron firing, lock kernel-HELD, no STOP, supervisor job alive, TODOs 8. Three rows
+  to RUN COMPLETE.
+- 2026-06-10 05:55 — Healthy, ONE safe repair. RW-09 🔵 wake PID 1218728 ALIVE 5min, already
+  building: source/http_ingest.rs NEW + flow/manager.rs + metered/registry.rs appends (the
+  push-source wired through RW-08's metering — good integration). REPAIR: remote was 2 behind
+  (RW-08's gate-push raced); pushed per the mandatory-push rule — origin now == HEAD
+  (..110d0b68), turned out partially reconciled already, push completed the rest. Cron firing
+  + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue 8✅/1🔵/2⬜, TODOs 8.
+  NEXT WAKE: expect the zenoh feature-gated source + datasource-kind manifest + ingest route.
+- 2026-06-10 05:59 — All healthy, NO action. RW-09 wake PID 1218728 ALIVE 10min, on the zenoh
+  half: source/zenoh.rs NEW + engine Cargo.toml (the feature gate) + native_registry.rs +
+  registry/descriptor.rs (palette descriptors — NOTE: this may also discharge the RW-04
+  datasource-sink palette follow-up since it's editing the descriptor table anyway; check at
+  gate) + dto/ingest/{accept,mod}.rs (the http_ingest response DTO). 4 cargo procs compiling
+  in parallel. Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job alive.
+  Queue 8✅/1🔵/2⬜, TODOs 8. NEXT WAKE: ingest route + tests + BACKPRESSURE.md append, then
+  commit+gate (must verify: default build has zero zenoh deps via cargo tree).
+- 2026-06-10 06:04 — All healthy, NO action. RW-09 wake PID 1218728 ALIVE 15min, API layer
+  landing: routes/ingest/push.rs (POST /ingest/:flow_id) + ingest/enqueue.rs (the channel
+  handoff w/ backpressure) + zenoh_config.json datasource-kind manifest + openapi/lib/routes
+  wiring. 4 cargo procs live. Both transports now have their full vertical in the tree
+  (engine source + API surface + manifest). Cron firing + skipping, lock kernel-HELD, no
+  STOP, supervisor job alive. Queue 8✅/1🔵/2⬜, TODOs 8. NEXT WAKE: tests + codegen + gate.
+- 2026-06-10 06:09 — All healthy, NO action. RW-09 wake PID 1218728 ALIVE 19min, TEST phase:
+  zenoh_test.rs (the loopback peer-mode round-trip) + push_e2e_test.rs (429/Retry-After +
+  cross-tenant) being written; descriptor.rs touched again (palette entries); 10 cargo/rustc
+  procs — feature-gated zenoh build compiling in parallel with the default build (the
+  cargo-tree zero-zenoh-by-default acceptance needs both). Cron firing + skipping, lock
+  kernel-HELD, no STOP, supervisor job alive. Queue 8✅/1🔵/2⬜, TODOs 8. NEXT WAKE:
+  commit+gate expected, then RW-04b spawn (first of the two fix-passes).
+- 2026-06-10 06:14 — All healthy, NO action. RW-09 wake PID 1218728 ALIVE 24min, verify phase
+  continuing (6 cargo/rustc procs — dual-build test matrix is heavy: default + --features
+  zenoh, each compiling the zenoh stack from scratch on first build; this WS's verify is
+  legitimately the longest). No new TODOs, remote synced (0 ahead). Cron firing + skipping,
+  lock kernel-HELD, no STOP, supervisor job alive. Queue 8✅/1🔵/2⬜. Not a stall: process
+  evidence live. NEXT WAKE: if not committed by ~33-35min, peek at the wake's cron.log tail
+  for test failures before judging — a red zenoh test would show retry churn.
+- 2026-06-10 06:19 — RW-09 ✅ DONE+COMMITTED (799040c3 + c0e39f02, 29min; I pushed the final
+  bookkeeping commit — origin now == HEAD): http_ingest push path (POST /api/v1/ingest/
+  {flow_id}, IngestChannels on FlowManager, non-blocking try_push, 429+Retry-After, cross-
+  tenant→404) + feature-gated zenoh source (at-most-once documented, loopback peer-mode
+  tested, OFF by default). The human's two transport asks are BOTH in. Two new TODOs, both
+  well-reasoned lane deferrals, both ALREADY COVERED by queued rows: (1) ingest.write must
+  reuse RW-09's IngestChannels seam → that's RW-07b's spec (noted in its row); (2) zenoh
+  test_connection probe missing (mirrors mqtt, catalogue-only) → RW-04 lane; folding into
+  RW-04b's scope note. Queue 9✅/2⬜ — only the fix-passes remain. Next firing spawns RW-04b.
+  Self-check: supervisor job alive.
