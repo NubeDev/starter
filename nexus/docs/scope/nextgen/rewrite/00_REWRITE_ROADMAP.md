@@ -79,14 +79,34 @@ Check `nexus-store` migrations dir for the actual latest before numbering.
 
 - **Engine node traits (RW-01, frozen after RW-02 starts):**
   `Source: async fn read(&mut self) -> Result<Option<RecordBatch>>` (None = finite end),
-  `Processor: async fn process(&self, RecordBatch) -> Result<Vec<RecordBatch>>`,
+  `Processor: async fn process(&mut self, RecordBatch) -> Result<Vec<RecordBatch>>`
+  (`&mut self` deliberately — stateful processors like windowing/dedupe must not need
+  interior mutability; the pipeline applies processors sequentially so it costs nothing),
   `Sink: async fn write(&mut self, &RecordBatch) -> Result<()>` + `async fn close(&mut self)`.
   All config in/out as `serde_json::Value`. Registry: name → builder fn, same names ArkFlow
   used (`"sql"`, `"json_to_arrow"`, `"memory"`, `"generate"`, plus nexus customs) so stored
   flow configs in tenant DBs keep working **without migration**.
+- **Batch size bound:** bounded channels bound *batch count*, not bytes — 64 × 100MB batches
+  is an OOM with green metrics. The pipeline enforces `max_batch_rows` (config, default 8192)
+  at the source and processor output boundary: oversized batches are sliced
+  (`RecordBatch::slice` is zero-copy) before entering the channel. RW-08 soak-tests the
+  fat-batch case explicitly.
+- **Schema stability (json_to_arrow and all sources):** per-batch inference may NOT drift
+  mid-stream. Contract: a flow either declares a schema in config (preferred for warehouse
+  sinks) or the first batch's inferred schema becomes the stream schema and later batches
+  are coerced to it; an incoercible batch is a source error (policy below), never a silent
+  sink-side mutation.
+- **Source error policy:** `read()` returning `Err` does not kill the flow by default —
+  per-flow `source_on_error: retry_backoff (default, capped attempts) | halt`; exhausted
+  retries → flow `last_error` state. Sink-side policy is RW-08's `on_error: halt|drop`,
+  plus an optional dead-letter path (`on_error: dlq` → failed batches to the RW-04 file
+  writer) once RW-04 lands — halt-vs-silent-drop is a brutal binary for a device fleet.
 - **Pipeline run contract:** `Pipeline::run(CancellationToken)`; finite pipelines end when
   the source returns None and sinks have flushed; cancellation drains in-flight batch then
   closes sinks. Identical observable semantics to today's `stream.run(token)` paths.
+- **Dependency versions:** RW-02/03 pin arrow/datafusion to ArkFlow's resolved versions for
+  parity. **Post-RW-03 the pin is free:** bump arrow/datafusion to current before RW-05
+  (federation leans on sqlparser fixes) — do not let the parity pin ossify.
 - **Datasource sink contract (RW-04):** sink config = `{ "datasource": "<id>", "table": "…" }`;
   creds resolved via the existing envelope-encrypted store; writes batched (N rows or T ms).
 - **Insight contract (RW-06):** `run_insight(script: &str, df: DataFrame, params: Value)
@@ -108,9 +128,13 @@ Check `nexus-store` migrations dir for the actual latest before numbering.
 - **No second database.** Timescale/Postgres stays the store of record.
 - **Public APIs frozen:** `QueryRunner::run`, `LiveRunner::spawn`, `FlowManager::start/stop`
   signatures and the HTTP/SSE wire contracts do not change (RW-06 adds optional fields only).
-- **No new heavyweight default deps:** `polars` (feature-trimmed), `rhai`, `object_store`
-  are approved. Anything else heavy (duckdb, pyo3, librdkafka) is forbidden — that bloat is
-  why the vendor trim existed. New connector-style deps must be feature-gated OFF by default
-  (precedent: `mqtt`/rumqttc from WS-08b).
+- **No new heavyweight default deps:** `rhai`, `object_store`, `parquet` are approved.
+  `polars` is NOT pre-approved — it ships its own Arrow fork (polars-arrow/arrow2), meaning
+  two Arrow stacks in one binary and a non-free RecordBatch↔DataFrame boundary; RW-06 must
+  spike the insight primitives on DataFusion first and may adopt Polars only if ergonomics
+  genuinely fail AND interop goes through the Arrow C data interface (zero-copy FFI), with
+  the compile/binary cost recorded in the session log. Anything else heavy (duckdb, pyo3,
+  librdkafka) is forbidden — that bloat is why the vendor trim existed. New connector-style
+  deps must be feature-gated OFF by default (precedent: `mqtt`/rumqttc from WS-08b).
 - ArkFlow code may not be copied verbatim (Apache-2.0 would allow it, but the point is a
   smaller, nexus-shaped core — write it fresh against the contracts in §6).

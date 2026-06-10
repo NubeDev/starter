@@ -20,13 +20,20 @@ Build `nexus-engine/src/core/` — a self-contained pipeline engine with **zero 
 imports**, implementing the §6 contracts in the roadmap:
 
 1. `core/node.rs` — `Source` / `Processor` / `Sink` async traits over `RecordBatch`
-   (exact signatures: roadmap §6). Builders take `serde_json::Value` config.
+   (exact signatures: roadmap §6 — note `Processor::process` takes `&mut self`, so
+   stateful processors need no interior mutability). Builders take `serde_json::Value`
+   config.
 2. `core/registry.rs` — `Registry { sources, processors, sinks: HashMap<String, Builder> }`
    with `register_*` + `build_*` fns. No global state; an instance lives on AppState later.
 3. `core/pipeline.rs` — `PipelineConfig { input, pipeline: Vec<…>, output }` parsed from
    the SAME JSON shape today's flows/queries use (see any stored flow config / the
-   StreamConfig construction in the runners), and `Pipeline::run(token)`:
+   StreamConfig construction in the runners — and grep stored configs/fixtures to confirm
+   no flow ever fans out to multiple outputs before freezing the single-output shape),
+   and `Pipeline::run(token)`:
    - source task → `tokio::mpsc::channel` (bounded, capacity from config, default 64)
+   - `max_batch_rows` enforcement (roadmap §6): oversized batches from source or processor
+     output are sliced (`RecordBatch::slice`, zero-copy) before entering the channel —
+     bounded-in-batches is only backpressure if batches are bounded in size
    - processor chain applied per batch
    - sink writes; `close()` on end
    - `tokio::select!` on `token.cancelled()` everywhere; cancellation = stop reading,

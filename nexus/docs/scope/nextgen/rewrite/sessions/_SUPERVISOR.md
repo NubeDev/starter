@@ -49,3 +49,15 @@
 
 ## Supervisor log
 <!-- Appended each wake: `YYYY-MM-DD HH:MM — <what was checked / repaired / escalated>` -->
+- 2026-06-10 02:19 — Supervisor online (first wake, pre-first-firing). Cron entry INSTALLED
+  (nexus-rewrite-loop, */5); no cron.log/heartbeat/lock yet — correct, first firing due 02:20Z.
+  Branch nexus-rewrite created at a4a4b63a (scope docs committed). Queue: 8 rows, all ⬜, none 🔵,
+  no STOP, no TODOs. NO action needed. NEXT WAKE: confirm the 02:20Z firing happened (cron.log
+  exists, wake-start/complete in heartbeat) and RW-01 went 🔵.
+- 2026-06-10 02:24 — All healthy, NO action. Cron fired on schedule (02:20:01Z, first firing).
+  RW-01 🔵 — wake PID 716380 ALIVE ~4min, lock correctly HELD (kernel-owned, untouched), no STOP.
+  ACTIVELY BUILDING the exact RW-01 spec layout: core/{node,pipeline,registry,config,error,
+  outcome}.rs all touched <5min + the sanctioned lib.rs append; RW-01.md session doc already
+  created (charter followed early — good sign). Build NOT evaluated (lock HELD = mid-edit, per
+  check #3). No TODOs, queue progressing (0✅/1🔵/7⬜). NEXT WAKE: expect RW-01 nearing tests or
+  commit; gate fires on the cron side when its row reads Done.

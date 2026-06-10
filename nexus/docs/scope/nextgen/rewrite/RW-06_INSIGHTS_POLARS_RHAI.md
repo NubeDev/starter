@@ -1,4 +1,4 @@
-# RW-06 — nexus-insights: Polars engine + Rhai sandbox
+# RW-06 — nexus-insights: vectorized engine (DataFusion-first) + Rhai sandbox
 
 > Verified: 2026-06-10 against master (6b6f16d2). §0: re-grep every file:line below first.
 > Depends on RW-03. Parallel-safe with RW-04/05 except the 🔶 query-route append — land
@@ -14,8 +14,17 @@ rows; it composes vetted vectorized primitives. That keeps it fast AND sandboxab
 ## Scope
 
 1. New crate `crates/nexus-insights` (workspace member append):
-   - `engine.rs` — Arrow `RecordBatch`es ↔ Polars `DataFrame` (polars feature-trimmed:
-     lazy, rolling_window, temporal; no io features needed — data arrives as Arrow).
+   - `engine.rs` — the vectorized compute backend. **Spike DataFusion FIRST** (peer-review
+     decision): Polars ships its own Arrow fork (polars-arrow/arrow2), so RecordBatch↔
+     DataFrame is a copy or unsafe C-FFI bridge plus a second Arrow stack in the binary —
+     the same dep-bloat mistake this rewrite exists to undo. Most api.rs primitives below
+     are plain DataFusion window/aggregate expressions over the SessionContext already
+     in-tree from RW-02; `resample` is the hard one — implement as `date_bin` + group-by
+     (which is what Timescale users expect anyway). Adopt Polars ONLY if the DataFusion
+     spike proves genuinely miserable for rolling/resample ergonomics, and then per
+     roadmap §8: Arrow C data interface interop (zero-copy), compile/binary cost recorded
+     in the session log. The api.rs surface is backend-agnostic either way — scripts see
+     DataFrame-handle methods, not the engine.
    - `sandbox.rs` — Rhai `Engine` factory: `set_max_operations`, `set_max_call_levels`,
      `set_max_string_size`/`array_size`, wall-clock timeout via `on_progress` + deadline;
      NO file/network/eval/module APIs registered. One engine per execution (cheap), no
@@ -24,8 +33,11 @@ rows; it composes vetted vectorized primitives. That keeps it fast AND sandboxab
      `select/rename/filter_gt/filter_lt/filter_eq`, `rolling_mean/min/max/sum(col, window)`,
      `zscore(col)`, `resample(time_col, every, aggs)`, `lag/diff/pct_change(col)`,
      `fill_null(strategy)`, `head/tail/sort`, `anomalies(col, z_threshold)` → flag column,
-     `describe()`. Each is a thin Polars expression call. Return values are DataFrame
-     handles (Rhai custom type), so scripts chain: `df.resample(...).zscore("kw").anomalies("kw", 3.0)`.
+     `describe()`. Each is a thin vectorized-engine expression call. Design rule: NO
+     primitive may increase row count beyond its input (no joins/cross products) — Rhai's
+     size limits can't catch an explosion that happens inside the engine, so the curated
+     surface must make it impossible. Return values are DataFrame handles (Rhai custom
+     type), so scripts chain: `df.resample(...).zscore("kw").anomalies("kw", 3.0)`.
    - `run_insight(script, df, params) -> Result<DataFrame>` per roadmap §6, with
      structured errors (compile vs runtime vs limit-exceeded) safe to show tenants.
 2. Query-path integration (🔶 small appends): optional `insight` field on the query
@@ -42,7 +54,7 @@ rows; it composes vetted vectorized primitives. That keeps it fast AND sandboxab
 ## Non-goals
 
 UI editor (follow-up WS), extension-contributed insights (RW-07), Python anything
-(forbidden by roadmap §8), per-row Rhai callbacks into Polars (perf + sandbox hazard).
+(forbidden by roadmap §8), per-row Rhai callbacks into the engine (perf + sandbox hazard).
 
 ## Acceptance
 

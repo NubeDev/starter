@@ -17,11 +17,18 @@
    - parse the incoming SQL's table references (DataFusion sqlparser);
    - resolve each `ds_<alias>.<table>` (define and document the naming convention)
      to a tenant datasource;
-   - register a DataFusion `TableProvider` per referenced table — first impls:
-     postgres/timescale (fetch via the existing read-guarded connection path, predicate
-     + projection pushdown where easy; correctness first), and file kinds (Parquet/CSV
-     via `object_store` — these get DataFusion natively);
-   - execute with the same caps/timeout/truncation contract QueryRunner enforces.
+   - register a DataFusion `TableProvider` per referenced table. FIRST ACTION of this
+     step: evaluate `datafusion-table-providers` (datafusion-contrib, used by Spice AI) —
+     Postgres/MySQL/SQLite providers with predicate+projection pushdown already done.
+     Adopt it if it supports our DataFusion major and our read-only-role/envelope-creds
+     path can be threaded through its pool machinery; if rejected, READ its pushdown code
+     before hand-writing one (remote pushdown has sharp edges: operator support tables,
+     decimal/timestamp casts) and record the rejection reason in the session log.
+     File kinds (Parquet/CSV via `object_store`) get DataFusion natively either way;
+   - execute with the same caps/timeout/truncation contract QueryRunner enforces, AND a
+     real input-side memory bound: caps cover output, but a join can pull two huge inputs
+     before producing one capped row — configure DataFusion's `RuntimeEnv` with a
+     `MemoryPool` limit (and a per-table fetch row limit where the provider allows).
 2. Dispatch seam in the query route: one datasource referenced → existing push-down path
    untouched; multiple datasources OR a file kind → federation runner. The request shape
    stays backward compatible (single-`datasource` requests behave exactly as today);

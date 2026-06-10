@@ -27,8 +27,11 @@ All of these are nexus-authored but implement **ArkFlow traits** (`Input`/`Outpu
    `processor/sql.rs` — DataFusion `SessionContext`, register incoming batch as a table
    (same table name convention the current sql processor exposes — grep stored flow
    configs/tests for it), run the configured query, emit result batches.
-   `processor/json_to_arrow.rs` — `arrow-json` Decoder (schema inference consistent with
-   today's behavior; mirror the existing tests' expectations).
+   `processor/json_to_arrow.rs` — `arrow-json` Decoder. Schema stability per roadmap §6:
+   today's per-batch inference is ArkFlow's accident, not a contract — implement
+   infer-on-first-batch-then-coerce (incoercible batch = source error), with an optional
+   declared schema in flow config taking precedence. Existing tests' expectations still
+   hold for the single-batch cases they cover.
    `source/memory.rs`, `source/generate.rs`, `sink/drop.rs`, `sink/stdout.rs` — trivial.
 3. Register everything in a `core::Registry` factory fn (`registry/native.rs` or similar)
    under the SAME string names the JSON configs use today — stored tenant flow configs

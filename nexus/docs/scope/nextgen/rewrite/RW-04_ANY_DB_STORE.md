@@ -21,11 +21,14 @@
    dispatches to a writer by datasource kind.
 2. Writer trait `DatasourceWriter { async fn write_batch(&mut self, &RecordBatch);
    async fn flush(&mut self) }` + the first two impls:
-   - `postgres` (covers Timescale): batched multi-row INSERT or COPY BINARY — must beat
-     the current row-at-a-time path; keep the existing Arrow→param mapping rules.
-   - `file`: append Parquet part-files to a configured directory/object path (uses
-     `object_store` + `parquet` crates; local-fs first, S3 config accepted but may be
-     feature-gated).
+   - `postgres` (covers Timescale): use tokio-postgres `BinaryCopyInWriter`
+     (`COPY … FROM STDIN BINARY`) — that is the right primitive; do not reinvent
+     multi-row INSERT batching and call it done. Keep the existing Arrow→param mapping
+     rules; fall back to multi-row INSERT only for types COPY BINARY can't carry.
+   - `file`: Parquet part-files via `parquet::arrow::AsyncArrowWriter` + `object_store`
+     (local-fs first, S3 config accepted but may be feature-gated). Small-files guard:
+     the Parquet writer rotates on SIZE/ROWS (≥64MB or N-minutes, whichever first), NOT
+     the generic batch timer — timer-flushed tiny row groups are what makes Parquet slow.
    Registered per kind so RW-07 extensions can add more.
 3. Batching: accumulate until `batch_rows` OR `batch_ms` (tokio interval), flush on either,
    always flush on `close()`/cancel. This is the write-side backpressure contract RW-08
