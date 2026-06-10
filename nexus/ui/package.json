@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test --project=chromium",
     "codegen": "node ../../packages/starter-client-ts/bin/codegen.mjs --input ../backend/openapi.json --output ./src/api/generated/index.ts"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.1.0",

@@ -52,6 +52,73 @@ describe("panelToWidget", () => {
     expect(panelToWidget({ ...panel, viz: "donut" }).type).toBe("pie");
     expect(panelToWidget({ ...panel, viz: "column" }).type).toBe("bar");
   });
+
+  it("round-trips the full display config (fieldConfig/options/transforms), not just fields", () => {
+    // The regression this guards: only `fields` used to be stashed, so every
+    // Field/Overrides/Legend/Transforms edit vanished on reload.
+    const full: PanelDetail = {
+      ...panel,
+      layout: {
+        x: 0,
+        y: 0,
+        w: 6,
+        h: 4,
+        fields: { x: "ts", series: [{ value: "v" }] },
+        fieldConfig: {
+          defaults: { unit: "kwatth", decimals: 1, thresholds: [{ value: null, color: "1 2% 3%" }] },
+          overrides: [{ matcher: { type: "byName", value: "v" }, display: { hidden: true } }],
+        },
+        options: { legend: { show: true, placement: "right" }, yAxis: { scale: "log" } },
+        transforms: [{ kind: "filter", field: "v", op: ">", value: "0" }],
+      },
+    };
+    const w = panelToWidget(full);
+    expect(w.config.fieldConfig?.defaults?.unit).toBe("kwatth");
+    expect(w.config.fieldConfig?.defaults?.decimals).toBe(1);
+    expect(w.config.fieldConfig?.overrides?.[0].display.hidden).toBe(true);
+    expect(w.config.options?.legend?.placement).toBe("right");
+    expect(w.config.options?.yAxis?.scale).toBe("log");
+    expect(w.config.transforms?.[0]).toMatchObject({ kind: "filter", field: "v" });
+  });
+
+  it("omits unset display config so the widget stays minimal", () => {
+    const w = panelToWidget(panel); // no fieldConfig/options/transforms in layout
+    expect(w.config.fieldConfig).toBeUndefined();
+    expect(w.config.options).toBeUndefined();
+    expect(w.config.transforms).toBeUndefined();
+  });
+});
+
+describe("full round-trip (widget → create body → widget)", () => {
+  it("preserves fieldConfig, options, and transforms through a save+reload", () => {
+    const widget: Widget = {
+      id: "p1",
+      type: "line",
+      title: "Full",
+      layout: { x: 0, y: 0, w: 6, h: 4 },
+      config: {
+        query: { datasourceId: "ds", sql: "select t, v from r" },
+        fields: { x: "t", series: [{ value: "v" }] },
+        fieldConfig: { defaults: { unit: "celsius", decimals: 2 } },
+        options: { legend: { show: false }, yAxis: { scale: "log", label: "kW" } },
+        transforms: [{ kind: "reduce", field: "v", calc: "avg", as: "avg_v" }],
+      },
+    };
+    const body = widgetToCreatePanel(widget);
+    // Simulate the backend echoing `layout` back verbatim into a PanelDetail.
+    const reloaded = panelToWidget({
+      id: "p1",
+      title: body.title,
+      sql: body.sql,
+      datasource_id: "ds",
+      viz: body.viz ?? "table",
+      layout: body.layout,
+    });
+    expect(reloaded.config.fieldConfig).toEqual(widget.config.fieldConfig);
+    expect(reloaded.config.options).toEqual(widget.config.options);
+    expect(reloaded.config.transforms).toEqual(widget.config.transforms);
+    expect(reloaded.config.fields).toEqual(widget.config.fields);
+  });
 });
 
 describe("widgetToCreatePanel", () => {

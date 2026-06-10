@@ -7,6 +7,14 @@ export interface MetricCardProps {
   label: string;
   /** Numeric value; animated on mount and on change. */
   value: number;
+  /** Optional preformatted display string. When set, it is shown verbatim
+   *  instead of the animated number — for a value that has been run through a
+   *  formatter (fixed decimals, unit, or a value-mapping that replaces the text
+   *  outright, e.g. `1` → "On"). `prefix`/`suffix` are ignored when `display`
+   *  is set, since the formatter already produced the full text. */
+  display?: string;
+  /** Optional CSS color for the value text (e.g. a value-mapping's colour). */
+  valueColor?: string;
   /** Optional suffix appended after the animated number (e.g. "kWh"). */
   suffix?: string;
   /** Optional prefix prepended before the animated number (e.g. "$"). */
@@ -80,6 +88,8 @@ function Spark({ data, color }: { data: number[]; color: string }) {
 export function MetricCard({
   label,
   value,
+  display,
+  valueColor,
   suffix,
   prefix,
   delta,
@@ -120,10 +130,20 @@ export function MetricCard({
         )}
       </div>
       <div className="flex items-end justify-between gap-3">
-        <div className="flex items-baseline gap-1 text-4xl font-semibold tracking-[-0.03em] tabular-nums">
-          {prefix && <span className="text-muted-foreground text-2xl">{prefix}</span>}
-          <motion.span>{animated}</motion.span>
-          {suffix && <span className="text-muted-foreground text-xl">{suffix}</span>}
+        <div
+          className="flex items-baseline gap-1 text-4xl font-semibold tracking-[-0.03em] tabular-nums"
+          style={valueColor ? { color: valueColor } : undefined}
+        >
+          {display !== undefined ? (
+            // Preformatted text (decimals/unit/value-mapping already applied).
+            <span>{display}</span>
+          ) : (
+            <>
+              {prefix && <span className="text-muted-foreground text-2xl">{prefix}</span>}
+              <motion.span>{animated}</motion.span>
+              {suffix && <span className="text-muted-foreground text-xl">{suffix}</span>}
+            </>
+          )}
         </div>
         <div className="opacity-90" style={{ color: accent }}>
           <Spark data={spark} color={accent} />
