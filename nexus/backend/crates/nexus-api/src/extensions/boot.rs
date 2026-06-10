@@ -168,29 +168,41 @@ pub async fn boot(
 /// Scan the extensions dir(s), validate every candidate, commit, and seal. A
 /// per-candidate failure is isolated by the loader (it lands as a `Failed`
 /// record), so a single bad bundle never takes the registry down.
+///
+/// Both roots are collected into **one** `Loader::commit` — the registry's
+/// `install` *replaces* its contents (two-phase commit, R3), so committing per
+/// root would wipe the first root's records with the second's. The installs
+/// dir is scanned last, so an uploaded bundle with the same id overrides the
+/// in-repo pack copy.
 fn scan_and_seal(cfg: &ExtensionsConfig) -> ExtensionRegistry {
     let mut registry = ExtensionRegistry::new();
+    let records = scan_roots(cfg);
+    let outcome = Loader::commit(records, &mut registry);
+    tracing::info!(
+        target: "nexus_api::extensions::boot",
+        pack = %cfg.extensions_dir.display(),
+        installs = %cfg.installs_dir.display(),
+        validated = outcome.validated,
+        failed = outcome.failed,
+        "scanned extension bundles"
+    );
+    registry.seal();
+    registry
+}
 
-    // The read-only in-repo pack dir and the writable installs dir are both
-    // scanned (the loader walks one level under each). A missing dir yields no
-    // candidates — the "no extensions" state — rather than an error.
+/// Collect validated records from the read-only in-repo pack dir and the
+/// writable installs dir (the loader walks one level under each). A missing
+/// dir yields no candidates — the "no extensions" state — rather than an
+/// error.
+fn scan_roots(cfg: &ExtensionsConfig) -> Vec<starter_ext_host::ExtensionRecord> {
+    let mut records = Vec::new();
     for root in [&cfg.extensions_dir, &cfg.installs_dir] {
         if !root.exists() {
             continue;
         }
-        let records = Loader::scan(root).validate_all();
-        let outcome = Loader::commit(records, &mut registry);
-        tracing::info!(
-            target: "nexus_api::extensions::boot",
-            dir = %root.display(),
-            validated = outcome.validated,
-            failed = outcome.failed,
-            "scanned extension bundles"
-        );
+        records.extend(Loader::scan(root).validate_all());
     }
-
-    registry.seal();
-    registry
+    records
 }
 
 /// Persist every validated extension's contributed query-kinds and build the
@@ -208,15 +220,10 @@ pub async fn load_extension_kinds(
 ) -> Result<KindRegistry, String> {
     // Re-scan to read manifests + bundle dirs. Cheap (filesystem walk of a small
     // dir); keeps this independent of `boot`'s sealed registry so ordering is
-    // simple.
+    // simple. One commit over both roots — `install` replaces, so a per-root
+    // commit would wipe the pack's records with the (often empty) installs dir.
     let mut registry = ExtensionRegistry::new();
-    for root in [&cfg.extensions_dir, &cfg.installs_dir] {
-        if !root.exists() {
-            continue;
-        }
-        let records = Loader::scan(root).validate_all();
-        let _ = Loader::commit(records, &mut registry);
-    }
+    let _ = Loader::commit(scan_roots(cfg), &mut registry);
     registry.seal();
 
     // Materialise each extension's contributed kinds into the provenance table.
@@ -261,4 +268,36 @@ pub async fn load_extension_kinds(
     }
 
     KindRegistry::from_kinds(all).map_err(|e| format!("building extension-kinds registry: {e}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Regression: the registry's `install` REPLACES its contents, so scanning
+    /// the pack dir and the (empty) installs dir must collapse into ONE commit
+    /// — a per-root commit wipes the pack's records with the empty installs
+    /// scan, leaving the deployment silently extension-less.
+    #[test]
+    fn empty_installs_dir_does_not_wipe_the_pack_scan() {
+        let pack = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("extensions");
+        let installs = std::env::temp_dir().join(format!(
+            "nexus-ext-boot-test-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&installs).unwrap();
+
+        let cfg = ExtensionsConfig {
+            extensions_dir: pack,
+            installs_dir: installs.clone(),
+            pidfile_dir: installs.join("pids"),
+        };
+        let registry = scan_and_seal(&cfg);
+        assert!(
+            registry.get_by_id_str("com.nexus.hello").is_some(),
+            "pack bundle must survive the (empty) installs-dir scan"
+        );
+
+        let _ = std::fs::remove_dir_all(&installs);
+    }
 }

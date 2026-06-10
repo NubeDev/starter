@@ -464,12 +464,23 @@ enum BundlePlan {
     /// already-uninstalled id can still report idempotently. Removal
     /// only fires when the path exists.
     LegacyInstalled { path: PathBuf, exists: bool },
+    /// The record's bundle dir lives OUTSIDE the installs tree — a
+    /// read-only source bundle (a host's in-repo pack). The handler
+    /// never deletes it; uninstall/purge still stop the supervisor,
+    /// persist disabled, and run the cleanup providers. This is the
+    /// sanity check the [`BundleOrigin`] docs promise: a path is only
+    /// ever `remove_dir_all`'d when it really lives under installs.
+    ///
+    /// [`BundleOrigin`]: starter_ext_host::BundleOrigin
+    KeepDevSource { path: PathBuf },
 }
 
 impl BundlePlan {
     fn bundle_path(&self) -> &Path {
         match self {
-            Self::RemoveInstalled { path } | Self::LegacyInstalled { path, .. } => path,
+            Self::RemoveInstalled { path }
+            | Self::LegacyInstalled { path, .. }
+            | Self::KeepDevSource { path } => path,
         }
     }
 
@@ -480,12 +491,22 @@ impl BundlePlan {
     fn outcome(&self) -> BundleOutcome {
         BundleOutcome {
             path: self.bundle_path().display().to_string(),
-            // Installed-only model: every uninstall removes the bundle
-            // dir. Field retained for one release so frontends with the
-            // dev-badge branch keep parsing successfully.
-            will_delete: true,
+            // Read-only source bundles are never deleted; installed
+            // bundles always are.
+            will_delete: !matches!(self, Self::KeepDevSource { .. }),
         }
     }
+}
+
+/// Is `path` inside `root`? Canonicalises both so relative configured dirs
+/// (a dev `./extensions`) and the record's path compare on the same footing.
+/// A path that fails to canonicalise (already deleted) is treated as inside —
+/// the legacy/idempotent-repurge behaviour for missing installed bundles.
+fn is_under(path: &Path, root: &Path) -> bool {
+    let (Ok(path), Ok(root)) = (path.canonicalize(), root.canonicalize()) else {
+        return true;
+    };
+    path.starts_with(&root)
 }
 
 // `axum::response::Response` weighs ~128 bytes which trips clippy's
@@ -498,10 +519,21 @@ fn plan_bundle_action(
     admin: &ExtensionAdmin,
     id: &str,
 ) -> Result<BundlePlan, axum::response::Response> {
-    // Records carry their bundle_dir from the loader; under the
-    // installed-only model that path always lives under installs_dir.
+    // Records carry their bundle_dir from the loader. Only a path that
+    // really lives under the configured installs tree is deletable — a
+    // record scanned from a read-only source pack (a host's in-repo
+    // extensions dir) is kept on disk, per the BundleOrigin contract.
     if let Some(rec) = admin.registry().get_by_id_str(id) {
-        return Ok(BundlePlan::RemoveInstalled {
+        let deletable = admin
+            .installs_dir()
+            .map(|installs| is_under(&rec.bundle_dir, installs))
+            .unwrap_or(false);
+        if deletable {
+            return Ok(BundlePlan::RemoveInstalled {
+                path: rec.bundle_dir.clone(),
+            });
+        }
+        return Ok(BundlePlan::KeepDevSource {
             path: rec.bundle_dir.clone(),
         });
     }
@@ -525,11 +557,17 @@ fn apply_bundle_removal(plan: &BundlePlan) -> Result<(), axum::response::Respons
     let (path, must_exist) = match plan {
         BundlePlan::RemoveInstalled { path } => (path, true),
         BundlePlan::LegacyInstalled { path, exists } => (path, *exists),
+        // Read-only source bundle — never removed.
+        BundlePlan::KeepDevSource { .. } => return Ok(()),
     };
     if !must_exist {
         return Ok(());
     }
     if let Err(e) = std::fs::remove_dir_all(path) {
+        // Already gone = already clean. Re-purge must stay idempotent.
+        if e.kind() == std::io::ErrorKind::NotFound {
+            return Ok(());
+        }
         tracing::warn!(err = %e, dir = %path.display(), "remove extension bundle failed");
         return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
     }

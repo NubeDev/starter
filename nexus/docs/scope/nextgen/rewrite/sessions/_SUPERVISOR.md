@@ -75,3 +75,15 @@
   at RW-02 gate). Cron healthy, lock state not relevant to this doc-only action. Left
   uncommitted: STATUS.md RW-02 row (cron's lane) + out-of-lane diffs (nexus-store bind/scan,
   extensions/boot.rs, WS-14 doc — concurrent session, untouched).
+- 2026-06-10 02:32 — All healthy, NO action. Cron firing on schedule (02:25 wake gated RW-01 ✅
+  9757df7c, full log line present; 02:30:01 firing spawned RW-02). RW-02 🔵 — wake PID 737438
+  ALIVE ~2.5min, lock correctly HELD, no STOP; no engine files touched yet (doc-reading phase,
+  normal). Build NOT evaluated (lock HELD, check #3). Queue 1✅/1🔵/6⬜, TODOs: 1 real entry
+  (the RW-01 contract-delta follow-up — non-blocking by design). WATCH (tight race): RW-02
+  spawned 02:30:01; the step-0 alignment pin (d7850167) + TODOs entry (c046ebaf) committed
+  ~02:31 — the subagent may have read the PRE-review spec. At RW-02's gate, verify
+  core/node.rs has `process(&mut self, …)` + max_batch_rows slicing landed; if missing, that
+  is an RW-03-BLOCKING fix pass (same-charter, gate step 4), because §6 traits freeze at the
+  RW-02 gate. node.rs:33 currently still `&self` (expected — RW-02 just started). Cosmetic:
+  RW-01's row says Finished 02:58 UTC, which is in the future vs real 02:32Z — subagent wrote
+  a bad timestamp; harmless, not touching another session's log line.

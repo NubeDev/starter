@@ -170,6 +170,14 @@ dev-all:
 seed:
 	cd $(BE_DIR) && cargo run --bin seed-admin
 
+# WS-14 example extension passthrough: `make ext-hello-<target>` runs <target>
+# in the com.nexus.hello bundle's own Makefile against the dev server —
+# e.g. `make ext-hello-test`, `make ext-hello-load`, `make ext-hello-unload`,
+# `make ext-hello-install`, `make ext-hello-status`, `make ext-hello-help`.
+# Admin creds + API port flow through the exported env above.
+ext-hello-%:
+	$(MAKE) -C $(BE_DIR)/crates/nexus-api/extensions/com.nexus.hello $*
+
 # Seed synthetic test data into the datasource DB: SIM_ROWS rows each of three
 # device profiles (hvac numeric floats, energy monotonic counter, door bool+str)
 # into sim_hvac / sim_energy / sim_door. Re-running appends another batch.

@@ -5,6 +5,15 @@
 //! surrounding SQL — only the tokens — so the author's query text stays the
 //! existing guarded path and the binder only ever *adds* bound `$N` args and
 //! vetted identifiers. See docs/design/query/.
+//!
+//! The scan is **comment- and string-aware**: a `$token` inside a `--` line
+//! comment, a `/* */` block comment (nested, per Postgres), a `'...'` string
+//! literal, or a `$tag$...$tag$` dollar-quoted body is plain text, not a token.
+//! Without this, a kind whose *documentation header* mentions
+//! `$caller_tenant_id` demands the host token at bind time (and the rewritten
+//! `$N` inside the comment then desyncs Postgres's supplied-vs-referenced
+//! param count), and a literal like `'price in $USD'` 4xxes as an undefined
+//! variable.
 
 use super::bound::{BoundQueryBuilder, SqlValue};
 use super::context::BindCtx;
@@ -24,17 +33,103 @@ pub fn scan(
     let mut i = 0;
     let mut literal_start = 0;
     while i < bytes.len() {
-        if bytes[i] != b'$' {
-            i += 1;
-            continue;
+        match bytes[i] {
+            // Comments and string literals are copied verbatim with no token
+            // expansion — advance `i` past them; the literal run keeps growing
+            // and is flushed at the next real token (or the end).
+            b'\'' => i = skip_string(bytes, i),
+            b'-' if bytes.get(i + 1) == Some(&b'-') => i = skip_line_comment(bytes, i),
+            b'/' if bytes.get(i + 1) == Some(&b'*') => i = skip_block_comment(bytes, i),
+            b'$' => {
+                // A dollar-quoted body (`$$...$$` / `$tag$...$tag$`) is a
+                // string literal too — skip it whole before token dispatch.
+                if let Some(end) = skip_dollar_quote(sql, i) {
+                    i = end;
+                    continue;
+                }
+                // Flush the literal run before this token, then expand it.
+                out.push_sql(&sql[literal_start..i]);
+                i = dispatch(sql, i, ctx, dialect, out)?;
+                literal_start = i;
+            }
+            _ => i += 1,
         }
-        // Flush the literal run before this token, then expand the token.
-        out.push_sql(&sql[literal_start..i]);
-        i = dispatch(sql, i, ctx, dialect, out)?;
-        literal_start = i;
     }
     out.push_sql(&sql[literal_start..]);
     Ok(())
+}
+
+/// Advance past a `'...'` string literal starting at `at` (`bytes[at] == '\''`).
+/// A doubled `''` is the SQL escape for a quote inside the literal. An
+/// unterminated literal runs to the end — the scanner copies it verbatim and
+/// Postgres reports the syntax error.
+fn skip_string(bytes: &[u8], at: usize) -> usize {
+    let mut i = at + 1;
+    while i < bytes.len() {
+        if bytes[i] == b'\'' {
+            if bytes.get(i + 1) == Some(&b'\'') {
+                i += 2; // escaped quote — still inside the literal
+                continue;
+            }
+            return i + 1;
+        }
+        i += 1;
+    }
+    bytes.len()
+}
+
+/// Advance past a `--` line comment starting at `at` (to past the newline, or
+/// the end of input).
+fn skip_line_comment(bytes: &[u8], at: usize) -> usize {
+    let mut i = at + 2;
+    while i < bytes.len() && bytes[i] != b'\n' {
+        i += 1;
+    }
+    (i + 1).min(bytes.len())
+}
+
+/// Advance past a `/* ... */` block comment starting at `at`. Nested per the
+/// Postgres rule (`/* /* */ */` is one comment). Unterminated runs to the end.
+fn skip_block_comment(bytes: &[u8], at: usize) -> usize {
+    let mut depth = 1usize;
+    let mut i = at + 2;
+    while i + 1 < bytes.len() {
+        if bytes[i] == b'/' && bytes[i + 1] == b'*' {
+            depth += 1;
+            i += 2;
+        } else if bytes[i] == b'*' && bytes[i + 1] == b'/' {
+            depth -= 1;
+            i += 2;
+            if depth == 0 {
+                return i;
+            }
+        } else {
+            i += 1;
+        }
+    }
+    bytes.len()
+}
+
+/// If `sql[at..]` opens a dollar-quoted string (`$$` or `$tag$` where `tag` is
+/// an identifier), return the index just past its closing delimiter (or the end
+/// of input when unterminated). `None` when the `$` is not a dollar-quote
+/// opener — i.e. it's a candidate macro/variable/param token.
+fn skip_dollar_quote(sql: &str, at: usize) -> Option<usize> {
+    let rest = &sql[at + 1..];
+    let tag = ident_after(rest);
+    // Opener is `$<tag>$`; a bare `$name` with no closing `$` is a token, and
+    // `$__macro` is never a dollar-quote (Postgres tags can't start with a
+    // digit; ours can't be macros).
+    if !rest[tag.len()..].starts_with('$') {
+        return None;
+    }
+    let delim_len = tag.len() + 2; // $tag$
+    let delim = &sql[at..at + delim_len];
+    let body_start = at + delim_len;
+    match sql[body_start..].find(delim) {
+        Some(rel) => Some(body_start + rel + delim_len),
+        None => Some(sql.len()),
+    }
 }
 
 /// Recognise the token starting at `at` (`sql[at] == '$'`), expand it, and

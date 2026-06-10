@@ -152,8 +152,32 @@ A nexus feature shipped as an extension = one bundle dir / tarball with a `block
 
 **Config/deploy (§4.1.2) — done.** `NEXUS_EXTENSIONS_DIR` (read-only pack), `NEXUS_EXTENSIONS_INSTALLS_DIR` + `NEXUS_EXTENSIONS_PIDFILE_DIR` (writable, default under the pack / `.nexus-ext` in dev). Makefile dev vars + Dockerfile COPY + `/data` runtime dirs, mirroring the WS-10 lesson.
 
+**E2E verified against a running stack** (db + seed + `make dev-be` + vite):
+`make ext-hello-test` PASSes (list → detail → ui bytes 200+ETag/304 → both
+contributed kinds run); unload/load/pack/install(upload)/cleanup-preview/purge
+all exercised — purge removed the uploaded copy + kinds + enablement rows,
+**left the in-repo pack intact** (`will_delete: false` via the new
+`KeepDevSource` guard), re-purge idempotent, audit ledger carries
+enabled/disabled/installed/uninstalled with the acting principal, and the next
+boot re-materialised the kinds. Browser (Playwright headless Chromium): login →
+federation load → `com.nexus.hello` panel mounts in the sidebar slot rendering
+its own kind's result; the Extensions admin page lists the bundle. Console
+clean. Three live bugs found + fixed during this pass (regression-tested):
+1. `ExtensionRegistry::install` **replaces** records — committing the pack and
+   installs scans separately wiped the pack; both roots now collect into one
+   commit (installs-last wins an id clash).
+2. The WS-10 query binder scanned `$tokens` inside SQL **comments, string
+   literals, and dollar-quoted bodies** — a kind whose doc header merely
+   mentioned `$caller_tenant_id` 4xx'd at bind time. The scanner is now
+   comment/string/dollar-quote-aware (5 new binder tests).
+3. The kernel's uninstall deleted any registry record's `bundle_dir` — for an
+   in-repo pack bundle that meant `remove_dir_all` on repo source. The
+   documented-but-unimplemented installs-tree sanity check now exists
+   (`KeepDevSource`: outside installs ⇒ never deleted, reported
+   `will_delete: false`); bundle removal also tolerates already-gone dirs.
+
 **Follow-ups (not in this cut):**
-- Verify the FE loop against a *running* stack (`make dev` → `com.nexus.hello` panel in the sidebar slot; the in-repo `com.nubeio.ce` remote is a rubix bundle and was not exercised).
+- The in-repo `com.nubeio.ce` remote is a rubix bundle and was not exercised in nexus.
 - Extensions entry in the server-seeded **nav tree** needs the `StaticRoute` enum + codegen extended (the sidebar link uses the static-menu pattern for now).
 - Datasource-kind cleanup provider (WS-08) — the seam exists (`with_cleanup_provider`), no provider yet.
 - Process-flavour e2e (restart policy, reaper, live PID) is kernel-tested but not exercised by a nexus integration test; needs a process-flavour fixture bundle.
