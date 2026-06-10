@@ -36,6 +36,9 @@ export interface ChatMessage {
   content: string;
   /** True while this assistant turn is still streaming. */
   streaming?: boolean;
+  /** Latest progress note while streaming (e.g. "Working…", "using Bash…"),
+   * shown until real content arrives. Cleared on completion. */
+  status?: string;
   /** Set when the run failed. */
   error?: string;
 }
@@ -101,23 +104,36 @@ export function useChat(agentId: string | undefined): UseChat {
         })) {
           switch (ev.kind) {
             case "text_delta":
-              patchReply((msg) => ({ ...msg, content: msg.content + ev.text }));
+              // Real content arriving — clear any transient status.
+              patchReply((msg) => ({ ...msg, content: msg.content + ev.text, status: undefined }));
+              break;
+            case "progress":
+              // Liveness while the agent works (e.g. "Working…", "using Bash…").
+              patchReply((msg) => ({ ...msg, status: ev.message }));
+              break;
+            case "tool_call":
+              patchReply((msg) => ({ ...msg, status: `using ${ev.name}…` }));
               break;
             case "done":
               patchReply((msg) => ({
                 ...msg,
                 content: ev.text.length > 0 ? ev.text : msg.content,
                 streaming: false,
+                status: undefined,
               }));
               terminal = true;
               break;
             case "raw":
               if (typeof ev.error === "string") {
-                patchReply((msg) => ({ ...msg, error: ev.error as string, streaming: false }));
+                patchReply((msg) => ({
+                  ...msg,
+                  error: ev.error as string,
+                  streaming: false,
+                  status: undefined,
+                }));
                 terminal = true;
               }
               break;
-            // tool_call / progress: not surfaced in the v1 chat UI.
             default:
               break;
           }

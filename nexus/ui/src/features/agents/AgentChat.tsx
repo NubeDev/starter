@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Plus, Send } from "lucide-react";
+import { Loader2, Plus, Send } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 import { cn } from "@nube/starter-ui-kit/lib/utils";
@@ -114,8 +114,16 @@ function Bubble({ message }: { message: ChatMessage }) {
         )}
       >
         {message.content}
-        {message.streaming ? (
+        {message.streaming && message.content.length > 0 ? (
           <span className="ms-0.5 inline-block animate-pulse">▍</span>
+        ) : null}
+        {/* Before any content arrives, show the live status so a long run reads
+            as "working" rather than a frozen empty bubble. */}
+        {message.streaming && message.content.length === 0 ? (
+          <span className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            {message.status ?? "Working…"}
+          </span>
         ) : null}
         {message.error ? (
           <p role="alert" className="mt-1 text-sm text-destructive">

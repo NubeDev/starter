@@ -156,19 +156,47 @@ mod zag_impl {
             &self,
             task: AgentTask,
         ) -> Result<BoxStream<'static, Result<Event>>> {
-            // zag streams live events through `on_log_event`, whose event schema
-            // is not yet pinned in this adapter. Until those event fields are
-            // mapped to the unified `Event`, the stream runs the task to
-            // completion and emits a single terminal `Done` — correct and usable,
-            // just not incremental. The broadcast/persist machinery in nexus-api
-            // already treats `Done` as terminal, so consumers need no change when
-            // incremental deltas are added here later.
-            let outcome = self.run(task).await?;
-            let done = Event::Done {
-                text: outcome.text,
-                usage: None,
+            // zag's `exec_streaming` is built for the interactive TUI (it waits on
+            // a stdin turn pipe) and does not yield events when driven one-shot
+            // from a library, so we use the reliable batch `exec` for the reply.
+            // To avoid a long blank wait, we emit an immediate `Progress` event so
+            // the UI shows the agent is working, then run, then a terminal `Done`.
+            // (Token-level streaming would require zag to expose a one-shot
+            // streaming consumer; tracked separately.)
+            // Build the run future before the stream so the model call starts as
+            // soon as it's polled.
+            let builder = self.builder(&task);
+            let prompt = task.prompt.clone();
+            let run = async move {
+                builder
+                    .exec(&prompt)
+                    .await
+                    .map(|o| o.result.unwrap_or_default())
+                    .map_err(|e| Error::Provider(e.to_string()))
             };
-            Ok(futures::stream::once(async move { Ok(done) }).boxed())
+
+            // A tiny state machine: yield Progress immediately, then await the run
+            // and yield Done (or an error), then end.
+            type RunFut = std::pin::Pin<Box<dyn std::future::Future<Output = Result<String>> + Send>>;
+            enum Phase {
+                Start(RunFut),
+                Running(RunFut),
+                End,
+            }
+            let stream = futures::stream::unfold(Phase::Start(Box::pin(run)), |phase| async move {
+                match phase {
+                    Phase::Start(fut) => {
+                        let progress = Event::Progress { message: "Working…".to_string() };
+                        Some((Ok(progress), Phase::Running(fut)))
+                    }
+                    Phase::Running(fut) => match fut.await {
+                        Ok(text) => Some((Ok(Event::Done { text, usage: None }), Phase::End)),
+                        Err(e) => Some((Err(e), Phase::End)),
+                    },
+                    Phase::End => None,
+                }
+            });
+            Ok(stream.boxed())
         }
     }
 }
