@@ -15,7 +15,7 @@
 | 3 | RW-03 | Cutover: runners on native engine; delete ArkFlow | ✅ | 2026-06-10 02:55 UTC | 2026-06-10 04:35 UTC | 8d679c5b | grep-zero arkflow; vendor/ gone; 207 tests green |
 | 4 | RW-04 | Any-DB store: datasource-id sinks, batched writes | ✅ | 2026-06-10 03:25 UTC | 2026-06-10 03:47 UTC | 70a48deb | postgres COPY + file(parquet) writers; audited resolve |
 | 5 | RW-05 | Federation: DataFusion across datasources + file kinds | ✅ | 2026-06-10 03:55 UTC | 2026-06-10 11:30 UTC | a8dc7274 | hand-written sqlx TableProvider + native parquet/csv; push-down path byte-identical; file *persistence* deferred to RW-04 (TODOs.md) |
-| 6 | RW-06 | nexus-insights: DataFusion engine + Rhai sandbox + query stage | ✅ | 2026-06-10 04:25 UTC | 2026-06-10 14:40 UTC | PENDING_HASH | DataFusion (not Polars) — every primitive lowers to one SQL stmt, none grows rows; Rhai sandbox (op/depth/string/deadline caps, no fs/net/eval/import); insight applied post-cache before serialize; `2101_insights.sql` RLS; openapi +273 add-only, UI green |
+| 6 | RW-06 | nexus-insights: DataFusion engine + Rhai sandbox + query stage | ✅ | 2026-06-10 04:25 UTC | 2026-06-10 14:40 UTC | d7d573bb | DataFusion (not Polars) — every primitive lowers to one SQL stmt, none grows rows; Rhai sandbox (op/depth/string/deadline caps, no fs/net/eval/import); insight applied post-cache before serialize; `2101_insights.sql` RLS; openapi +273 add-only, UI green |
 | 7 | RW-07 | Extension data-plane: sources/sinks/insights contributions | ⬜ | | | | ingest.write host method |
 | 8 | RW-08 | Backpressure hardening + soak + flow metrics | ⬜ | | | | BACKPRESSURE.md + make soak |
 | 9 | RW-09 | Transport breadth: http_ingest + Zenoh source | ⬜ | | | | human-added 2026-06-10; zenoh feature-gated OFF |
