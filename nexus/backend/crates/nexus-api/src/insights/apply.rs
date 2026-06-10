@@ -2,7 +2,7 @@
 
 use nexus_spi::dto::insight::InsightRef;
 use nexus_spi::dto::query::{ColumnSchema, QueryResponse, QueryStats, ResultColumnType};
-use nexus_store::insight;
+use nexus_store::{extension_insight, insight};
 use serde_json::{Map, Value};
 use sqlx::PgPool;
 use starter_spi::Error;
@@ -35,8 +35,10 @@ pub async fn apply_insight(
     Ok(reshape(transformed, response.stats.elapsed_ms, response.stats.truncated))
 }
 
-/// Pick the script: a stored id (resolved + tenant-authorised by RLS) takes
-/// precedence over an inline script; absent both is a caller error.
+/// Pick the script. Precedence: a stored tenant id (resolved + tenant-authorised
+/// by RLS), then an extension-contributed name (the global registry, resolved
+/// without a tenant — the script runs against the caller's own rows), then an
+/// inline script. Absent all three is a caller error.
 async fn resolve_script(
     metadata: &PgPool,
     tenant: Option<&str>,
@@ -53,8 +55,16 @@ async fn resolve_script(
             }),
         };
     }
+    if let Some(name) = &insight.insight_name {
+        return match extension_insight::get_by_name(metadata, name).await? {
+            Some(rec) => Ok(rec.script),
+            None => Err(Error::NotFound {
+                what: format!("extension insight `{name}` not found"),
+            }),
+        };
+    }
     insight.script.clone().ok_or_else(|| Error::Invalid {
-        message: "insight reference has neither an id nor an inline script".into(),
+        message: "insight reference has neither an id, a name, nor an inline script".into(),
     })
 }
 

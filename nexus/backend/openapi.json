@@ -4988,7 +4988,7 @@
       },
       "InsightRef": {
         "type": "object",
-        "description": "How a query attaches a post-query insight transform. A request may either\ninline a `script` (the ad-hoc / preview case) or name a stored insight by\n`insight_id` (the panel case); `params` feeds either as the script's `params`\nobject. Both fields are optional and the whole `InsightRef` is optional on the\nrequest, so a query without one behaves exactly as before — this is a purely\nadditive contract, like the RW-05 `sources` field.\n\nWhen both `script` and `insight_id` are set, `insight_id` wins (a stored\ninsight is the authored source of truth; an inline script is the override only\nwhen no id is given). Caps still apply *after* the insight runs: it can\naggregate the result down but the surface guarantees it never grows it.",
+        "description": "How a query attaches a post-query insight transform. A request may either\ninline a `script` (the ad-hoc / preview case) or name a stored insight by\n`insight_id` (the panel case); `params` feeds either as the script's `params`\nobject. Both fields are optional and the whole `InsightRef` is optional on the\nrequest, so a query without one behaves exactly as before — this is a purely\nadditive contract, like the RW-05 `sources` field.\n\nA request may also name an extension-contributed insight by `insight_name`\n(the global registry an installed extension contributes via\n`contributes.insights[]`). Precedence when more than one is set: a stored\n`insight_id` (tenant-authored) wins, then `insight_name` (global, admin-\ncurated), then an inline `script`. Caps still apply *after* the insight runs:\nit can aggregate the result down but the surface guarantees it never grows it.",
         "properties": {
           "insight_id": {
             "type": [
@@ -4997,6 +4997,13 @@
             ],
             "format": "uuid",
             "description": "A stored insight id to run. Resolved and tenant-authorised server-side."
+          },
+          "insight_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An extension-contributed insight name to run (e.g. `com.nexus.hello.zscore`).\nResolved against the global extension-insight registry server-side; the\nscript runs against the caller's own result rows, so a global definition\nonly ever touches the caller's data. Additive and optional."
           },
           "params": {
             "description": "Parameters bound as the script's `params` object. Arbitrary JSON; the\nscript reads `params.<field>`."

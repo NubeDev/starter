@@ -40,6 +40,17 @@ contributes:
       sql_file: kinds/echo.sql
       tables: []
 
+  # `contributes.insights[]` → global extension-insight registry (RW-07). On
+  # boot the script is compiled against the insight sandbox and materialised into
+  # `nexus_extension_insights`; a `POST /query { insight: { insight_name:
+  # "com.nexus.hello.zscore" } }` resolves and runs it post-query;
+  # `DELETE /extensions/com.nexus.hello?purge=true` removes it via the insight
+  # cleanup provider. The dual of `warehouse_templates[]` for the insight stage.
+  insights:
+    - name: com.nexus.hello.zscore
+      script_file: insights/zscore.rhai
+      params_schema: insights/zscore_params.json
+
   ui:
     entry: ui/remoteEntry.js
     exposes:

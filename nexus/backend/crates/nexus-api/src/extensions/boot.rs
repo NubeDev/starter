@@ -6,10 +6,13 @@
 //!    spawns (the supervisor memory: process groups + boot pidfile reaper).
 //! 2. **Scan + validate + commit + seal** the manifest registry from the
 //!    extensions dir(s).
-//! 3. **Materialise contributed query-kinds** — read each validated extension's
-//!    `warehouse_templates[]`, lint them, upsert into
+//! 3. **Materialise contributed query-kinds + insights** — read each validated
+//!    extension's `warehouse_templates[]`, lint them, upsert into
 //!    `nexus_extension_query_kinds`, then build the in-memory `extension_kinds`
-//!    registry (the dispatcher's third source) from the persisted rows.
+//!    registry (the dispatcher's third source) from the persisted rows; and read
+//!    each extension's `insights[]`, compile-check them, upsert into
+//!    `nexus_extension_insights` (resolved per-request by name, no in-memory
+//!    registry needed).
 //! 4. **Spawn supervisors** for enabled process-flavour extensions, installing
 //!    nexus's host-method handler so a `warehouse.query`/`authz.check`/
 //!    `dashboard.read` call routes back into nexus under the caller's tenant.
@@ -41,11 +44,13 @@ use starter_ext_supervisor::{reap_stale_groups, SharedHostMethodHandler};
 
 use super::audit::NexusExtensionAudit;
 use super::cleanup::QueryKindCleanupProvider;
+use super::cleanup_insights::InsightCleanupProvider;
 use super::config::ExtensionsConfig;
 use super::contribute::{contributed_query_kinds, record_to_query_kind};
-use super::post_install::QueryKindPostInstall;
+use super::contribute_insights::contributed_insights;
+use super::post_install::ContributionPostInstall;
 use crate::kinds::Registry as KindRegistry;
-use nexus_store::extension_query_kind;
+use nexus_store::{extension_insight, extension_query_kind};
 
 /// The assembled extension runtime handed back to `main`.
 pub struct ExtensionRuntime {
@@ -152,7 +157,8 @@ pub async fn boot(
         .with_supervisors(supervisors)
         .with_installs_dir(cfg.installs_dir.clone())
         .with_cleanup_provider(Arc::new(QueryKindCleanupProvider::new(metadata.clone())))
-        .with_post_install_hook(Arc::new(QueryKindPostInstall::new(
+        .with_cleanup_provider(Arc::new(InsightCleanupProvider::new(metadata.clone())))
+        .with_post_install_hook(Arc::new(ContributionPostInstall::new(
             metadata.clone(),
             cfg.installs_dir.clone(),
         )))
@@ -250,6 +256,30 @@ pub async fn load_extension_kinds(
             extension_query_kind::upsert(metadata, ext_id.as_str(), new)
                 .await
                 .map_err(|e| format!("persist contributed kind {}: {e}", new.name))?;
+        }
+
+        // Materialise contributed insights the same way: compile-check off disk,
+        // upsert into the global registry. A single extension's bad script is
+        // logged and skipped (parity with the bad-template path); a metadata-DB
+        // failure propagates. Insights need no in-memory registry — the query
+        // path resolves a contributed insight by name from the table per request,
+        // exactly as a stored tenant insight resolves by id.
+        match contributed_insights(ext_id.as_str(), &record.bundle_dir, manifest) {
+            Ok(insights) => {
+                for new in &insights {
+                    extension_insight::upsert(metadata, ext_id.as_str(), new)
+                        .await
+                        .map_err(|e| format!("persist contributed insight {}: {e}", new.name))?;
+                }
+            }
+            Err(e) => {
+                tracing::warn!(
+                    target: "nexus_api::extensions::boot",
+                    extension = %ext_id.as_str(),
+                    error = %e,
+                    "skipping extension's insight contribution (bad script)"
+                );
+            }
         }
     }
 

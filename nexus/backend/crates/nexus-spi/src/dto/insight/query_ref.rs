@@ -12,15 +12,23 @@ use uuid::Uuid;
 /// request, so a query without one behaves exactly as before — this is a purely
 /// additive contract, like the RW-05 `sources` field.
 ///
-/// When both `script` and `insight_id` are set, `insight_id` wins (a stored
-/// insight is the authored source of truth; an inline script is the override only
-/// when no id is given). Caps still apply *after* the insight runs: it can
-/// aggregate the result down but the surface guarantees it never grows it.
+/// A request may also name an extension-contributed insight by `insight_name`
+/// (the global registry an installed extension contributes via
+/// `contributes.insights[]`). Precedence when more than one is set: a stored
+/// `insight_id` (tenant-authored) wins, then `insight_name` (global, admin-
+/// curated), then an inline `script`. Caps still apply *after* the insight runs:
+/// it can aggregate the result down but the surface guarantees it never grows it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct InsightRef {
     /// A stored insight id to run. Resolved and tenant-authorised server-side.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub insight_id: Option<Uuid>,
+    /// An extension-contributed insight name to run (e.g. `com.nexus.hello.zscore`).
+    /// Resolved against the global extension-insight registry server-side; the
+    /// script runs against the caller's own result rows, so a global definition
+    /// only ever touches the caller's data. Additive and optional.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_name: Option<String>,
     /// An inline Rhai script to run instead, when no `insight_id` is given. The
     /// script orchestrates the curated vectorized surface over the result frame.
     #[serde(default, skip_serializing_if = "Option::is_none")]

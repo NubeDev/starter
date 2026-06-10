@@ -115,3 +115,41 @@ Format per entry:
 - **Proposed:** The RW that owns the dashboard-DTO / `serve::assemble` change (or a dedicated
   drift-fix pass) updates these two call sites: add the three `NewDashboard` fields and the
   missing `assemble` router argument. Until then they are stale, not regressions.
+
+## 2026-06-10 RW-07 — Extension data-plane sources/sinks (`ingest.*`) deferred — only the insights slice shipped
+- **Type:** follow-up (RW-07 scope items 2, 3, 4)
+- **What:** RW-07 shipped only its insights slice (spec items 1 + 5): `contributes.insights[]`
+  boot lint+materialise+cleanup into the global `nexus_extension_insights` table, the
+  `InsightRef.insight_name` query path, and the `com.nexus.hello.zscore` demo. The larger
+  host-mediated data-plane — spec items 2–4 — is NOT done:
+    - `contributes.sources[]` / `contributes.sinks[]` manifest fields
+      (`{name, config_schema, direction}`) in `starter-ext-spi/src/manifest.rs` (additive).
+    - host method `ingest.write` (extension pushes JSON rows tagged with a registered source
+      name; host stamps tenant from the extension's *install identity*, NEVER the payload;
+      json_to_arrow → the named flow source's bounded channel; returns `retry_after` when the
+      channel is full — document the backpressure contract in the SPI).
+    - sink direction: `ingest.read_batch` (long-poll) OR push via supervisor JSON-RPC — pick
+      ONE based on what `starter-ext-supervisor` already supports best; document the choice.
+    - engine `source/extension.rs` + `sink/extension.rs` nodes, registered under contributed
+      names at extension boot and deregistered on disable/purge; a flow referencing a missing
+      extension node must fail to build with a clear error (test).
+    - authz: gate the `ingest.*` host-method categories the same way `warehouse` is gated (see
+      the kernel category-gate comment in `nexus-api/src/extensions/host_methods.rs`).
+    - migration `22xx` only if registration state needs persistence beyond existing extension
+      tables (`2201_extension_insights.sql` is already taken by the insights slice; use `2202+`).
+  Outstanding acceptance bullets: a process-runtime test extension pushing rows through
+  `ingest.write` into a flow that lands them in a datasource sink (docker-gated e2e, tenant
+  stamped by host + verified); the channel-full backpressure response (test with a tiny channel
+  capacity); and extending the hello e2e to assert `DELETE …?purge=true` removes the insight
+  via `InsightCleanupProvider` (the cleanup path exists and is unit-covered, but the hello e2e
+  was not extended with a new purge assertion this pass).
+- **Why:** Items 2–4 are a substantially larger cross-workspace data-plane (starter-extensions
+  host methods + supervisor wiring + engine nodes + authz). The spec itself names item 1 "the
+  smallest slice that proves the pattern"; shipping 2–4 half-done would mean stubs across two
+  workspaces. The insights slice is self-contained, fully tested, and unblocks downstream RWs
+  that only need the contributed-insight path.
+- **Proposed:** A dedicated RW-07b (or reopened RW-07) implements the sources/sinks data-plane
+  against the host_methods.rs category-gate pattern and the supervisor JSON-RPC the spec points
+  at, mirroring the channel/backpressure design in the engine's existing bounded-source path.
+  Additive manifest fields only — if any needed `starter-ext-spi`/supervisor change is breaking,
+  that is a blocker entry here, not a guess (per the spec's Non-goals).

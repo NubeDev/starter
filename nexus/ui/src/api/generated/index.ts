@@ -1860,10 +1860,12 @@ export interface components {
          *     request, so a query without one behaves exactly as before — this is a purely
          *     additive contract, like the RW-05 `sources` field.
          *
-         *     When both `script` and `insight_id` are set, `insight_id` wins (a stored
-         *     insight is the authored source of truth; an inline script is the override only
-         *     when no id is given). Caps still apply *after* the insight runs: it can
-         *     aggregate the result down but the surface guarantees it never grows it.
+         *     A request may also name an extension-contributed insight by `insight_name`
+         *     (the global registry an installed extension contributes via
+         *     `contributes.insights[]`). Precedence when more than one is set: a stored
+         *     `insight_id` (tenant-authored) wins, then `insight_name` (global, admin-
+         *     curated), then an inline `script`. Caps still apply *after* the insight runs:
+         *     it can aggregate the result down but the surface guarantees it never grows it.
          */
         InsightRef: {
             /**
@@ -1871,6 +1873,13 @@ export interface components {
              * @description A stored insight id to run. Resolved and tenant-authorised server-side.
              */
             insight_id?: string | null;
+            /**
+             * @description An extension-contributed insight name to run (e.g. `com.nexus.hello.zscore`).
+             *     Resolved against the global extension-insight registry server-side; the
+             *     script runs against the caller's own result rows, so a global definition
+             *     only ever touches the caller's data. Additive and optional.
+             */
+            insight_name?: string | null;
             /**
              * @description Parameters bound as the script's `params` object. Arbitrary JSON; the
              *     script reads `params.<field>`.

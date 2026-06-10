@@ -402,6 +402,46 @@ pub struct Contributes {
     /// builtin NaN/Spike/Stuck rules use.
     #[serde(default)]
     pub anomaly_rules: Vec<ContributeAnomalyRule>,
+    /// Post-query insight scripts the extension contributes. Each entry names a
+    /// reusable, sandboxed transform the host materialises into its global
+    /// extension-insight registry, the dual of `warehouse_templates[]` for the
+    /// insight stage rather than the query stage. See [`ContributeInsight`].
+    ///
+    /// The host (nexus-api) compiles each entry's `script_file` against the
+    /// insight sandbox at registration and rejects the contribution on a compile
+    /// error, exactly as `warehouse_templates[]` are linted before they land.
+    /// A consumer host that does not run an insight stage simply ignores the
+    /// field — like every other contribution it is additive and defaults empty.
+    #[serde(default)]
+    pub insights: Vec<ContributeInsight>,
+}
+
+/// One `contributes.insights[]` entry — a named, sandboxed post-query transform
+/// script the extension contributes to the host's insight stage.
+///
+/// The extension ships a Rhai script (resolved from `script_file`, relative to
+/// the bundle root, R7: never templated at runtime) and an optional JSON Schema
+/// describing the script's `params` (resolved from `params_schema`, advisory —
+/// the sandbox enforces safety regardless). The host compiles the script at
+/// registration and refuses the contribution if it does not compile, so a
+/// broken insight never reaches a query.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeInsight {
+    /// Insight name. Must be the extension id or a dotted descendant (R4
+    /// namespace ownership), e.g. `com.acme.weather.zscore`. Host-reserved
+    /// prefixes (`starter.`, `sys.`) are rejected at load time.
+    pub name: String,
+
+    /// Path (relative to bundle root) to the Rhai script holding the transform
+    /// body. R7 — read verbatim, never templated at runtime.
+    pub script_file: String,
+
+    /// Optional path (relative to bundle root) to a JSON Schema describing the
+    /// script's bound `params`. Advisory only (the sandbox is the safety
+    /// boundary); omitted ⇒ no schema is surfaced to the UI.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub params_schema: Option<String>,
 }
 
 /// One `contributes.skills[]` entry — a directory of `SKILL.md`
@@ -1497,6 +1537,69 @@ contributes:
     - kind: com.nube.mqtt.publish
       settings_schema: schemas/publish.json
       unexpected_field: 1
+"#;
+        assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
+    }
+
+    #[test]
+    fn contributes_insights_parses() {
+        // Additive insight contributions mirror `warehouse_templates[]`:
+        // `name` + `script_file` required, `params_schema` optional.
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  insights:
+    - name: com.acme.weather.zscore
+      script_file: insights/zscore.rhai
+      params_schema: insights/zscore_params.json
+    - name: com.acme.weather.smooth
+      script_file: insights/smooth.rhai
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.insights.len(), 2);
+        assert_eq!(m.contributes.insights[0].name, "com.acme.weather.zscore");
+        assert_eq!(
+            m.contributes.insights[0].script_file,
+            "insights/zscore.rhai"
+        );
+        assert_eq!(
+            m.contributes.insights[0].params_schema.as_deref(),
+            Some("insights/zscore_params.json")
+        );
+        assert!(m.contributes.insights[1].params_schema.is_none());
+    }
+
+    #[test]
+    fn contributes_insights_default_to_empty() {
+        let yaml = r#"
+v: 1
+id: com.acme.none
+version: 0.0.1
+display_name: "None"
+runtime: { kind: builtin, crate_name: none }
+contributes: {}
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(m.contributes.insights.is_empty());
+    }
+
+    #[test]
+    fn contributes_insights_rejects_unknown_field() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  insights:
+    - name: com.acme.weather.z
+      script_file: insights/z.rhai
+      bogus: 1
 "#;
         assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
     }

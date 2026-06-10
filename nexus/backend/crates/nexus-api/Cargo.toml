@@ -188,3 +188,7 @@ path = "tests/routes/insights/insights_e2e_test.rs"
 [[test]]
 name = "routes_query_insight_e2e"
 path = "tests/routes/query/insight_e2e_test.rs"
+
+[[test]]
+name = "routes_query_extension_insight_e2e"
+path = "tests/routes/query/extension_insight_e2e_test.rs"
