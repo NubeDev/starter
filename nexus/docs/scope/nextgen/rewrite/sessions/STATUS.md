@@ -14,7 +14,7 @@
 | 2 | RW-02 | Port nodes onto core (DataFusion direct) | ✅ | 2026-06-10 02:30 UTC | 2026-06-10 03:25 UTC | 6b25bb7d | behavior parity, same registry names; 40 engine tests green |
 | 3 | RW-03 | Cutover: runners on native engine; delete ArkFlow | ✅ | 2026-06-10 02:55 UTC | 2026-06-10 04:35 UTC | 8d679c5b | grep-zero arkflow; vendor/ gone; 207 tests green |
 | 4 | RW-04 | Any-DB store: datasource-id sinks, batched writes | ✅ | 2026-06-10 03:25 UTC | 2026-06-10 03:47 UTC | 70a48deb | postgres COPY + file(parquet) writers; audited resolve |
-| 5 | RW-05 | Federation: DataFusion across datasources + file kinds | ✅ | 2026-06-10 03:55 UTC | 2026-06-10 11:30 UTC | | hand-written sqlx TableProvider + native parquet/csv; push-down path byte-identical; file *persistence* deferred to RW-04 (TODOs.md) |
+| 5 | RW-05 | Federation: DataFusion across datasources + file kinds | ✅ | 2026-06-10 03:55 UTC | 2026-06-10 11:30 UTC | a8dc7274 | hand-written sqlx TableProvider + native parquet/csv; push-down path byte-identical; file *persistence* deferred to RW-04 (TODOs.md) |
 | 6 | RW-06 | nexus-insights: Polars + Rhai sandbox + query stage | ⬜ | | | | migration 18xx; DTO-first |
 | 7 | RW-07 | Extension data-plane: sources/sinks/insights contributions | ⬜ | | | | ingest.write host method |
 | 8 | RW-08 | Backpressure hardening + soak + flow metrics | ⬜ | | | | BACKPRESSURE.md + make soak |
