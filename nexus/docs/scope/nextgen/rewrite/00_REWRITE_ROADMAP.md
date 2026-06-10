@@ -37,6 +37,14 @@ Extensions (WS-14 system, `nexus-api/src/extensions/`) are the plugin surface:
 query-kinds exist already; RW-07 adds sources/sinks/insights contributions.
 Rule: extensions contribute **into** the pipeline via host methods; they never bypass it.
 
+**Ingest is GENERIC by contract (human requirement 2026-06-10):** incoming data is never
+limited to a protocol list. The only ingest contract is the §6 `Source` trait + the
+bounded-channel backpressure path; everything transport-specific (MQTT, Zenoh, HTTP push,
+Modbus, Kafka, vendor SDKs, …) lives BEHIND a source — as a built-in feature-gated node,
+an extension via `ingest.write`, or the `http_ingest` REST endpoint. Nothing downstream
+of the channel (batching, schema, tenancy, sinks, storage, query, insights) may ever
+branch on the transport. Adding a transport = adding one source node, zero core changes.
+
 ## §3 Execution queue (dependency order — do not reorder)
 
 | Order | RW | Title | Depends on |
@@ -49,6 +57,7 @@ Rule: extensions contribute **into** the pipeline via host methods; they never b
 | 6 | RW-06 | nexus-insights: vectorized engine (DataFusion-first) + Rhai sandbox | RW-03 |
 | 7 | RW-07 | Extension data-plane: contributes.sources/sinks/insights + ingest.write | RW-04, RW-06 |
 | 8 | RW-08 | Backpressure hardening + soak test + flow metrics | RW-04 |
+| 9 | RW-09 | Transport breadth: http_ingest + Zenoh source | RW-04, RW-07 |
 
 ## §4 Owned files (lanes)
 
@@ -69,6 +78,8 @@ Rule: extensions contribute **into** the pipeline via host methods; they never b
   `starter-ext-spi` manifest fields ONLY if additive + backward compatible.
 - RW-08: `nexus-engine/src/flow/**` (metrics append), `backend/tests/soak/**` (new),
   docs `rewrite/BACKPRESSURE.md`.
+- RW-09: `nexus-engine/src/source/{http_ingest,zenoh}.rs` (new), one thin ingest route,
+  datasource-kind manifest entries, BACKPRESSURE.md append.
 
 🔶 Shared files (append-only, never restructure): `nexus-engine/src/lib.rs`,
 `nexus-api/src/main.rs`/`state.rs`, workspace `Cargo.toml`s, `openapi.rs`.
@@ -149,6 +160,7 @@ latest before numbering; never reuse a block.)
   genuinely fail AND interop goes through the Arrow C data interface (zero-copy FFI), with
   the compile/binary cost recorded in the session log. Anything else heavy (duckdb, pyo3,
   librdkafka) is forbidden — that bloat is why the vendor trim existed. New connector-style
-  deps must be feature-gated OFF by default (precedent: `mqtt`/rumqttc from WS-08b).
+  deps must be feature-gated OFF by default (precedent: `mqtt`/rumqttc from WS-08b;
+  `zenoh` approved under the same gating for RW-09).
 - ArkFlow code may not be copied verbatim (Apache-2.0 would allow it, but the point is a
   smaller, nexus-shaped core — write it fresh against the contracts in §6).
