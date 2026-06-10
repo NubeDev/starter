@@ -125,6 +125,10 @@ name = "routes_datasources_query_e2e"
 path = "tests/routes/datasources/query_e2e_test.rs"
 
 [[test]]
+name = "routes_datasources_federation_e2e"
+path = "tests/routes/datasources/federation_e2e_test.rs"
+
+[[test]]
 name = "routes_datasources_sink_e2e"
 path = "tests/routes/datasources/sink_e2e_test.rs"
 

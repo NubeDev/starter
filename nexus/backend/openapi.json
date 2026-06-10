@@ -4584,6 +4584,31 @@
           }
         }
       },
+      "FederatedSourceRef": {
+        "type": "object",
+        "description": "One federated input reference: a SQL alias bound to a datasource id. The alias\nbecomes the `ds_<alias>` table the request's `sql` reads; the id is resolved\nand tenant-authorised server-side. A file datasource (kind `parquet`/`csv`)\nreferences its configured path; a `postgres` datasource references its `table`.",
+        "required": [
+          "alias",
+          "datasource"
+        ],
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "SQL alias for this input — referenced as `ds_<alias>` in the statement.\nRestricted to a plain identifier server-side so it is a safe table name."
+          },
+          "datasource": {
+            "type": "string",
+            "description": "The datasource id (UUID string) this alias resolves to. Must be visible to\nthe caller's tenant; an id the tenant cannot view is rejected, never read."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "For a `postgres` datasource, the remote table to read into the join. A\nfile datasource ignores this (its path is the table)."
+          }
+        }
+      },
       "FlowDetail": {
         "type": "object",
         "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
@@ -5507,6 +5532,13 @@
           },
           "params": {
             "description": "WS-10 kind-mode named params, validated host-side against the kind's JSON\nSchema before binding. Each value binds as a `$N` arg, never inlined.\nIgnored in raw-SQL mode."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FederatedSourceRef"
+            },
+            "description": "RW-05 federation: an alias → datasource-id map naming the inputs a\ncross-datasource (or file) `sql` joins over. Each alias is the SQL-visible\ntable `ds_<alias>`; the server authorises every referenced id against the\ncaller's tenant before planning. Absent (the default) keeps the request on\nthe single-datasource push-down path — exactly today's behaviour — so this\nfield is purely additive. Ignored in kind-mode."
           },
           "sql": {
             "type": "string",

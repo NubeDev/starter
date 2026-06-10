@@ -49,6 +49,32 @@ pub struct QueryRequest {
     /// Ignored in raw-SQL mode.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub params: Option<serde_json::Value>,
+    /// RW-05 federation: an alias → datasource-id map naming the inputs a
+    /// cross-datasource (or file) `sql` joins over. Each alias is the SQL-visible
+    /// table `ds_<alias>`; the server authorises every referenced id against the
+    /// caller's tenant before planning. Absent (the default) keeps the request on
+    /// the single-datasource push-down path — exactly today's behaviour — so this
+    /// field is purely additive. Ignored in kind-mode.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sources: Vec<FederatedSourceRef>,
+}
+
+/// One federated input reference: a SQL alias bound to a datasource id. The alias
+/// becomes the `ds_<alias>` table the request's `sql` reads; the id is resolved
+/// and tenant-authorised server-side. A file datasource (kind `parquet`/`csv`)
+/// references its configured path; a `postgres` datasource references its `table`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub struct FederatedSourceRef {
+    /// SQL alias for this input — referenced as `ds_<alias>` in the statement.
+    /// Restricted to a plain identifier server-side so it is a safe table name.
+    pub alias: String,
+    /// The datasource id (UUID string) this alias resolves to. Must be visible to
+    /// the caller's tenant; an id the tenant cannot view is rejected, never read.
+    pub datasource: String,
+    /// For a `postgres` datasource, the remote table to read into the join. A
+    /// file datasource ignores this (its path is the table).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub table: Option<String>,
 }
 
 /// An absolute query window. Half-open (`from` inclusive, `to` exclusive),

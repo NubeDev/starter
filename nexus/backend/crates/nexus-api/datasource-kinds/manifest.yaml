@@ -31,3 +31,22 @@ datasource_kinds:
     test:
       mode: connect
     description: MQTT broker subscription for live device telemetry (stream source).
+
+  # File-backed query connectors for federation (RW-05). A Parquet/CSV file is a
+  # read-only `POST /query` target the engine reads natively (DataFusion file
+  # input) and can join against a SQL datasource in one federated statement. It
+  # holds no secret — the config is a server-local path — so its probe is a
+  # `connect` (open/stat the file), not a credentialed round-trip.
+  - name: parquet
+    surface: query
+    config_schema: parquet_config.json
+    test:
+      mode: connect
+    description: Parquet file read natively by the engine (federated query input).
+
+  - name: csv
+    surface: query
+    config_schema: csv_config.json
+    test:
+      mode: connect
+    description: CSV file read natively by the engine (federated query input).

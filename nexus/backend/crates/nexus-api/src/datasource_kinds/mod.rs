@@ -147,12 +147,23 @@ mod tests {
     #[test]
     fn builtin_pack_loads_and_lints_clean() {
         let reg = Registry::load_dir(&builtin_pack_dir()).expect("the shipped pack must load");
-        assert_eq!(reg.len(), 2, "the core pack declares postgres + mqtt");
+        assert_eq!(
+            reg.len(),
+            4,
+            "the core pack declares postgres + mqtt + parquet + csv"
+        );
         let pg = reg.get("postgres").expect("postgres is declared");
         assert_eq!(pg.surface, Surface::Query);
         assert!(pg.secret_fields.contains(&"password".to_string()));
         let mqtt = reg.get("mqtt").expect("mqtt is declared");
         assert_eq!(mqtt.surface, Surface::Stream);
+        // RW-05 file kinds: queryable, path-only (no secrets), engine-read.
+        let parquet = reg.get("parquet").expect("parquet is declared");
+        assert_eq!(parquet.surface, Surface::Query);
+        assert!(parquet.secret_fields.is_empty());
+        let csv = reg.get("csv").expect("csv is declared");
+        assert_eq!(csv.surface, Surface::Query);
+        assert!(csv.secret_fields.is_empty());
     }
 
     #[test]

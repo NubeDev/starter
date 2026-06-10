@@ -11,6 +11,7 @@
 
 pub mod arrow_json;
 pub mod core;
+pub mod federation;
 pub mod flow;
 pub mod native_registry;
 pub mod processor;
@@ -21,6 +22,7 @@ pub mod source;
 pub mod stream_registry;
 pub mod time;
 
+pub use federation::{FederatedQuery, FederatedSource, PostgresConn};
 pub use flow::{FlowManager, FlowStats};
 pub use native_registry::native_registry;
 pub use registry::{describe, NodeCategory, NodeDescriptor};

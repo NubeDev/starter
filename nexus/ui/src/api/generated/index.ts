@@ -1670,6 +1670,29 @@ export interface components {
             stats: components["schemas"]["QueryStats"];
         };
         /**
+         * @description One federated input reference: a SQL alias bound to a datasource id. The alias
+         *     becomes the `ds_<alias>` table the request's `sql` reads; the id is resolved
+         *     and tenant-authorised server-side. A file datasource (kind `parquet`/`csv`)
+         *     references its configured path; a `postgres` datasource references its `table`.
+         */
+        FederatedSourceRef: {
+            /**
+             * @description SQL alias for this input — referenced as `ds_<alias>` in the statement.
+             *     Restricted to a plain identifier server-side so it is a safe table name.
+             */
+            alias: string;
+            /**
+             * @description The datasource id (UUID string) this alias resolves to. Must be visible to
+             *     the caller's tenant; an id the tenant cannot view is rejected, never read.
+             */
+            datasource: string;
+            /**
+             * @description For a `postgres` datasource, the remote table to read into the join. A
+             *     file datasource ignores this (its path is the table).
+             */
+            table?: string | null;
+        };
+        /**
          * @description A saved ingestion flow in full. The three config blobs are opaque JSON on the
          *     wire — the input connector, the processor pipeline, and the output sink the
          *     FlowManager hands to the engine.
@@ -2112,6 +2135,15 @@ export interface components {
              *     Ignored in raw-SQL mode.
              */
             params?: unknown;
+            /**
+             * @description RW-05 federation: an alias → datasource-id map naming the inputs a
+             *     cross-datasource (or file) `sql` joins over. Each alias is the SQL-visible
+             *     table `ds_<alias>`; the server authorises every referenced id against the
+             *     caller's tenant before planning. Absent (the default) keeps the request on
+             *     the single-datasource push-down path — exactly today's behaviour — so this
+             *     field is purely additive. Ignored in kind-mode.
+             */
+            sources?: components["schemas"]["FederatedSourceRef"][];
             /**
              * @description The SQL to run against the datasource. May carry macros (`$__timeFilter`)
              *     and variable references (`$region`) the binder expands into bound args.

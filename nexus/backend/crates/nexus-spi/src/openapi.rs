@@ -39,8 +39,8 @@ use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRe
 use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{
-    ColumnSchema, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse, QueryStats,
-    QueryTimeRange, QueryVariable, ResultColumnType,
+    ColumnSchema, FederatedSourceRef, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse,
+    QueryStats, QueryTimeRange, QueryVariable, ResultColumnType,
 };
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
@@ -57,6 +57,7 @@ use crate::Problem;
     QueryRequest,
     QueryTimeRange,
     QueryVariable,
+    FederatedSourceRef,
     QueryResponse,
     QueryStats,
     QueryKindList,

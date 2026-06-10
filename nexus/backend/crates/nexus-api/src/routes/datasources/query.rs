@@ -62,6 +62,12 @@ pub async fn query_datasource(
     {
         return resp;
     }
+    // RW-05 dispatch seam: a request naming federated `sources` runs the
+    // cross-datasource engine path (each source authorised against the tenant);
+    // an ordinary request stays on the push-down path below, unchanged.
+    if crate::federation::is_federated(&req) {
+        return crate::federation::respond(&state, caller_principal, &tenant, &req).await;
+    }
     let pool = match state
         .datasource_pools
         .get_or_connect(

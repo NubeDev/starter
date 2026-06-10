@@ -67,6 +67,28 @@ Format per entry:
   descriptor: category Output, config_schema `{kind, datasource(id), table, batch_rows?,
   batch_ms?}`, and extends the `describes_every_registered_node` test.
 
+## 2026-06-10 RW-05 — File datasource (parquet/csv) cannot be *persisted* — store schema is Postgres-shaped
+- **Type:** follow-up
+- **What:** The `parquet`/`csv` datasource kinds are declared (manifest pack) and the engine
+  reads them natively (`FederatedSource::{Parquet,Csv}`, engine test green), but a file
+  datasource cannot be stored as a `nexus_datasources` row. Migration 0001's table is rigidly
+  Postgres-shaped — `host`/`port`/`database`/`db_user` NOT NULL, `secret_cipher` NOT NULL —
+  with no generic `config`/`path` column and no way to omit the secret. So
+  `federation::resolve::resolve_one` returns `Invalid` for a stored file kind today: it can
+  authorise + decrypt a `postgres` source, but a file source has no record to resolve.
+  Postgres↔Postgres federation is therefore fully wired end-to-end; file *persistence* is the
+  one missing leg of an end-to-end docker-PG ⋈ stored-Parquet join.
+- **Why:** The fix is a store-side migration (a nullable `config jsonb` / `path` column +
+  nullable secret columns) plus `record.rs`/`insert.rs`/`get`/`resolve` changes — squarely
+  RW-04's `nexus-store/src/datasource/**` lane and RW-04's 20xx migration block. The charter
+  forbids editing another RW's lane, and a second DB / schema change is out of RW-05's scope.
+- **Proposed:** An RW-04 fix pass adds a nullable `config jsonb` column (carrying `{path,
+  has_header}` for file kinds) and makes the secret columns nullable for secret-less kinds;
+  then `resolve::resolve_one`'s `parquet`/`csv` arms build `FederatedSource::{Parquet,Csv}`
+  from `record.config.path` (engine + manifest already support it). Until then the file arms
+  stay an explicit `Invalid` (loud, never a silent drop), and the E2E join is proven with two
+  registered Postgres datasources (`federation_e2e_test.rs`).
+
 ## 2026-06-10 RW-02 — Native `sql` omits ArkFlow's JSON UDFs (confirm before vendor delete)
 - **Type:** follow-up
 - **What:** ArkFlow's vendored `sql` processor registers `datafusion_functions_json` + a custom

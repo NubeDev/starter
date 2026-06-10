@@ -14,6 +14,7 @@ pub mod changelog;
 pub mod datasource_kinds;
 pub mod datasource_pools;
 pub mod extensions;
+pub mod federation;
 pub mod flows;
 pub mod identity;
 pub mod kinds;

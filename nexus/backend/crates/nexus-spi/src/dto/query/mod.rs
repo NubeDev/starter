@@ -5,5 +5,7 @@ mod run;
 mod shared;
 
 pub use kinds::{QueryKindList, QueryKindSummary};
-pub use run::{QueryRequest, QueryResponse, QueryTimeRange, QueryVariable};
+pub use run::{
+    FederatedSourceRef, QueryRequest, QueryResponse, QueryTimeRange, QueryVariable,
+};
 pub use shared::{ColumnSchema, QueryStats, ResultColumnType};

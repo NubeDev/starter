@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CSV datasource config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path"],
+  "properties": {
+    "path": { "type": "string", "minLength": 1, "title": "File path", "description": "Server-local path to the CSV file the engine reads." },
+    "has_header": { "type": "boolean", "default": true, "title": "Has header row", "description": "Whether the first CSV row holds column names." }
+  }
+}

@@ -55,6 +55,7 @@ pub fn build(req: &QueryRequest, identity: &QueryIdentity, datasource: &str) -> 
     feed(&mut hasher, "tenant", identity.tenant_id.as_deref().unwrap_or(""));
     feed(&mut hasher, "datasource", datasource);
     feed_query(&mut hasher, req);
+    feed_sources(&mut hasher, req);
     feed_time(&mut hasher, req);
     feed_vars(&mut hasher, req);
     feed(&mut hasher, "units", UNITS_PLACEHOLDER);
@@ -81,6 +82,23 @@ fn feed_query(hasher: &mut Sha256, req: &QueryRequest) {
             feed(hasher, "mode", "sql");
             feed(hasher, "sql", &req.sql);
         }
+    }
+}
+
+/// RW-05 federation inputs: the alias → datasource(+table) references a
+/// cross-datasource `sql` joins over. The same SQL against different federated
+/// inputs returns different rows, so each ref folds into the key. References are
+/// sorted by alias so the key is independent of the wire array's order; an empty
+/// `sources` (the single-datasource path) folds in a zero count, leaving today's
+/// keys unchanged.
+fn feed_sources(hasher: &mut Sha256, req: &QueryRequest) {
+    let mut refs: Vec<&nexus_spi::dto::query::FederatedSourceRef> = req.sources.iter().collect();
+    refs.sort_by(|a, b| a.alias.cmp(&b.alias));
+    feed(hasher, "source_count", &refs.len().to_string());
+    for r in refs {
+        feed(hasher, "source_alias", &r.alias);
+        feed(hasher, "source_ds", &r.datasource);
+        feed(hasher, "source_table", r.table.as_deref().unwrap_or(""));
     }
 }
 
@@ -135,6 +153,7 @@ mod tests {
             variables: Vec::new(),
             kind: None,
             params: None,
+            sources: Vec::new(),
         }
     }
 
@@ -264,6 +283,7 @@ mod tests {
         feed(&mut hasher, "tenant", "t1");
         feed(&mut hasher, "datasource", "ds1");
         feed_query(&mut hasher, &req);
+        feed_sources(&mut hasher, &req);
         feed_time(&mut hasher, &req);
         feed_vars(&mut hasher, &req);
         feed(&mut hasher, "units", "units:imperial-en-US");
