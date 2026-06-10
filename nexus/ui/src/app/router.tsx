@@ -10,6 +10,7 @@ import { Explore } from "@/features/query-editor/Explore";
 import { AgentsPage } from "@/features/agents";
 import { AccessPage } from "@/features/access/AccessPage";
 import { AuditPage } from "@/features/audit/AuditPage";
+import { ExtensionsPage } from "@/features/extensions/ExtensionsPage";
 import { NavBuilderPage } from "@/features/nav/NavBuilderPage";
 import { ExportPage } from "@/features/portability/ExportPage";
 import { ImportPage } from "@/features/portability/ImportPage";
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { path: "agents", element: <AgentsPage /> },
       { path: "access", element: <AccessPage /> },
       { path: "audit", element: <AuditPage /> },
+      { path: "extensions", element: <ExtensionsPage /> },
       { path: "nav", element: <NavBuilderPage /> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],

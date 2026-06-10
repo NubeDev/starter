@@ -39,6 +39,7 @@ pub fn assemble<A>(
     auth: Router<AppState>,
     authz: Router<AppState>,
     tenants: Router<AppState>,
+    extensions: Router<AppState>,
     authenticator: Arc<A>,
 ) -> Router
 where
@@ -67,6 +68,11 @@ where
         .merge_router(auth)
         .merge_router(authz)
         .merge_router(tenants)
+        // The extension admin router carries its own `with_principal` +
+        // `with_role(Admin)` layer (applied by the kernel), so it merges as a
+        // sibling here — like `authz`/`tenants` — never inside `protected`'s
+        // principal layer.
+        .merge_router(extensions)
         .merge_router(protected)
         .with_openapi(document())
         .build()

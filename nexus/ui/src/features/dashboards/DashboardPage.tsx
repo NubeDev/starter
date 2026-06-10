@@ -10,6 +10,7 @@ import { PanelProperties } from "@/features/canvas/PanelProperties";
 import { VizPalette } from "@/features/canvas/VizPalette";
 import { DashboardToolbar } from "@/features/dashboards/DashboardToolbar";
 import { useDashboard } from "@/features/dashboards/useDashboard";
+import { useDuplicateWidget } from "@/features/dashboards/useDuplicateWidget";
 import { useRemovePanel } from "@/features/dashboards/useRemovePanel";
 import { useSaveLayout } from "@/features/dashboards/useSaveLayout";
 import { Empty } from "@/features/state/Empty";
@@ -31,6 +32,7 @@ export function DashboardPage() {
   const selectWidget = useUiStore((s) => s.selectWidget);
   const removePanel = useRemovePanel(slug ?? "");
   const saveLayout = useSaveLayout(slug ?? "");
+  const duplicateWidget = useDuplicateWidget(slug ?? "");
 
   // Global time-range concerns (WS-01): restore/reflect the range + refresh
   // in the URL for shareable deep links, and drive the auto-refresh loop. Both
@@ -96,6 +98,15 @@ export function DashboardPage() {
               }}
               onLayoutChange={(moved) => saveLayout.mutate(moved)}
               onSelectPanel={(id) => selectWidget(id)}
+              onDuplicatePanel={(id) => {
+                const source = dashboard.widgets.find((w) => w.id === id);
+                if (source) {
+                  duplicateWidget.mutate({
+                    source,
+                    widgets: dashboard.widgets,
+                  });
+                }
+              }}
               onDropWidget={(position) => {
                 if (!dragType) return;
                 setDraft({ type: dragType, position: { ...position, w: 0, h: 0 } });

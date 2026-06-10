@@ -11,11 +11,13 @@
 //! `ReversibleRegistry`/`UndoService` are reused unchanged — only the SQL is
 //! nexus-local.
 
+mod audit;
 mod codec;
 mod log;
 mod prune;
 mod recorder;
 
+pub use audit::record_audit;
 pub use log::NexusChangeLog;
 pub use prune::prune_aged;
 pub use recorder::NexusRecorder;

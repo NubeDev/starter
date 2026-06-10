@@ -19,6 +19,19 @@ export function useRefreshQueryHistory() {
   return () => queryClient.invalidateQueries({ queryKey: HISTORY_KEY });
 }
 
+// Collapse repeated runs of the same SQL to a single row, keyed by the query
+// text. The list arrives starred-first then most-recent, so keeping the first
+// occurrence of each unique SQL preserves that priority while dropping dupes.
+function dedupeBySql(entries: QueryHistoryEntry[]): QueryHistoryEntry[] {
+  const seen = new Set<string>();
+  return entries.filter((e) => {
+    const key = e.sql.trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export function QueryHistoryDrawer({
   onRecall,
   onRerun,
@@ -41,7 +54,7 @@ export function QueryHistoryDrawer({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: HISTORY_KEY }),
   });
 
-  const entries = data?.entries ?? [];
+  const entries = dedupeBySql(data?.entries ?? []);
   if (entries.length === 0) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -60,7 +73,7 @@ export function QueryHistoryDrawer({
       <ul className="flex max-h-56 flex-col gap-1 overflow-auto">
         {entries.map((e) => (
           <HistoryRow
-            key={e.id}
+            key={e.sql}
             entry={e}
             onRecall={() => onRecall(e.sql)}
             onRerun={() => onRerun(e.sql)}

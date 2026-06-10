@@ -9,12 +9,14 @@ import { useStarterClient } from "@nube/starter-client-react";
 import { createFlow } from "@/api/flows/create";
 import { getFlow } from "@/api/flows/get";
 import { listFlows } from "@/api/flows/list";
+import { exportFlow, importFlow } from "@/api/flows/portability";
 import { removeFlow } from "@/api/flows/remove";
 import { updateFlow } from "@/api/flows/update";
 import { startFlow, stopFlow } from "@/api/flows/lifecycle";
 import type {
   CreateFlowRequest,
   FlowDetail,
+  FlowExport,
   FlowSummary,
   UpdateFlowRequest,
 } from "@/api/types";
@@ -88,6 +90,28 @@ export function useUpdateFlow() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { id: string; body: UpdateFlowRequest }>({
     mutationFn: ({ id, body }) => updateFlow(client, id, body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FLOWS_KEY }),
+  });
+}
+
+// Fetch a flow's portable JSON model on demand (the caller saves it to a file
+// for sharing). A mutation, not a query, because it is a user-triggered
+// one-shot. Secrets are redacted server-side.
+export function useExportFlow() {
+  const client = useStarterClient();
+  return useMutation<FlowExport, Error, string>({
+    mutationFn: (id) => exportFlow(client, id),
+  });
+}
+
+// Re-create a flow from a previously exported model (a shared file). Lands
+// stopped. Invalidates the list so the imported flow appears.
+export function useImportFlow() {
+  const client = useStarterClient();
+  const queryClient = useQueryClient();
+  return useMutation<FlowDetail, Error, FlowExport>({
+    mutationFn: (model) => importFlow(client, model),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: FLOWS_KEY }),
   });

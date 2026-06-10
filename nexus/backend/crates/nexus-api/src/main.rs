@@ -71,8 +71,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Reversibles for secret-bearing kinds close over the same envelope so undo
     // can re-seal a rotated secret through the store.
     let changelog = nexus_api::changelog::ChangelogHandles::new(metadata.clone(), envelope.clone());
+
+    // WS-14 extensions: resolve the runtime dirs and materialise every installed
+    // extension's contributed query-kinds (the dispatcher's third source) into
+    // the provenance table, building the in-memory registry placed on AppState.
+    // This runs before AppState is built because the host-method handler the
+    // supervisors install closes over the finished AppState (which holds this
+    // registry). A bad bundle is logged + skipped inside; only a metadata-DB
+    // failure aborts boot.
+    let ext_cfg = nexus_api::extensions::ExtensionsConfig::from_env();
+    if let Err(e) = ext_cfg.ensure_writable_dirs() {
+        tracing::warn!(err = %e, "creating extension installs/pidfile dirs failed (install/reaper may degrade)");
+    }
+    let extension_kinds = std::sync::Arc::new(
+        nexus_api::extensions::load_extension_kinds(&ext_cfg, &metadata).await?,
+    );
+    tracing::info!(
+        count = extension_kinds.len(),
+        "loaded extension-contributed query-kinds"
+    );
+
     let state = AppState {
-        metadata,
+        metadata: metadata.clone(),
         datasource,
         datasource_pools: Default::default(),
         envelope,
@@ -87,6 +107,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
         kinds: std::sync::Arc::new(kinds),
+        extension_kinds: extension_kinds.clone(),
         datasource_kinds: std::sync::Arc::new(datasource_kinds),
         prefs,
         changelog,
@@ -96,6 +117,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             nexus_api::ratelimit::RateLimitConfig::from_env(),
         ),
     };
+
+    // Now AppState exists: build nexus's host-method handler over it and boot the
+    // extension runtime (reap orphans → seal registry → spawn enabled process
+    // supervisors with host methods installed → assemble the admin handle).
+    let host_methods = nexus_api::extensions::NexusHostMethods::shared(state.clone());
+    let ext_runtime = nexus_api::extensions::boot(
+        &ext_cfg,
+        metadata.clone(),
+        host_methods,
+        extension_kinds,
+    )
+    .await?;
+    let ext_admin = ext_runtime.admin;
 
     // The alert scheduler runs for the process's lifetime, evaluating due rules
     // on its own cadence. Single-node for v1.
@@ -108,15 +142,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         nexus_api::changelog::RetentionPolicy::from_env(),
     );
 
+    // The extension admin router is a sibling of the authz/tenants routers: the
+    // kernel applies its own `with_principal` → `with_role(Admin)` layer, so it
+    // must NOT be wrapped in nexus's product principal layer (that would run the
+    // layer twice). `serve::assemble` merges it after the identity routers.
+    let ext_router =
+        nexus_api::extensions::router(ext_admin.clone(), identity.authenticator.clone());
+
     let router = serve::assemble(
         state,
         identity.auth,
         identity.authz,
         identity.tenants,
+        ext_router,
         identity.authenticator,
     );
     tracing::info!(bind = %cfg.bind, "nexus-api listening");
-    starter_server::builder::bind(router, cfg.bind).await?;
+
+    // On shutdown, stop every supervised extension (SIGTERM → grace → SIGKILL)
+    // so no child outlives nexus. `bind` returns when the graceful-shutdown
+    // signal fires; we then drain the supervisors.
+    let serve_result = starter_server::builder::bind(router, cfg.bind).await;
+    tracing::info!("nexus-api shutting down; stopping extension supervisors");
+    ext_admin.shutdown_all().await;
+    serve_result?;
     Ok(())
 }
 

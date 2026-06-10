@@ -25,6 +25,7 @@ const TITLES: Record<string, string> = {
   "/agents": "Agents",
   "/access": "Access",
   "/audit": "Audit",
+  "/extensions": "Extensions",
 };
 
 export function AppShell() {

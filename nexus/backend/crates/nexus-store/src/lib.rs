@@ -13,6 +13,7 @@ pub mod alert;
 pub mod changelog;
 pub mod dashboard;
 pub mod datasource;
+pub mod extension_query_kind;
 pub mod flow;
 pub mod folder;
 pub mod migrate;

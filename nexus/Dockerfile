@@ -34,6 +34,21 @@ RUN apk add --no-cache gcompat ca-certificates
 COPY --from=backend /src/nexus/backend/target/release/nexus-api  /usr/local/bin/nexus-api
 COPY --from=backend /src/nexus/backend/target/release/seed-admin /usr/local/bin/seed-admin
 COPY --from=ui       /src/nexus/ui/dist                          /srv/ui
+# The built-in query-kinds and datasource-kinds packs are data files (manifest +
+# *.sql/*.json), not compiled into the binary, so they must be copied into the
+# runtime image. The loader is pointed at them via the absolute NEXUS_*_DIR env
+# vars below — the binary's CWD here is undefined, so the in-code `./kinds`
+# default would not resolve and the Explore "Kind" picker would show "No kinds".
+COPY --from=backend /src/nexus/backend/crates/nexus-api/kinds            /usr/local/share/nexus/kinds
+COPY --from=backend /src/nexus/backend/crates/nexus-api/datasource-kinds /usr/local/share/nexus/datasource-kinds
+# WS-14: the read-only in-repo extension pack is data (block.yaml + ui bundle +
+# SQL/schema files), same story as the kinds packs — copy it into the image and
+# point the loader at it via NEXUS_EXTENSIONS_DIR below. Uploaded tarballs and
+# supervisor pidfiles are *runtime-writable* state and must NOT live under this
+# read-only pack: they go under /data (a writable volume) via the installs /
+# pidfile env vars, so an install survives without mutating the image and the
+# reaper can write pidfiles.
+COPY --from=backend /src/nexus/backend/crates/nexus-api/extensions       /usr/local/share/nexus/extensions
 COPY nexus/deploy/Caddyfile  /etc/caddy/Caddyfile
 COPY nexus/deploy/start.sh   /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
@@ -41,5 +56,16 @@ RUN chmod +x /usr/local/bin/start.sh
 # Caddy listens on 8080 (Fly's internal port); nexus-api stays on loopback:9090
 # and is only reachable through Caddy.
 ENV NEXUS_BIND=127.0.0.1:9090
+# Absolute paths to the kinds packs copied above (CWD-independent).
+ENV NEXUS_KINDS_DIR=/usr/local/share/nexus/kinds \
+    NEXUS_DATASOURCE_KINDS_DIR=/usr/local/share/nexus/datasource-kinds
+# WS-14: read-only in-repo extension pack (copied above) + writable runtime dirs
+# under /data for uploaded bundles and supervisor pidfiles. Both the pack dir and
+# the installs dir are scanned at boot; keeping them separate means an image
+# rebuild never clobbers an uploaded extension and the read-only pack stays
+# immutable.
+ENV NEXUS_EXTENSIONS_DIR=/usr/local/share/nexus/extensions \
+    NEXUS_EXTENSIONS_INSTALLS_DIR=/data/extensions/installs \
+    NEXUS_EXTENSIONS_PIDFILE_DIR=/data/extensions/pids
 EXPOSE 8080
 CMD ["/usr/local/bin/start.sh"]

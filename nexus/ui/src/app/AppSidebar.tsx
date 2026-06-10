@@ -1,4 +1,4 @@
-import { LayoutDashboard, LayoutGrid } from "lucide-react";
+import { Blocks, LayoutDashboard, LayoutGrid } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -74,6 +74,23 @@ export function AppSidebar() {
                   >
                     <LayoutGrid />
                     <span>Manage dashboards</span>
+                  </SidebarMenuButton>
+                )}
+              </NavLink>
+            </SidebarMenuItem>
+            {/* Extensions admin (WS-14). A static link like Manage dashboards —
+                `extensions` isn't a nav-tree StaticRoute, and the page itself
+                is admin-gated like Access/Audit. */}
+            <SidebarMenuItem>
+              <NavLink to="/extensions" end>
+                {({ isActive }) => (
+                  <SidebarMenuButton
+                    isActive={isActive}
+                    tooltip="Extensions"
+                    className="text-muted-foreground"
+                  >
+                    <Blocks />
+                    <span>Extensions</span>
                   </SidebarMenuButton>
                 )}
               </NavLink>

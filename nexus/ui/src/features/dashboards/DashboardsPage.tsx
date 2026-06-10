@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import {
   Dialog,
@@ -27,6 +27,7 @@ import { Loading } from "@/features/state/Loading";
 // (name + icon + accent) reused from create; the slug stays stable so
 // existing links keep working and is shown read-only for reference.
 export function DashboardsPage() {
+  const navigate = useNavigate();
   const { data, isPending, isError, error } = useDashboards();
   const [creating, setCreating] = useState(false);
   const [toEdit, setToEdit] = useState<DashboardSummary | null>(null);
@@ -36,10 +37,21 @@ export function DashboardsPage() {
     <div className="flex h-full flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold tracking-tight">Dashboards</h2>
-        <Button size="sm" className="gap-2" onClick={() => setCreating(true)}>
-          <Plus className="size-4" />
-          New dashboard
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate("/import")}
+          >
+            <Upload className="size-4" />
+            Import
+          </Button>
+          <Button size="sm" className="gap-2" onClick={() => setCreating(true)}>
+            <Plus className="size-4" />
+            New dashboard
+          </Button>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">

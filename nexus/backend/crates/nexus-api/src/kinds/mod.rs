@@ -28,6 +28,17 @@ pub use error::KindError;
 pub use kind::QueryKind;
 pub use resolve::BoundKind;
 
+/// Run the load-time lints over `kind` — the same checks the boot loader applies
+/// to file-pack kinds, exposed so the API layer can reject an unsafe
+/// tenant-authored kind (§4.5c) *before* it is persisted: an undeclared `$param`,
+/// a host token smuggled as a param, or a missing `$caller_tenant_id` predicate
+/// on a tenant-scoped table fails the save with a 4xx instead of writing a row
+/// that would later fail (or leak) at dispatch. A persisted kind is therefore
+/// always already lint-clean, exactly like a file kind.
+pub fn lint(kind: &QueryKind) -> Result<(), KindError> {
+    lint::check(kind)
+}
+
 /// An immutable, source-agnostic set of registered query-kinds keyed by name.
 ///
 /// v1 loads a built-in pack directory at boot; the registry itself is unaware of
@@ -59,6 +70,27 @@ impl Registry {
         Ok(Self { by_name })
     }
 
+    /// Build a registry from an in-memory set of kinds, refusing duplicate
+    /// names. The source-agnostic counterpart to [`Self::load_dir`]: WS-14 uses
+    /// it to assemble the **extension-contributed** kinds (the third source)
+    /// from `nexus_extension_query_kinds` rows at boot, so the dispatcher
+    /// resolves them through the identical validate/bind path as file kinds with
+    /// no per-request DB hit. A duplicate name is an error — the global
+    /// `UNIQUE (name)` on the table makes that unreachable in practice, but the
+    /// registry stays the single place that invariant is enforced in memory.
+    pub fn from_kinds(
+        kinds: impl IntoIterator<Item = QueryKind>,
+    ) -> Result<Self, KindError> {
+        let mut by_name = BTreeMap::new();
+        for kind in kinds {
+            if by_name.contains_key(&kind.name) {
+                return Err(KindError::DuplicateName(kind.name));
+            }
+            by_name.insert(kind.name.clone(), kind);
+        }
+        Ok(Self { by_name })
+    }
+
     /// Look up a registered kind by its reverse-DNS name.
     pub fn get(&self, name: &str) -> Option<&QueryKind> {
         self.by_name.get(name)
@@ -80,9 +112,11 @@ impl Registry {
     }
 }
 
-/// Validate caller `params` for the named kind and produce the kind's SQL plus
-/// the binder param map. A request-time entry point: the dispatcher then hands
-/// the result to the store, which binds it (params + host tokens) and runs it.
+/// Validate caller `params` for the named kind in the file registry and produce
+/// the kind's SQL plus the binder param map. A request-time entry point: the
+/// dispatcher then hands the result to the store, which binds it (params + host
+/// tokens) and runs it. A name absent from the registry is `Unknown` — the
+/// dispatcher treats that as a cue to look for a tenant-authored kind (§4.5c).
 pub fn resolve(
     registry: &Registry,
     name: &str,
@@ -91,6 +125,15 @@ pub fn resolve(
     let kind = registry
         .get(name)
         .ok_or_else(|| KindError::Unknown(name.to_string()))?;
+    resolve_kind(kind, params)
+}
+
+/// Validate caller `params` against an already-resolved [`QueryKind`] and lower
+/// them to the binder param map. The source of the kind — file pack or the
+/// metadata DB — is irrelevant here: a tenant-authored kind is reconstructed into
+/// a `QueryKind` and validated through this exact same path, so both honour the
+/// identical schema/host-token rules.
+pub fn resolve_kind(kind: &QueryKind, params: &serde_json::Value) -> Result<BoundKind, KindError> {
     let params = validate::validate(kind, params)?;
     Ok(BoundKind {
         sql: kind.sql.clone(),
@@ -235,5 +278,52 @@ mod tests {
         )
         .expect_err("a host token is not a declarable param");
         assert!(matches!(err, KindError::ParamValidation { .. }));
+    }
+
+    /// A tenant-authored kind (§4.5c) is reconstructed into a `QueryKind` from a DB
+    /// row and resolved through `resolve_kind` — the same path file kinds use. This
+    /// proves the keystone property: a DB-sourced kind honours the identical
+    /// host-token rule, so a caller still cannot smuggle `$caller_tenant_id`.
+    fn db_kind(sql: &str, schema: serde_json::Value) -> QueryKind {
+        QueryKind {
+            name: "com.acme.saved".into(),
+            sql: sql.into(),
+            params_schema: schema,
+            datasource_kind: "postgres".into(),
+            tables: vec!["meters".into()],
+            datasource_binding: None,
+            description: None,
+        }
+    }
+
+    #[test]
+    fn resolve_kind_on_a_db_kind_rejects_smuggled_host_token() {
+        let kind = db_kind(
+            "SELECT 1 FROM meters WHERE tenant_id = $caller_tenant_id",
+            serde_json::json!({ "type": "object", "properties": {}, "additionalProperties": false }),
+        );
+        let err = resolve_kind(&kind, &serde_json::json!({ "caller_tenant_id": "other" }))
+            .expect_err("a DB kind must reject a smuggled host token like a file kind");
+        assert!(matches!(err, KindError::ParamValidation { .. }));
+    }
+
+    #[test]
+    fn lint_rejects_a_db_kind_missing_the_tenant_predicate() {
+        // The save handler calls `lint` before persisting; a kind that reads a
+        // tenant-scoped table but omits `$caller_tenant_id` must fail, so an unsafe
+        // row never reaches the DB (the data side has no RLS — §4.4).
+        let unsafe_kind = db_kind(
+            "SELECT 1 FROM meters",
+            serde_json::json!({ "type": "object", "properties": {} }),
+        );
+        let err = lint(&unsafe_kind).expect_err("a missing tenant predicate must fail the lint");
+        assert!(matches!(err, KindError::Lint { .. }));
+
+        // The same kind with the predicate present lints clean.
+        let safe_kind = db_kind(
+            "SELECT 1 FROM meters WHERE tenant_id = $caller_tenant_id",
+            serde_json::json!({ "type": "object", "properties": {} }),
+        );
+        assert!(lint(&safe_kind).is_ok());
     }
 }

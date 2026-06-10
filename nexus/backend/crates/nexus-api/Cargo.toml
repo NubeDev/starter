@@ -39,6 +39,17 @@ starter-store-postgres.workspace = true
 starter-config.workspace = true
 starter-observability.workspace = true
 
+# WS-14 extensions runtime. `starter-ext-server` mounts the admin router
+# (`/extensions/*`) over nexus's `starter-server` auth stack; `-host` scans +
+# seals the manifest registry at boot; `-supervisor` keeps process-flavour
+# extensions running (+ reaper); `-store-pg` persists enablement; `-spi` carries
+# the shared `Manifest`/`ExtensionId`/`Capability` types.
+starter-ext-spi.workspace = true
+starter-ext-host.workspace = true
+starter-ext-server.workspace = true
+starter-ext-supervisor.workspace = true
+starter-ext-store-pg.workspace = true
+
 axum.workspace = true
 tower.workspace = true
 tower-http.workspace = true

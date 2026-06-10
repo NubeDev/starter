@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "Text echoed back by the kind.",
+      "default": "hi"
+    }
+  },
+  "required": ["message"],
+  "additionalProperties": false
+}

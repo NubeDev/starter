@@ -15,14 +15,16 @@ export function PanelHost({
   selected,
   onRemove,
   onSelect,
+  onDuplicate,
 }: {
   widget: Widget;
   editing?: boolean;
   selected?: boolean;
   onRemove?: () => void;
   onSelect?: () => void;
+  onDuplicate?: () => void;
 }) {
-  const common = { editing, selected, onRemove, onSelect };
+  const common = { editing, selected, onRemove, onSelect, onDuplicate };
   if (widget.config.live?.streamId) {
     return <LivePanel widget={widget} {...common} />;
   }
@@ -37,12 +39,14 @@ function QueryPanel({
   selected,
   onRemove,
   onSelect,
+  onDuplicate,
 }: {
   widget: Widget;
   editing?: boolean;
   selected?: boolean;
   onRemove?: () => void;
   onSelect?: () => void;
+  onDuplicate?: () => void;
 }) {
   const state = useWidgetQuery(widget);
   return (
@@ -53,6 +57,7 @@ function QueryPanel({
       selected={selected}
       onRemove={onRemove}
       onSelect={onSelect}
+      onDuplicate={onDuplicate}
     />
   );
 }

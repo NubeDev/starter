@@ -63,6 +63,16 @@ pub struct AppState {
     /// binds the kind's SQL through the shared binder. Shared read-only across
     /// requests; an empty registry means kind-mode requests 404.
     pub kinds: Arc<KindRegistry>,
+    /// Extension-contributed query-kinds (WS-14) — the dispatcher's *third*
+    /// source, beside the file pack (`kinds`) and the per-tenant overlay
+    /// (`nexus_query_kinds`). Built at boot from the `nexus_extension_query_kinds`
+    /// provenance table: an installed extension's `warehouse_templates[]` are
+    /// materialised here so the dispatcher resolves them through the identical
+    /// validate/bind path as file kinds, with no per-request DB hit. Global
+    /// (extensions install once per deployment); an empty registry means no
+    /// extension contributes a kind. Replaced wholesale on the next boot after an
+    /// install/uninstall (the registry is sealed-by-restart, like the file pack).
+    pub extension_kinds: Arc<KindRegistry>,
     /// Registered declarative datasource-kinds (WS-08b), loaded from the built-in
     /// pack at boot. A connector type (`postgres`, `mqtt`) declared by manifest:
     /// its config schema validates a config before save, its `secret_fields`

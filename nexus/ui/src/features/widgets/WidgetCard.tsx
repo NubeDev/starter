@@ -1,4 +1,4 @@
-import { Settings2, X } from "lucide-react";
+import { Copy, Settings2, X } from "lucide-react";
 
 import type { Widget, WidgetData } from "@/data/types";
 import { ErrorState } from "@/features/state/ErrorState";
@@ -26,6 +26,7 @@ export function WidgetCard({
   selected = false,
   onRemove,
   onSelect,
+  onDuplicate,
 }: {
   widget: Widget;
   state: WidgetState;
@@ -35,6 +36,8 @@ export function WidgetCard({
   onRemove?: () => void;
   /** Open this panel's properties. Wired only in edit mode. */
   onSelect?: () => void;
+  /** Duplicate this panel. Wired only in edit mode on the canvas. */
+  onDuplicate?: () => void;
 }) {
   return (
     <div
@@ -56,6 +59,18 @@ export function WidgetCard({
             <span className="truncate text-xs text-muted-foreground">
               {widget.subtitle}
             </span>
+          ) : null}
+          {editing && onDuplicate ? (
+            <button
+              type="button"
+              aria-label={`Duplicate ${widget.title}`}
+              // Stop the mousedown reaching react-grid-layout's drag start.
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={onDuplicate}
+              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
+            >
+              <Copy className="size-4" />
+            </button>
           ) : null}
           {editing && onSelect ? (
             <button

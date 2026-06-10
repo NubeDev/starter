@@ -183,6 +183,7 @@ sessions both need an ad-hoc migration. **Instead, each WS owns a numeric block*
 | `14xx` | WS-10 kinds | `1401_query_kinds.sql` (tenant-authored; manifest-only needs none) |
 | `15xx` | WS-11 units/prefs | `1501_prefs.sql` (port `starter-prefs/migrations/postgres/0001_*` under RLS) |
 | `16xx` | WS-12 audit/undo | `1601_changelog.sql` (port `starter-changelog-postgres/*` + `tenant_id`+RLS), `1602_undo_cursors.sql` (port `starter-undo/*`) |
+| `17xx` | WS-13 nav/context | `1701_nav_tree.sql` (`nexus_nav_nodes`, mirrors `0602_folders.sql` RLS/nesting); tags reuse `0005_tags.sql` — no new tag table |
 
 Pick the **next free number within your block**; record it in your WS doc. WS-01/04/06 need no schema
 (state lives in the dashboard JSON model / engine registry). If a WS exhausts its block (unlikely),

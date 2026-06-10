@@ -15,7 +15,7 @@ rust-version.workspace = true
 starter-ext-spi    = { workspace = true }
 starter-ext-server = { workspace = true }
 
-sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "postgres", "chrono"] }
+sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "migrate", "postgres", "chrono"] }
 async-trait = { workspace = true }
 serde       = { workspace = true }
 thiserror   = { workspace = true }

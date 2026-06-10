@@ -25,6 +25,7 @@ use starter_ext_metrics::MetricsRegistry;
 use starter_ext_spi::{ExtensionId, Manifest, RuntimeKind};
 use starter_ext_supervisor::SupervisorHandle;
 
+use crate::audit::{AuditSink, NoopAuditSink};
 use crate::cleanup::{
     CleanupItem, CleanupProvider, EnablementRowProvider, I18nCacheProvider, PostInstallHook,
     UiCacheProvider,
@@ -64,6 +65,10 @@ struct Inner {
     /// to a fresh empty registry so a `TestApp` that does not wire the
     /// adapters still serves all-zero counters.
     metrics: MetricsRegistry,
+    /// Consumer-supplied lifecycle audit sink. The enable/disable/install/
+    /// uninstall handlers notify it with the acting principal after a
+    /// successful mutation. Defaults to [`NoopAuditSink`] when unset.
+    audit_sink: Arc<dyn AuditSink>,
     worker_states: Option<WorkerStatesFn>,
     /// On-disk root for installed (uploaded-tarball) bundles. The
     /// install handler unpacks here and the uninstall handler removes
@@ -109,6 +114,7 @@ impl ExtensionAdmin {
             installs_dir: None,
             cleanup_providers: Vec::new(),
             post_install_hook: None,
+            audit_sink: None,
         }
     }
 
@@ -146,12 +152,39 @@ impl ExtensionAdmin {
         }
     }
 
+    /// Shut down every live supervisor (`SIGTERM` → grace → `SIGKILL`) and
+    /// clear the map. Called by the host at process exit so no extension child
+    /// outlives the host. Idempotent — a second call finds an empty map and is a
+    /// no-op. Builtin/wasm records have no handle and are unaffected.
+    pub async fn shutdown_all(&self) {
+        // Drain the handles out under the lock, then await their shutdowns
+        // outside it (the lock is sync; awaiting while holding it would be a
+        // deadlock risk and blocks concurrent reads).
+        let handles: Vec<SupervisorHandle> = {
+            let mut map = self
+                .inner
+                .supervisors
+                .write()
+                .expect("supervisor map poisoned");
+            map.drain().map(|(_, h)| h).collect()
+        };
+        for handle in handles {
+            handle.shutdown().await;
+        }
+    }
+
     pub(crate) fn store(&self) -> &dyn EnablementStore {
         &*self.inner.store
     }
 
     pub(crate) fn factory(&self) -> &DynFactory {
         &self.inner.factory
+    }
+
+    /// The lifecycle audit sink. Always present (defaults to the no-op sink);
+    /// the lifecycle handlers call it after a successful mutation.
+    pub(crate) fn audit_sink(&self) -> &Arc<dyn AuditSink> {
+        &self.inner.audit_sink
     }
 
     pub(crate) fn etag_cache(&self) -> &EtagCache {
@@ -306,6 +339,7 @@ pub struct ExtensionAdminBuilder {
     installs_dir: Option<PathBuf>,
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
     post_install_hook: Option<Arc<dyn PostInstallHook>>,
+    audit_sink: Option<Arc<dyn AuditSink>>,
 }
 
 impl ExtensionAdminBuilder {
@@ -384,6 +418,16 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Wire a lifecycle [`AuditSink`]. The enable/disable/install/uninstall
+    /// handlers notify it with the acting principal after a successful
+    /// mutation. Defaults to [`NoopAuditSink`] when unset, so a host that does
+    /// not keep an audit ledger needs no wiring (nexus wires its `nexus_changes`
+    /// recorder here).
+    pub fn with_audit_sink(mut self, sink: Arc<dyn AuditSink>) -> Self {
+        self.audit_sink = Some(sink);
+        self
+    }
+
     /// Materialise the [`ExtensionAdmin`].
     pub fn build(self) -> ExtensionAdmin {
         let registry = self.registry;
@@ -413,6 +457,9 @@ impl ExtensionAdminBuilder {
                 cleanup_providers,
                 pending_restart: RwLock::new(HashMap::new()),
                 metrics: self.metrics.unwrap_or_default(),
+                audit_sink: self
+                    .audit_sink
+                    .unwrap_or_else(|| Arc::new(NoopAuditSink)),
                 worker_states: self.worker_states,
                 installs_dir: self.installs_dir,
                 post_install_hook: self.post_install_hook,

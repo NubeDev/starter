@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Play } from "lucide-react";
+import { Play, Save } from "lucide-react";
 import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
@@ -16,6 +16,7 @@ import {
 } from "@/features/query-editor/QueryHistoryDrawer";
 import { QuickQueries } from "@/features/query-editor/QuickQueries";
 import { ResultGrid } from "@/features/query-editor/ResultGrid";
+import { SaveKindDialog } from "@/features/query-editor/SaveKindDialog";
 import { SqlEditor } from "@/features/sql-editor";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -36,6 +37,7 @@ export function Explore() {
   const [sql, setSql] = useState("");
   const [mode, setMode] = useState<Mode>("sql");
   const [kind, setKind] = useState<string | undefined>();
+  const [saveOpen, setSaveOpen] = useState(false);
 
   // Takes the SQL to run as the mutation variable rather than reading `sql`
   // from state, so a quick-add chip can run the exact query it just inserted
@@ -104,12 +106,24 @@ export function Explore() {
             <KindPicker value={kind} onChange={setKind} />
           )}
           {mode === "sql" ? (
-            <div className="ms-auto">
+            <div className="ms-auto flex items-center gap-2">
               <AiSqlAssist
                 datasourceId={datasourceId}
                 currentSql={sql}
                 onApply={setSql}
               />
+              {sql.trim().length > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setSaveOpen(true)}
+                >
+                  <Save className="size-4" />
+                  Save as kind
+                </Button>
+              ) : null}
             </div>
           ) : null}
           <Button
@@ -155,6 +169,11 @@ export function Explore() {
           <ResultGrid result={active.data} />
         ) : null}
       </div>
+      <SaveKindDialog
+        sql={sql}
+        open={saveOpen}
+        onClose={() => setSaveOpen(false)}
+      />
     </div>
   );
 }

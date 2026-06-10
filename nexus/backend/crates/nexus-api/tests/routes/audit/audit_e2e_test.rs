@@ -57,6 +57,7 @@ fn state(pool: &sqlx::PgPool) -> AppState {
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),
         kinds: Arc::new(nexus_api::kinds::Registry::empty()),
+        extension_kinds: Arc::new(nexus_api::kinds::Registry::empty()),
         datasource_kinds: Arc::new(nexus_api::datasource_kinds::Registry::empty()),
         prefs: nexus_api::prefs::prefs_store(pool.clone()),
         changelog: nexus_api::changelog::ChangelogHandles::new(
@@ -102,6 +103,7 @@ fn new_dashboard(slug: &str, name: &str) -> NewDashboard {
         name: name.into(),
         icon: "gauge".into(),
         accent: "152 76% 44%".into(),
+        folder_id: None,
     }
 }
 
@@ -326,6 +328,187 @@ async fn forget_is_admin_gated() {
         .await
         .expect("request");
     assert_eq!(resp.status(), 403, "a non-admin cannot issue a forget");
+
+    drop(app);
+}
+
+/// Regression for the reported bug: before panels recorded their own changes,
+/// an Undo issued after editing a dashboard fell through to the dashboard's
+/// `Create` row and **deleted the whole dashboard**. With panel recording, undo
+/// of an add-panel must delete only that panel and leave the dashboard intact.
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn undo_of_add_panel_removes_the_panel_not_the_dashboard() {
+    let (admin_pool, _guard) = with_database().await;
+    let pg = runtime_pool(admin_pool.sqlx()).await;
+    let st = state(&pg);
+    let dash = dashboard::insert(&st.metadata, "acme", &new_dashboard("ops", "Ops"))
+        .await
+        .expect("create dashboard");
+
+    let app = app_for(&pg, admin("alice", "acme")).await;
+    let http = reqwest::Client::new();
+
+    // Add a panel through the real handler (records a panel Create).
+    let created: serde_json::Value = http
+        .post(format!("{}/api/v1/dashboards/ops/panels", app.base_url))
+        .json(&serde_json::json!({ "title": "Energy", "sql": "SELECT 1" }))
+        .send()
+        .await
+        .expect("add panel")
+        .json()
+        .await
+        .expect("json");
+    let panel_id = created["id"].as_str().expect("panel id").to_string();
+    assert_eq!(
+        dashboard::panel::list_for_dashboard(&pg, "acme", dash.id)
+            .await
+            .expect("list")
+            .len(),
+        1,
+        "panel was added",
+    );
+
+    // Undo: the most recent recorded group is the panel Create, so undo deletes
+    // the panel — NOT the dashboard (the bug).
+    let resp = http
+        .post(format!("{}/api/v1/undo", app.base_url))
+        .send()
+        .await
+        .expect("undo");
+    assert_eq!(resp.status(), 200, "undo applies");
+
+    assert!(
+        dashboard::by_slug(&pg, "acme", "ops")
+            .await
+            .expect("read")
+            .is_some(),
+        "the dashboard must survive an undo of a panel add",
+    );
+    assert!(
+        dashboard::panel::get(&pg, "acme", Uuid::parse_str(&panel_id).unwrap())
+            .await
+            .expect("read panel")
+            .is_none(),
+        "undo removed the added panel",
+    );
+
+    drop(app);
+}
+
+/// Undo of a panel *update* restores the panel's prior fields; redo re-applies
+/// the edit. Proves the snapshot round-trip through the real HTTP path.
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn undo_redo_of_panel_update_round_trips() {
+    let (admin_pool, _guard) = with_database().await;
+    let pg = runtime_pool(admin_pool.sqlx()).await;
+    let st = state(&pg);
+    let dash = dashboard::insert(&st.metadata, "acme", &new_dashboard("ops", "Ops"))
+        .await
+        .expect("create dashboard");
+    let panel = dashboard::panel::insert(
+        &st.metadata,
+        "acme",
+        &nexus_store::dashboard::NewPanel {
+            dashboard_id: dash.id,
+            datasource_id: None,
+            title: "Before".into(),
+            sql: "SELECT 1".into(),
+            viz: "table".into(),
+            layout: serde_json::json!({}),
+        },
+    )
+    .await
+    .expect("insert panel");
+
+    let app = app_for(&pg, admin("alice", "acme")).await;
+    let http = reqwest::Client::new();
+
+    // Edit the panel title through the handler (records a panel Update with a
+    // non-null `before`).
+    http.patch(format!("{}/api/v1/panels/{}", app.base_url, panel.id))
+        .json(&serde_json::json!({ "title": "After" }))
+        .send()
+        .await
+        .expect("update panel");
+    let read = |pg: sqlx::PgPool, id: Uuid| async move {
+        dashboard::panel::get(&pg, "acme", id)
+            .await
+            .expect("read")
+            .expect("panel exists")
+            .title
+    };
+    assert_eq!(read(pg.clone(), panel.id).await, "After", "edit applied");
+
+    // Undo → back to "Before"; redo → "After" again.
+    http.post(format!("{}/api/v1/undo", app.base_url))
+        .send()
+        .await
+        .expect("undo");
+    assert_eq!(read(pg.clone(), panel.id).await, "Before", "undo restored before");
+
+    http.post(format!("{}/api/v1/redo", app.base_url))
+        .send()
+        .await
+        .expect("redo");
+    assert_eq!(read(pg.clone(), panel.id).await, "After", "redo re-applied after");
+
+    drop(app);
+}
+
+/// Undo of a panel *delete* resurrects the panel under its original id (the
+/// dashboard layout addresses panels by id, so a fresh id would orphan it).
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn undo_of_panel_delete_resurrects_under_original_id() {
+    let (admin_pool, _guard) = with_database().await;
+    let pg = runtime_pool(admin_pool.sqlx()).await;
+    let st = state(&pg);
+    let dash = dashboard::insert(&st.metadata, "acme", &new_dashboard("ops", "Ops"))
+        .await
+        .expect("create dashboard");
+    let panel = dashboard::panel::insert(
+        &st.metadata,
+        "acme",
+        &nexus_store::dashboard::NewPanel {
+            dashboard_id: dash.id,
+            datasource_id: None,
+            title: "Keep me".into(),
+            sql: "SELECT 1".into(),
+            viz: "table".into(),
+            layout: serde_json::json!({ "x": 1 }),
+        },
+    )
+    .await
+    .expect("insert panel");
+
+    let app = app_for(&pg, admin("alice", "acme")).await;
+    let http = reqwest::Client::new();
+
+    http.delete(format!("{}/api/v1/panels/{}", app.base_url, panel.id))
+        .send()
+        .await
+        .expect("delete panel");
+    assert!(
+        dashboard::panel::get(&pg, "acme", panel.id)
+            .await
+            .expect("read")
+            .is_none(),
+        "panel deleted",
+    );
+
+    http.post(format!("{}/api/v1/undo", app.base_url))
+        .send()
+        .await
+        .expect("undo");
+    let resurrected = dashboard::panel::get(&pg, "acme", panel.id)
+        .await
+        .expect("read")
+        .expect("panel resurrected under original id");
+    assert_eq!(resurrected.id, panel.id, "same id, so layout stays valid");
+    assert_eq!(resurrected.title, "Keep me");
+    assert_eq!(resurrected.layout, serde_json::json!({ "x": 1 }));
 
     drop(app);
 }

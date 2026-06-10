@@ -1,0 +1,264 @@
+//! Boot-time assembly of the extension runtime (WS-14 §4.1).
+//!
+//! The single entry point [`boot`] does, in order:
+//! 1. **Reap orphans first** — `reap_stale_groups(pidfile_dir)` `killpg`s any
+//!    process groups a prior crash left behind, *before* any new supervisor
+//!    spawns (the supervisor memory: process groups + boot pidfile reaper).
+//! 2. **Scan + validate + commit + seal** the manifest registry from the
+//!    extensions dir(s).
+//! 3. **Materialise contributed query-kinds** — read each validated extension's
+//!    `warehouse_templates[]`, lint them, upsert into
+//!    `nexus_extension_query_kinds`, then build the in-memory `extension_kinds`
+//!    registry (the dispatcher's third source) from the persisted rows.
+//! 4. **Spawn supervisors** for enabled process-flavour extensions, installing
+//!    nexus's host-method handler so a `warehouse.query`/`authz.check`/
+//!    `dashboard.read` call routes back into nexus under the caller's tenant.
+//! 5. **Build `ExtensionAdmin`** — PG enablement store, supervisor factory (with
+//!    host methods), the query-kind cleanup provider + post-install hook, and
+//!    the nexus audit sink.
+//!
+//! Returns the assembled [`ExtensionRuntime`]: the admin handle (mounted into
+//! the router) and the extension-kinds registry (placed on `AppState`).
+//!
+//! The host-method handler closes over [`AppState`], but `AppState` itself holds
+//! the `extension_kinds` registry this boot builds — a chicken/egg. `main`
+//! resolves it by ordering: [`load_extension_kinds`] persists + builds the
+//! registry first, `main` places it on `AppState`, then builds the host-method
+//! handler over that `AppState` and passes it to [`boot`] (the `host_methods`
+//! parameter). So [`boot`] never has to reach back into `AppState` itself.
+
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use sqlx::PgPool;
+use starter_ext_host::{ExtensionRegistry, Loader};
+use starter_ext_server::{
+    EnablementStore, ExtensionAdmin, WithHostMethodsFactory,
+};
+use starter_ext_spi::RuntimeKind;
+use starter_ext_store_pg::PgEnablementStore;
+use starter_ext_supervisor::{reap_stale_groups, SharedHostMethodHandler};
+
+use super::audit::NexusExtensionAudit;
+use super::cleanup::QueryKindCleanupProvider;
+use super::config::ExtensionsConfig;
+use super::contribute::{contributed_query_kinds, record_to_query_kind};
+use super::post_install::QueryKindPostInstall;
+use crate::kinds::Registry as KindRegistry;
+use nexus_store::extension_query_kind;
+
+/// The assembled extension runtime handed back to `main`.
+pub struct ExtensionRuntime {
+    /// The admin handle. Mounted into the router via
+    /// [`super::router`] and used at shutdown to stop supervisors.
+    pub admin: ExtensionAdmin,
+    /// The extension-contributed query-kinds registry — the dispatcher's third
+    /// source. Placed on `AppState.extension_kinds`.
+    pub extension_kinds: Arc<KindRegistry>,
+}
+
+/// Assemble the extension runtime. `host_methods` is nexus's
+/// [`HostMethodHandler`](starter_ext_supervisor::HostMethodHandler), already
+/// closed over the finished `AppState` — built by the caller after the
+/// `extension_kinds` registry this function persists is available. (`main`
+/// builds the registry-less state first, calls [`load_extension_kinds`], places
+/// the registry on `AppState`, then calls `boot` with a handler over that state.)
+///
+/// Boot never aborts on a *single* bad extension: a manifest that fails to parse
+/// or a template that fails its lint is logged and skipped, and the rest of the
+/// runtime comes up. A failure to reach the metadata DB (the kinds upsert) *does*
+/// propagate, since that signals a broken deployment, not a bad bundle.
+pub async fn boot(
+    cfg: &ExtensionsConfig,
+    metadata: PgPool,
+    host_methods: SharedHostMethodHandler,
+    extension_kinds: Arc<KindRegistry>,
+) -> Result<ExtensionRuntime, String> {
+    // 1. Reap orphaned process groups from a prior crash before spawning.
+    let reaped = reap_stale_groups(&cfg.pidfile_dir);
+    if reaped.killed() > 0 {
+        tracing::warn!(
+            target: "nexus_api::extensions::boot",
+            killed = reaped.killed(),
+            total = reaped.total(),
+            "reaped stale extension process groups from a prior run"
+        );
+    }
+
+    // 2. Scan + validate + commit + seal the registry.
+    let registry = scan_and_seal(cfg);
+    let registry = Arc::new(registry);
+
+    // 3. Persistence: PG enablement store. Hydrate enabled state for the spawn
+    //    decision below.
+    let store = Arc::new(PgEnablementStore::new(metadata.clone()));
+
+    // 4. Spawn supervisors for enabled process-flavour extensions, with nexus's
+    //    host methods installed so capability calls route back into nexus.
+    let factory = Arc::new(
+        WithHostMethodsFactory::new(host_methods).with_pidfile_dir(cfg.pidfile_dir.clone()),
+    );
+    let mut supervisors = HashMap::new();
+    for record in registry.iter_validated() {
+        let Some(ext_id) = record.id.as_ref() else {
+            continue;
+        };
+        let is_process = record
+            .manifest
+            .as_ref()
+            .map(|m| m.runtime.kind == RuntimeKind::Process)
+            .unwrap_or(false);
+        if !is_process {
+            continue;
+        }
+        // Default to enabled when no row exists yet (the kernel's convention).
+        let enabled = match store.get(ext_id).await {
+            Ok(Some(state)) => matches!(state, starter_ext_server::EnablementState::Enabled),
+            Ok(None) => true,
+            Err(e) => {
+                tracing::warn!(
+                    target: "nexus_api::extensions::boot",
+                    extension = %ext_id.as_str(),
+                    error = %e,
+                    "reading enablement state failed; treating as disabled"
+                );
+                false
+            }
+        };
+        if !enabled {
+            continue;
+        }
+        match starter_ext_server::SupervisorFactory::spawn(&*factory, record).await {
+            Ok(Some(handle)) => {
+                supervisors.insert(ext_id.as_str().to_string(), handle);
+            }
+            Ok(None) => {} // builtin/wasm — nothing to spawn
+            Err(e) => {
+                tracing::warn!(
+                    target: "nexus_api::extensions::boot",
+                    extension = %ext_id.as_str(),
+                    error = %e.0,
+                    "spawning extension supervisor at boot failed"
+                );
+            }
+        }
+    }
+
+    // 5. Build the admin: PG store, host-method factory, the query-kind cleanup
+    //    provider + post-install hook, and the nexus audit sink.
+    let admin = ExtensionAdmin::builder(registry)
+        .with_enablement_store(store)
+        .with_supervisor_factory(factory)
+        .with_supervisors(supervisors)
+        .with_installs_dir(cfg.installs_dir.clone())
+        .with_cleanup_provider(Arc::new(QueryKindCleanupProvider::new(metadata.clone())))
+        .with_post_install_hook(Arc::new(QueryKindPostInstall::new(
+            metadata.clone(),
+            cfg.installs_dir.clone(),
+        )))
+        .with_audit_sink(Arc::new(NexusExtensionAudit::new(metadata)))
+        .build();
+
+    Ok(ExtensionRuntime {
+        admin,
+        extension_kinds,
+    })
+}
+
+/// Scan the extensions dir(s), validate every candidate, commit, and seal. A
+/// per-candidate failure is isolated by the loader (it lands as a `Failed`
+/// record), so a single bad bundle never takes the registry down.
+fn scan_and_seal(cfg: &ExtensionsConfig) -> ExtensionRegistry {
+    let mut registry = ExtensionRegistry::new();
+
+    // The read-only in-repo pack dir and the writable installs dir are both
+    // scanned (the loader walks one level under each). A missing dir yields no
+    // candidates — the "no extensions" state — rather than an error.
+    for root in [&cfg.extensions_dir, &cfg.installs_dir] {
+        if !root.exists() {
+            continue;
+        }
+        let records = Loader::scan(root).validate_all();
+        let outcome = Loader::commit(records, &mut registry);
+        tracing::info!(
+            target: "nexus_api::extensions::boot",
+            dir = %root.display(),
+            validated = outcome.validated,
+            failed = outcome.failed,
+            "scanned extension bundles"
+        );
+    }
+
+    registry.seal();
+    registry
+}
+
+/// Persist every validated extension's contributed query-kinds and build the
+/// in-memory registry (the dispatcher's third source) from the persisted rows.
+///
+/// Called by `main` **before** [`boot`], because the registry it returns is
+/// placed on `AppState`, which the host-method handler `boot` installs closes
+/// over. Persisting first (rather than only building the in-memory registry)
+/// means an extension contributing a kind survives a restart and the cleanup
+/// provider can find it by owner. A single extension's bad template is logged
+/// and skipped; a metadata-DB failure propagates (broken deployment).
+pub async fn load_extension_kinds(
+    cfg: &ExtensionsConfig,
+    metadata: &PgPool,
+) -> Result<KindRegistry, String> {
+    // Re-scan to read manifests + bundle dirs. Cheap (filesystem walk of a small
+    // dir); keeps this independent of `boot`'s sealed registry so ordering is
+    // simple.
+    let mut registry = ExtensionRegistry::new();
+    for root in [&cfg.extensions_dir, &cfg.installs_dir] {
+        if !root.exists() {
+            continue;
+        }
+        let records = Loader::scan(root).validate_all();
+        let _ = Loader::commit(records, &mut registry);
+    }
+    registry.seal();
+
+    // Materialise each extension's contributed kinds into the provenance table.
+    for record in registry.iter_validated() {
+        let Some(ext_id) = record.id.as_ref() else {
+            continue;
+        };
+        let Some(manifest) = record.manifest.as_ref() else {
+            continue;
+        };
+        let kinds = match contributed_query_kinds(ext_id.as_str(), &record.bundle_dir, manifest) {
+            Ok(k) => k,
+            Err(e) => {
+                tracing::warn!(
+                    target: "nexus_api::extensions::boot",
+                    extension = %ext_id.as_str(),
+                    error = %e,
+                    "skipping extension's query-kind contribution (bad template)"
+                );
+                continue;
+            }
+        };
+        for new in &kinds {
+            extension_query_kind::upsert(metadata, ext_id.as_str(), new)
+                .await
+                .map_err(|e| format!("persist contributed kind {}: {e}", new.name))?;
+        }
+    }
+
+    // Build the in-memory registry from *all* persisted contributed kinds (not
+    // just this boot's manifests) so a kind contributed by a now-removed bundle
+    // dir is still resolvable until its owner is purged. Listing by each known
+    // extension would miss orphans; instead we read the whole table.
+    let mut all = Vec::new();
+    for record in registry.iter_validated() {
+        if let Some(ext_id) = record.id.as_ref() {
+            let rows = extension_query_kind::list_by_extension(metadata, ext_id.as_str())
+                .await
+                .map_err(|e| format!("listing contributed kinds: {e}"))?;
+            all.extend(rows.into_iter().map(record_to_query_kind));
+        }
+    }
+
+    KindRegistry::from_kinds(all).map_err(|e| format!("building extension-kinds registry: {e}"))
+}
