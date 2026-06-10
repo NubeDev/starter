@@ -24,7 +24,7 @@ import {
 import { usePrincipal } from "@/auth/usePrincipal";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
-import { DashboardAccessTab } from "@/features/access/DashboardAccessTab";
+import { NavAccessTab } from "@/features/access/NavAccessTab";
 import { useMemberDirectory } from "@/features/access/useMemberDirectory";
 import { CreateUserForm } from "@/features/access/CreateUserForm";
 
@@ -59,15 +59,18 @@ function AccessTabs({ scopedTenant }: { scopedTenant: string | null }) {
 
   return (
     <UserDirectoryProvider value={directory}>
-    <Tabs defaultValue="dashboards" className="flex h-full flex-col">
+    <Tabs defaultValue="navigation" className="flex h-full flex-col">
       <TabsList>
-        <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
+        <TabsTrigger value="navigation">Navigation</TabsTrigger>
         <TabsTrigger value="teams">Teams</TabsTrigger>
         <TabsTrigger value="members">Members</TabsTrigger>
       </TabsList>
       <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
-        <TabsContent value="dashboards" className="h-full">
-          <DashboardAccessTab tenantId={scopedTenant} />
+        {/* WS-13 §6: access is granted per nav node, not per dashboard — the
+            Navigation tab replaces the old Dashboards tab. A node grant gives a
+            user a specific mount, not every page that reuses the template. */}
+        <TabsContent value="navigation" className="h-full">
+          <NavAccessTab tenantId={scopedTenant} />
         </TabsContent>
         <TabsContent value="teams" className="h-full">
           {scopedTenant ? (
