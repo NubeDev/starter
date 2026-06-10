@@ -482,3 +482,79 @@
   test_connection probe missing (mirrors mqtt, catalogue-only) → RW-04 lane; folding into
   RW-04b's scope note. Queue 9✅/2⬜ — only the fix-passes remain. Next firing spawns RW-04b.
   Self-check: supervisor job alive.
+- 2026-06-10 06:23 — All healthy, NO action. Penultimate row: 06:20:01 firing spawned RW-04b
+  (file-datasource persistence + zenoh/mqtt probe arms) — fresh wake PID 1281613 ALIVE 3.5min,
+  row 🔵, reading phase (its spec lives in the TODOs entries + row note — first test of a
+  supervisor-queued row driving a session). Lock kernel-HELD, cron firing, no STOP, supervisor
+  job alive. Queue 9✅/1🔵/1⬜ (RW-07b last). TODOs 10 (all owned/bundled). NEXT WAKE: expect
+  the 20xx migration (nullable config jsonb + nullable secret cols) + store record/resolve
+  updates + the stored-Parquet⋈PG e2e.
+- 2026-06-10 06:28 — All healthy, NO action. RW-04b wake PID 1281613 ALIVE 8.5min, wide but
+  correct touch set: dto/datasource/shared.rs (the config-jsonb DTO surface) +
+  federation/resolve.rs (the file-kind resolve arm flipping from Invalid→real) + e2e tests
+  across sink/federation/streams/alerts (the last two likely just struct-literal updates
+  where NewDatasource gained fields — the nullable-columns change ripples through every
+  test that constructs a datasource; in-lane consequence, not scope creep). Cron firing +
+  skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue 9✅/1🔵/1⬜, TODOs 10.
+  NEXT WAKE: migration file + probe arms + gate.
+- 2026-06-10 06:33 — All healthy, NO action. RW-04b wake PID 1281613 ALIVE 13min: zenoh
+  store-side probe landing (nexus-store/src/datasource/zenoh/probe.rs — the folded-in
+  follow-up being honored) + federation e2e extension; 29 cargo/rustc procs (heavy verify).
+  WATCH: no 20xx migration file visible yet in migrations/nexus/ (latest 2201) — the
+  nullable-config schema change MUST ship a migration; verify at gate before accepting ✅
+  (it may be written last, or use ALTER in a differently-numbered file — check, don't
+  assume). Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue
+  9✅/1🔵/1⬜, TODOs 10. NEXT WAKE: gate check incl. the migration-exists verification.
+- 2026-06-10 06:37 — All healthy, NO action. RW-04b ✅ confirmed at gate (5ac2cbec + 83b0dcf1,
+  pushed, 17min): migration 2001_datasource_file_config.sql EXISTS (the 06:33 watch was a
+  sorted-ls artifact — 2001 sorts above 2101; armed check discharged), file datasources now
+  persistable, zenoh/mqtt connect probes shipped, federation file-resolve arm real. LOCK-FREE
+  BUILD CHECK: cargo check --workspace GREEN (cached 1.2s — wake left fresh build). RW-04b
+  wake exited clean; next firing (06:40) spawns RW-07b — THE LAST ROW. Remote synced, cron
+  firing, no STOP, supervisor job alive. Queue 10✅/1⬜, TODOs 10. NEXT WAKE: RW-07b 🔵 —
+  the two-workspace WS (starter-extensions SPI + supervisor wiring); allow the longest
+  envelope of the run; gate checks = tenant-stamp e2e, retry_after via RW-09's
+  IngestChannels seam (not a second path), hello purge assertion, additive-only SPI changes.
+- 2026-06-10 06:42 — All healthy, NO action. FINAL ROW RUNNING: 06:40:01 firing spawned
+  RW-07b (extension ingest data-plane) — fresh wake PID 1316235 ALIVE 2.5min, row 🔵,
+  reading phase (longest required-reading of the run: RW-07 spec items 2-4 + its deferral
+  TODO + RW-09's IngestChannels seam + starter-ext-supervisor JSON-RPC). Lock kernel-HELD,
+  cron firing, no STOP, supervisor job alive. Queue 10✅/1🔵. TODOs 10. NEXT WAKE: expect
+  manifest SPI fields (additive) + host_methods ingest.* arms; watching BOTH workspaces'
+  file churn from here.
+- 2026-06-10 06:47 — All healthy, NO action. RW-07b wake PID 1316235 ALIVE 7.5min, working
+  BOTH workspaces as designed: starter-ext-spi manifest.rs/ingest.rs/capability.rs (the
+  additive sources/sinks fields + ingest capability gate) + supervisor capability.rs +
+  host validate.rs, AND nexus-api/extensions/ingest.rs (the ingest.write host-method arm).
+  Exactly the cross-workspace seam this row exists for. WATCH at gate: SPI changes must be
+  additive-only (charter) — diff starter-ext-spi for any signature/field REMOVAL. Cron
+  firing + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue 10✅/1🔵,
+  TODOs 10. NEXT WAKE: engine extension source/sink nodes + tests.
+- 2026-06-10 06:52 — All healthy, NO action. RW-07b wake PID 1316235 ALIVE 12min, TEST phase
+  already: ingest_write_e2e_test.rs (the tenant-stamp + backpressure acceptance) +
+  insight_purge_e2e_test.rs (the hello purge assertion RW-07 left outstanding — being
+  discharged) + host_methods.rs dispatch arm wiring; 4 cargo procs. Both outstanding
+  acceptance bullets from the deferral TODO are getting tests. Cron firing + skipping, lock
+  kernel-HELD, no STOP, supervisor job alive. Queue 10✅/1🔵, TODOs 10. NEXT WAKE: gate —
+  the SPI additive-only diff check + IngestChannels-reuse check, then RUN COMPLETE handling.
+- 2026-06-10 06:58 — RW-07b ✅ GATE-VERIFIED — ALL 11 QUEUE ROWS DONE. Commits 509d44cf +
+  0fdda31a pushed (origin == HEAD); cargo test --workspace green on BOTH workspaces (backend
+  + starter-extensions). Both armed checks PASS: (1) SPI diff additive-only — zero removed
+  pub items/fns; commit message confirms "Additive contracts" (ingest::* DTOs,
+  Capability::Ingest, Contributes.sources/sinks, IngestDirection); (2) ingest.write reuses
+  RW-09's IngestChannels seam (try_push in extensions/ingest.rs) — no second path. Acceptance
+  e2es shipped: tenant-stamp + channel-full retry_after + hello insight purge. One final
+  deferral (11th TODO): sink-direction ingest.read_batch (host→extension EXPORT drain) —
+  correctly out of "incoming is generic" scope; documented, no row queued (no current
+  consumer; first export-extension use case should drive it). The RW-07b wake is in its tail;
+  the 07:00 firing executes the loop's RUN-COMPLETE step (final loop-log line + cron
+  removal). Supervisor confirms cron removal next wake, then writes the final human report
+  and stops.
+- 2026-06-10 07:02 — ✅✅ RUN COMPLETE — SUPERVISOR SIGNING OFF. The 07:00 firing wrote the
+  loop's RUN-COMPLETE line and removed its own crontab (verified: crontab -l has no
+  nexus-rewrite-loop entry; final wake exited clean, lock FREE, queue 11/11 ✅, no ⛔).
+  Pushed the final bookkeeping commits — origin == HEAD. Run totals: 11 workstreams in
+  ~4h40m wall (02:20→07:00 UTC), every one committed + pushed + gated green; 2 human review
+  rounds applied mid-run; 2 supervisor-queued fix-pass rows both landed; 11 TODOs remain,
+  ALL follow-ups with named owners — zero unresolved blockers. ArkFlow: deleted. Supervisor
+  loop (job 48c168b4) stops now. Final human report delivered in-session.
