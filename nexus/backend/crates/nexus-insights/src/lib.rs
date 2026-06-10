@@ -23,4 +23,4 @@ mod sandbox;
 pub use engine::Frame;
 pub use error::{InsightError, InsightResult};
 pub use limits::Limits;
-pub use run::{run_insight, run_insight_rows, run_insight_rows_with_limits};
+pub use run::{compile_check, run_insight, run_insight_rows, run_insight_rows_with_limits};

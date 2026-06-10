@@ -10,6 +10,7 @@ default-run = "nexus-api"
 [dependencies]
 nexus-spi.workspace = true
 nexus-engine.workspace = true
+nexus-insights.workspace = true
 nexus-store.workspace = true
 # The `agent` feature pulls in the zag tier so sessions can drive the local
 # coding-agent CLIs (Claude Code, Codex, Gemini, Ollama) using their own auth —
@@ -179,3 +180,11 @@ path = "tests/routes/agents/agent_e2e_test.rs"
 [[test]]
 name = "routes_audit_e2e"
 path = "tests/routes/audit/audit_e2e_test.rs"
+
+[[test]]
+name = "routes_insights_e2e"
+path = "tests/routes/insights/insights_e2e_test.rs"
+
+[[test]]
+name = "routes_query_insight_e2e"
+path = "tests/routes/query/insight_e2e_test.rs"

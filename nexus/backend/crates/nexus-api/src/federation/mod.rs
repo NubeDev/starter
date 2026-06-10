@@ -88,6 +88,7 @@ mod tests {
             kind: None,
             params: None,
             sources: Vec::new(),
+            insight: None,
         }
     }
 

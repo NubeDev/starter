@@ -31,5 +31,15 @@ pub async fn run_query(
     let result = crate::cache::run_cached(&state, &state.datasource, &req, &identity, "dev")
         .await
         .map_err(IntoResponse)?;
+    // RW-06 insight seam (dev path): no tenant context, so only an inline script
+    // is valid; a stored reference is a clean caller error, not a panic.
+    let result = match &req.insight {
+        Some(insight) => {
+            crate::insights::apply_insight(&state, &state.metadata, None, insight, result)
+                .await
+                .map_err(IntoResponse)?
+        }
+        None => result,
+    };
     Ok(Json(result))
 }

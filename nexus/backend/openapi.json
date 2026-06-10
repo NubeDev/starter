@@ -2170,6 +2170,176 @@
         }
       }
     },
+    "/api/v1/insights": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "list_insights",
+        "responses": {
+          "200": {
+            "description": "Insights in the tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InsightSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "create_insight",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The script does not compile"
+          }
+        }
+      }
+    },
+    "/api/v1/insights/{id}": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "get_insight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Insight id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The insight",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightSummary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this insight"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "delete_insight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Insight id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not authorized to delete this insight"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "update_insight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Insight id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The new script does not compile"
+          },
+          "403": {
+            "description": "Not authorized to edit this insight"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "tags": [
@@ -3960,6 +4130,27 @@
           }
         }
       },
+      "CreateInsightRequest": {
+        "type": "object",
+        "description": "Create a tenant-scoped insight. `script` is the Rhai transform; `params_schema`\nis an optional JSON-Schema describing the params a caller may pass when running\nit (advisory metadata for the UI — the sandbox enforces safety regardless).",
+        "required": [
+          "name",
+          "script"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name, unique enough for the tenant's list."
+          },
+          "params_schema": {
+            "description": "Optional JSON-Schema for the script's params, for UI form generation."
+          },
+          "script": {
+            "type": "string",
+            "description": "The Rhai script orchestrating the curated vectorized surface."
+          }
+        }
+      },
       "CreateNavNodeRequest": {
         "type": "object",
         "description": "Create a nav node. `target` defaults to a `group` header when omitted so a\nclient can lay out structure first and bind pages later. `context` is only\nmeaningful for a `dashboard` target and is ignored (cleared) otherwise.",
@@ -4795,6 +4986,55 @@
         "type": "string",
         "description": "Identifier shared by every [`super::Change`] recorded inside a\nsingle [`super::ChangeRecorder::transaction`] call. Undo operates\non whole groups."
       },
+      "InsightRef": {
+        "type": "object",
+        "description": "How a query attaches a post-query insight transform. A request may either\ninline a `script` (the ad-hoc / preview case) or name a stored insight by\n`insight_id` (the panel case); `params` feeds either as the script's `params`\nobject. Both fields are optional and the whole `InsightRef` is optional on the\nrequest, so a query without one behaves exactly as before — this is a purely\nadditive contract, like the RW-05 `sources` field.\n\nWhen both `script` and `insight_id` are set, `insight_id` wins (a stored\ninsight is the authored source of truth; an inline script is the override only\nwhen no id is given). Caps still apply *after* the insight runs: it can\naggregate the result down but the surface guarantees it never grows it.",
+        "properties": {
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "A stored insight id to run. Resolved and tenant-authorised server-side."
+          },
+          "params": {
+            "description": "Parameters bound as the script's `params` object. Arbitrary JSON; the\nscript reads `params.<field>`."
+          },
+          "script": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An inline Rhai script to run instead, when no `insight_id` is given. The\nscript orchestrates the curated vectorized surface over the result frame."
+          }
+        }
+      },
+      "InsightSummary": {
+        "type": "object",
+        "description": "One stored insight: immutable id, name, the script, and its optional params\nschema. The flat list carries every field the client needs to run or edit it.",
+        "required": [
+          "id",
+          "name",
+          "script"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "params_schema": {
+            "description": "Optional JSON-Schema for the script's params."
+          },
+          "script": {
+            "type": "string",
+            "description": "The Rhai transform script."
+          }
+        }
+      },
       "MeResponse": {
         "type": "object",
         "description": "The authenticated caller's full context.",
@@ -5514,6 +5754,17 @@
           "sql"
         ],
         "properties": {
+          "insight": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InsightRef",
+                "description": "RW-06 post-query insight: an optional Rhai transform (inline or a stored\nid) applied to the result frame *after* the query runs and *before* the\nresponse is serialized. Caps still apply after the transform — it can\naggregate the result down, never grow it past a cap. Absent (the default)\nkeeps the result exactly as the query produced it, so this field is purely\nadditive."
+              }
+            ]
+          },
           "interval_secs": {
             "type": [
               "integer",
@@ -6458,6 +6709,28 @@
             ],
             "format": "uuid",
             "description": "Move under this folder. Ignored when `clear_parent` is true."
+          }
+        }
+      },
+      "UpdateInsightRequest": {
+        "type": "object",
+        "description": "Partial update. Any field left unset is unchanged. `params_schema` is updated\nonly when present — there is no separate \"clear\" since an absent schema and an\nempty one are equivalent for the advisory UI use.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "params_schema": {
+            "description": "Replace the params schema."
+          },
+          "script": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Replace the script."
           }
         }
       },

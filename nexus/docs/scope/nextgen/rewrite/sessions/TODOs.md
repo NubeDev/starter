@@ -100,3 +100,18 @@ Format per entry:
 - **Proposed:** RW-03, before deleting `vendor/arkflow-plugin/src/processor/sql.rs`: grep stored
   tenant flow configs for JSON-UDF usage in `sql.query`. If any exist, raise a blocker to get
   `datafusion-functions-json` approved as a direct dep; otherwise the omission is safe.
+
+## 2026-06-10 RW-06 — Two pre-existing nexus-api test binaries fail to compile (stale drift)
+- **Type:** follow-up
+- **What:** `tests/routes/authz/grant_gate_test.rs` constructs `NewDashboard` without the
+  `icon`/`accent`/`folder_id` fields it gained in a later RW, and
+  `tests/routes/identity/wiring_test.rs` calls `serve::assemble` with 5 args after it grew a
+  6th (`Router<AppState>`). Both fail `cargo test -p nexus-api --no-run`. These files are
+  outside RW-06's lane and were already broken on `nexus-rewrite` before this session — the
+  RW-06 DTO change (additive `insight` field on `QueryRequest`) does not touch them.
+- **Why:** Fixing them means editing another RW's test lane; RW-06 must stay in-lane. They do
+  not block RW-06's own test binaries (`routes_insights_e2e`, `routes_query_insight_e2e`),
+  which compile clean.
+- **Proposed:** The RW that owns the dashboard-DTO / `serve::assemble` change (or a dedicated
+  drift-fix pass) updates these two call sites: add the three `NewDashboard` fields and the
+  missing `assemble` router argument. Until then they are stale, not regressions.

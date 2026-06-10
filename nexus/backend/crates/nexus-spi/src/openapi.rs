@@ -18,6 +18,7 @@ use crate::dto::dashboard::{
     UpdateDashboardRequest, VariableExport,
 };
 use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
+use crate::dto::insight::{CreateInsightRequest, InsightRef, InsightSummary, UpdateInsightRequest};
 use crate::dto::nav::{
     CreateNavNodeRequest, NavContext, NavNodeDetail, NavTarget, StaticRoute, UpdateNavNodeRequest,
 };
@@ -96,6 +97,10 @@ use crate::Problem;
     FolderSummary,
     CreateFolderRequest,
     UpdateFolderRequest,
+    InsightSummary,
+    CreateInsightRequest,
+    UpdateInsightRequest,
+    InsightRef,
     NavNodeDetail,
     NavTarget,
     StaticRoute,

@@ -281,6 +281,7 @@ impl NexusHostMethods {
             kind: Some(req.template.clone()),
             params: Some(req.params.clone()),
             sources: Vec::new(),
+            insight: None,
         };
         let response = nexus_store::run_kind_request(
             &self.state.metadata,

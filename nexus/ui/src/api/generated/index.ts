@@ -659,6 +659,38 @@ export interface paths {
         patch: operations["update_folder"];
         trace?: never;
     };
+    "/api/v1/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_insights"];
+        put?: never;
+        post: operations["create_insight"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_insight"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_insight"];
+        options?: never;
+        head?: never;
+        patch: operations["update_insight"];
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -1350,6 +1382,19 @@ export interface components {
             parent_id?: string | null;
         };
         /**
+         * @description Create a tenant-scoped insight. `script` is the Rhai transform; `params_schema`
+         *     is an optional JSON-Schema describing the params a caller may pass when running
+         *     it (advisory metadata for the UI — the sandbox enforces safety regardless).
+         */
+        CreateInsightRequest: {
+            /** @description Human-readable name, unique enough for the tenant's list. */
+            name: string;
+            /** @description Optional JSON-Schema for the script's params, for UI form generation. */
+            params_schema?: unknown;
+            /** @description The Rhai script orchestrating the curated vectorized surface. */
+            script: string;
+        };
+        /**
          * @description Create a nav node. `target` defaults to a `group` header when omitted so a
          *     client can lay out structure first and bind pages later. `context` is only
          *     meaningful for a `dashboard` target and is ignored (cleared) otherwise.
@@ -1807,6 +1852,49 @@ export interface components {
          *     on whole groups.
          */
         GroupId: string;
+        /**
+         * @description How a query attaches a post-query insight transform. A request may either
+         *     inline a `script` (the ad-hoc / preview case) or name a stored insight by
+         *     `insight_id` (the panel case); `params` feeds either as the script's `params`
+         *     object. Both fields are optional and the whole `InsightRef` is optional on the
+         *     request, so a query without one behaves exactly as before — this is a purely
+         *     additive contract, like the RW-05 `sources` field.
+         *
+         *     When both `script` and `insight_id` are set, `insight_id` wins (a stored
+         *     insight is the authored source of truth; an inline script is the override only
+         *     when no id is given). Caps still apply *after* the insight runs: it can
+         *     aggregate the result down but the surface guarantees it never grows it.
+         */
+        InsightRef: {
+            /**
+             * Format: uuid
+             * @description A stored insight id to run. Resolved and tenant-authorised server-side.
+             */
+            insight_id?: string | null;
+            /**
+             * @description Parameters bound as the script's `params` object. Arbitrary JSON; the
+             *     script reads `params.<field>`.
+             */
+            params?: unknown;
+            /**
+             * @description An inline Rhai script to run instead, when no `insight_id` is given. The
+             *     script orchestrates the curated vectorized surface over the result frame.
+             */
+            script?: string | null;
+        };
+        /**
+         * @description One stored insight: immutable id, name, the script, and its optional params
+         *     schema. The flat list carries every field the client needs to run or edit it.
+         */
+        InsightSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Optional JSON-Schema for the script's params. */
+            params_schema?: unknown;
+            /** @description The Rhai transform script. */
+            script: string;
+        };
         /** @description The authenticated caller's full context. */
         MeResponse: {
             /** @description Coarse role: `reader` | `writer` | `admin`. */
@@ -2114,6 +2202,7 @@ export interface components {
          *     flow through the same binder.
          */
         QueryRequest: {
+            insight?: null | components["schemas"]["InsightRef"];
             /**
              * Format: int64
              * @description The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a
@@ -2609,6 +2698,18 @@ export interface components {
              * @description Move under this folder. Ignored when `clear_parent` is true.
              */
             parent_id?: string | null;
+        };
+        /**
+         * @description Partial update. Any field left unset is unchanged. `params_schema` is updated
+         *     only when present — there is no separate "clear" since an absent schema and an
+         *     empty one are equivalent for the advisory UI use.
+         */
+        UpdateInsightRequest: {
+            name?: string | null;
+            /** @description Replace the params schema. */
+            params_schema?: unknown;
+            /** @description Replace the script. */
+            script?: string | null;
         };
         /**
          * @description Partially update a nav node. Omitted fields are left unchanged. The
@@ -4685,6 +4786,177 @@ export interface operations {
             };
             /** @description Invalid reparent (self-parent or absent parent) */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_insights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Insights in the tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"][];
+                };
+            };
+        };
+    };
+    create_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"];
+                };
+            };
+            /** @description The script does not compile */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Insight id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The insight */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"];
+                };
+            };
+            /** @description Not authorized to view this insight */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Insight id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authorized to delete this insight */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Insight id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"];
+                };
+            };
+            /** @description The new script does not compile */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authorized to edit this insight */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

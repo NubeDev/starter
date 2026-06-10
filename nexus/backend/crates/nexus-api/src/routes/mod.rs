@@ -9,6 +9,7 @@ pub mod dashboards;
 pub mod datasources;
 pub mod flows;
 pub mod folders;
+pub mod insights;
 pub mod me;
 pub mod nav;
 pub mod query;
@@ -35,6 +36,7 @@ pub fn product_router() -> Router<AppState> {
         .merge(dashboards::router())
         .merge(flows::router())
         .merge(folders::router())
+        .merge(insights::router())
         .merge(nav::router())
         .merge(alerts::router())
         .merge(tags::router())

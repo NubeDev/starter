@@ -16,6 +16,7 @@ pub mod datasource;
 pub mod extension_query_kind;
 pub mod flow;
 pub mod folder;
+pub mod insight;
 pub mod migrate;
 pub mod nav_node;
 pub mod query;

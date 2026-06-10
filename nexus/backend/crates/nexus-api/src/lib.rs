@@ -17,6 +17,7 @@ pub mod extensions;
 pub mod federation;
 pub mod flows;
 pub mod identity;
+pub mod insights;
 pub mod kinds;
 pub mod middleware;
 pub mod openapi;

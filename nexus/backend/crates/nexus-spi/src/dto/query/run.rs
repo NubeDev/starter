@@ -6,6 +6,7 @@ use serde_json::Value;
 use utoipa::ToSchema;
 
 use super::shared::{ColumnSchema, QueryStats};
+use crate::dto::insight::InsightRef;
 
 /// Body of a one-shot query. The caller supplies the SQL plus the optional
 /// macro context (time range, variables) the server-side binder substitutes;
@@ -57,6 +58,14 @@ pub struct QueryRequest {
     /// field is purely additive. Ignored in kind-mode.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sources: Vec<FederatedSourceRef>,
+    /// RW-06 post-query insight: an optional Rhai transform (inline or a stored
+    /// id) applied to the result frame *after* the query runs and *before* the
+    /// response is serialized. Caps still apply after the transform — it can
+    /// aggregate the result down, never grow it past a cap. Absent (the default)
+    /// keeps the result exactly as the query produced it, so this field is purely
+    /// additive.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight: Option<InsightRef>,
 }
 
 /// One federated input reference: a SQL alias bound to a datasource id. The alias

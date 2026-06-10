@@ -60,6 +60,19 @@ pub async fn run_insight(
         .map_err(|e| InsightError::Engine(format!("insight task join: {e}")))?
 }
 
+/// Compile-check a script without running it, so a stored insight can be
+/// validated at save time. Returns the compile error message on failure. Uses the
+/// same sandboxed engine + registered surface as a real run, so a script that
+/// references an unknown primitive is caught here too.
+pub fn compile_check(script: &str) -> InsightResult<()> {
+    let mut engine = sandbox::build(&Limits::default(), Instant::now());
+    api::register(&mut engine);
+    engine
+        .compile(script)
+        .map(|_| ())
+        .map_err(|e| InsightError::Compile(e.to_string()))
+}
+
 /// The blocking body: build the sandbox, register the surface, compile, and run.
 fn evaluate(script: &str, input: Frame, params: Dynamic, limits: Limits) -> InsightResult<Frame> {
     let started = Instant::now();
