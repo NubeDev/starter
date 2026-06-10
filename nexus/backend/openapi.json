@@ -3012,6 +3012,12 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Not allowed to view this entity"
+          },
+          "404": {
+            "description": "Entity not found in this tenant"
           }
         }
       },
@@ -3053,6 +3059,12 @@
         "responses": {
           "204": {
             "description": "Tags replaced"
+          },
+          "403": {
+            "description": "Not allowed to edit this entity"
+          },
+          "404": {
+            "description": "Entity not found in this tenant"
           }
         }
       }

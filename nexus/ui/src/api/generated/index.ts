@@ -5472,6 +5472,20 @@ export interface operations {
                     "application/json": components["schemas"]["Tag"][];
                 };
             };
+            /** @description Not allowed to view this entity */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Entity not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     set_tags: {
@@ -5494,6 +5508,20 @@ export interface operations {
         responses: {
             /** @description Tags replaced */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this entity */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Entity not found in this tenant */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
