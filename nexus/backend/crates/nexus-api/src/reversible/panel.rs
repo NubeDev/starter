@@ -45,7 +45,10 @@ impl PanelReversible {
     /// (snapshot = `before`) and redo (snapshot = `after`): a snapshot kind has no
     /// direction-specific logic beyond which side it writes. `NotFound` if the row
     /// is gone. `layout`/`sql`/`viz` are always set (full snapshot), so the
-    /// COALESCE-on-`None` store semantics never leave a stale field behind.
+    /// COALESCE-on-`None` store semantics never leave a stale field behind. The
+    /// insight fields use the three-valued patch with `Some(_)` so the snapshot's
+    /// value is restored *exactly* — including a `None` (an insight that was
+    /// detached at the snapshot point), which a plain COALESCE could not reinstate.
     async fn restore_snapshot(&self, tenant: &str, snapshot: &PanelRecord) -> Result<()> {
         let patch = PanelPatch {
             title: Some(snapshot.title.clone()),
@@ -53,6 +56,8 @@ impl PanelReversible {
             sql: Some(snapshot.sql.clone()),
             viz: Some(snapshot.viz.clone()),
             layout: Some(snapshot.layout.clone()),
+            insight_id: Some(snapshot.insight_id),
+            insight_params: Some(snapshot.insight_params.clone()),
         };
         match panel::update(&self.metadata, tenant, snapshot.id, &patch).await? {
             Some(_) => Ok(()),
@@ -73,6 +78,8 @@ impl PanelReversible {
             sql: snapshot.sql.clone(),
             viz: snapshot.viz.clone(),
             layout: snapshot.layout.clone(),
+            insight_id: snapshot.insight_id,
+            insight_params: snapshot.insight_params.clone(),
         };
         panel::insert_with_id(&self.metadata, tenant, snapshot.id, &new)
             .await
@@ -183,6 +190,19 @@ fn snapshot_from(value: Option<&serde_json::Value>, which: &str) -> Result<Panel
     };
     // layout is opaque grid JSON the canvas owns — carried through verbatim.
     let layout = v.get("layout").cloned().unwrap_or_else(|| json!({}));
+    // insight_id is optional (a panel may have no insight attached).
+    let insight_id = match v.get("insight_id").and_then(|d| d.as_str()) {
+        Some(raw) => Some(Uuid::parse_str(raw).map_err(|e| Error::Invalid {
+            message: format!("panel {which} snapshot insight_id {raw:?} is not a uuid: {e}"),
+        })?),
+        None => None,
+    };
+    // insight_params is opaque JSON the script binds; carried through verbatim.
+    // Absent or JSON null both mean "no params".
+    let insight_params = match v.get("insight_params") {
+        Some(serde_json::Value::Null) | None => None,
+        Some(other) => Some(other.clone()),
+    };
     Ok(PanelRecord {
         id,
         dashboard_id,
@@ -191,6 +211,8 @@ fn snapshot_from(value: Option<&serde_json::Value>, which: &str) -> Result<Panel
         sql: field_str(v, "sql")?,
         viz: field_str(v, "viz")?,
         layout,
+        insight_id,
+        insight_params,
     })
 }
 
@@ -226,6 +248,8 @@ pub fn snapshot_json(rec: &PanelRecord) -> serde_json::Value {
         "sql": rec.sql,
         "viz": rec.viz,
         "layout": rec.layout,
+        "insight_id": rec.insight_id.map(|id| id.to_string()),
+        "insight_params": rec.insight_params,
     })
 }
 

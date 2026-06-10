@@ -40,5 +40,7 @@ pub fn to_panel(p: &PanelRecord) -> PanelDetail {
         sql: p.sql.clone(),
         viz: p.viz.clone(),
         layout: p.layout.clone(),
+        insight_id: p.insight_id,
+        insight_params: p.insight_params.clone(),
     }
 }

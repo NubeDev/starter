@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use nexus_spi::dto::flow::FlowDebugEvent;
+use nexus_spi::dto::flow::{FlowDebugEvent, NodeCounters};
 use tokio::sync::broadcast;
 
 /// Fan-out buffer depth. A subscriber more than this many events behind receives
@@ -35,6 +35,15 @@ pub struct FlowDebugChannel {
     sender: broadcast::Sender<FlowDebugEvent>,
     seq: Arc<AtomicU64>,
     enabled: Arc<AtomicBool>,
+    /// Latest counters published per node, keyed by `node_index`. A
+    /// `broadcast` subscriber sees only events published *after* it attaches, so
+    /// without this a node that hasn't had a batch cross since the SSE stream
+    /// opened would stay blank ("—") until its next batch — and on a bursty
+    /// source that can be seconds. We snapshot the running totals here so a
+    /// freshly-attached subscriber can be replayed the current state up front
+    /// (see [`Self::snapshot`]). Totals are monotonic, so the replay is always
+    /// truthful; no staleness, no heartbeat needed.
+    latest: Arc<Mutex<HashMap<u32, NodeCounters>>>,
     /// Total nodes (source + processors + sink), so the API can report the chain
     /// length and the UI can validate its positional mapping.
     node_count: u32,
@@ -49,6 +58,7 @@ impl FlowDebugChannel {
             sender,
             seq: Arc::new(AtomicU64::new(0)),
             enabled: Arc::new(AtomicBool::new(false)),
+            latest: Arc::new(Mutex::new(HashMap::new())),
             node_count,
             sample_rows: DEFAULT_SAMPLE_ROWS,
         }
@@ -83,14 +93,34 @@ impl FlowDebugChannel {
     /// Publish one event. The caller has already gated on [`is_enabled`] for the
     /// hot-path variants. The "no receivers" error is ignored: the channel stays
     /// warm for the next subscriber to attach.
+    ///
+    /// A `Counters` event also updates the per-node snapshot so a subscriber that
+    /// attaches later can be brought up to the current totals immediately rather
+    /// than waiting for the node's next batch (see [`Self::snapshot`]).
     pub fn publish(&self, event: FlowDebugEvent) {
+        if let FlowDebugEvent::Counters { counters, .. } = &event {
+            self.latest
+                .lock()
+                .unwrap()
+                .insert(counters.node_index, counters.clone());
+        }
         let _ = self.sender.send(event);
     }
 
     /// Open a new subscription. The receiver sees events published after this
-    /// call; earlier events are not replayed.
+    /// call; earlier events are not replayed — pair with [`Self::snapshot`] to
+    /// prime the new subscriber with the current per-node totals.
     pub fn subscribe(&self) -> broadcast::Receiver<FlowDebugEvent> {
         self.sender.subscribe()
+    }
+
+    /// The latest per-node counters seen so far, ordered by `node_index`. Replayed
+    /// to a newly-attached SSE subscriber so the panel shows the true running
+    /// totals on connect instead of blanks until the next batch crosses each node.
+    pub fn snapshot(&self) -> Vec<NodeCounters> {
+        let mut rows: Vec<NodeCounters> = self.latest.lock().unwrap().values().cloned().collect();
+        rows.sort_by_key(|c| c.node_index);
+        rows
     }
 }
 
@@ -179,6 +209,52 @@ mod tests {
             }
             other => panic!("expected log, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn snapshot_returns_latest_counters_per_node_sorted() {
+        let channel = FlowDebugChannel::new(3);
+        // Two ticks for the source; the snapshot must keep the latest, not both.
+        channel.publish(counters_event(channel.next_seq())); // node 0, rows_in 1
+        let mut later = match counters_event(channel.next_seq()) {
+            FlowDebugEvent::Counters { counters, .. } => counters,
+            _ => unreachable!(),
+        };
+        later.rows_in = 42;
+        channel.publish(FlowDebugEvent::Counters {
+            seq: channel.next_seq(),
+            counters: later,
+        });
+        // A sink at a higher index, published first — snapshot must sort by index.
+        channel.publish(FlowDebugEvent::Counters {
+            seq: channel.next_seq(),
+            counters: NodeCounters {
+                node_index: 2,
+                role: NodeRole::Sink,
+                rows_in: 7,
+                rows_out: 7,
+                batches: 1,
+            },
+        });
+
+        let snap = channel.snapshot();
+        assert_eq!(snap.len(), 2, "one entry per node, deduped");
+        assert_eq!(snap[0].node_index, 0);
+        assert_eq!(snap[0].rows_in, 42, "kept the latest tick");
+        assert_eq!(snap[1].node_index, 2);
+    }
+
+    #[test]
+    fn snapshot_ignores_non_counter_events() {
+        let channel = FlowDebugChannel::new(2);
+        channel.publish(FlowDebugEvent::Log {
+            seq: channel.next_seq(),
+            level: LogLevel::Info,
+            node_index: Some(0),
+            message: "hi".into(),
+            at_ms: 0,
+        });
+        assert!(channel.snapshot().is_empty());
     }
 
     #[test]

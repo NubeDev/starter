@@ -4,6 +4,7 @@
 #![cfg(feature = "testing")]
 
 use nexus_store::dashboard::{self, NewDashboard, NewPanel, PanelPatch};
+use nexus_store::insight::{self, NewInsight};
 use nexus_store::testing::runtime_pool;
 use serde_json::json;
 use starter_store_postgres::testing::with_database;
@@ -27,6 +28,16 @@ fn new_panel(dashboard_id: Uuid) -> NewPanel {
         sql: "SELECT 1".into(),
         viz: "line".into(),
         layout: json!({"x": 0, "y": 0}),
+        insight_id: None,
+        insight_params: None,
+    }
+}
+
+fn new_insight(name: &str) -> NewInsight {
+    NewInsight {
+        name: name.into(),
+        script: "df.zscore(\"value\")".into(),
+        params_schema: None,
     }
 }
 
@@ -133,4 +144,82 @@ async fn panel_update_is_partial_and_tenant_scoped() {
         .await
         .unwrap();
     assert!(cross.is_none(), "cross-tenant update finds no panel");
+}
+
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn panel_insight_attaches_round_trips_and_detaches() {
+    let (admin, _guard) = with_database().await;
+    let pg = &runtime_pool(admin.sqlx()).await;
+
+    let d = dashboard::insert(pg, "acme", &new_dash("plant-1"))
+        .await
+        .unwrap();
+    let ins = insight::insert(pg, "acme", &new_insight("z-outliers"))
+        .await
+        .unwrap();
+
+    // Attach an insight + params at create; both round-trip through read.
+    let mut np = new_panel(d.id);
+    np.insight_id = Some(ins.id);
+    np.insight_params = Some(json!({ "threshold": 2.5 }));
+    let p = dashboard::panel::insert(pg, "acme", &np).await.unwrap();
+    assert_eq!(p.insight_id, Some(ins.id));
+    assert_eq!(p.insight_params, Some(json!({ "threshold": 2.5 })));
+
+    let fetched = dashboard::panel::get(pg, "acme", p.id)
+        .await
+        .unwrap()
+        .expect("panel visible");
+    assert_eq!(fetched.insight_id, Some(ins.id), "insight id persisted");
+    assert_eq!(fetched.insight_params, Some(json!({ "threshold": 2.5 })));
+
+    // A patch that leaves the insight fields `None` must NOT detach it (the
+    // drag/resize path). Only a `Some(None)` detaches.
+    let layout_only = PanelPatch {
+        layout: Some(json!({"x": 1})),
+        ..PanelPatch::default()
+    };
+    let after_layout = dashboard::panel::update(pg, "acme", p.id, &layout_only)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        after_layout.insight_id,
+        Some(ins.id),
+        "omitted insight field is left unchanged, not cleared"
+    );
+
+    // Three-valued detach: Some(None) actually NULLs both columns.
+    let detach = PanelPatch {
+        insight_id: Some(None),
+        insight_params: Some(None),
+        ..PanelPatch::default()
+    };
+    let detached = dashboard::panel::update(pg, "acme", p.id, &detach)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(detached.insight_id, None, "Some(None) detaches the insight");
+    assert_eq!(detached.insight_params, None, "params cleared with it");
+
+    // Re-attach, then prove the FK is ON DELETE SET NULL: deleting the insight
+    // leaves the panel rendering its raw query rather than cascading it away.
+    let reattach = PanelPatch {
+        insight_id: Some(Some(ins.id)),
+        ..PanelPatch::default()
+    };
+    dashboard::panel::update(pg, "acme", p.id, &reattach)
+        .await
+        .unwrap()
+        .unwrap();
+    insight::delete(pg, "acme", ins.id).await.unwrap();
+    let orphaned = dashboard::panel::get(pg, "acme", p.id)
+        .await
+        .unwrap()
+        .expect("panel still exists after its insight is deleted");
+    assert_eq!(
+        orphaned.insight_id, None,
+        "ON DELETE SET NULL detaches, does not cascade the panel"
+    );
 }

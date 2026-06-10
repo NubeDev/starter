@@ -79,6 +79,8 @@ pub async fn export_dashboard(
                 sql: p.sql.clone(),
                 viz: p.viz.clone(),
                 layout: p.layout.clone(),
+                insight_id: p.insight_id,
+                insight_params: p.insight_params.clone(),
             })
             .collect(),
         variables: variables

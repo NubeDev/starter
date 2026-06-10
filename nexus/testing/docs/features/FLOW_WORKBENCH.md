@@ -149,4 +149,58 @@ One flow context; streaming, the database, and transformations side by side.
 
 ## Known issues / fixes
 
-- _none yet (design)_
+### Blank debug panel on `zenoh-typed-ingest` — root cause was a key mismatch (diagnosed 2026-06-10)
+
+Symptom: the Debug drawer for `zenoh-typed-ingest` showed `—` for every node
+(rows/batches) and the Values tab stayed empty, even with the datapump running.
+
+**Actual cause (found by e2e, not the first guess): no data was reaching the
+flow.** The flow's metrics read `batches_in: 0, rows_written: 0` since
+`last_started_at` — nothing had ever flowed. The debug panel was *correctly*
+showing "no data."
+
+The mismatch:
+
+| | zenoh key |
+|---|---|
+| Flow `input.key_expr` | `rubix/typed/**` |
+| Datapump publishes | `rubix/testing/all/<site>/<kind>/<meter>` |
+
+(`{path-prefix}/{path-tenant}/{site}/{kind}/{meter}`, run with
+`--path-prefix rubix/testing --path-tenant all`.) `rubix/typed/**` cannot match
+`rubix/testing/...` — second segment differs — so zenoh routed nothing. No other
+producer publishes to `rubix/typed/**`.
+
+**Fix (config, by the user):** set the flow's `key_expr` to `rubix/testing/**`,
+then stop/start the flow so the zenoh subscriber re-declares. Data then reaches
+node 0.
+
+**Lesson for the debug panel:** an empty Stream tab is ambiguous — it can mean
+"capture race" *or* "the flow genuinely has no input." The panel should
+distinguish these. A node row at `—` with the flow's `batches_in: 0` means
+**no input is arriving** (check the source config / key match), not a debug bug.
+Worth surfacing `batches_in` / `last_error` in the drawer header so this is
+obvious without reading metrics by hand. (TODO, not yet built.)
+
+### Latent: snapshot-on-subscribe race (implemented, unit-tested, **e2e-pending**)
+
+Separate from the above, there is a real race that *would* cause intermittent
+blanks **once data is flowing**: `enableFlowDebug` flips capture on, then the SSE
+stream subscribes in a *second* round-trip. `broadcast::subscribe` replays
+nothing and a node's counter only ticks when a batch crosses it, so any tick
+published in the enable→subscribe gap is lost and an idle node stays blank until
+its next batch.
+
+Fix implemented: the channel snapshots the latest `NodeCounters` per node on each
+`publish`, and `stream_flow_debug` replays that snapshot as the first SSE events
+before the live receiver (`channel.rs` `snapshot()` + `latest` map; `debug.rs`
+priming `chain`). Builds clean; covered by 2 channel unit tests
+(`snapshot_returns_latest_counters_per_node_sorted`,
+`snapshot_ignores_non_counter_events`).
+
+⚠️ **Not yet verified end-to-end**: the 2026-06-10 e2e attempt could not exercise
+it because the flow had zero batches (the key mismatch above), so the snapshot
+was empty and there was nothing to replay. Re-test after `key_expr` is fixed:
+enable debug on the running flow, open the SSE stream, and confirm all 3 nodes'
+counters arrive immediately on connect (within a sub-1s window, shorter than the
+batch interval) rather than only after the next batch.

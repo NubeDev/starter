@@ -4,6 +4,13 @@ import { PlayCircle } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nube/starter-ui-kit/components/select";
 
 import type { QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
@@ -11,6 +18,10 @@ import { runQuery } from "@/api/query/run";
 import type { EditorDraft } from "@/features/canvas/PanelEditor/useEditorDraft";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
+import { useInsights } from "@/features/insights/useInsights";
+
+// Select sentinel for "no insight" — Radix Select can't hold an empty value.
+const NO_INSIGHT = "__none__";
 
 // Query tab: datasource + SQL (the WS-03 CodeMirror editor) + a Test run
 // that reports row count / columns / timing without mutating the panel.
@@ -20,11 +31,17 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
   const { widget, patch, patchConfig } = draft;
   const datasourceId = widget.config.query.datasourceId || undefined;
   const sql = widget.config.query.sql;
+  const insightId = widget.config.query.insightId || undefined;
+  const insights = useInsights();
 
   const client = useStarterClient();
   const test = useMutation<QueryResponse, Error>({
     mutationFn: () => {
-      const req = { sql: sql.trim() };
+      // Apply the attached insight so the test matches the rendered panel.
+      const req = {
+        sql: sql.trim(),
+        ...(insightId ? { insight: { insight_id: insightId } } : {}),
+      };
       return datasourceId
         ? queryDatasource(client, datasourceId, req)
         : runQuery(client, req);
@@ -93,6 +110,39 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
             ) : null}
           </div>
         ) : null}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="ed-insight">Insight (post-query transform)</Label>
+        <Select
+          value={insightId ?? NO_INSIGHT}
+          onValueChange={(v) =>
+            patchConfig({
+              query: {
+                ...widget.config.query,
+                insightId: v === NO_INSIGHT ? undefined : v,
+              },
+            })
+          }
+        >
+          <SelectTrigger id="ed-insight">
+            <SelectValue
+              placeholder={insights.isPending ? "Loading insights…" : "None"}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_INSIGHT}>None</SelectItem>
+            {(insights.data ?? []).map((ins) => (
+              <SelectItem key={ins.id} value={ins.id}>
+                {ins.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Applies a saved insight's transform to this panel's query result
+          before it's drawn.
+        </p>
       </div>
     </div>
   );

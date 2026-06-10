@@ -18,4 +18,15 @@ pub struct UpdatePanelRequest {
     pub viz: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub layout: Option<Value>,
+    /// Three-valued (RW-06): omitted = leave the insight unchanged; `null` =
+    /// detach the insight; an id = attach/replace it. The `Option<Option<_>>`
+    /// encodes this — `None` (absent), `Some(None)` (explicit null → detach),
+    /// `Some(Some(id))` (set). `#[serde(default)]` (not `skip_serializing_if`) so
+    /// an explicit `null` deserializes to `Some(None)` rather than being elided.
+    #[serde(default)]
+    pub insight_id: Option<Option<Uuid>>,
+    /// Three-valued like `insight_id`: omitted = unchanged, `null` = clear params,
+    /// object = set params.
+    #[serde(default)]
+    pub insight_params: Option<Option<Value>>,
 }

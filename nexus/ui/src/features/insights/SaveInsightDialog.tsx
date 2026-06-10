@@ -17,8 +17,10 @@ import { useCreateInsight } from "@/features/insights/useInsightMutations";
 // Saves the Workbench's current transform script as a named, reusable insight.
 // The backend compile-checks the script and returns a 400 with a message when
 // it doesn't compile; that message is surfaced inline (role="alert") so the
-// user can fix it without losing the dialog. On success the new insight appears
-// in the "Load saved insight" dropdown (the create invalidates that list).
+// user can fix it without losing the dialog. On success the create invalidates
+// the insights list (so the list page and the "Load saved insight" dropdown both
+// refresh) and the optional `onSaved` callback fires (the Workbench uses it to
+// return to the list).
 export function SaveInsightDialog({
   open,
   onOpenChange,
@@ -53,7 +55,7 @@ export function SaveInsightDialog({
           <DialogTitle>Save as insight</DialogTitle>
           <DialogDescription>
             Save the current transform as a reusable insight. It will appear in
-            the saved-insight dropdown.
+            your Insights list to reuse on panels and in Explore.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-3" onSubmit={onSubmit}>

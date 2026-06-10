@@ -32,7 +32,7 @@ import {
 import { palettes, useThemeStore } from "@/theme";
 import type { ThemePreference } from "@/theme";
 import { REGION_LABELS, type Region, useDateTime } from "@/datetime";
-import { useDateTimeSettings } from "@/datetime/store";
+import { useDateTimeControls } from "@/datetime/useDateTimeControls";
 
 const MODES: { value: ThemePreference; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
@@ -70,8 +70,10 @@ export function SettingsMenu() {
   const palette = useThemeStore((s) => s.palette);
   const setPalette = useThemeStore((s) => s.setPalette);
 
+  // Persists to the backend when a session is present (applies across
+  // devices), else to the per-device local store. Same surface either way.
   const { dateFormat, timeFormat, set, reset, applyRegion } =
-    useDateTimeSettings();
+    useDateTimeControls();
   // Live preview of the current date/time choice.
   const { dateTime } = useDateTime();
 

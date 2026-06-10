@@ -17,6 +17,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse as _, Response};
 use axum::{Extension, Json};
+use futures::StreamExt as _;
 use nexus_engine::flow::debug as flow_debug;
 use nexus_spi::dto::flow::{FlowDebugEnableResponse, FlowDebugEvent, FlowDebugStatus};
 use serde::Deserialize;
@@ -173,7 +174,19 @@ pub async fn stream_flow_debug(
         None => return (StatusCode::NOT_FOUND, "flow not running").into_response(),
     };
     let receiver = channel.subscribe();
-    let events = futures::stream::unfold(receiver, |mut rx| async move {
+    // Prime the subscriber with the current per-node totals before the live
+    // receiver. `broadcast::subscribe` replays nothing, and a node only ticks
+    // when a batch crosses it, so on a bursty source the panel would otherwise
+    // sit on "—" until the next batch. The snapshot makes it show truth on open.
+    let priming: Vec<FlowDebugEvent> = channel
+        .snapshot()
+        .into_iter()
+        .map(|counters| FlowDebugEvent::Counters {
+            seq: channel.next_seq(),
+            counters,
+        })
+        .collect();
+    let live = futures::stream::unfold(receiver, |mut rx| async move {
         // A lagging subscriber skips ahead rather than stalling the producer; a
         // closed channel (run ended) ends the SSE stream.
         loop {
@@ -184,6 +197,7 @@ pub async fn stream_flow_debug(
             }
         }
     });
+    let events = futures::stream::iter(priming).chain(live);
     sse::from_stream::<_, FlowDebugEvent>(events).into_response()
 }
 

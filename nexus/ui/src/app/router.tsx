@@ -6,6 +6,8 @@ import { DashboardPage } from "@/features/dashboards/DashboardPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
 import { DatasourcesPage } from "@/features/datasources/DatasourcesPage";
 import { FlowsPage } from "@/features/flows/FlowsPage";
+import { FlowEditorPage } from "@/features/flows/FlowEditorPage";
+import { InsightsListPage } from "@/features/insights/InsightsListPage";
 import { InsightsPage } from "@/features/insights/InsightsPage";
 import { Explore } from "@/features/query-editor/Explore";
 import { AgentsPage } from "@/features/agents";
@@ -38,7 +40,9 @@ export const router = createBrowserRouter([
       { path: "explore", element: <Explore /> },
       { path: "datasources", element: <DatasourcesPage /> },
       { path: "flows", element: <FlowsPage /> },
-      { path: "insights", element: <InsightsPage /> },
+      { path: "flows/:flowName", element: <FlowEditorPage /> },
+      { path: "insights", element: <InsightsListPage /> },
+      { path: "insights/workbench", element: <InsightsPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "agents", element: <AgentsPage /> },
       {

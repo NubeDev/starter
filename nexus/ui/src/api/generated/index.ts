@@ -1569,6 +1569,13 @@ export interface components {
              * @description Datasource this panel queries.
              */
             datasource_id: string;
+            /**
+             * Format: uuid
+             * @description Optional post-query insight (RW-06) to attach at creation. Omitted = none.
+             */
+            insight_id?: string | null;
+            /** @description Params bound as the insight script's `params`. */
+            insight_params?: unknown;
             /** @description Grid layout; defaults to empty when omitted. */
             layout?: unknown;
             sql: string;
@@ -2405,6 +2412,14 @@ export interface components {
             datasource_id?: string | null;
             /** Format: uuid */
             id: string;
+            /**
+             * Format: uuid
+             * @description Optional post-query insight (RW-06) applied to the panel's result. `None`
+             *     = none attached, or the referenced insight was deleted (FK SET NULL).
+             */
+            insight_id?: string | null;
+            /** @description Params bound as the insight script's `params`. `None` = no params. */
+            insight_params?: unknown;
             /** @description Opaque grid layout the canvas owns. */
             layout: unknown;
             /** @description The panel's SQL, run under the server query guards when refreshed. */
@@ -2424,6 +2439,18 @@ export interface components {
              *     or the importing tenant should re-bind it.
              */
             datasource_id?: string | null;
+            /**
+             * Format: uuid
+             * @description Optional post-query insight id (RW-06). Carried so a dashboard's insight
+             *     wiring survives export within a tenant. NOTE: insight ids are tenant-
+             *     scoped, so importing into a *different* tenant won't resolve this id —
+             *     import drops an unresolved id rather than failing (the same caveat as
+             *     `datasource_id`). The insight's script is not inlined (it lives in the
+             *     tenant's insight library).
+             */
+            insight_id?: string | null;
+            /** @description Params bound as the insight script's `params`. */
+            insight_params?: unknown;
             layout: unknown;
             sql: string;
             title: string;
@@ -3163,6 +3190,20 @@ export interface components {
         UpdatePanelRequest: {
             /** Format: uuid */
             datasource_id?: string | null;
+            /**
+             * Format: uuid
+             * @description Three-valued (RW-06): omitted = leave the insight unchanged; `null` =
+             *     detach the insight; an id = attach/replace it. The `Option<Option<_>>`
+             *     encodes this — `None` (absent), `Some(None)` (explicit null → detach),
+             *     `Some(Some(id))` (set). `#[serde(default)]` (not `skip_serializing_if`) so
+             *     an explicit `null` deserializes to `Some(None)` rather than being elided.
+             */
+            insight_id?: string | null;
+            /**
+             * @description Three-valued like `insight_id`: omitted = unchanged, `null` = clear params,
+             *     object = set params.
+             */
+            insight_params?: unknown;
             layout?: unknown;
             sql?: string | null;
             title?: string | null;

@@ -20,4 +20,11 @@ pub struct PanelDetail {
     pub viz: String,
     /// Opaque grid layout the canvas owns.
     pub layout: Value,
+    /// Optional post-query insight (RW-06) applied to the panel's result. `None`
+    /// = none attached, or the referenced insight was deleted (FK SET NULL).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_id: Option<Uuid>,
+    /// Params bound as the insight script's `params`. `None` = no params.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_params: Option<Value>,
 }

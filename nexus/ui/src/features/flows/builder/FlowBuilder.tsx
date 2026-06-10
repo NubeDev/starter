@@ -29,6 +29,8 @@ import { Textarea } from "@nube/starter-ui-kit/components/textarea";
 import type { NodeType } from "@/api/types";
 import { useCreateFlow, useFlow, useUpdateFlow } from "@/features/flows/useFlows";
 import { Canvas } from "@/features/flows/builder/Canvas";
+import { DebugDock } from "@/features/flows/DebugDock";
+import type { FlowDebugState } from "@/features/flows/useFlowDebug";
 import { DryRunResult } from "@/features/flows/builder/DryRunResult";
 import { NodeConfigForm } from "@/features/flows/builder/NodeConfigForm";
 import { Palette } from "@/features/flows/builder/Palette";
@@ -48,46 +50,52 @@ import { Loading } from "@/features/state/Loading";
 // raw-three-textareas dialog as the primary authoring path. When `flowId` is
 // given the dialog opens that saved flow for editing (load detail → graph,
 // save via update) instead of creating a new one.
+// New-flow authoring still uses a dialog (there's nothing to deep-link to yet —
+// the flow has no name/id). Editing a saved flow happens on its own full-page
+// route (`/flows/:flowName`) via `FlowEditor`, so the canvas and node config get
+// the whole viewport instead of a cramped popout.
 export function FlowBuilder({
   open,
   onOpenChange,
-  flowId = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  flowId?: string | null;
 }) {
-  const editing = flowId !== null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass flex h-[85vh] max-w-[90vw] flex-col gap-3 p-0 sm:max-w-[90vw]">
         <DialogHeader className="px-5 pt-5">
-          <DialogTitle>{editing ? "Edit flow" : "Flow builder"}</DialogTitle>
+          <DialogTitle>Flow builder</DialogTitle>
           <DialogDescription>
             Drag node types onto the canvas, connect input → processor → output,
             and test the pipeline before saving.
           </DialogDescription>
         </DialogHeader>
-        {/* Key by flowId so switching which flow is open remounts the body,
-            resetting its graph/name/enabled state to the new flow. */}
+        {/* Remount fresh each open so a previous draft never leaks in. */}
         {open ? (
-          <BuilderBody
-            key={flowId ?? "new"}
-            flowId={flowId}
-            onDone={() => onOpenChange(false)}
-          />
+          <FlowEditor key="new" flowId={null} onDone={() => onOpenChange(false)} />
         ) : null}
       </DialogContent>
     </Dialog>
   );
 }
 
-function BuilderBody({
+// The builder body: palette + canvas + inspector, plus name/template/enabled and
+// the Test/Save bar. Used full-page (editing a saved flow) and inside the
+// new-flow dialog. `onDone` fires after a successful save (close dialog / leave
+// the page).
+export function FlowEditor({
   flowId,
   onDone,
+  debug,
 }: {
   flowId: string | null;
   onDone: () => void;
+  // When a running flow is being debugged, the live SSE state is passed in and
+  // the same canvas overlays counters + a dock appears below it. Editing the
+  // canvas and the right-hand node config stay fully available throughout — debug
+  // is an overlay on the editor, not a separate view.
+  debug?: FlowDebugState;
 }) {
   const nodeTypes = useNodeTypes();
   const create = useCreateFlow();
@@ -107,7 +115,10 @@ function BuilderBody({
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const palette = nodeTypes.data ?? [];
-  const selected = builder.graph.nodes.find((n) => n.id === builder.selectedId);
+  const selectedIndex = builder.graph.nodes.findIndex(
+    (n) => n.id === builder.selectedId,
+  );
+  const selected = selectedIndex >= 0 ? builder.graph.nodes[selectedIndex] : undefined;
   const selectedType = selected
     ? palette.find((p) => p.kind === selected.kind)
     : undefined;
@@ -296,7 +307,7 @@ function BuilderBody({
               Click a node type on the left to add it, or load a template.
             </div>
           ) : (
-            <Canvas builder={builder} />
+            <Canvas builder={builder} byNode={debug?.byNode} />
           )}
         </div>
 
@@ -359,6 +370,24 @@ function BuilderBody({
           </Tabs>
         </div>
       </div>
+
+      {/* Live debug dock: sits below the shared canvas + config panel. Same
+          selection drives the canvas, the config form, and these tabs, so node
+          settings stay visible while you watch values flow. */}
+      {debug && detail.data ? (
+        <div className="h-72 min-h-0 rounded-lg border border-border/60 p-3">
+          <DebugDock
+            flowId={flowId as string}
+            graph={builder.graph}
+            debug={debug}
+            input={detail.data.input}
+            pipeline={detail.data.pipeline}
+            output={detail.data.output}
+            selectedIndex={selectedIndex >= 0 ? selectedIndex : null}
+            onSelect={(i) => builder.select(builder.graph.nodes[i]?.id ?? null)}
+          />
+        </div>
+      ) : null}
 
       {dryRun.data || dryRun.isPending || dryRun.isError ? (
         <div className="max-h-48 min-h-0 overflow-auto rounded-lg border border-border/60 p-3">

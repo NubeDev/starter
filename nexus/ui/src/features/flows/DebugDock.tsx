@@ -1,16 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Bug, Play, Radio } from "lucide-react";
+import { AlertTriangle, Play, Radio } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Textarea } from "@nube/starter-ui-kit/components/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@nube/starter-ui-kit/components/dialog";
 import {
   Tabs,
   TabsContent,
@@ -28,89 +21,51 @@ import {
 import { Badge } from "@nube/starter-ui-kit/components/badge";
 import { ScrollArea } from "@nube/starter-ui-kit/components/scroll-area";
 
-import { useFlow, useUpdateFlow } from "@/features/flows/useFlows";
-import { useNodeTypes, useDryRun } from "@/features/flows/builder/useBuilder";
+import { useUpdateFlow } from "@/features/flows/useFlows";
+import { useDryRun } from "@/features/flows/builder/useBuilder";
 import { DryRunResult } from "@/features/flows/builder/DryRunResult";
-import { parseGraph } from "@/features/flows/builder/parse";
-import { DebugCanvas } from "@/features/flows/DebugCanvas";
-import {
-  useFlowDebug,
-  type DebugLogLine,
-  type NodeDebug,
+import type { FlowGraph } from "@/features/flows/builder/graph";
+import type {
+  DebugLogLine,
+  FlowDebugState,
+  NodeDebug,
 } from "@/features/flows/useFlowDebug";
 import { queryFlowTable } from "@/api/flows/table";
 import type { QueryResponse } from "@/api/types";
-import { Loading } from "@/features/state/Loading";
 
-// Live debug & values for a running flow. Opening the drawer enables per-node
-// capture server-side and subscribes to its SSE stream; closing disables it.
-// The flow is shown two ways at once (the requested table + canvas): the
-// read-only canvas overlays live counters on each node, and the tabbed panel
-// below gives a per-node counters table, the sampled row values for the
-// selected node, and the run's log lines.
-export function DebugDrawer({
+// The live-debug dock that sits *below the shared canvas* in the flow editor —
+// never a separate view. The canvas (with its overlaid counters) and the
+// right-hand node-config panel stay visible; this dock just adds the per-node
+// table, sampled values for the selected node, the sink Table query, a pipeline
+// Transform sandbox, and the run log. `selectedIndex` is the same selection the
+// canvas/config panel use, so clicking a node updates everything at once.
+export function DebugDock({
   flowId,
-  flowName,
-  open,
-  onOpenChange,
+  graph,
+  debug,
+  input,
+  pipeline,
+  output,
+  selectedIndex,
+  onSelect,
 }: {
-  flowId: string | null;
-  flowName: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  flowId: string;
+  graph: FlowGraph;
+  debug: FlowDebugState;
+  input: unknown;
+  pipeline: unknown;
+  output: unknown;
+  selectedIndex: number | null;
+  onSelect: (i: number) => void;
 }) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass flex h-[85vh] max-w-[90vw] flex-col gap-3 p-4 sm:max-w-[90vw]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Bug className="size-4" />
-            Debug · {flowName}
-          </DialogTitle>
-          <DialogDescription>
-            Live values flowing through each node of the running flow. Capture
-            is on while this is open.
-          </DialogDescription>
-        </DialogHeader>
-        {open && flowId ? <DebugBody flowId={flowId} /> : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DebugBody({ flowId }: { flowId: string }) {
-  const flow = useFlow(flowId);
-  const nodeTypes = useNodeTypes();
-  const debug = useFlowDebug(flowId, true);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
   const [tab, setTab] = useState("nodes");
 
-  const graph = useMemo(() => {
-    if (!flow.data || !nodeTypes.data) return null;
-    return parseGraph(
-      flow.data.input,
-      flow.data.pipeline,
-      flow.data.output,
-      nodeTypes.data,
-    );
-  }, [flow.data, nodeTypes.data]);
-
-  if (flow.isPending || nodeTypes.isPending) {
-    return <Loading label="Loading flow…" />;
-  }
-  if (flow.isError || !graph) {
-    return (
-      <p className="text-sm text-destructive">Couldn't load the flow config.</p>
-    );
-  }
-
-  // The sink table this flow writes to, if any — drives the Table tab. Only
-  // postgres/datasource sinks store rows; other sinks have no table to query.
-  const sinkTable = sinkTableName(flow.data.output);
-
+  const sinkTable = sinkTableName(output);
   const selectedNode =
     selectedIndex !== null ? debug.byNode.get(selectedIndex) : undefined;
-  // Order nodes by index for the table and node labels for the values tab.
+  const selectedLabel =
+    selectedIndex !== null ? graph.nodes[selectedIndex]?.kind : undefined;
+
   const orderedNodes = graph.nodes.map((n, i) => ({
     index: i,
     label: n.kind,
@@ -118,38 +73,18 @@ function DebugBody({ flowId }: { flowId: string }) {
     debug: debug.byNode.get(i),
   }));
 
-  // Clicking a node pivots the bottom panel to the right view: the sink (output)
-  // node → the Table tab (what landed), any other node → its live Values. This
-  // is the stream↔table pivot in one gesture (Workbench phase 2).
-  const onNodeClick = (i: number) => {
-    setSelectedIndex(i);
-    const isSink = graph.nodes[i]?.category === "output";
-    setTab(isSink && sinkTable ? "table" : "values");
-  };
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div className="flex h-full min-h-0 flex-col gap-2">
       <ConnectionBar connection={debug.connection} error={debug.error} />
-
-      <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border/60">
-        <DebugCanvas
-          graph={graph}
-          byNode={debug.byNode}
-          selectedIndex={selectedIndex}
-          onSelect={onNodeClick}
-        />
-      </div>
-
       <Tabs
         value={tab}
         onValueChange={setTab}
-        className="flex h-64 min-h-0 flex-col"
+        className="flex min-h-0 flex-1 flex-col"
       >
         <TabsList>
           <TabsTrigger value="nodes">Per-node</TabsTrigger>
           <TabsTrigger value="values">
-            Values
-            {selectedNode ? ` · ${orderedNodes[selectedIndex ?? 0]?.label}` : ""}
+            Values{selectedLabel ? ` · ${selectedLabel}` : ""}
           </TabsTrigger>
           {sinkTable ? <TabsTrigger value="table">Table</TabsTrigger> : null}
           <TabsTrigger value="transform">Transform</TabsTrigger>
@@ -162,7 +97,7 @@ function DebugBody({ flowId }: { flowId: string }) {
           <NodeTable
             nodes={orderedNodes}
             selectedIndex={selectedIndex}
-            onSelect={setSelectedIndex}
+            onSelect={onSelect}
           />
         </TabsContent>
         <TabsContent value="values" className="min-h-0 flex-1">
@@ -174,11 +109,7 @@ function DebugBody({ flowId }: { flowId: string }) {
           </TabsContent>
         ) : null}
         <TabsContent value="transform" className="min-h-0 flex-1">
-          <TransformTab
-            flowId={flowId}
-            input={flow.data.input}
-            pipeline={flow.data.pipeline}
-          />
+          <TransformTab flowId={flowId} input={input} pipeline={pipeline} />
         </TabsContent>
         <TabsContent value="logs" className="min-h-0 flex-1">
           <LogList logs={debug.logs} />
@@ -192,7 +123,7 @@ function ConnectionBar({
   connection,
   error,
 }: {
-  connection: ReturnType<typeof useFlowDebug>["connection"];
+  connection: FlowDebugState["connection"];
   error?: string;
 }) {
   if (connection === "error") {
@@ -290,8 +221,6 @@ function ValuesTable({ node }: { node?: NodeDebug }) {
       </p>
     );
   }
-  // Union of keys across the sampled rows gives stable columns even when rows
-  // are sparsely populated.
   const columns = Array.from(
     node.rows.reduce<Set<string>>((set, row) => {
       Object.keys(row).forEach((k) => set.add(k));
@@ -312,7 +241,10 @@ function ValuesTable({ node }: { node?: NodeDebug }) {
           {node.rows.map((row, i) => (
             <TableRow key={i}>
               {columns.map((col) => (
-                <TableCell key={col} className="max-w-48 truncate font-mono text-xs">
+                <TableCell
+                  key={col}
+                  className="max-w-48 truncate font-mono text-xs"
+                >
                   {renderCell(row[col])}
                 </TableCell>
               ))}
@@ -372,27 +304,21 @@ function sinkTableName(output: unknown): string | null {
   return typeof o.table === "string" ? o.table : null;
 }
 
-// Query the flow's sink table without leaving the drawer — the flow scopes the
+// Query the flow's sink table without leaving the editor — the flow scopes the
 // connection + table, so there's no datasource to pick or table name to retype.
-// On open it introspects the real columns and builds a smart default query
-// (ordered by a timestamp column when one exists), so the user gets recent rows
-// with zero SQL knowledge. `{table}` expands server-side to the flow's table.
 function TableTab({ flowId, table }: { flowId: string; table: string }) {
   const client = useStarterClient();
   const [sql, setSql] = useState("");
   const [ready, setReady] = useState(false);
 
-  // Learn the table's shape with a zero-row probe (cheap, schema-agnostic — works
-  // whether the flow declared a schema or inferred it). Columns drive the smart
-  // default and the column-help line.
   const probe = useMutation<QueryResponse, Error>({
-    mutationFn: () => queryFlowTable(client, flowId, { sql: "SELECT * FROM {table}", limit: 1 }),
+    mutationFn: () =>
+      queryFlowTable(client, flowId, { sql: "SELECT * FROM {table}", limit: 1 }),
   });
   const run = useMutation<QueryResponse, Error, string>({
     mutationFn: (q: string) => queryFlowTable(client, flowId, { sql: q }),
   });
 
-  // On first open: probe → build the smart default → run it once.
   useEffect(() => {
     if (ready) return;
     probe.mutate(undefined, {
@@ -406,13 +332,12 @@ function TableTab({ flowId, table }: { flowId: string; table: string }) {
         run.mutate(def);
       },
       onError: () => {
-        // Still let the user query manually even if the probe failed.
         const def = `SELECT * FROM {table} LIMIT 50`;
         setSql(def);
         setReady(true);
       },
     });
-    // run/probe are stable mutation handles; we intentionally run this once.
+    // run/probe are stable mutation handles; intentionally run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
@@ -440,8 +365,6 @@ function TableTab({ flowId, table }: { flowId: string; table: string }) {
         </Button>
       </div>
 
-      {/* Column help: show what's actually in the table so the user doesn't need
-          to know the schema. */}
       {columns.length > 0 ? (
         <p className="flex flex-wrap gap-1 text-[11px] text-muted-foreground">
           <span className="font-mono">{table}</span>
@@ -478,11 +401,9 @@ function TableTab({ flowId, table }: { flowId: string; table: string }) {
   );
 }
 
-// Edit the pipeline and dry-run it: input rows → transformed output, against
-// the flow's real input connector, with NO write to the sink and NO change to
-// the running flow (the engine swaps in a bounded collector). "Apply to flow"
-// is an explicit, separate step that saves the edited pipeline. (Workbench
-// phase 3.)
+// Edit the pipeline and dry-run it: input rows → transformed output, against the
+// flow's real input connector, with NO write to the sink and NO change to the
+// running flow. "Apply to flow" is an explicit, separate step that saves it.
 function TransformTab({
   flowId,
   input,
@@ -500,7 +421,6 @@ function TransformTab({
   const dryRun = useDryRun();
   const update = useUpdateFlow();
 
-  // Parse the edited pipeline; a parse error gates Run/Apply with a clear message.
   const parsed = useMemo(() => {
     try {
       return { value: JSON.parse(text) as unknown, error: null as string | null };
@@ -576,8 +496,6 @@ function TransformTab({
   );
 }
 
-// Render a QueryResponse (columns + rows) — shared by the Table tab and, later,
-// the Transform tab's dry-run output.
 function ResultTable({ result }: { result: QueryResponse }) {
   const columns = result.columns.map((c) => c.name);
   if (result.rows.length === 0) {

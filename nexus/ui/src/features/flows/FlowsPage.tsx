@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Bug,
@@ -26,7 +27,6 @@ import {
   readJsonFile,
 } from "@/features/flows/portabilityFile";
 import { FlowBuilder } from "@/features/flows/builder/FlowBuilder";
-import { DebugDrawer } from "@/features/flows/DebugDrawer";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -38,11 +38,16 @@ import { Loading } from "@/features/state/Loading";
 export function FlowsPage() {
   const { data, isPending, isError, error } = useFlows();
   const actions = useFlowActions();
+  const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
-  // The flow currently open for editing, or null when authoring a new one.
-  const [editingId, setEditingId] = useState<string | null>(null);
-  // The running flow currently open in the debug drawer, or null.
-  const [debugging, setDebugging] = useState<FlowSummary | null>(null);
+
+  // Editing and debugging both happen on the flow's own full-page route
+  // (`/flows/<name>`), which is deep-linkable and gives the canvas/node config
+  // the whole viewport. `?debug` opens that page with the live debug view on.
+  const openFlow = (flow: FlowSummary, opts?: { debug?: boolean }) =>
+    navigate(
+      `/flows/${encodeURIComponent(flow.name)}${opts?.debug ? "?debug=1" : ""}`,
+    );
 
   // Which flow id (if any) each mutation is currently acting on, so only the
   // affected row shows the busy/disabled state instead of the whole list.
@@ -198,9 +203,9 @@ export function FlowsPage() {
                   actionError?.id === flow.id ? actionError.message : null
                 }
                 actions={actions}
-                onEdit={() => setEditingId(flow.id)}
+                onEdit={() => openFlow(flow)}
                 onExport={() => onExport(flow)}
-                onDebug={() => setDebugging(flow)}
+                onDebug={() => openFlow(flow, { debug: true })}
               />
             ))}
           </ul>
@@ -208,22 +213,9 @@ export function FlowsPage() {
       </div>
 
       <FlowBuilder
-        open={creating || editingId !== null}
-        flowId={editingId}
+        open={creating}
         onOpenChange={(open) => {
-          if (!open) {
-            setCreating(false);
-            setEditingId(null);
-          }
-        }}
-      />
-
-      <DebugDrawer
-        open={debugging !== null}
-        flowId={debugging?.id ?? null}
-        flowName={debugging?.name ?? ""}
-        onOpenChange={(open) => {
-          if (!open) setDebugging(null);
+          if (!open) setCreating(false);
         }}
       />
     </div>

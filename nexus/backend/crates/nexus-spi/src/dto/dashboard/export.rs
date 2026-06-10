@@ -46,6 +46,17 @@ pub struct PanelExport {
     pub sql: String,
     pub viz: String,
     pub layout: Value,
+    /// Optional post-query insight id (RW-06). Carried so a dashboard's insight
+    /// wiring survives export within a tenant. NOTE: insight ids are tenant-
+    /// scoped, so importing into a *different* tenant won't resolve this id —
+    /// import drops an unresolved id rather than failing (the same caveat as
+    /// `datasource_id`). The insight's script is not inlined (it lives in the
+    /// tenant's insight library).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_id: Option<Uuid>,
+    /// Params bound as the insight script's `params`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_params: Option<Value>,
 }
 
 /// One variable in the export. Mirrors the relational variable row minus its

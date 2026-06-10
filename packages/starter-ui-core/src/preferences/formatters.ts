@@ -35,9 +35,10 @@ import { UNIT_SYMBOL, convertUnit } from "./units.js";
  * pattern + timezone. `prefs.date_format === "auto"` defers to the
  * locale's default short date. */
 export function formatDate(timestampMs: number, prefs: ResolvedPreferences): string {
-  return new Intl.DateTimeFormat(prefs.locale, dateOptions(prefs.date_format, prefs.timezone)).format(
-    new Date(timestampMs),
-  );
+  return new Intl.DateTimeFormat(
+    dateLocaleChain(prefs.locale, prefs.date_format),
+    dateOptions(prefs.date_format, prefs.timezone),
+  ).format(new Date(timestampMs));
 }
 
 /** Render a UNIX-millis timestamp as a time-of-day in the user's
@@ -85,6 +86,47 @@ function dateOptions(fmt: DateFormat, timeZone: string): Intl.DateTimeFormatOpti
     case "DD/MM/YYYY":
     case "MM/DD/YYYY":
       return { timeZone, year: "numeric", month: "2-digit", day: "2-digit" };
+  }
+}
+
+/** Pick the locale that yields the requested field *order*. `Intl`'s
+ * numeric `year/month/day` options control padding but NOT order —
+ * order is locale-driven (en-US → MM/DD, en-GB → DD/MM). So an explicit
+ * `date_format` must force a representative locale, exactly like
+ * `numberLocaleChain` does for grouping/decimal separators; otherwise a
+ * user whose locale is `en-US` but who picks `DD/MM/YYYY` still sees
+ * MM/DD. The user's own locale stays at the head when it already
+ * produces the requested order, preserving any locale-specific glyphs;
+ * `auto` keeps the locale default untouched. */
+function dateLocaleChain(locale: string, fmt: DateFormat): string[] {
+  if (fmt === "auto") return [locale];
+  const forced =
+    fmt === "YYYY-MM-DD" ? "en-CA" : fmt === "DD/MM/YYYY" ? "en-GB" : /* MM/DD/YYYY */ "en-US";
+  return localeMatchesDatePattern(locale, fmt) ? [locale] : [forced, locale];
+}
+
+/** Does `locale`'s default numeric short date already place the fields
+ * in the requested order? Probes a date whose day/month are
+ * unambiguous (day 25 can't be a month) and reads the part order. */
+function localeMatchesDatePattern(locale: string, fmt: DateFormat): boolean {
+  const parts = new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(Date.UTC(2026, 0, 25)));
+  const order = parts
+    .filter((p) => p.type === "year" || p.type === "month" || p.type === "day")
+    .map((p) => p.type)
+    .join("-");
+  switch (fmt) {
+    case "YYYY-MM-DD":
+      return order === "year-month-day";
+    case "DD/MM/YYYY":
+      return order === "day-month-year";
+    case "MM/DD/YYYY":
+      return order === "month-day-year";
+    case "auto":
+      return true;
   }
 }
 

@@ -68,6 +68,8 @@ pub async fn add_panel(
         sql: req.sql,
         viz: req.viz.unwrap_or_else(|| "table".into()),
         layout: req.layout.unwrap_or_else(|| json!({})),
+        insight_id: req.insight_id,
+        insight_params: req.insight_params,
     };
     match dashboard::panel::insert(&state.metadata, &tenant, &new).await {
         Ok(rec) => {

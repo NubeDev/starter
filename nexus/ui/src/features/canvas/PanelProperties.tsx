@@ -21,6 +21,11 @@ import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
 import { useUpdatePanel } from "@/features/dashboards/useUpdatePanel";
+import { useInsights } from "@/features/insights/useInsights";
+
+// Select sentinel for "no insight" — Radix Select can't hold an empty-string
+// value, so the explicit none-option carries this and maps to `undefined`.
+const NO_INSIGHT = "__none__";
 
 const needsX = (t: WidgetType) => WIDGET_CATALOG[t].roles.x === "required";
 
@@ -53,6 +58,10 @@ export function PanelProperties({
     widget.config.query.datasourceId || undefined,
   );
   const [sql, setSql] = useState(widget.config.query.sql);
+  const [insightId, setInsightId] = useState<string | undefined>(
+    widget.config.query.insightId || undefined,
+  );
+  const insights = useInsights();
   const [xCol, setXCol] = useState(widget.config.fields.x ?? "");
   const [valueCol, setValueCol] = useState(
     widget.config.fields.series[0]?.value ?? "",
@@ -66,7 +75,12 @@ export function PanelProperties({
   const client = useStarterClient();
   const test = useMutation<QueryResponse, Error>({
     mutationFn: () => {
-      const req = { sql: sql.trim() };
+      // Apply the selected insight in the test too, so the preview matches what
+      // the panel will actually render (query → insight transform).
+      const req = {
+        sql: sql.trim(),
+        ...(insightId ? { insight: { insight_id: insightId } } : {}),
+      };
       return datasourceId
         ? queryDatasource(client, datasourceId, req)
         : runQuery(client, req);
@@ -89,7 +103,14 @@ export function PanelProperties({
       title: title.trim(),
       config: {
         ...widget.config,
-        query: { ...widget.config.query, datasourceId: datasourceId!, sql: sql.trim() },
+        query: {
+          ...widget.config.query,
+          datasourceId: datasourceId!,
+          sql: sql.trim(),
+          // Carry the attached insight (or clear it). `panelAdapter` sends an
+          // explicit `null` on save when this is undefined, detaching it.
+          insightId: insightId || undefined,
+        },
         fields: {
           ...widget.config.fields,
           x: needsX(type) ? xCol.trim() || undefined : undefined,
@@ -209,6 +230,33 @@ export function PanelProperties({
               ) : null}
             </div>
           ) : null}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="prop-insight">Insight (post-query transform)</Label>
+          <Select
+            value={insightId ?? NO_INSIGHT}
+            onValueChange={(v) => setInsightId(v === NO_INSIGHT ? undefined : v)}
+          >
+            <SelectTrigger id="prop-insight">
+              <SelectValue
+                placeholder={
+                  insights.isPending ? "Loading insights…" : "None"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_INSIGHT}>None</SelectItem>
+              {(insights.data ?? []).map((ins) => (
+                <SelectItem key={ins.id} value={ins.id}>
+                  {ins.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Applies a saved insight's transform to this panel's query result.
+          </p>
         </div>
 
         {needsX(type) ? (

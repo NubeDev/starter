@@ -105,6 +105,14 @@ export function panelToWidget(panel: PanelDetail): Widget {
       query: {
         datasourceId: panel.datasource_id ?? "",
         sql: panel.sql,
+        // RW-06: an attached insight rides on the query as its own columns, not
+        // inside the opaque layout blob. `?? undefined` so a missing/`null` id
+        // becomes "no insight" rather than an empty string.
+        ...(panel.insight_id ? { insightId: panel.insight_id } : {}),
+        ...(panel.insight_params !== undefined &&
+        panel.insight_params !== null
+          ? { insightParams: panel.insight_params }
+          : {}),
       },
       fields,
       // Spread the rest of the round-tripped display config (fieldConfig,
@@ -119,12 +127,19 @@ export function panelToWidget(panel: PanelDetail): Widget {
 // mapping in the opaque `layout`. The backend echoes `layout` back
 // untouched, so `panelToWidget` reconstructs the full widget.
 export function widgetToCreatePanel(widget: Widget): CreatePanelRequest {
+  const q = widget.config.query;
   return {
     title: widget.title,
-    sql: widget.config.query.sql,
-    datasource_id: widget.config.query.datasourceId,
+    sql: q.sql,
+    datasource_id: q.datasourceId,
     viz: widget.type,
     layout: stashLayout(widget),
+    // Attach an insight only when one is set; omit otherwise (create has no
+    // "detach" — absence is "none").
+    ...(q.insightId ? { insight_id: q.insightId } : {}),
+    ...(q.insightId && q.insightParams !== undefined
+      ? { insight_params: q.insightParams }
+      : {}),
   };
 }
 
@@ -142,11 +157,19 @@ export function widgetToLayoutPatch(widget: Widget): UpdatePanelRequest {
 // the position inside `layout` is the widget's current one, unchanged by a
 // properties edit.
 export function widgetToUpdatePanel(widget: Widget): UpdatePanelRequest {
+  const q = widget.config.query;
   return {
     title: widget.title,
-    sql: widget.config.query.sql,
-    datasource_id: widget.config.query.datasourceId,
+    sql: q.sql,
+    datasource_id: q.datasourceId,
     viz: widget.type,
     layout: stashLayout(widget),
+    // A full panel save: always send `insight_id` so clearing it in the editor
+    // DETACHES (sends `null`), not "leave unchanged". The backend's update DTO is
+    // three-valued — `null` detaches, an id sets — and a full save expresses the
+    // editor's current state, so we send the explicit value either way. Params
+    // ride along, cleared to `null` when no insight is attached.
+    insight_id: q.insightId ?? null,
+    insight_params: q.insightId ? (q.insightParams ?? null) : null,
   };
 }

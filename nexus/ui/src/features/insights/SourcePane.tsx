@@ -28,13 +28,17 @@ import { Loading } from "@/features/state/Loading";
 const SAMPLE_CAP = 500;
 
 // Starter transforms — clicking fills the editor so the page is never blank.
+// Scripts are method-style on the bound frame `df` (the only data handle), and
+// the final expression is the result. NOTE: `resample` takes MAP aggregates —
+// `[#{ "col": …, "func": … }]` — not `"col:func"` strings; a string trips a
+// runtime error in the engine.
 const TEMPLATES: { label: string; script: string }[] = [
-  { label: "Z-score outliers", script: 'zscore("value")' },
-  { label: "Rolling average", script: 'rolling_mean("value", 5)' },
-  { label: "Detect anomalies", script: 'anomalies("value", 3.0)' },
+  { label: "Z-score", script: 'df.zscore("value")' },
+  { label: "Rolling average", script: 'df.rolling_mean("value", 5)' },
+  { label: "Detect anomalies", script: 'df.zscore("value").anomalies("value", 3.0)' },
   {
     label: "Resample hourly",
-    script: 'resample("time", "1h", ["value:mean"])',
+    script: 'df.resample("time", "1h", [#{ "col": "value", "func": "mean" }])',
   },
 ];
 

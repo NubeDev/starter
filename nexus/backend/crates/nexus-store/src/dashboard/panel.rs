@@ -14,8 +14,8 @@ pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewPanel) -> Result<Pa
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(
         "INSERT INTO nexus_panels \
-         (tenant_id, dashboard_id, datasource_id, title, sql, viz, layout) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+         (tenant_id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id",
     )
     .bind(tenant_id)
     .bind(new.dashboard_id)
@@ -24,6 +24,8 @@ pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewPanel) -> Result<Pa
     .bind(&new.sql)
     .bind(&new.viz)
     .bind(&new.layout)
+    .bind(new.insight_id)
+    .bind(&new.insight_params)
     .fetch_one(&mut *tx)
     .await
     .map_err(internal)?;
@@ -37,6 +39,8 @@ pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewPanel) -> Result<Pa
         sql: new.sql.clone(),
         viz: new.viz.clone(),
         layout: new.layout.clone(),
+        insight_id: new.insight_id,
+        insight_params: new.insight_params.clone(),
     })
 }
 
@@ -54,8 +58,8 @@ pub async fn insert_with_id(
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     sqlx::query(
         "INSERT INTO nexus_panels \
-         (id, tenant_id, dashboard_id, datasource_id, title, sql, viz, layout) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+         (id, tenant_id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
     )
     .bind(id)
     .bind(tenant_id)
@@ -65,6 +69,8 @@ pub async fn insert_with_id(
     .bind(&new.sql)
     .bind(&new.viz)
     .bind(&new.layout)
+    .bind(new.insight_id)
+    .bind(&new.insight_params)
     .execute(&mut *tx)
     .await
     .map_err(conflict_or_internal)?;
@@ -78,6 +84,8 @@ pub async fn insert_with_id(
         sql: new.sql.clone(),
         viz: new.viz.clone(),
         layout: new.layout.clone(),
+        insight_id: new.insight_id,
+        insight_params: new.insight_params.clone(),
     })
 }
 
@@ -88,7 +96,7 @@ pub async fn insert_with_id(
 pub async fn get(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<Option<PanelRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(
-        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout \
+        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params \
          FROM nexus_panels WHERE id = $1",
     )
     .bind(id)
@@ -107,7 +115,7 @@ pub async fn list_for_dashboard(
 ) -> Result<Vec<PanelRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let rows = sqlx::query(
-        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout \
+        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params \
          FROM nexus_panels WHERE dashboard_id = $1 ORDER BY created_at",
     )
     .bind(dashboard_id)
@@ -152,15 +160,31 @@ pub async fn update(
     // "leave unchanged" rather than "set NULL". COALESCE gives exactly that —
     // clearing a datasource is not expressible here, which matches the DTO (the
     // UI only ever sets a datasource, never unsets it).
+    //
+    // `insight_id` / `insight_params` are three-valued (leave / set / clear) which
+    // COALESCE can't express — detaching an insight (set NULL) is a real edit. So
+    // each is gated by a `set_*` flag and bound directly, the same pattern as
+    // `folder_id` on dashboards. A cross-tenant insight id is hidden by RLS and
+    // surfaces as a FK violation we map to `Invalid`.
+    let (set_insight, insight) = match patch.insight_id {
+        Some(v) => (true, v),
+        None => (false, None),
+    };
+    let (set_params, params) = match &patch.insight_params {
+        Some(v) => (true, v.clone()),
+        None => (false, None),
+    };
     let row = sqlx::query(
         "UPDATE nexus_panels SET \
-           title         = COALESCE($2, title), \
-           datasource_id = COALESCE($3, datasource_id), \
-           sql           = COALESCE($4, sql), \
-           viz           = COALESCE($5, viz), \
-           layout        = COALESCE($6, layout) \
+           title          = COALESCE($2, title), \
+           datasource_id  = COALESCE($3, datasource_id), \
+           sql            = COALESCE($4, sql), \
+           viz            = COALESCE($5, viz), \
+           layout         = COALESCE($6, layout), \
+           insight_id     = CASE WHEN $7 THEN $8 ELSE insight_id END, \
+           insight_params = CASE WHEN $9 THEN $10 ELSE insight_params END \
          WHERE id = $1 \
-         RETURNING id, dashboard_id, datasource_id, title, sql, viz, layout",
+         RETURNING id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params",
     )
     .bind(id)
     .bind(&patch.title)
@@ -168,9 +192,13 @@ pub async fn update(
     .bind(&patch.sql)
     .bind(&patch.viz)
     .bind(&patch.layout)
+    .bind(set_insight)
+    .bind(insight)
+    .bind(set_params)
+    .bind(params)
     .fetch_optional(&mut *tx)
     .await
-    .map_err(internal)?;
+    .map_err(conflict_or_internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(row.as_ref().map(row_to_record))
 }
@@ -196,6 +224,8 @@ fn row_to_record(row: &sqlx::postgres::PgRow) -> PanelRecord {
         sql: row.get::<String, _>("sql"),
         viz: row.get::<String, _>("viz"),
         layout: row.get::<serde_json::Value, _>("layout"),
+        insight_id: row.get::<Option<Uuid>, _>("insight_id"),
+        insight_params: row.get::<Option<serde_json::Value>, _>("insight_params"),
     }
 }
 

@@ -74,6 +74,11 @@ pub async fn update_panel(
         sql: req.sql,
         viz: req.viz,
         layout: req.layout,
+        // Both are already three-valued on the wire (Option<Option<_>>), mapping
+        // 1:1 onto the store patch: None = leave, Some(None) = detach/clear,
+        // Some(Some(_)) = set.
+        insight_id: req.insight_id,
+        insight_params: req.insight_params,
     };
     match dashboard::panel::update(&state.metadata, &tenant, id, &patch).await {
         Ok(Some(rec)) => {
