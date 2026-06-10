@@ -17,6 +17,47 @@ export const EMPTY_PAGE_CONTEXT: PageContext = {
   values: {},
 };
 
+/** The nav node a page is opened under, as the assembler needs it. A subset of
+ *  the wire `NavNodeDetail` — only the fields the context reads. */
+export interface NavContextInput {
+  nodeId: string;
+  slug: string;
+  name: string;
+  path: string[];
+  /** The node's `context.values` — explicit per-mount overrides. */
+  values?: Record<string, string | string[]>;
+  /** The node's `context.tags` — merged *over* the dashboard's own tags. */
+  tags?: Record<string, string | null>;
+}
+
+/** Assemble the page context (WS-13 §1) from its three external sources: the
+ *  nav node the page was opened under, the URL query params, and the
+ *  dashboard's own tags. The nav node's `context.tags` are merged **over** the
+ *  dashboard tags (a mount can pin/override a tag without retagging the shared
+ *  page); its `context.values` become the `values` slot. The slots are kept
+ *  **separate** (not flattened) so a `context` variable addresses exactly one;
+ *  the cross-source precedence is applied later, per variable, by the resolver. */
+export function assemblePageContext(args: {
+  nav?: NavContextInput;
+  url?: Record<string, string | string[]>;
+  dashboardTags?: Record<string, string | null>;
+}): PageContext {
+  const { nav, url = {}, dashboardTags = {} } = args;
+  // Dashboard tags first, then the nav node's tag pins override them.
+  const tags: Record<string, string | null> = { ...dashboardTags };
+  if (nav?.tags) {
+    for (const [k, v] of Object.entries(nav.tags)) tags[k] = v;
+  }
+  return {
+    nav: nav
+      ? { nodeId: nav.nodeId, slug: nav.slug, name: nav.name, path: nav.path }
+      : undefined,
+    url,
+    tags,
+    values: nav?.values ?? {},
+  };
+}
+
 /** Read a single value out of the assembled context for a `context` variable.
  *  Returns the resolved string (the value the variable binds), or `undefined`
  *  when the source/key is absent — the caller then yields no option, so the

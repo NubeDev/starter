@@ -24,6 +24,8 @@ export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];
 export type QueryKindList = S["QueryKindList"];
 export type QueryKindSummary = S["QueryKindSummary"];
+export type QueryKindDetail = S["QueryKindDetail"];
+export type CreateQueryKindRequest = S["CreateQueryKindRequest"];
 export type QueryStats = S["QueryStats"];
 export type ColumnSchema = S["ColumnSchema"];
 export type ResultColumnType = S["ResultColumnType"];
@@ -65,6 +67,8 @@ export type NodeCategory = S["NodeCategory"];
 export type DryRunRequest = S["DryRunRequest"];
 export type DryRunResponse = S["DryRunResponse"];
 export type UpdateFlowRequest = S["UpdateFlowRequest"];
+// Flow portability (share/import): the self-contained, secret-redacted model.
+export type FlowExport = S["FlowExport"];
 
 export type AlertRuleDetail = S["AlertRuleDetail"];
 export type CreateAlertRuleRequest = S["CreateAlertRuleRequest"];
@@ -79,6 +83,15 @@ export type Tag = S["Tag"];
 export type TaggableKind = S["TaggableKind"];
 export type SetTagsRequest = S["SetTagsRequest"];
 export type TaggedEntity = S["TaggedEntity"];
+
+// Nav tree (WS-13): a node mounts a dashboard page (with context) or a static
+// route into the access-gated navigation tree.
+export type NavNodeDetail = S["NavNodeDetail"];
+export type NavTarget = S["NavTarget"];
+export type NavContext = S["NavContext"];
+export type StaticRoute = S["StaticRoute"];
+export type CreateNavNodeRequest = S["CreateNavNodeRequest"];
+export type UpdateNavNodeRequest = S["UpdateNavNodeRequest"];
 
 export type VariableDetail = S["VariableDetail"];
 export type VariableKind = S["VariableKind"];

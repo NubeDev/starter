@@ -5,7 +5,8 @@ import type { StarterClient } from "@nube/starter-client-ts";
 
 import { listVariables } from "@/api/variables/list";
 import type { VariableDetail } from "@/api/types";
-import type { ResolvedVariable } from "@/data/types";
+import type { PageContext, ResolvedVariable } from "@/data/types";
+import { EMPTY_PAGE_CONTEXT } from "@/features/variables/context";
 import {
   resolutionOrder,
   type VarDef,
@@ -40,6 +41,27 @@ function effectiveSelection(
   return options.length > 0 ? [options[0].value] : [];
 }
 
+/** The context-derived default for a variable, by the §1 cross-source
+ *  precedence (later wins): dashboard tag → nav `values` → bare URL param,
+ *  matched on the variable's own name. Returns a single-value selection, or
+ *  `undefined` when no source carries the name (the variable then falls back to
+ *  its stored/first-option default). The bar selection, which outranks all of
+ *  these, is applied by the caller. */
+function contextSeed(
+  name: string,
+  ctx: PageContext,
+): ReadonlyArray<string> | undefined {
+  // URL is highest of the context sources (a deep link is the most explicit
+  // external intent short of a bar pick), then nav.values, then the tag.
+  const url = ctx.url[name];
+  if (url !== undefined) return Array.isArray(url) ? [...url] : [url];
+  const value = ctx.values[name];
+  if (value !== undefined) return Array.isArray(value) ? [...value] : [value];
+  const tag = ctx.tags[name];
+  if (tag != null) return [tag];
+  return undefined;
+}
+
 /** Resolve every variable for a dashboard in dependency order, threading
  *  each resolved selection into the next so a cascading `query` variable
  *  sees its parents' current values (item 6). Cycles surface as the thrown
@@ -48,6 +70,7 @@ async function resolveAll(
   client: StarterClient,
   defs: VariableDetail[],
   overrides: Record<string, ReadonlyArray<string>>,
+  pageContext: PageContext,
 ): Promise<ResolvedVariable[]> {
   const order = resolutionOrder(
     defs.map<VarDef & { sortOrder?: number }>((d) => ({
@@ -69,8 +92,18 @@ async function resolveAll(
       def.kind,
       def.options_config,
       selections,
+      pageContext,
     );
-    const current = effectiveSelection(def, overrides[def.name], options);
+    // Context precedence (WS-13 §1, later wins): dashboard tags → nav.values →
+    // URL bare param → explicit bar selection. The bar selection is `overrides`
+    // (URL `var-*` + store); the lower-precedence context sources seed a default
+    // when the bar has not overridden this variable, threaded as an override so
+    // it flows the normal WS-02 selection path and bumps one revision.
+    const contextDefault = contextSeed(def.name, pageContext);
+    const barOverride = overrides[def.name];
+    const effectiveOverride =
+      barOverride && barOverride.length > 0 ? barOverride : contextDefault;
+    const current = effectiveSelection(def, effectiveOverride, options);
     selections[def.name] = current;
     resolved.push({
       id: def.id,
@@ -97,7 +130,10 @@ async function resolveAll(
  *  truth. Re-resolves when the slug changes or a selection bumps the
  *  store's `revision` (so a parent change re-resolves its children, item 7).
  *  A dependency cycle surfaces as the query's `error`. */
-export function useDashboardVariables(slug: string | undefined): {
+export function useDashboardVariables(
+  slug: string | undefined,
+  pageContext: PageContext = EMPTY_PAGE_CONTEXT,
+): {
   isPending: boolean;
   error: Error | null;
   cycle: VariableCycleError | null;
@@ -107,18 +143,25 @@ export function useDashboardVariables(slug: string | undefined): {
   const setResolved = useVariableStore((s) => s.setResolved);
   const reset = useVariableStore((s) => s.reset);
 
-  // Snapshot the selections used as overrides for this resolution pass.
-  // Reading the live object inside `queryFn` is fine since the key includes
-  // the revision; we capture it so the dependency is explicit.
+  // Snapshot the selections + context used for this resolution pass. Reading
+  // the live objects inside `queryFn` is fine since the key includes both; we
+  // capture them so the dependency is explicit.
   const overridesRef = useRef(selections);
   overridesRef.current = selections;
+  const contextRef = useRef(pageContext);
+  contextRef.current = pageContext;
+
+  // The assembled context is part of the resolution key (WS-13 §5): the slug is
+  // unchanged when only the nav node changes, so without this two mounts of one
+  // page would resolve cascading `query` options from each other's stale cache.
+  const contextKey = JSON.stringify(pageContext);
 
   const query = useQuery({
-    queryKey: [...variablesKey(slug ?? ""), JSON.stringify(selections)],
+    queryKey: [...variablesKey(slug ?? ""), JSON.stringify(selections), contextKey],
     enabled: !!slug,
     queryFn: async () => {
       const defs = await listVariables(client, slug!);
-      return resolveAll(client, defs, overridesRef.current);
+      return resolveAll(client, defs, overridesRef.current, contextRef.current);
     },
   });
 

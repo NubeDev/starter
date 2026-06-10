@@ -1,8 +1,10 @@
 import { useStarterClient } from "@nube/starter-client-react";
 
 import { useVariableStore } from "@/store/variables";
+import { useDashboard } from "@/features/dashboards/useDashboard";
 import { VariableControl } from "@/features/variables/VariableControl";
 import { useDashboardVariables } from "@/features/variables/useDashboardVariables";
+import { usePageContext } from "@/features/variables/usePageContext";
 import { useVariableUrlSync } from "@/features/variables/useVariableUrlSync";
 import { updateVariable } from "@/api/variables/update";
 
@@ -18,7 +20,14 @@ import { updateVariable } from "@/api/variables/update";
 // dashboard visually unchanged (backwards-compatible).
 export function VariableBar({ slug }: { slug: string }) {
   const client = useStarterClient();
-  const { cycle } = useDashboardVariables(slug);
+  // Assemble the page context (WS-13 §1) — the nav node from `?nav=`, the bare
+  // URL params, and this dashboard's tags — and thread it into resolution so a
+  // `context` variable resolves and navigating between two mounts of one page
+  // re-resolves + re-queries (§5). The dashboard id (for its tags) comes from
+  // the already-cached dashboard query, so this adds no extra round-trip.
+  const { data: dashboard } = useDashboard(slug);
+  const pageContext = usePageContext(slug, dashboard?.id);
+  const { cycle } = useDashboardVariables(slug, pageContext);
   useVariableUrlSync();
 
   const resolved = useVariableStore((s) => s.resolved);

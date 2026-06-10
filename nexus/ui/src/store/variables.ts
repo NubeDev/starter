@@ -42,7 +42,19 @@ export const useVariableStore = create<VariableState>((set) => ({
   resolved: [],
   selections: {},
   revision: 0,
-  setResolved: (resolved) => set({ resolved }),
+  setResolved: (resolved) =>
+    set((s) => {
+      // Bump the revision when the *bound values* change, not just the option
+      // lists — a context change (e.g. navigating to another nav mount) updates
+      // a variable's `current` without any user selection, and panels key on
+      // `revision` (WS-13 §5). Comparing only the (name → values) projection
+      // avoids a needless bump when only option metadata refreshed.
+      const next = boundSignature(resolved);
+      const prev = boundSignature(s.resolved);
+      return next === prev
+        ? { resolved }
+        : { resolved, revision: s.revision + 1 };
+    }),
   setSelection: (name, values) =>
     set((s) => ({
       selections: { ...s.selections, [name]: values },
@@ -55,6 +67,16 @@ export const useVariableStore = create<VariableState>((set) => ({
     })),
   reset: () => set({ resolved: [], selections: {}, revision: 0 }),
 }));
+
+/** A stable string of the resolved set's bound (name → current) values — the
+ *  only part of a resolved variable that affects a query. `setResolved` bumps
+ *  the revision exactly when this changes, so a context-driven re-resolution
+ *  re-keys panels while a pure option-list refresh does not. */
+function boundSignature(resolved: ReadonlyArray<ResolvedVariable>): string {
+  return JSON.stringify(
+    resolved.map((v) => [v.name, v.current] as const),
+  );
+}
 
 /** Build the query-layer `QueryVariable[]` from the resolved set: each
  *  variable contributes its current value(s). Variables with no value are

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { PageContext } from "@/data/types";
 import {
+  assemblePageContext,
   EMPTY_PAGE_CONTEXT,
   isContextToken,
   resolveContextToken,
@@ -62,6 +63,40 @@ describe("resolveContextValue", () => {
     expect(
       resolveContextValue({ source: "nav", key: "slug" }, EMPTY_PAGE_CONTEXT),
     ).toBeUndefined();
+  });
+});
+
+describe("assemblePageContext", () => {
+  it("keeps the four sources separate and folds nav values/tags in", () => {
+    const ctx = assemblePageContext({
+      nav: {
+        nodeId: "n1",
+        slug: "energy",
+        name: "Building-1",
+        path: ["Buildings"],
+        values: { building: "b1" },
+        tags: { zone: "north" },
+      },
+      url: { building: "b-url" },
+      dashboardTags: { building: "b-tag", zone: "south" },
+    });
+    // values come from the nav node's context.values.
+    expect(ctx.values).toEqual({ building: "b1" });
+    // url stays its own slot (not flattened into values).
+    expect(ctx.url).toEqual({ building: "b-url" });
+    // nav context.tags are merged OVER the dashboard tags.
+    expect(ctx.tags).toEqual({ building: "b-tag", zone: "north" });
+    expect(ctx.nav?.nodeId).toBe("n1");
+  });
+
+  it("with no nav node, values is empty and tags are the dashboard's", () => {
+    const ctx = assemblePageContext({
+      url: { building: "b1" },
+      dashboardTags: { building: "b-tag" },
+    });
+    expect(ctx.nav).toBeUndefined();
+    expect(ctx.values).toEqual({});
+    expect(ctx.tags).toEqual({ building: "b-tag" });
   });
 });
 
