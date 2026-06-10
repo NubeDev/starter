@@ -13,7 +13,7 @@ use crate::tenant_tx;
 pub async fn list(pool: &PgPool, tenant_id: &str) -> Result<Vec<DatasourceRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let rows = sqlx::query(
-        "SELECT id, tenant_id, name, kind, host, port, database, db_user, key_version \
+        "SELECT id, tenant_id, name, kind, host, port, database, db_user, key_version, config \
          FROM nexus_datasources ORDER BY created_at DESC",
     )
     .fetch_all(&mut *tx)
@@ -33,7 +33,7 @@ pub async fn get(
 ) -> Result<Option<DatasourceRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(
-        "SELECT id, tenant_id, name, kind, host, port, database, db_user, key_version \
+        "SELECT id, tenant_id, name, kind, host, port, database, db_user, key_version, config \
          FROM nexus_datasources WHERE id = $1",
     )
     .bind(id)
@@ -45,16 +45,20 @@ pub async fn get(
 }
 
 fn row_to_record(row: &sqlx::postgres::PgRow) -> DatasourceRecord {
+    // The connection columns are nullable since file kinds populate none of them;
+    // a missing column reads back as the type default so the record stays a plain
+    // value, with the kind-specific shape carried in `config`.
     DatasourceRecord {
         id: row.get::<Uuid, _>("id"),
         tenant_id: row.get::<String, _>("tenant_id"),
         name: row.get::<String, _>("name"),
         kind: row.get::<String, _>("kind"),
-        host: row.get::<String, _>("host"),
-        port: row.get::<i32, _>("port"),
-        database: row.get::<String, _>("database"),
-        db_user: row.get::<String, _>("db_user"),
+        host: row.get::<Option<String>, _>("host").unwrap_or_default(),
+        port: row.get::<Option<i32>, _>("port").unwrap_or_default(),
+        database: row.get::<Option<String>, _>("database").unwrap_or_default(),
+        db_user: row.get::<Option<String>, _>("db_user").unwrap_or_default(),
         key_version: row.get::<i32, _>("key_version"),
+        config: row.get::<Option<serde_json::Value>, _>("config"),
     }
 }
 

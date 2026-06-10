@@ -19,6 +19,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::Extension;
+use datafusion::arrow::array::{Int32Array, RecordBatch, StringArray};
+use datafusion::arrow::datatypes::{DataType, Field, Schema};
+use datafusion::parquet::arrow::ArrowWriter;
 use nexus_api::middleware::StreamTokenSigner;
 use nexus_api::serve;
 use nexus_api::state::AppState;
@@ -210,7 +213,8 @@ async fn cross_tenant_federated_source_is_denied_and_leaks_nothing() {
             port: i32::from(port),
             database: "postgres".into(),
             db_user: "postgres".into(),
-            secret: "postgres".into(),
+            secret: Some("postgres".into()),
+            config: None,
         },
     )
     .await
@@ -249,4 +253,127 @@ async fn cross_tenant_federated_source_is_denied_and_leaks_nothing() {
     );
 
     drop(app);
+}
+
+/// Write a tiny Parquet `devices` fixture and return its path. The file is the
+/// stored file datasource's `config.path`; DataFusion reads it natively.
+fn write_devices_parquet(dir: &std::path::Path) -> String {
+    let schema = Arc::new(Schema::new(vec![
+        Field::new("id", DataType::Int32, false),
+        Field::new("name", DataType::Utf8, false),
+    ]));
+    let batch = RecordBatch::try_new(
+        schema.clone(),
+        vec![
+            Arc::new(Int32Array::from(vec![1, 2])),
+            Arc::new(StringArray::from(vec!["boiler", "chiller"])),
+        ],
+    )
+    .expect("build batch");
+    let path = dir.join("devices.parquet");
+    let file = std::fs::File::create(&path).expect("create parquet");
+    let mut writer = ArrowWriter::try_new(file, schema, None).expect("parquet writer");
+    writer.write(&batch).expect("write batch");
+    writer.close().expect("close parquet");
+    path.to_string_lossy().to_string()
+}
+
+/// RW-04b: a file datasource (Parquet) persisted as a `nexus_datasources` row —
+/// no secret, its path carried in the new `config` jsonb — is resolvable and
+/// joins against a live Postgres datasource in one federated statement. This is
+/// the missing leg of the stored-Parquet ⋈ Postgres end-to-end join: the
+/// Parquet source is registered through the store (not a Postgres-shaped create),
+/// then resolved by `federation::resolve` from `config.path`.
+#[tokio::test]
+#[ignore = "requires docker"]
+async fn stored_parquet_joins_live_postgres_end_to_end() {
+    let (admin, _guard) = with_database().await;
+    let port = admin.sqlx().connect_options().as_ref().get_port();
+    let pool = runtime_pool(admin.sqlx()).await;
+
+    sqlx::query("CREATE TABLE readings (device_id int, temp_c int)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO readings VALUES (1, 80), (2, 5), (1, 82)")
+        .execute(admin.sqlx())
+        .await
+        .unwrap();
+
+    let tmp = std::env::temp_dir().join(format!("nexus-rw04b-{}", uuid::Uuid::new_v4()));
+    std::fs::create_dir_all(&tmp).expect("tmp dir");
+    let parquet_path = write_devices_parquet(&tmp);
+
+    // Persist the Parquet datasource directly through the store: no secret, the
+    // path lives in `config`. This exercises the new secret-less insert path.
+    let envelope = Envelope::new(b"0123456789abcdef0123456789abcdef", 1).unwrap();
+    let devices = nexus_store::datasource::insert(
+        &pool,
+        &envelope,
+        "acme",
+        &NewDatasource {
+            name: "devices-parquet".into(),
+            kind: "parquet".into(),
+            host: String::new(),
+            port: 0,
+            database: String::new(),
+            db_user: String::new(),
+            secret: None,
+            config: Some(json!({ "path": parquet_path })),
+        },
+    )
+    .await
+    .expect("persist parquet datasource");
+
+    let router = serve::router(test_state(&pool)).layer(Extension(acme_admin()));
+    let app = TestApp::spawn(router).await;
+    let client = reqwest::Client::new();
+
+    let readings_id = register_self(&client, &app.base_url, port, "readings-ds").await;
+
+    let result: Value = client
+        .post(format!("{}/api/v1/datasources/{readings_id}/query", app.base_url))
+        .json(&json!({
+            "sql": "SELECT d.name, r.temp_c \
+                    FROM ds_devices d JOIN ds_readings r ON d.id = r.device_id \
+                    ORDER BY d.name, r.temp_c",
+            "sources": [
+                { "alias": "devices", "datasource": devices.id.to_string() },
+                { "alias": "readings", "datasource": readings_id, "table": "readings" }
+            ]
+        }))
+        .send()
+        .await
+        .expect("federated query")
+        .json()
+        .await
+        .expect("body");
+
+    assert_eq!(
+        result["stats"]["row_count"], 3,
+        "the stored-Parquet ⋈ Postgres join produced three rows"
+    );
+    let pairs: Vec<(String, i64)> = result["rows"]
+        .as_array()
+        .expect("rows")
+        .iter()
+        .map(|r| {
+            (
+                r["name"].as_str().unwrap().to_string(),
+                r["temp_c"].as_i64().unwrap(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        pairs,
+        [
+            ("boiler".to_string(), 80),
+            ("boiler".to_string(), 82),
+            ("chiller".to_string(), 5)
+        ],
+        "rows arrive joined across the file source and the live datasource"
+    );
+
+    drop(app);
+    let _ = std::fs::remove_dir_all(&tmp);
 }

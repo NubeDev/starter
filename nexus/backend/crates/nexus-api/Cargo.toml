@@ -116,6 +116,10 @@ tokio = { workspace = true, features = ["test-util", "io-util", "net"] }
 tokio-util = { workspace = true, features = ["io"] }
 futures.workspace = true
 starter-store-postgres.workspace = true
+# The stored-Parquet ⋈ Postgres federation e2e writes a small Parquet fixture via
+# arrow/parquet (already in the tree through datafusion) to register a file
+# datasource; test-only, no new runtime dep.
+datafusion.workspace = true
 
 [[test]]
 name = "routes_query_run"

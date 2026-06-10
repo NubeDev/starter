@@ -37,7 +37,8 @@ pub async fn create_datasource(
         port: req.port as i32,
         database: req.database,
         db_user: req.user,
-        secret: req.password,
+        secret: Some(req.password),
+        config: None,
     };
     match datasource::insert(&state.metadata, &state.envelope, &tenant, &new).await {
         Ok(rec) => Json(to_detail(&rec)).into_response(),

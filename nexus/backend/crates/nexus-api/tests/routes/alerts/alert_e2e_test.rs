@@ -414,7 +414,8 @@ async fn rule_evaluates_against_its_named_datasource_not_the_dev_pool() {
             port: port as i32,
             database: "postgres".into(),
             db_user: "postgres".into(),
-            secret: "postgres".into(),
+            secret: Some("postgres".into()),
+            config: None,
         },
     )
     .await

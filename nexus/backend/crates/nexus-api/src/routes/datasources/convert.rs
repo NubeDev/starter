@@ -15,6 +15,8 @@ use nexus_store::datasource::DatasourceRecord;
 pub fn kind_to_stored(kind: DatasourceKind) -> &'static str {
     match kind {
         DatasourceKind::Postgres => "postgres",
+        DatasourceKind::Mqtt => "mqtt",
+        DatasourceKind::Zenoh => "zenoh",
     }
 }
 

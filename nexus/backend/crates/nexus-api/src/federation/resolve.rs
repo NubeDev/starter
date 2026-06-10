@@ -94,15 +94,45 @@ async fn resolve_one(
                 table: table.to_string(),
             })
         }
-        // File datasource kinds (parquet/csv) are declared in the kinds pack and
-        // supported by the engine, but persisting one needs a datasource record
-        // that carries a path and no secret — a store-side change tracked for an
-        // RW-04 fix pass (see rewrite/sessions/TODOs.md). Until then a file
-        // datasource cannot be stored, so resolving one is an explicit Invalid.
+        // File datasource kinds (parquet/csv) hold no secret: their config is a
+        // server-local path stored in the record's `config` jsonb. DataFusion
+        // reads the file natively, so no decrypt/audit step is involved.
+        "parquet" => {
+            let path = config_path(&record.config, "parquet", &r.alias)?;
+            Ok(FederatedSource::Parquet { path })
+        }
+        "csv" => {
+            let path = config_path(&record.config, "csv", &r.alias)?;
+            let has_header = record
+                .config
+                .as_ref()
+                .and_then(|c| c.get("has_header"))
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true);
+            Ok(FederatedSource::Csv { path, has_header })
+        }
         other => Err(Error::Invalid {
             message: format!("datasource kind '{other}' is not yet usable as a federated source"),
         }),
     }
+}
+
+/// Extract the required `path` string from a file datasource's stored config.
+/// A file kind with no `config.path` is a corrupt/half-written row, not a silent
+/// drop — surface it as `Invalid` naming the offending alias.
+fn config_path(
+    config: &Option<serde_json::Value>,
+    kind: &str,
+    alias: &str,
+) -> Result<String, Error> {
+    config
+        .as_ref()
+        .and_then(|c| c.get("path"))
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_string)
+        .ok_or_else(|| Error::Invalid {
+            message: format!("{kind} federated source {alias:?} has no config.path"),
+        })
 }
 
 /// A federated alias becomes the SQL table `ds_<alias>`, so it must be a plain

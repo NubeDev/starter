@@ -88,6 +88,11 @@ Format per entry:
   from `record.config.path` (engine + manifest already support it). Until then the file arms
   stay an explicit `Invalid` (loud, never a silent drop), and the E2E join is proven with two
   registered Postgres datasources (`federation_e2e_test.rs`).
+- **✅ RESOLVED (RW-04b):** migration `2001_datasource_file_config.sql` adds the nullable `config
+  jsonb` + nullable secret/connection columns; `record/insert/fetch` carry `config` and an optional
+  secret; `federation::resolve::resolve_one`'s parquet/csv arms build `FederatedSource::{Parquet,
+  Csv}` from `record.config.path`. New `stored_parquet_joins_live_postgres_end_to_end` e2e proves
+  the stored-Parquet ⋈ live-PG join.
 
 ## 2026-06-10 RW-09 — `ingest.write` should route through the engine's push channel (RW-07b)
 - **Type:** follow-up
@@ -117,6 +122,11 @@ Format per entry:
 - **Proposed:** Whoever extends `test_connection` (an RW-04 fix pass) adds a zenoh
   arm that opens a short-lived session against the configured endpoints and reports
   reachability, the same shape as a future mqtt probe.
+- **✅ RESOLVED (RW-04b):** `DatasourceKind` gains `Mqtt`+`Zenoh`; `test_connection` dispatches a
+  zenoh arm (and an mqtt-parity arm) reading params from the request `config`. New feature-gated
+  store probe `datasource/zenoh/probe.rs` (`zenoh` feature, OFF by default, mirrors `mqtt`) opens
+  a short-lived `zenoh::open` against the endpoints and reports reachability; feature-off returns
+  a clear "not enabled" error. Zero zenoh deps in a default build.
 
 ## 2026-06-10 RW-02 — Native `sql` omits ArkFlow's JSON UDFs (confirm before vendor delete)
 - **Type:** follow-up

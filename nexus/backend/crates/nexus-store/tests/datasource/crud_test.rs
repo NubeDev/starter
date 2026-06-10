@@ -22,7 +22,8 @@ fn new_ds(name: &str) -> NewDatasource {
         port: 5432,
         database: "metrics".into(),
         db_user: "reader".into(),
-        secret: "s3cr3t-pw".into(),
+        secret: Some("s3cr3t-pw".into()),
+        config: None,
     }
 }
 

@@ -154,6 +154,9 @@ fn snapshot_from(value: Option<&serde_json::Value>, which: &str) -> Result<Datas
         database: field_str(v, "database")?,
         db_user: field_str(v, "db_user")?,
         key_version: field_i32(v, "key_version")?,
+        // Optional per-kind config (file kinds); absent in a redacted snapshot
+        // taken before this column existed, which is a benign None.
+        config: v.get("config").cloned(),
     })
 }
 

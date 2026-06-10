@@ -4646,9 +4646,11 @@
       },
       "DatasourceKind": {
         "type": "string",
-        "description": "The kind of datasource, which selects the engine's input builder. v1 ships\nSQL-over-Postgres as the first connector; the enum is the extension point as\nmore registry input builders land.",
+        "description": "The kind of datasource, which selects the engine's input builder. SQL over\nPostgres is the queryable connector; `mqtt`/`zenoh` are stream connectors whose\npre-save probe opens a short-lived session (no ad-hoc query target). The enum\nis the extension point as more registry input builders land.",
         "enum": [
-          "postgres"
+          "postgres",
+          "mqtt",
+          "zenoh"
         ]
       },
       "DatasourceKindList": {
@@ -6409,37 +6411,50 @@
       },
       "TestConnectionRequest": {
         "type": "object",
-        "description": "Body for a *pre-save* connection probe. Carries the same connection fields as\na create request, including the write-only secret, so the \"Test connection\"\naffordance works before the datasource is persisted (and before a secret is\nsealed). The secret is used transiently to connect and never stored or echoed.",
+        "description": "Body for a *pre-save* connection probe. The flat connection fields carry a\ncredentialed SQL connector's parameters (postgres), including the write-only\nsecret used transiently to connect and never stored or echoed. Stream\nconnectors (`mqtt`/`zenoh`) supply their non-SQL parameters in [`config`] —\nthe same `{endpoints, key_expr, …}` shape their datasource-kind config schema\ndeclares — so one probe endpoint serves every connector. The SQL fields are\noptional so a stream probe need not send placeholder host/port values.",
         "required": [
-          "kind",
-          "host",
-          "port",
-          "database",
-          "user",
-          "password"
+          "kind"
         ],
         "properties": {
+          "config": {
+            "description": "Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,\n`{host, port, client_id, …}` for mqtt). Ignored for postgres."
+          },
           "database": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "host": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "kind": {
             "$ref": "#/components/schemas/DatasourceKind",
             "description": "Which connector to probe."
           },
           "password": {
-            "type": "string",
-            "description": "Write-only secret used only to open the probe connection."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Write-only secret used only to open the probe connection (SQL connectors)."
           },
           "port": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "minimum": 0
           },
           "user": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

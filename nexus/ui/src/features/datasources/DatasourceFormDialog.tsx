@@ -49,10 +49,12 @@ export function DatasourceFormDialog({
     setForm((f) => ({ ...f, [k]: v }));
   };
 
-  // The raw config the probe and the create call both submit.
-  function connectionBody(): TestConnectionRequest {
+  // The concrete Postgres connection fields the probe and the create call both
+  // submit. Built with required (non-null) fields so it satisfies the create body;
+  // the probe request accepts the same shape (its SQL fields are now optional).
+  function connectionBody() {
     return {
-      kind: "postgres",
+      kind: "postgres" as const,
       host: form.host.trim(),
       port: Number(form.port) || 5432,
       database: form.database.trim(),
@@ -62,7 +64,8 @@ export function DatasourceFormDialog({
   }
 
   function onTest() {
-    test.mutate(connectionBody());
+    const probe: TestConnectionRequest = connectionBody();
+    test.mutate(probe);
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {

@@ -41,6 +41,12 @@ base64.workspace = true
 # error rather than a fake success.
 rumqttc = { workspace = true, optional = true }
 
+# RW-09: the Zenoh connector's connect-probe session. Optional + off by default,
+# mirroring `mqtt`, so a build without the `zenoh` feature carries none of zenoh's
+# transitive deps (roadmap §8). With the feature off the probe returns a clear
+# "not enabled" error rather than a fake success.
+zenoh = { workspace = true, optional = true }
+
 [features]
 # Mirrors starter-store-postgres: gates the testcontainers harness so the heavy
 # docker-backed deps stay out of normal builds.
@@ -48,6 +54,9 @@ testing = ["starter-store-postgres/testing"]
 # Compiles the rumqttc-backed MQTT connect probe. OFF by default; enable with
 # `--features mqtt` to build the device-telemetry connector.
 mqtt = ["dep:rumqttc"]
+# Compiles the zenoh-backed connect probe. OFF by default; enable with
+# `--features zenoh` to build the Zenoh telemetry connector's probe.
+zenoh = ["dep:zenoh"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }

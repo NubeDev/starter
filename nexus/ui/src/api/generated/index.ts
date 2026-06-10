@@ -1626,12 +1626,13 @@ export interface components {
             name: string;
         };
         /**
-         * @description The kind of datasource, which selects the engine's input builder. v1 ships
-         *     SQL-over-Postgres as the first connector; the enum is the extension point as
-         *     more registry input builders land.
+         * @description The kind of datasource, which selects the engine's input builder. SQL over
+         *     Postgres is the queryable connector; `mqtt`/`zenoh` are stream connectors whose
+         *     pre-save probe opens a short-lived session (no ad-hoc query target). The enum
+         *     is the extension point as more registry input builders land.
          * @enum {string}
          */
-        DatasourceKind: "postgres";
+        DatasourceKind: "postgres" | "mqtt" | "zenoh";
         /** @description The registered datasource-kinds, name-ordered. */
         DatasourceKindList: {
             /** @description One entry per declared connector type. */
@@ -2601,21 +2602,29 @@ export interface components {
             kind: components["schemas"]["TaggableKind"];
         };
         /**
-         * @description Body for a *pre-save* connection probe. Carries the same connection fields as
-         *     a create request, including the write-only secret, so the "Test connection"
-         *     affordance works before the datasource is persisted (and before a secret is
-         *     sealed). The secret is used transiently to connect and never stored or echoed.
+         * @description Body for a *pre-save* connection probe. The flat connection fields carry a
+         *     credentialed SQL connector's parameters (postgres), including the write-only
+         *     secret used transiently to connect and never stored or echoed. Stream
+         *     connectors (`mqtt`/`zenoh`) supply their non-SQL parameters in [`config`] —
+         *     the same `{endpoints, key_expr, …}` shape their datasource-kind config schema
+         *     declares — so one probe endpoint serves every connector. The SQL fields are
+         *     optional so a stream probe need not send placeholder host/port values.
          */
         TestConnectionRequest: {
-            database: string;
-            host: string;
+            /**
+             * @description Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,
+             *     `{host, port, client_id, …}` for mqtt). Ignored for postgres.
+             */
+            config?: unknown;
+            database?: string | null;
+            host?: string | null;
             /** @description Which connector to probe. */
             kind: components["schemas"]["DatasourceKind"];
-            /** @description Write-only secret used only to open the probe connection. */
-            password: string;
+            /** @description Write-only secret used only to open the probe connection (SQL connectors). */
+            password?: string | null;
             /** Format: int32 */
-            port: number;
-            user: string;
+            port?: number | null;
+            user?: string | null;
         };
         /**
          * @description Outcome of a connection probe. `ok` is the headline; on failure `message`

@@ -14,6 +14,7 @@ mod record;
 mod resolve;
 pub mod secret;
 mod update;
+pub mod zenoh;
 
 use uuid::Uuid;
 

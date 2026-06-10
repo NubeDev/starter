@@ -36,7 +36,8 @@ fn self_referencing(host: &str, port: i32) -> NewDatasource {
         port,
         database: "postgres".into(),
         db_user: "postgres".into(),
-        secret: "postgres".into(),
+        secret: Some("postgres".into()),
+        config: None,
     }
 }
 
