@@ -10,7 +10,7 @@
 
 | Order | RW | Title | Status | Started | Finished | Commit | Notes |
 |------:|----|-------|:------:|---------|----------|--------|-------|
-| 1 | RW-01 | Engine core: native pipeline loop, node traits, registry | ⬜ | | | | additive only; ArkFlow stays compiling |
+| 1 | RW-01 | Engine core: native pipeline loop, node traits, registry | ✅ | 2026-06-10 02:20 UTC | 2026-06-10 02:58 UTC | (pending) | additive only; ArkFlow stays compiling; 5 core tests green |
 | 2 | RW-02 | Port nodes onto core (DataFusion direct) | ⬜ | | | | behavior parity, same registry names |
 | 3 | RW-03 | Cutover: runners on native engine; delete ArkFlow | ⬜ | | | | grep-zero arkflow; vendor/ gone |
 | 4 | RW-04 | Any-DB store: datasource-id sinks, batched writes | ⬜ | | | | postgres + file(parquet) writers |
@@ -22,3 +22,5 @@
 ## Loop log (append one line per wake)
 
 <!-- Format: `YYYY-MM-DD HH:MM — <action taken>` -->
+2026-06-10 02:20 — RW-01 picked (first pending, no RW in progress); marked 🔵, spawning subagent.
+2026-06-10 02:58 — RW-01 done: nexus-engine/src/core/ landed (node traits, registry, config, pipeline, outcome, error); 5 core tests + full engine suite green; ArkFlow still compiles. Marked ✅.

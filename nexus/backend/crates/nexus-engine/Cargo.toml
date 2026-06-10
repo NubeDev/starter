@@ -50,6 +50,10 @@ serde_json.workspace = true
 # Integration tests mirror src/ one-to-one; cargo only auto-discovers top-level
 # tests/*.rs, so the mirrored paths are declared explicitly.
 [[test]]
+name = "core_pipeline"
+path = "tests/core/pipeline_test.rs"
+
+[[test]]
 name = "runner_query"
 path = "tests/runner/query_test.rs"
 

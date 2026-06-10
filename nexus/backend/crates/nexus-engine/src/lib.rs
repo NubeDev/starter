@@ -9,6 +9,7 @@
 //! dependency, never forked.
 
 pub mod arrow_json;
+pub mod core;
 pub mod flow;
 pub mod registry;
 pub mod runner;
