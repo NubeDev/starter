@@ -153,3 +153,23 @@ Format per entry:
   at, mirroring the channel/backpressure design in the engine's existing bounded-source path.
   Additive manifest fields only — if any needed `starter-ext-spi`/supervisor change is breaking,
   that is a blocker entry here, not a guess (per the spec's Non-goals).
+
+---
+
+## 2026-06-10 RW-08 — pre-existing test drift under `--features testing` (out of lane)
+
+Two nexus-api test binaries fail to compile **only** with `--features testing` (the
+default `cargo test --workspace` is green because both files are
+`#![cfg(feature = "testing")]` and compile empty without it):
+
+- `crates/nexus-api/tests/routes/identity/wiring_test.rs:61` — `serve::assemble` now
+  takes 6 args (a `Router` was added); the call passes 5.
+- `crates/nexus-api/tests/routes/authz/grant_gate_test.rs:88,117` —
+  `NewDashboard` gained `accent`, `folder_id`, `icon`; the two literals omit them.
+
+Neither file is in RW-08's lane (flow metrics / soak / BACKPRESSURE.md) and the
+drift predates this session (dashboard-folder + identity-assemble work added the
+fields/arg). RW-08 left them untouched. **Action:** the owning lane (nav/dashboard
++ identity) should refresh these two literals/call-sites; they are a one-line fix
+each. Until then `cargo clippy --all-targets --features testing` on nexus-api is
+red on these two targets only.

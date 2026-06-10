@@ -155,6 +155,27 @@ async fn flow_ingests_http_into_postgres_then_stops() {
     }
     assert!(inserted > 0, "the flow ingested the HTTP response into postgres");
 
+    // The flow detail surfaces the RW-08 ingest metrics, and they reconcile with
+    // what landed: every metrics field is present and the counters are monotonic
+    // (at least one batch in, at least one row written, a flush, a last-write
+    // stamp, no write errors on a healthy flow).
+    let detail: Value = client
+        .get(format!("{}/api/v1/flows/{flow_id}", app.base_url))
+        .send()
+        .await
+        .expect("get flow")
+        .json()
+        .await
+        .expect("detail body");
+    let m = &detail["metrics"];
+    assert_eq!(m["running"], true, "running surfaced");
+    assert!(m["batches_in"].as_u64().unwrap() >= 1, "batches_in counted");
+    assert!(m["rows_written"].as_u64().unwrap() >= 1, "rows_written counted");
+    assert!(m["flush_count"].as_u64().unwrap() >= 1, "flush_count counted");
+    assert_eq!(m["write_errors"], 0, "no write errors on a healthy flow");
+    assert!(m["last_write_ms"].is_u64(), "last_write_ms stamped");
+    assert!(m["channel_depth"].is_u64(), "channel_depth present");
+
     // Stop it; the flow is no longer running.
     let stop: Value = client
         .post(format!("{}/api/v1/flows/{flow_id}/stop", app.base_url))

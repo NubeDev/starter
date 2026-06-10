@@ -1780,14 +1780,28 @@ export interface components {
         /**
          * @description Live run state surfaced on the flows list and detail so an admin sees a
          *     flow's health without opening it: whether it is running, when its current
-         *     (or most recent) run started, and the error that ended the last run (if
-         *     any). All fields reflect this node's in-process
-         *     [`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and
-         *     are absent once the process restarts (single-node v1). Throughput counters
-         *     would require instrumenting every output sink, so they are intentionally
-         *     omitted rather than reported as zero.
+         *     (or most recent) run started, the error that ended the last run (if any),
+         *     and the ingest throughput counters for the current run. All fields reflect
+         *     this node's in-process [`FlowManager`](nexus_engine::FlowManager) state; they
+         *     reset on restart and are absent once the process restarts (single-node v1).
          */
         FlowMetrics: {
+            /**
+             * Format: int64
+             * @description Batches read from the source since this run started.
+             */
+            batches_in: number;
+            /**
+             * Format: int64
+             * @description Approximate depth of the bounded source→sink channel (batches read but
+             *     not yet drained to the sink) — the live backpressure gauge.
+             */
+            channel_depth: number;
+            /**
+             * Format: int64
+             * @description Number of batches handed to the underlying sink writer.
+             */
+            flush_count: number;
             /**
              * @description The error that ended the most recent run, or `None` if it ended cleanly
              *     (or is still running).
@@ -1798,8 +1812,24 @@ export interface components {
              *     `None` if the flow has never run this process.
              */
             last_started_at?: string | null;
+            /**
+             * Format: int64
+             * @description Wall-clock millis (since the epoch) of the last successful sink write, or
+             *     `None` if no write has succeeded yet this run.
+             */
+            last_write_ms?: number | null;
+            /**
+             * Format: int64
+             * @description Rows the sink has successfully written since this run started.
+             */
+            rows_written: number;
             /** @description Whether the manager currently has the flow running on this node. */
             running: boolean;
+            /**
+             * Format: int64
+             * @description Failed sink write attempts (each errored attempt, including retries).
+             */
+            write_errors: number;
         };
         /**
          * @description A flow as it appears in the list: identity and run state, without the config

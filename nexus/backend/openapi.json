@@ -4874,11 +4874,34 @@
       },
       "FlowMetrics": {
         "type": "object",
-        "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, and the error that ended the last run (if\nany). All fields reflect this node's in-process\n[`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and\nare absent once the process restarts (single-node v1). Throughput counters\nwould require instrumenting every output sink, so they are intentionally\nomitted rather than reported as zero.",
+        "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, the error that ended the last run (if any),\nand the ingest throughput counters for the current run. All fields reflect\nthis node's in-process [`FlowManager`](nexus_engine::FlowManager) state; they\nreset on restart and are absent once the process restarts (single-node v1).",
         "required": [
-          "running"
+          "running",
+          "batches_in",
+          "rows_written",
+          "channel_depth",
+          "flush_count",
+          "write_errors"
         ],
         "properties": {
+          "batches_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Batches read from the source since this run started.",
+            "minimum": 0
+          },
+          "channel_depth": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Approximate depth of the bounded source→sink channel (batches read but\nnot yet drained to the sink) — the live backpressure gauge.",
+            "minimum": 0
+          },
+          "flush_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of batches handed to the underlying sink writer.",
+            "minimum": 0
+          },
           "last_error": {
             "type": [
               "string",
@@ -4893,9 +4916,30 @@
             ],
             "description": "RFC-3339 timestamp of when the current or most recent run started, or\n`None` if the flow has never run this process."
           },
+          "last_write_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Wall-clock millis (since the epoch) of the last successful sink write, or\n`None` if no write has succeeded yet this run.",
+            "minimum": 0
+          },
+          "rows_written": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows the sink has successfully written since this run started.",
+            "minimum": 0
+          },
           "running": {
             "type": "boolean",
             "description": "Whether the manager currently has the flow running on this node."
+          },
+          "write_errors": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Failed sink write attempts (each errored attempt, including retries).",
+            "minimum": 0
           }
         }
       },

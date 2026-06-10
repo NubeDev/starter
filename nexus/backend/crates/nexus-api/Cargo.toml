@@ -192,3 +192,8 @@ path = "tests/routes/query/insight_e2e_test.rs"
 [[test]]
 name = "routes_query_extension_insight_e2e"
 path = "tests/routes/query/extension_insight_e2e_test.rs"
+
+# RW-08 backpressure soak — opt-in (`#[ignore]`), needs Docker. See BACKPRESSURE.md.
+[[test]]
+name = "routes_soak_backpressure"
+path = "tests/soak/backpressure_soak.rs"

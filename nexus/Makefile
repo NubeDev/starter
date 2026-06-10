@@ -76,7 +76,7 @@ export ADMIN_PASSWORD ?= change-me-admin
 FLY_APP    ?= nexus
 IMAGE      ?= nexus:local
 
-.PHONY: build dev dev-all dev-be dev-ui test db db-stop bootstrap seed seed-sim \
+.PHONY: build dev dev-all dev-be dev-ui test soak db db-stop bootstrap seed seed-sim \
         docker-build docker-run fly-secrets fly-deploy clean kill build-be build-ui
 
 # Rows per profile for `make seed-sim` (hvac/energy/door); override on the CLI.
@@ -116,6 +116,16 @@ dev-ui:
 test:
 	cd $(BE_DIR) && cargo test -- --include-ignored
 	cd $(ROOT) && pnpm --filter $(UI_PKG) test
+
+# Backpressure soak (RW-08): a high-rate flow into a Docker Postgres datasource,
+# asserting bounded RSS, zero lost rows, a sliced fat batch, and a DB-fault chaos
+# case. #[ignore]d so it never runs in the normal suite; this target opts it in.
+# Needs a running Docker daemon. Tune length/rate with NEXUS_SOAK_SECS (default
+# 20; set 600 for the documented ≥10-minute run) and NEXUS_SOAK_BATCH. See
+# docs/scope/nextgen/rewrite/BACKPRESSURE.md for runtime + interpretation.
+soak:
+	cd $(BE_DIR) && cargo test -p nexus-api --features testing \
+		--test routes_soak_backpressure -- --ignored --nocapture
 
 # A throwaway Postgres for running the backend locally. Idempotent: re-running
 # reuses the existing container. The backend applies its own migrations on

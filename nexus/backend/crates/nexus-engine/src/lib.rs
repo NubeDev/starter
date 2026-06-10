@@ -23,7 +23,7 @@ pub mod stream_registry;
 pub mod time;
 
 pub use federation::{FederatedQuery, FederatedSource, PostgresConn};
-pub use flow::{FlowManager, FlowStats};
+pub use flow::{FlowManager, FlowMetrics, FlowStats, MetricsSnapshot};
 pub use native_registry::native_registry;
 pub use registry::{describe, NodeCategory, NodeDescriptor};
 pub use runner::{LiveRunner, QueryOutcome, QueryRunner};
