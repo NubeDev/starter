@@ -89,6 +89,35 @@ Format per entry:
   stay an explicit `Invalid` (loud, never a silent drop), and the E2E join is proven with two
   registered Postgres datasources (`federation_e2e_test.rs`).
 
+## 2026-06-10 RW-09 — `ingest.write` should route through the engine's push channel (RW-07b)
+- **Type:** follow-up
+- **What:** RW-09 built the bounded push-ingest path self-contained in the engine
+  (`source/http_ingest.rs` → `IngestChannels` on `FlowManager`, non-blocking
+  `try_push` with `429 + Retry-After` on a full channel). The spec said to *share*
+  this with RW-07's `ingest.write`, but RW-07's data-plane (items 2–4, incl.
+  `ingest.write`) is deferred to RW-07b, so there was nothing to share *into* yet.
+- **Why:** Building `ingest.write` here would have crossed into the deferred
+  extension data-plane lane (two-workspace host-method + supervisor wiring).
+- **Proposed:** RW-07b's `ingest.write` host method should resolve the named flow's
+  sender via `state.flows.ingest()` and call `IngestChannels::try_push`, returning
+  `retry_after` on `IngestError::Full` — reusing RW-09's channel/backpressure seam
+  rather than introducing a second path. The host stamps tenant from the install
+  identity (never the payload), exactly as the spec requires.
+
+## 2026-06-10 RW-09 — Zenoh store-side connect probe not implemented (RW-04 lane)
+- **Type:** follow-up
+- **What:** The `zenoh` datasource kind is declared in the manifest pack
+  (`datasource-kinds/zenoh_config.json` + `manifest.yaml`, Stream surface, no
+  secrets) and the engine reads it natively behind the `zenoh` feature, but there
+  is no store-side connect/probe — `test_connection` has no zenoh arm. This mirrors
+  `mqtt`, which is also catalogue-only with no `test_connection` enum wiring.
+- **Why:** A store-side connect probe lives in RW-04's `DatasourceKind` /
+  `test_connection` lane; the charter forbids editing another RW's lane. The
+  catalogue entry is fully functional for flow authoring without it.
+- **Proposed:** Whoever extends `test_connection` (an RW-04 fix pass) adds a zenoh
+  arm that opens a short-lived session against the configured endpoints and reports
+  reachability, the same shape as a future mqtt probe.
+
 ## 2026-06-10 RW-02 — Native `sql` omits ArkFlow's JSON UDFs (confirm before vendor delete)
 - **Type:** follow-up
 - **What:** ArkFlow's vendored `sql` processor registers `datafusion_functions_json` + a custom

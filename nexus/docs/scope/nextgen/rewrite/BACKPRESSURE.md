@@ -85,6 +85,45 @@ receiver only** — the producer never blocks and other subscribers are unaffect
 The monotonic per-event sequence number makes the skipped range visible, which is
 exactly the gap the `Last-Event-ID` resume contract reports.
 
+## Push ingest (`http_ingest`) — RW-09
+
+A flow whose `input` is `{"type":"http_ingest"}` exposes
+`POST /api/v1/ingest/{flow_id}`. There is no upstream broker (no L1): the caller
+*is* the source. The same L2 bound applies — each `http_ingest` source registers a
+bounded `tokio::mpsc` channel (depth = `capacity`, default 256) with the
+`FlowManager`'s shared `IngestChannels`. The route does a **non-blocking**
+`try_push`:
+
+- **Channel has room** → the JSON body (a single object, or an array fanned out to
+  one document each) is enqueued as one batch and the response is
+  `200 { "accepted": N }`.
+- **Channel full** → `429 Too Many Requests` with a `Retry-After: 1` header. The
+  push is *not* queued and *not* dropped silently — the caller is told to slow
+  down and retry, mirroring the L2 "slow the source" rule for a source that cannot
+  itself be slowed (an HTTP client). This is the one place the bound surfaces as a
+  status code rather than backpressuring an `.await`, because the producer is
+  remote.
+- **Flow not running / unknown / another tenant's flow** → `404 Not Found`,
+  indistinguishable across all three so a cross-tenant probe never leaks a flow's
+  existence (the route resolves the flow scoped to the caller's tenant first).
+
+At-most-once vs the broker path: a 429'd push is the caller's to retry, so the
+push path is at-least-once *only if the client retries*; nexus makes no durability
+promise for a body it answered 429 to. Once accepted (200), the document rides the
+same bounded channel → processors → sink path as any other source, with the same
+write-batching and failure semantics above.
+
+## Zenoh source — RW-09 (feature-gated, at-most-once)
+
+The `zenoh` source (engine `zenoh` cargo feature, OFF by default) subscribes to a
+key expression and forwards each sample as a one-document batch. Unlike MQTT it
+implements `Source::commit` as a **no-op**: v1 is **at-most-once** — a sample
+consumed from the subscriber but lost to a crash before the sink writes it is not
+redelivered. This is a deliberate v1 scope choice (zenoh's pull/ack story differs
+from MQTT QoS); the L2 channel bound still applies, so a slow sink backs the
+samples up in the subscriber, not in unbounded process memory. Cancellation drops
+the session, closing the subscription cleanly.
+
 ## Soak test
 
 `crates/nexus-api/tests/soak/backpressure_soak.rs`, `#[ignore]`-by-default (the

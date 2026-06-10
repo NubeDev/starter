@@ -58,15 +58,72 @@ pub struct NodeDescriptor {
 /// registrations in [`crate::native_registry`] — one descriptor per buildable
 /// node `type`, no more.
 pub fn describe() -> Vec<NodeDescriptor> {
-    vec![
+    #[allow(unused_mut)]
+    let mut nodes = vec![
         http_poll(),
+        http_ingest(),
         simulator(),
         sql_processor(),
         json_to_arrow(),
         collector(),
         sse(),
         postgres(),
-    ]
+    ];
+    // The zenoh subscriber is feature-gated OFF by default; only describe it when
+    // the engine was compiled with its builder registered, so the palette never
+    // offers a node the registry cannot construct.
+    #[cfg(feature = "zenoh")]
+    nodes.push(zenoh_source());
+    nodes
+}
+
+fn http_ingest() -> NodeDescriptor {
+    NodeDescriptor {
+        kind: "http_ingest",
+        category: NodeCategory::Input,
+        label: "HTTP ingest (push)",
+        description: "Accept pushed JSON over POST /api/v1/ingest/{flow_id}; each push is one batch.",
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "capacity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Bounded-channel depth; a full channel answers callers with 429.",
+                },
+            },
+            "additionalProperties": false,
+        }),
+    }
+}
+
+#[cfg(feature = "zenoh")]
+fn zenoh_source() -> NodeDescriptor {
+    NodeDescriptor {
+        kind: "zenoh",
+        category: NodeCategory::Input,
+        label: "Zenoh subscribe",
+        description: "Subscribe to an Eclipse Zenoh key expression; each sample is one batch.",
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "endpoints": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Endpoints to connect/listen on, e.g. tcp/127.0.0.1:7447.",
+                },
+                "key_expr": str_prop("Key expression to subscribe to, e.g. site/**."),
+                "mode": {
+                    "type": "string",
+                    "enum": ["client", "peer"],
+                    "default": "client",
+                    "description": "Session mode: client connects to a router; peer meshes directly.",
+                },
+            },
+            "required": ["key_expr"],
+            "additionalProperties": false,
+        }),
+    }
 }
 
 /// A required string property.
@@ -211,6 +268,7 @@ mod tests {
         let kinds: Vec<&str> = nodes.iter().map(|n| n.kind).collect();
         for expected in [
             "http_poll",
+            "http_ingest",
             "simulator",
             "sql",
             "json_to_arrow",

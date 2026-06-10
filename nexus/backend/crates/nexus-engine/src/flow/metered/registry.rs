@@ -17,6 +17,7 @@ use crate::core::Registry;
 use crate::flow::metrics::FlowMetrics;
 use crate::flow::policy::{sink_policy, source_policy};
 use crate::native_registry;
+use crate::source::{HttpIngestSource, IngestChannels};
 
 use super::sink::MeteredSink;
 use super::source::MeteredSource;
@@ -24,14 +25,23 @@ use super::source::MeteredSource;
 /// Construct a registry for one flow run: native builders everywhere, except the
 /// `source_type` and `sink_type` builders are wrapped to count metrics and apply
 /// the flow's read/write error policy parsed from `input`/`output`.
+///
+/// `flow_id` and `channels` are the push-ingest binding: when a flow's source is
+/// `http_ingest`, its builder is registered here (the native registry cannot
+/// build it — it needs the flow id and the shared channel registry) so a pushed
+/// document reaches this exact run. Non-push flows ignore both.
 pub fn metered_registry(
+    flow_id: &str,
     source_type: &str,
     sink_type: &str,
     input: &Value,
     output: &Value,
     metrics: FlowMetrics,
+    channels: IngestChannels,
 ) -> Registry {
-    let inner = Arc::new(native_registry());
+    let mut inner = native_registry();
+    bind_http_ingest(&mut inner, flow_id, channels);
+    let inner = Arc::new(inner);
     let mut registry = native_registry();
 
     let src_policy = source_policy(input);
@@ -67,4 +77,21 @@ pub fn metered_registry(
     );
 
     registry
+}
+
+/// Register the `http_ingest` source builder on `registry`, capturing the run's
+/// flow id and shared channel registry. Done per-flow because the source needs
+/// both — which is why the static native registry omits it.
+fn bind_http_ingest(registry: &mut Registry, flow_id: &str, channels: IngestChannels) {
+    let flow_id = flow_id.to_string();
+    registry.register_source(
+        "http_ingest",
+        Box::new(move |config| {
+            Ok(Box::new(HttpIngestSource::build(
+                &flow_id,
+                channels.clone(),
+                config,
+            )?))
+        }),
+    );
 }

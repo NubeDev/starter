@@ -102,6 +102,16 @@ rhai = { version = "1.20", default-features = false, features = ["sync", "std"] 
 # off keeps the surface to the broker host/port/credentials nexus already models.
 rumqttc = { version = "0.24", default-features = false, features = ["use-rustls"] }
 
+# Eclipse Zenoh subscriber for the optional `zenoh` ingest source (RW-09). Pulled
+# in only when nexus-engine's `zenoh` feature is enabled — OFF by default per
+# roadmap §8 (same gating precedent as `mqtt`/rumqttc), so a build without the
+# zenoh transport carries none of its transitive deps. In-process peer mode lets
+# tests run a publisher→subscriber round-trip with no external router.
+# `transport_tcp` is the one transport we ship — the common deployment shape and
+# what the in-process loopback test connects over; the rest stay off to keep the
+# gated build's surface small.
+zenoh = { version = "1.0", default-features = false, features = ["transport_tcp"] }
+
 # Crypto for the R6 envelope encryption and R8 stream-token signing.
 aes-gcm = "0.10"
 hmac    = "0.12"

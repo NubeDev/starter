@@ -27,6 +27,7 @@ use tokio_util::sync::CancellationToken;
 use crate::core::{Pipeline, PipelineConfig};
 use crate::flow::metered::metered_registry;
 use crate::flow::metrics::{FlowMetrics, MetricsSnapshot};
+use crate::source::IngestChannels;
 use crate::time::now_rfc3339;
 
 /// Per-flow run state the manager observes directly: when the current/most
@@ -60,6 +61,9 @@ pub struct FlowManager {
     /// Per-flow run state, retained across stop/restart so the flows list can show
     /// the last error and the run's counters after a run ends.
     state: Arc<Mutex<HashMap<String, FlowState>>>,
+    /// Push-ingest channel registry: a running `http_ingest` flow registers its
+    /// channel sender here so the push transport can enqueue into the right run.
+    ingest: IngestChannels,
 }
 
 impl FlowManager {
@@ -67,6 +71,12 @@ impl FlowManager {
     /// `start`, so the manager holds no shared registry.
     pub fn new() -> Result<Self, String> {
         Ok(Self::default())
+    }
+
+    /// The push-ingest channel registry, for the transport that feeds
+    /// `http_ingest` flows: look a flow up by id and try to enqueue a push.
+    pub fn ingest(&self) -> &IngestChannels {
+        &self.ingest
     }
 
     /// Whether the flow `id` is currently running on this node.
@@ -114,7 +124,15 @@ impl FlowManager {
         // A fresh metrics handle per run: the metered source/sink bump it, the API
         // reads its snapshot. Installed below before the task spawns.
         let metrics = FlowMetrics::new();
-        let registry = metered_registry(&source_type, &sink_type, &input, &output, metrics.clone());
+        let registry = metered_registry(
+            id,
+            &source_type,
+            &sink_type,
+            &input,
+            &output,
+            metrics.clone(),
+            self.ingest.clone(),
+        );
 
         let config = json!({
             "input": input,

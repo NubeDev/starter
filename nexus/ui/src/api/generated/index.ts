@@ -659,6 +659,22 @@ export interface paths {
         patch: operations["update_folder"];
         trace?: never;
     };
+    "/api/v1/ingest/{flow_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["push_ingest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/insights": {
         parameters: {
             query?: never;
@@ -1882,6 +1898,19 @@ export interface components {
          *     on whole groups.
          */
         GroupId: string;
+        /**
+         * @description Acknowledges that a push was enqueued onto a flow's bounded channel. The rows
+         *     are accepted, not yet written — the flow's sink writes them asynchronously, so
+         *     this is a `202`-style accept, not a write confirmation.
+         */
+        IngestAccepted: {
+            /**
+             * Format: int64
+             * @description How many JSON documents the push contributed (one for a single object, the
+             *     element count for an array).
+             */
+            accepted: number;
+        };
         /**
          * @description How a query attaches a post-query insight transform. A request may either
          *     inline a `script` (the ad-hoc / preview case) or name a stored insight by
@@ -4832,6 +4861,47 @@ export interface operations {
             };
             /** @description Not found in this tenant */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    push_ingest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Target http_ingest flow id */
+                flow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Accepted onto the flow channel */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestAccepted"];
+                };
+            };
+            /** @description No such flow accepting pushes in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow channel full; retry after the given seconds */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

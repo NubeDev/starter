@@ -35,6 +35,16 @@ sqlx.workspace = true
 # uses the same row builder.
 chrono.workspace = true
 
+# Optional Eclipse Zenoh subscriber source, gated OFF by default (roadmap §8).
+# A default build pulls none of its transitive deps; `--features zenoh` adds the
+# subscriber node and registers it.
+zenoh = { workspace = true, optional = true }
+
+[features]
+default = []
+# Compile the `zenoh` ingest source and register it in the native registry.
+zenoh = ["dep:zenoh"]
+
 # A small bin that bulk-seeds the three simulator profiles into a datasource DB
 # for testing, reusing the simulator's row shapes.
 [[bin]]
@@ -70,6 +80,16 @@ path = "tests/source/http_poll_test.rs"
 [[test]]
 name = "source_simulator"
 path = "tests/source/simulator_test.rs"
+
+[[test]]
+name = "source_http_ingest"
+path = "tests/source/http_ingest_test.rs"
+
+# The zenoh loopback round-trip compiles only with the connector feature on.
+[[test]]
+name = "source_zenoh"
+path = "tests/source/zenoh_test.rs"
+required-features = ["zenoh"]
 
 [[test]]
 name = "native_pipeline"

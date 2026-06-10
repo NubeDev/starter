@@ -33,6 +33,11 @@ pub fn native_registry() -> Registry {
         "simulator",
         Box::new(|c| Ok(Box::new(SimulatorSource::from_config(c)?))),
     );
+    #[cfg(feature = "zenoh")]
+    registry.register_source(
+        "zenoh",
+        Box::new(|c| Ok(Box::new(crate::source::zenoh::ZenohSource::build(c)?))),
+    );
 
     registry.register_processor(
         "json_to_arrow",

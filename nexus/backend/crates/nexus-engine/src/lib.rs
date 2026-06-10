@@ -28,4 +28,5 @@ pub use native_registry::native_registry;
 pub use registry::{describe, NodeCategory, NodeDescriptor};
 pub use runner::{LiveRunner, QueryOutcome, QueryRunner};
 pub use sink::cap::Caps;
+pub use source::{IngestChannels, IngestError};
 pub use stream_registry::{attach, register, Attach, StreamKey, Subscription};

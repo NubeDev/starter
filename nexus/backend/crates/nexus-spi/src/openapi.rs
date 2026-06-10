@@ -35,6 +35,7 @@ use crate::dto::flow::{
     CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDetail, FlowExport, FlowMetrics,
     FlowSummary, NodeCategory, NodeType, NodeTypeList, UpdateFlowRequest,
 };
+use crate::dto::ingest::IngestAccepted;
 use crate::dto::me::MeResponse;
 use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
 use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
@@ -119,6 +120,7 @@ use crate::Problem;
     NodeType,
     NodeTypeList,
     NodeCategory,
+    IngestAccepted,
     DryRunRequest,
     DryRunResponse,
     AlertCondition,

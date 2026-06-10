@@ -2170,6 +2170,52 @@
         }
       }
     },
+    "/api/v1/ingest/{flow_id}": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "push_ingest",
+        "parameters": [
+          {
+            "name": "flow_id",
+            "in": "path",
+            "description": "Target http_ingest flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted onto the flow channel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestAccepted"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such flow accepting pushes in this tenant"
+          },
+          "429": {
+            "description": "Flow channel full; retry after the given seconds"
+          }
+        }
+      }
+    },
     "/api/v1/insights": {
       "get": {
         "tags": [
@@ -5029,6 +5075,21 @@
       "GroupId": {
         "type": "string",
         "description": "Identifier shared by every [`super::Change`] recorded inside a\nsingle [`super::ChangeRecorder::transaction`] call. Undo operates\non whole groups."
+      },
+      "IngestAccepted": {
+        "type": "object",
+        "description": "Acknowledges that a push was enqueued onto a flow's bounded channel. The rows\nare accepted, not yet written — the flow's sink writes them asynchronously, so\nthis is a `202`-style accept, not a write confirmation.",
+        "required": [
+          "accepted"
+        ],
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "format": "int64",
+            "description": "How many JSON documents the push contributed (one for a single object, the\nelement count for an array).",
+            "minimum": 0
+          }
+        }
       },
       "InsightRef": {
         "type": "object",

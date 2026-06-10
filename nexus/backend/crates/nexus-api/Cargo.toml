@@ -170,6 +170,10 @@ name = "routes_flows_e2e"
 path = "tests/routes/flows/flow_e2e_test.rs"
 
 [[test]]
+name = "routes_ingest_e2e"
+path = "tests/routes/ingest/push_e2e_test.rs"
+
+[[test]]
 name = "routes_alerts_e2e"
 path = "tests/routes/alerts/alert_e2e_test.rs"
 

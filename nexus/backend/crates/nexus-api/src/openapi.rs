@@ -74,6 +74,7 @@ use utoipa::OpenApi;
         crate::routes::flows::stop::stop_flow,
         crate::routes::flows::export::export_flow,
         crate::routes::flows::import::import_flow,
+        crate::routes::ingest::push::push_ingest,
         crate::routes::alerts::rules::list_rules,
         crate::routes::alerts::rules::create_rule,
         crate::routes::alerts::rules::get_rule,
