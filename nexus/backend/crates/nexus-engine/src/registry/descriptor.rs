@@ -202,8 +202,49 @@ fn json_to_arrow() -> NodeDescriptor {
         kind: "json_to_arrow",
         category: NodeCategory::Processor,
         label: "JSON → Arrow",
-        description: "Parse a JSON-document batch into an Arrow record batch for SQL processing.",
-        config_schema: json!({ "type": "object", "additionalProperties": true }),
+        description: "Parse a JSON-document batch into an Arrow record batch for SQL processing. \
+            Declare a column schema to pin the output types (preferred for a warehouse sink), or \
+            leave it empty to infer the schema from the first batch.",
+        // The only config is the OPTIONAL declared schema: a list of typed
+        // columns. Empty/absent → infer from the first batch. The closed type set
+        // mirrors `processor::declared_schema::DeclaredType`.
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "schema": {
+                    "type": "object",
+                    "title": "Declared columns",
+                    "description": "Optional. Pin the output columns and their types. Leave empty to infer from the first batch.",
+                    "properties": {
+                        "fields": {
+                            "type": "array",
+                            "title": "Columns",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": { "type": "string", "description": "Column name." },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": ["bool", "int", "float", "string", "timestamp"],
+                                        "description": "Column type. `timestamp` parses an RFC3339 string.",
+                                    },
+                                    "nullable": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "description": "Whether the column may be null (default true).",
+                                    },
+                                },
+                                "required": ["name", "type"],
+                                "additionalProperties": false,
+                            },
+                        },
+                    },
+                    "required": ["fields"],
+                    "additionalProperties": false,
+                },
+            },
+            "additionalProperties": false,
+        }),
     }
 }
 

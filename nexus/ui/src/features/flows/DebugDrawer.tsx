@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Bug, Play, Radio } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
@@ -374,15 +374,49 @@ function sinkTableName(output: unknown): string | null {
 
 // Query the flow's sink table without leaving the drawer — the flow scopes the
 // connection + table, so there's no datasource to pick or table name to retype.
-// `{table}` expands server-side to the flow's table; the default is recent rows.
+// On open it introspects the real columns and builds a smart default query
+// (ordered by a timestamp column when one exists), so the user gets recent rows
+// with zero SQL knowledge. `{table}` expands server-side to the flow's table.
 function TableTab({ flowId, table }: { flowId: string; table: string }) {
   const client = useStarterClient();
-  const defaultSql = `SELECT * FROM {table} ORDER BY 1 DESC LIMIT 50`;
-  const [sql, setSql] = useState(defaultSql);
+  const [sql, setSql] = useState("");
+  const [ready, setReady] = useState(false);
 
-  const run = useMutation<QueryResponse, Error>({
-    mutationFn: () => queryFlowTable(client, flowId, { sql }),
+  // Learn the table's shape with a zero-row probe (cheap, schema-agnostic — works
+  // whether the flow declared a schema or inferred it). Columns drive the smart
+  // default and the column-help line.
+  const probe = useMutation<QueryResponse, Error>({
+    mutationFn: () => queryFlowTable(client, flowId, { sql: "SELECT * FROM {table}", limit: 1 }),
   });
+  const run = useMutation<QueryResponse, Error, string>({
+    mutationFn: (q: string) => queryFlowTable(client, flowId, { sql: q }),
+  });
+
+  // On first open: probe → build the smart default → run it once.
+  useEffect(() => {
+    if (ready) return;
+    probe.mutate(undefined, {
+      onSuccess: (res) => {
+        const cols = res.columns ?? [];
+        const tsCol = cols.find((c) => c.type === "timestamp")?.name;
+        const order = tsCol ? ` ORDER BY "${tsCol}" DESC` : "";
+        const def = `SELECT * FROM {table}${order} LIMIT 50`;
+        setSql(def);
+        setReady(true);
+        run.mutate(def);
+      },
+      onError: () => {
+        // Still let the user query manually even if the probe failed.
+        const def = `SELECT * FROM {table} LIMIT 50`;
+        setSql(def);
+        setReady(true);
+      },
+    });
+    // run/probe are stable mutation handles; we intentionally run this once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
+  const columns = probe.data?.columns ?? [];
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
@@ -393,22 +427,39 @@ function TableTab({ flowId, table }: { flowId: string; table: string }) {
           spellCheck={false}
           className="h-16 flex-1 resize-none font-mono text-xs"
           aria-label={`SQL over ${table}`}
+          placeholder={ready ? undefined : "Loading the table…"}
         />
         <Button
           size="sm"
-          onClick={() => run.mutate()}
-          disabled={run.isPending}
+          onClick={() => run.mutate(sql)}
+          disabled={run.isPending || !sql.trim()}
           className="shrink-0"
         >
           <Play className="size-3.5" aria-hidden />
           {run.isPending ? "Running…" : "Run"}
         </Button>
       </div>
-      <p className="text-[11px] text-muted-foreground">
-        Read-only, scoped to <span className="font-mono">{table}</span> ·{" "}
-        <span className="font-mono">{"{table}"}</span> expands to the flow's
-        sink table.
-      </p>
+
+      {/* Column help: show what's actually in the table so the user doesn't need
+          to know the schema. */}
+      {columns.length > 0 ? (
+        <p className="flex flex-wrap gap-1 text-[11px] text-muted-foreground">
+          <span className="font-mono">{table}</span>
+          <span>·</span>
+          {columns.map((c) => (
+            <span key={c.name} className="font-mono">
+              {c.name}
+              <span className="text-muted-foreground/60">:{c.type}</span>
+            </span>
+          ))}
+        </p>
+      ) : (
+        <p className="text-[11px] text-muted-foreground">
+          Read-only, scoped to <span className="font-mono">{table}</span> ·{" "}
+          <span className="font-mono">{"{table}"}</span> expands to the sink table.
+        </p>
+      )}
+
       {run.isError ? (
         <p role="alert" className="text-xs text-destructive">
           {run.error.message}
@@ -419,7 +470,7 @@ function TableTab({ flowId, table }: { flowId: string; table: string }) {
           <ResultTable result={run.data} />
         ) : (
           <p className="p-3 text-xs text-muted-foreground">
-            Run the query to see what landed in the table.
+            {ready ? "Run the query to see rows." : "Loading the table…"}
           </p>
         )}
       </div>
