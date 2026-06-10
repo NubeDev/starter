@@ -20,6 +20,7 @@
 | 8 | RW-08 | Backpressure hardening + soak + flow metrics | ⬜ | | | | BACKPRESSURE.md + make soak |
 | 9 | RW-09 | Transport breadth: http_ingest + Zenoh source | ⬜ | | | | human-added 2026-06-10; zenoh feature-gated OFF |
 | 10 | RW-04b | File-datasource persistence (RW-04 fix pass) | ⬜ | | | | supervisor-queued from RW-05's TODO; spec = TODOs.md entry "File datasource cannot be persisted" (its Proposed section is the scope): nullable `config jsonb` + nullable secret cols (20xx block), record/insert/get/resolve updates, stored-Parquet⋈PG e2e; RW-04 lane files only |
+| 11 | RW-07b | Extension ingest data-plane: sources/sinks + ingest.write (RW-07 items 2-4) | ⬜ | | | | supervisor-queued from RW-07's deferral TODO; spec = RW-07_EXTENSION_DATA_PLANE.md items 2-4 + the TODOs.md entry "Extension data-plane sources/sinks deferred" (incl. its outstanding acceptance bullets: tenant-stamp e2e, channel-full retry_after test, hello purge assertion); migration 2202+; completes the human's "incoming is generic" requirement |
 
 ## Loop log (append one line per wake)
 

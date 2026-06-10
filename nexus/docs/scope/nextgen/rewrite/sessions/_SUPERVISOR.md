@@ -287,3 +287,103 @@
   jsonb + nullable secrets in the 20xx block, RW-04 lane). Loop picks it up after RW-09.
   Self-check: supervisor job alive. Queue 5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: RW-06 progress —
   watch its session log record the DataFusion-vs-Polars spike outcome (§8 requires it).
+- 2026-06-10 04:29 — All healthy, NO action. RW-06 wake PID 928731 ALIVE 4.5min, FAST start:
+  crates/nexus-insights scaffolded (workspace member added; engine/{mod,convert,run_sql}.rs +
+  error.rs <4min) and the §8 ENGINE DECISION already recorded in RW-06.md: DataFusion chosen
+  (in-tree, Arrow-native, no second Arrow stack) — the Polars de-approval held; zero new heavy
+  deps. run_sql.rs naming suggests primitives compile to SQL window/aggregate exprs over the
+  RW-02 SessionContext, as the spec sketched. RW-04b row 10 visible in queue (committed
+  44963b71). Cron firing, lock kernel-HELD, no STOP, supervisor job alive. Queue 5✅/1🔵/4⬜,
+  TODOs 5. NEXT WAKE: expect sandbox.rs (Rhai limits + DummyModuleResolver) + api.rs curated
+  surface + 21xx migration; gate checks = sandbox kill-switch tests + no row-increasing
+  primitives + migration number 21xx not 18xx.
+- 2026-06-10 04:34 — All healthy, NO action. RW-06 wake PID 928731 ALIVE 9min, the full crate
+  shape from the spec is materializing: sandbox.rs + limits.rs (the Rhai jail), api.rs (curated
+  surface), run.rs (run_insight entry), engine/ops/{filter,resample}.rs (verb-per-file ops —
+  HOW-TO-CODE layout; resample = the date_bin+group-by hard case being done natively). All
+  <4min. Cron firing + skipping (04:30), lock kernel-HELD, no STOP, supervisor job alive.
+  Queue 5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: expect remaining ops (rolling/zscore/lag) + 21xx
+  migration + insights CRUD routes + query-path integration, then tests.
+- 2026-06-10 04:39 — All healthy, NO action. RW-06 wake PID 928731 ALIVE 14min, late-mid phase:
+  MIGRATION NUMBER CORRECT — 2101_insights.sql in the 21xx block exactly as the codex-rebased
+  roadmap §5 requires (the stale-18xx trap was avoided; the doc-update mechanism works). Tests
+  being written: sandbox_limits_test.rs (kill-switch acceptance) + api_primitives_test.rs +
+  run_insight_test.rs; DTO/openapi churn (spi openapi.rs + dto/mod.rs) = insights CRUD DTOs
+  landing. Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue
+  5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: expect routes + UI codegen + workspace test run, then
+  commit+gate (envelope projects ~20-25min total, on track).
+- 2026-06-10 04:43 — All healthy, NO action. RW-06 wake PID 928731 ALIVE 19min, working in TWO
+  commits (smart for a 2-layer WS): crate committed FIRST (643aa958 — nexus-insights:
+  DataFusion vectorized surface + Rhai sandbox), now wiring the API layer (nexus-api/src/
+  insights/{apply,mod}.rs + openapi.rs + lib.rs <4min — the query-path apply seam + CRUD).
+  Remote 1 behind (gate pushes at ✅, fine). Cron firing + skipping, lock kernel-HELD, no
+  STOP, supervisor job alive. Queue 5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: expect API commit +
+  UI codegen + gate ✅, then RW-07 spawn (which also owes the RW-04 palette descriptor
+  follow-up).
+- 2026-06-10 04:48 — All healthy, NO action. RW-06 wake PID 928731 ALIVE 23min, integration
+  sweep across the query path: insights/apply.rs + routes/query/run.rs + routes/datasources/
+  query.rs (the apply seam on BOTH query routes) + cache/key.rs (folding insight into the C3
+  cache key — correct, an insight changes the result) + host_methods.rs + federation/mod.rs
+  (insight after federated results too). All 🔶-append-shaped files, in-spec. 23min of a WS
+  whose envelope I projected 20-25; continuous churn, no stall. Cron firing + skipping, lock
+  kernel-HELD, no STOP, supervisor job alive. Queue 5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: if still
+  🔵 at ~28min with codegen running that's normal tail; only investigate harder if file churn
+  stops AND no commit by ~33min.
+- 2026-06-10 04:53 — All healthy, NO action. RW-06 wake PID 928731 ALIVE 28min, classic
+  finishing tail: UI client codegen done (ui/src/api/generated/index.ts <4min) + e2e tests
+  being written (insights_e2e_test.rs CRUD + query/insight_e2e_test.rs apply-path). This is
+  the workspace-test-then-commit phase. 28min vs 20-25 projection — acceptable for the widest
+  WS so far (new crate + 2 query routes + cache key + federation + CRUD + UI types); churn
+  continuous, well short of the 33min investigate bar. Cron firing + skipping, lock kernel-
+  HELD, no STOP, supervisor job alive. Queue 5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: commit+gate
+  expected; if not committed by ~33min AND churn stopped, inspect the wake's recent output
+  in cron.log before judging.
+- 2026-06-10 04:58 — All healthy, NO action. RW-06 ✅ COMMITTED+PUSHED (d7d573bb + f8648aa1,
+  origin == HEAD, 31min): insights vertical complete — DataFusion engine (every primitive
+  lowers to one SQL stmt, none grows rows — both review rules honored), Rhai sandbox
+  (op/depth/string/deadline caps, no fs/net/eval/import), insight applied post-cache before
+  serialize, 2101_insights.sql RLS, openapi +273 add-only, UI green. Wake exited clean, lock
+  FREE. LOCK-FREE BUILD CHECK: cargo check --workspace GREEN (32s, real). NEW TODO (6th):
+  two PRE-EXISTING nexus-api test binaries fail compile (grant_gate_test — same drift flagged
+  in the PREVIOUS run's TODOs; identity wiring_test — assemble arity) — stale drift from the
+  nextgen run, NOT rewrite regressions, out of every rewrite lane; gates pass because these
+  are docker/feature-gated binaries outside the default workspace test set. NOT repairing
+  (out-of-lane per rules); flagged for the final human report as a 5-minute manual fix or a
+  one-off drift pass. Queue 6✅/4⬜ (RW-07/08/09/04b). Next firing spawns RW-07. Self-check:
+  supervisor job alive.
+- 2026-06-10 05:02 — All healthy, NO action. Clean handoff #6: 05:00:01 firing spawned RW-07
+  (extension data-plane) — fresh wake PID 1010913 ALIVE 3min, row 🔵, doc-reading phase
+  (no files yet, normal; this WS has the biggest required-reading list: WS-14 extension
+  system + RW-06 insights + RW-04 writer registry). Lock kernel-HELD, cron INSTALLED +
+  firing, no STOP, supervisor job alive. Queue 6✅/1🔵/3⬜, TODOs 6 (the 2 stale-drift test
+  binaries documented last wake — final-report item, untouched). NEXT WAKE: expect
+  contributes.insights boot-lint path first (spec's smallest slice) + ingest.write host
+  method scaffolding; gate must also check the RW-04 palette-descriptor follow-up this WS
+  owes (TODOs.md).
+- 2026-06-10 05:07 — All healthy, NO action. RW-07 wake PID 1010913 ALIVE 7.5min, on the
+  spec's step 1 exactly (insights contribution = smallest slice first): extensions/
+  {contribute_insights,cleanup_insights}.rs NEW + boot.rs/post_install.rs/mod.rs appends +
+  nexus-store extension_insight/ store module + insights/apply.rs touched (resolution
+  order: extension-namespaced insight ids). Mirrors the proven query-kinds
+  contribute/cleanup pattern file-for-file. Cron firing + skipping, lock kernel-HELD, no
+  STOP, supervisor job alive. Queue 6✅/1🔵/3⬜, TODOs 6. NEXT WAKE: expect ingest.write
+  host method + engine extension source/sink nodes + hello-extension demo insight.
+- 2026-06-10 05:12 — All healthy, NO action. RW-07 wake PID 1010913 ALIVE 12min, single file
+  in churn window: extension_insight_e2e_test.rs — testing the insights-contribution slice
+  before moving to the ingest.write half (test-as-you-go, consistent with this WS's
+  slice-by-slice plan). Narrow churn at 12min = likely also compiling/running tests between
+  edits. Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job alive. Queue
+  6✅/1🔵/3⬜, TODOs 6. NEXT WAKE: expect the ingest.write host method + engine extension
+  nodes phase; this WS may run a longer envelope (two distinct halves) — no concern before
+  ~30min absent stalled churn.
+- 2026-06-10 05:18 — RW-07 ✅ PARTIAL but charter-clean (167c1059 + 325b3f0d, pushed, 17min):
+  shipped the insights slice (spec items 1+5 — contributes.insights boot lint/materialise/
+  cleanup, 2201 global table mirroring query-kinds, InsightRef.insight_name query path,
+  hello.zscore demo, openapi +8 add-only) and DEFERRED items 2-4 (ingest.write host method +
+  extension source/sink nodes) to a thorough TODO rather than stubbing across two workspaces
+  — correct per charter. BUT items 2-4 ARE the human's "incoming is generic" requirement, so
+  SUPERVISOR ACTION: queued row 11 RW-07b (spec = RW-07 items 2-4 + the TODO's outstanding
+  acceptance bullets, migration 2202+), same precedent as RW-04b. Gate note: RW-07's row
+  honestly says PARTIAL — acceptable because the deferred scope is now a queue row, not lost.
+  Self-check: supervisor job alive. Queue 7✅/4⬜ (RW-08, RW-09, RW-04b, RW-07b). Next firing
+  spawns RW-08 (soak). TODOs 7.
