@@ -119,12 +119,18 @@ With `time_range` 09:00–11:00, `interval_secs: 60`, `$site=site-001`: line →
 buckets, stat → 1, bar → 2 kinds, table → 100 rows; SQL-injection value for
 `$site` binds inert (0 rows, table intact).
 
-### NOT verified: visual render
-The browser render (panels actually drawing) was **not** confirmed this session —
-no Chrome DevTools MCP available. Eyeball it at
-`http://localhost:4790/d/energy` with the time picker set to a window that
-contains data (e.g. last 1–6h while datapump runs) and `$site` selected. If a
-panel is blank, widen the time range first (the data is "now"-ish).
+### Visual render: verified (Playwright)
+Panel rendering is now confirmed in a real browser via the chart-settings
+harness (`nexus/ui/e2e/chart-settings.spec.ts`, `pnpm test:e2e`) — see
+[CHARTS.md](CHARTS.md). That run also surfaced + fixed the real bug that made
+panels show "No data" with a working query: the panel adapter only persisted
+`fields`, dropping unit/decimals/thresholds/legend/axes/transforms on save
+(fixed — full display config now round-trips).
+
+To eyeball this `energy` dashboard: `http://localhost:4790/d/energy` with the
+time picker on a window that contains data (last 1–6h while datapump runs) and
+`$site` selected. If a panel is blank, widen the time range first (data is
+"now"-ish).
 
 ---
 
