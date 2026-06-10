@@ -28,7 +28,11 @@ import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { nextSlot } from "@/features/canvas/placement";
 import { useAddPanel } from "@/features/dashboards/useAddPanel";
+import { useInsights } from "@/features/insights/useInsights";
 import { WIDGET_CATALOG, WIDGET_TYPES } from "@/features/widgets/catalog";
+
+// Select sentinel for "no insight" — Radix Select can't hold an empty value.
+const NO_INSIGHT = "__none__";
 
 // Picker order and per-type metadata (label, default footprint, whether
 // an x column is needed) come from the widget catalog — the one place a
@@ -58,6 +62,8 @@ export function AddWidgetDialog({
   const [title, setTitle] = useState("");
   const [datasourceId, setDatasourceId] = useState<string | undefined>();
   const [sql, setSql] = useState("");
+  const [insightId, setInsightId] = useState<string | undefined>();
+  const insights = useInsights();
   const [xCol, setXCol] = useState("");
   const [valueCol, setValueCol] = useState("");
 
@@ -85,7 +91,11 @@ export function AddWidgetDialog({
         ? { ...initial.position, w: size.w, h: size.h }
         : nextSlot(dashboard.widgets, size.w, size.h),
       config: {
-        query: { datasourceId: datasourceId!, sql: sql.trim() },
+        query: {
+          datasourceId: datasourceId!,
+          sql: sql.trim(),
+          ...(insightId ? { insightId } : {}),
+        },
         fields: {
           x: needsX(type) ? xCol.trim() || undefined : undefined,
           series: [{ value: valueCol.trim() }],
@@ -153,6 +163,32 @@ export function AddWidgetDialog({
               placeholder="select … from … limit 100"
               ariaLabel="Panel SQL"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="panel-insight">Insight (optional)</Label>
+            <Select
+              value={insightId ?? NO_INSIGHT}
+              onValueChange={(v) =>
+                setInsightId(v === NO_INSIGHT ? undefined : v)
+              }
+            >
+              <SelectTrigger id="panel-insight">
+                <SelectValue
+                  placeholder={insights.isPending ? "Loading…" : "None"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_INSIGHT}>None</SelectItem>
+                {(insights.data ?? []).map((ins) => (
+                  <SelectItem key={ins.id} value={ins.id}>
+                    {ins.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Applies a saved transform to this panel's query result.
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {needsX(type) ? (

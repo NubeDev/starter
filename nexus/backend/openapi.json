@@ -4562,6 +4562,17 @@
             "format": "uuid",
             "description": "Datasource this panel queries."
           },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional post-query insight (RW-06) to attach at creation. Omitted = none."
+          },
+          "insight_params": {
+            "description": "Params bound as the insight script's `params`."
+          },
           "layout": {
             "description": "Grid layout; defaults to empty when omitted."
           },
@@ -6079,6 +6090,17 @@
             "type": "string",
             "format": "uuid"
           },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional post-query insight (RW-06) applied to the panel's result. `None`\n= none attached, or the referenced insight was deleted (FK SET NULL)."
+          },
+          "insight_params": {
+            "description": "Params bound as the insight script's `params`. `None` = no params."
+          },
           "layout": {
             "description": "Opaque grid layout the canvas owns."
           },
@@ -6112,6 +6134,17 @@
             ],
             "format": "uuid",
             "description": "Datasource this panel queries; `null` when the source dashboard had none\nor the importing tenant should re-bind it."
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional post-query insight id (RW-06). Carried so a dashboard's insight\nwiring survives export within a tenant. NOTE: insight ids are tenant-\nscoped, so importing into a *different* tenant won't resolve this id —\nimport drops an unresolved id rather than failing (the same caveat as\n`datasource_id`). The insight's script is not inlined (it lives in the\ntenant's insight library)."
+          },
+          "insight_params": {
+            "description": "Params bound as the insight script's `params`."
           },
           "layout": {},
           "sql": {
@@ -7641,12 +7674,27 @@
         "type": "object",
         "description": "Partial update of a panel. `None` fields are left unchanged.",
         "properties": {
+          "clear_insight": {
+            "type": "boolean",
+            "description": "Detach the panel's insight (and clear its params). Takes precedence over\n`insight_id`."
+          },
           "datasource_id": {
             "type": [
               "string",
               "null"
             ],
             "format": "uuid"
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Attach/replace this panel's post-query insight (RW-06). Ignored when\n`clear_insight` is true; `None` (with `clear_insight` false) leaves the\ninsight unchanged. This mirrors the `folder_id` + `clear_folder` pair on\ndashboards — a bool flag carries the \"detach\" intent rather than an\n`Option<Option<_>>`, which serde can't distinguish from \"absent\" on the\nwire (a bug found in live testing: an explicit JSON `null` deserialized to\n\"leave unchanged\", so detach never fired)."
+          },
+          "insight_params": {
+            "description": "Set the insight's params. Ignored when `clear_insight` is true; cleared\nalongside the insight on detach. `None` leaves params unchanged."
           },
           "layout": {},
           "sql": {

@@ -20,7 +20,15 @@ export const QUICK_RANGES: ReadonlyArray<QuickRange> = [
   { label: "Last 7 days", range: { from: "now-7d", to: "now" } },
   { label: "Last 30 days", range: { from: "now-30d", to: "now" } },
   { label: "Today", range: { from: "now/d", to: "now" } },
-  { label: "Yesterday", range: { from: "now-1d/d", to: "now-1d/d" } },
+  // Yesterday = [start of yesterday, start of today). The `to` is `now/d`, NOT
+  // `now-1d/d` — both being `now-1d/d` collapsed to a single instant ("From must
+  // be before to" → empty range, no data). Same start-vs-end pattern for the
+  // last-week / last-month ranges below.
+  { label: "Yesterday", range: { from: "now-1d/d", to: "now/d" } },
+  { label: "This week", range: { from: "now/w", to: "now" } },
+  { label: "Last week", range: { from: "now-1w/w", to: "now/w" } },
+  { label: "This month", range: { from: "now/M", to: "now" } },
+  { label: "Last month", range: { from: "now-1M/M", to: "now/M" } },
 ];
 
 /** The refresh-interval options, in seconds (`0` = off). */

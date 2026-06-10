@@ -3188,20 +3188,27 @@ export interface components {
         };
         /** @description Partial update of a panel. `None` fields are left unchanged. */
         UpdatePanelRequest: {
+            /**
+             * @description Detach the panel's insight (and clear its params). Takes precedence over
+             *     `insight_id`.
+             */
+            clear_insight?: boolean;
             /** Format: uuid */
             datasource_id?: string | null;
             /**
              * Format: uuid
-             * @description Three-valued (RW-06): omitted = leave the insight unchanged; `null` =
-             *     detach the insight; an id = attach/replace it. The `Option<Option<_>>`
-             *     encodes this — `None` (absent), `Some(None)` (explicit null → detach),
-             *     `Some(Some(id))` (set). `#[serde(default)]` (not `skip_serializing_if`) so
-             *     an explicit `null` deserializes to `Some(None)` rather than being elided.
+             * @description Attach/replace this panel's post-query insight (RW-06). Ignored when
+             *     `clear_insight` is true; `None` (with `clear_insight` false) leaves the
+             *     insight unchanged. This mirrors the `folder_id` + `clear_folder` pair on
+             *     dashboards — a bool flag carries the "detach" intent rather than an
+             *     `Option<Option<_>>`, which serde can't distinguish from "absent" on the
+             *     wire (a bug found in live testing: an explicit JSON `null` deserialized to
+             *     "leave unchanged", so detach never fired).
              */
             insight_id?: string | null;
             /**
-             * @description Three-valued like `insight_id`: omitted = unchanged, `null` = clear params,
-             *     object = set params.
+             * @description Set the insight's params. Ignored when `clear_insight` is true; cleared
+             *     alongside the insight on detach. `None` leaves params unchanged.
              */
             insight_params?: unknown;
             layout?: unknown;

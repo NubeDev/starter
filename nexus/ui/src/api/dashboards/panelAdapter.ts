@@ -164,12 +164,17 @@ export function widgetToUpdatePanel(widget: Widget): UpdatePanelRequest {
     datasource_id: q.datasourceId,
     viz: widget.type,
     layout: stashLayout(widget),
-    // A full panel save: always send `insight_id` so clearing it in the editor
-    // DETACHES (sends `null`), not "leave unchanged". The backend's update DTO is
-    // three-valued — `null` detaches, an id sets — and a full save expresses the
-    // editor's current state, so we send the explicit value either way. Params
-    // ride along, cleared to `null` when no insight is attached.
-    insight_id: q.insightId ?? null,
-    insight_params: q.insightId ? (q.insightParams ?? null) : null,
+    // A full panel save expresses the editor's current state, so the insight is
+    // either set or explicitly detached — never "leave unchanged". The backend
+    // detach intent rides a `clear_insight` flag (not a wire `null`, which serde
+    // can't tell from "absent"), mirroring dashboards' `clear_folder`.
+    ...(q.insightId
+      ? {
+          insight_id: q.insightId,
+          ...(q.insightParams !== undefined
+            ? { insight_params: q.insightParams }
+            : {}),
+        }
+      : { clear_insight: true }),
   };
 }

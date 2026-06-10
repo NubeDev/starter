@@ -61,8 +61,11 @@ curl -s -b "$JAR" -X POST $BASE/api/v1/insights/preview \
     [nexus-insights/src/limits.rs](../../../backend/crates/nexus-insights/src/limits.rs)).
 - ✅ Determinism: same input frame + same params ⇒ byte-identical output rows
   (`df.zscore("value")` hashed identical across two calls).
-- [ ] A saved insight referenced from a panel changes the rendered result. _(not
-  re-run this sweep.)_
+- ✅ **A saved insight referenced from a panel changes the rendered result.**
+  Verified 2026-06-10 — a panel query with `insight:{insight_id,params}` runs the
+  stored script server-side after the SQL and returns its derived columns
+  (`value_zscore`, `value_anomaly`, `value_roll_mean`). See the **insight-backed
+  dashboard recipe** below.
 
 ### Example insight (verified)
 
@@ -73,6 +76,101 @@ curl -s -b "$JAR" -X POST $BASE/api/v1/insights/preview \
   "params": { "threshold": 2.0 }
 }
 ```
+
+---
+
+## Insight-backed dashboard recipe (VERIFIED, 2026-06-10)
+
+A whole dashboard whose panels render **insight-derived** columns, not just raw
+SQL output. The `insights-demo` dashboard (`/d/insights-demo`) was built this way
+and all four panel queries verified live against `telemetry_typed`
+(`elec`, `site-002`, 726 rows in a 09:00–13:00 window).
+
+### How a panel attaches an insight
+
+A panel persists `insight_id` + `insight_params` (own columns on `nexus_panels`,
+**not** in the `layout` blob). The widget query hook
+(`ui/src/features/widgets/useWidgetQuery.ts`) sends them as the optional
+`insight:{insight_id,params}` on the **same** `/datasources/{id}/query` call that
+carries `time_range` / `interval_secs` / `variables`. The server runs the panel's
+SQL, then runs the stored insight script over the result frame, then serialises —
+so the insight's new columns arrive as ordinary result columns the chart maps via
+`layout.fields.series[]`. **Caps apply after the insight: it can shrink the frame,
+never grow it.**
+
+> ⚠️ **GOTCHA — whole-number params arrive as `i64`, breaking `f64`-typed
+> primitives.** `anomalies(col, z: number)` is registered for `f64`. A param like
+> `{"threshold": 2.0}` round-trips through jsonb/serde and reaches Rhai as **`2`
+> (i64)**, so `anomalies("value", params.threshold)` fails with
+> `Function not found: anomalies (Frame, String, i64)`. This bit the
+> `elec-anomaly-zscore` insight live — curl with `2.0` worked, but the saved
+> panel (whose `2.0` collapsed to an int) errored in the UI. **Fix in the script,
+> not the caller:** coerce to float with arithmetic — `params.threshold * 1.0`
+> (Rhai's `to_float()` is **not** registered for `i64` in this sandbox; use `* 1.0`
+> or `+ 0.0`). The verified script is:
+> ```rhai
+> let z = params.threshold * 1.0;
+> df.zscore("value").anomalies("value", z)
+> ```
+> Integer-typed primitives (`rolling_mean(col, window: int)`) are unaffected — they
+> *want* `i64`, so `params.window` passes straight through.
+
+> The insight's output column names are what you map in `layout.fields`. For the
+> registered primitives: `zscore("value")` → `value_zscore`,
+> `anomalies("value", z)` → `value_anomaly` (bool), `rolling_mean("value", n)` →
+> `value_roll_mean` (note: `roll`, not `rolling`). Confirm names with a
+> `/insights/preview` call before wiring a panel — a name typo = an empty series
+> = "No data" with a working query (same trap as DASHBOARDS.md's `layout.fields`).
+
+### Build (API)
+
+```bash
+# 1. save the insights (compiles the script; 400 on bad syntax)
+ANOM=$(post /api/v1/insights '{"name":"elec-anomaly-zscore",
+  "script":"df.zscore(\"value\").anomalies(\"value\", params.threshold)",
+  "params_schema":{"type":"object","properties":{"threshold":{"type":"number","default":2.0}}}}' \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+ROLL=$(post /api/v1/insights '{"name":"rolling-mean-smooth",
+  "script":"df.rolling_mean(\"value\", params.window)",
+  "params_schema":{"type":"object","properties":{"window":{"type":"integer","default":5}}}}' \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+
+# 2. dashboard + a panel that references an insight by id (with per-panel params)
+post /api/v1/dashboards '{"slug":"insights-demo","name":"Insights Demo"}'
+post /api/v1/dashboards/insights-demo/panels "$(python3 -c 'import json,os;print(json.dumps({
+  "title":"Z-score","datasource_id":os.environ["DSID"],
+  "sql":"SELECT timestamp AS time, value FROM telemetry_typed WHERE $__timeFilter(timestamp) AND kind='elec' AND site_id = $site ORDER BY timestamp",
+  "viz":"line","insight_id":os.environ["ANOM"],"insight_params":{"threshold":2.0},
+  "layout":{"x":0,"y":0,"w":12,"h":7,"fields":{"x":"time","xKind":"time",
+    "series":[{"value":"value_zscore","label":"Z-score"}]}}}))')"
+```
+
+The four panels built: **value + rolling-mean overlay** (`rolling-mean-smooth`,
+two series `value`+`value_roll_mean`), **z-score line**, a **latest-z-score stat**
+(reduce→last transform), and an **anomaly table** (time/value/zscore/anomaly).
+
+### Verified (data layer, replaying each panel's exact widget request)
+
+With `time_range` 09:00–13:00, `$site=site-002`, and the panel's `insight` ref:
+
+| Panel | insight | params | result |
+|-------|---------|--------|--------|
+| value + rolling | rolling-mean-smooth | `window:5` | cols `value,value_roll_mean`, 34 buckets |
+| z-score line | elec-anomaly-zscore | `threshold:2.0` | cols incl `value_zscore`, 726 rows, **25** anomalies |
+| anomaly table | elec-anomaly-zscore | `threshold:1.5` | same cols, **108** anomalies |
+
+✅ **Per-panel params are honoured** — the same stored insight flags 25 anomalies
+at `threshold:2.0` and 108 at `1.5`, proving `insight_params` rides per-panel.
+✅ **Refs round-trip** — `GET /api/v1/dashboards/insights-demo` returns each
+panel's `insight_id` + `insight_params` + `layout.fields` intact.
+
+To eyeball: `http://localhost:4790/d/insights-demo?from=now-6h&to=now` with
+`$site=site-002` (widen the range if blank — data is "now"-ish while datapump runs).
+
+- ⬜ **UI render** (the insight series actually drawing in the browser) — the data
+  + persistence + request path are proven; the visual was not run this sweep (no
+  Chrome DevTools MCP in the session). Verify via the link above or the Playwright
+  harness pattern in CHARTS.md.
 
 ---
 

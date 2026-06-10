@@ -68,17 +68,29 @@ pub async fn update_panel(
     {
         return resp;
     }
+    // Collapse the wire's (insight_id, clear_insight, insight_params) into the
+    // store's three-valued patch (None = leave / Some(None) = detach /
+    // Some(Some) = set), mirroring how dashboard update collapses folder_id +
+    // clear_folder. `clear_insight` wins and clears params too — params without an
+    // insight are meaningless.
+    let (insight_id, insight_params) = if req.clear_insight {
+        (Some(None), Some(None))
+    } else {
+        (
+            req.insight_id.map(Some),
+            // Only touch params when an id is being set, or when params are sent
+            // standalone for an already-attached insight.
+            req.insight_params.map(Some),
+        )
+    };
     let patch = PanelPatch {
         title: req.title,
         datasource_id: req.datasource_id,
         sql: req.sql,
         viz: req.viz,
         layout: req.layout,
-        // Both are already three-valued on the wire (Option<Option<_>>), mapping
-        // 1:1 onto the store patch: None = leave, Some(None) = detach/clear,
-        // Some(Some(_)) = set.
-        insight_id: req.insight_id,
-        insight_params: req.insight_params,
+        insight_id,
+        insight_params,
     };
     match dashboard::panel::update(&state.metadata, &tenant, id, &patch).await {
         Ok(Some(rec)) => {
