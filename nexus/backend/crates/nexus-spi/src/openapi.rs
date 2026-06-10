@@ -18,6 +18,9 @@ use crate::dto::dashboard::{
     UpdateDashboardRequest, VariableExport,
 };
 use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
+use crate::dto::nav::{
+    CreateNavNodeRequest, NavContext, NavNodeDetail, NavTarget, StaticRoute, UpdateNavNodeRequest,
+};
 use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceKindList,
     DatasourceKindSummary, DatasourceSchema, DatasourceSummary, RedactedConnection, SchemaColumn,
@@ -28,11 +31,12 @@ use crate::dto::alert::{
     CreateChannelRequest, CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
 };
 use crate::dto::flow::{
-    CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDetail, FlowMetrics, FlowSummary,
-    NodeCategory, NodeType, NodeTypeList, UpdateFlowRequest,
+    CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDetail, FlowExport, FlowMetrics,
+    FlowSummary, NodeCategory, NodeType, NodeTypeList, UpdateFlowRequest,
 };
 use crate::dto::me::MeResponse;
 use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
+use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{
     ColumnSchema, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse, QueryStats,
@@ -57,6 +61,9 @@ use crate::Problem;
     QueryStats,
     QueryKindList,
     QueryKindSummary,
+    CreateQueryKindRequest,
+    UpdateQueryKindRequest,
+    QueryKindDetail,
     ColumnSchema,
     ResultColumnType,
     QueryHistoryEntry,
@@ -88,6 +95,12 @@ use crate::Problem;
     FolderSummary,
     CreateFolderRequest,
     UpdateFolderRequest,
+    NavNodeDetail,
+    NavTarget,
+    StaticRoute,
+    NavContext,
+    CreateNavNodeRequest,
+    UpdateNavNodeRequest,
     PanelDetail,
     CreatePanelRequest,
     UpdatePanelRequest,
@@ -96,6 +109,7 @@ use crate::Problem;
     FlowMetrics,
     CreateFlowRequest,
     UpdateFlowRequest,
+    FlowExport,
     NodeType,
     NodeTypeList,
     NodeCategory,

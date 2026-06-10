@@ -39,6 +39,15 @@ pub const KIND_FLOW: &str = "nexus.flow";
 pub const KIND_ALERT_RULE: &str = "nexus.alert_rule";
 /// Registry kind for an AI agent (its sessions inherit the agent's grants).
 pub const KIND_AGENT: &str = "nexus.agent";
+/// Registry kind for a tenant-authored query-kind (WS-10 §4.5c): a named SQL
+/// query an admin promotes from Explore. The built-in file-pack kinds are
+/// immutable config and are not resources; only the DB-backed ones are.
+pub const KIND_QUERY_KIND: &str = "nexus.query_kind";
+/// Registry kind for a navigation node (WS-13). A nav node mounts a page or a
+/// static route into the tree and is the unit access is granted on: `view` on
+/// the node is "can this principal navigate here". The underlying dashboard's
+/// own `edit`/`delete` grants still gate *authoring* the template.
+pub const KIND_NAV_NODE: &str = "nexus.nav_node";
 
 /// Read a resource.
 pub const ACTION_VIEW: &str = "view";
@@ -61,6 +70,8 @@ pub fn register_nexus_resources(registry: &dyn ResourceRegistry) {
         KIND_FLOW,
         KIND_ALERT_RULE,
         KIND_AGENT,
+        KIND_QUERY_KIND,
+        KIND_NAV_NODE,
     ] {
         registry.register(ResourceSpec {
             kind: kind.to_string(),

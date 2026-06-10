@@ -11,7 +11,9 @@
 //! Entries are the stable [`starter_spi::authz::ResourceRef::kind`] discriminators
 //! (e.g. `nexus.dashboard`), matching the constants in [`crate::authz`].
 
-use crate::authz::{KIND_DASHBOARD, KIND_DATASOURCE, KIND_FOLDER, KIND_PANEL};
+use crate::authz::{
+    KIND_DASHBOARD, KIND_DATASOURCE, KIND_FOLDER, KIND_NAV_NODE, KIND_PANEL, KIND_QUERY_KIND,
+};
 
 /// Every nexus resource kind that is expected to record an audit/undo `Change`
 /// on mutation. WS-12 ships the dashboard and datasource reference entries; each
@@ -19,8 +21,14 @@ use crate::authz::{KIND_DASHBOARD, KIND_DATASOURCE, KIND_FOLDER, KIND_PANEL};
 /// kind's [`starter_spi::changelog::Reversible`] impl (C6 convention, ROADMAP
 /// §6a). The coverage guard test cross-checks this against the live registry so
 /// the two never silently diverge.
-pub const KNOWN_MUTABLE_KINDS: &[&str] =
-    &[KIND_DASHBOARD, KIND_PANEL, KIND_FOLDER, KIND_DATASOURCE];
+pub const KNOWN_MUTABLE_KINDS: &[&str] = &[
+    KIND_DASHBOARD,
+    KIND_PANEL,
+    KIND_FOLDER,
+    KIND_DATASOURCE,
+    KIND_QUERY_KIND,
+    KIND_NAV_NODE,
+];
 
 /// Whether `kind` is on the [`KNOWN_MUTABLE_KINDS`] manifest. Used by the
 /// coverage guard and available to callers that want to assert a kind is meant

@@ -10,7 +10,9 @@ pub mod datasources;
 pub mod flows;
 pub mod folders;
 pub mod me;
+pub mod nav;
 pub mod query;
+pub mod query_kinds;
 pub mod streams;
 pub mod tags;
 pub mod undo;
@@ -27,11 +29,13 @@ pub fn product_router() -> Router<AppState> {
     Router::new()
         .merge(me::router())
         .merge(query::router())
+        .merge(query_kinds::router())
         .merge(streams::router())
         .merge(datasources::router())
         .merge(dashboards::router())
         .merge(flows::router())
         .merge(folders::router())
+        .merge(nav::router())
         .merge(alerts::router())
         .merge(tags::router())
         .merge(agents::router())

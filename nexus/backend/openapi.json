@@ -131,8 +131,8 @@
           "401": {
             "description": "Missing/expired/invalid token"
           },
-          "410": {
-            "description": "Session run already finished"
+          "404": {
+            "description": "Session not found in this tenant"
           }
         }
       }
@@ -1765,6 +1765,39 @@
         }
       }
     },
+    "/api/v1/flows/import": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "import_flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown schema_version"
+          }
+        }
+      }
+    },
     "/api/v1/flows/node-types": {
       "get": {
         "tags": [
@@ -1885,6 +1918,44 @@
           },
           "403": {
             "description": "Not allowed to delete this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/export": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "export_flow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portable flow model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowExport"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this flow"
           },
           "404": {
             "description": "Not found in this tenant"
@@ -2182,6 +2253,176 @@
         }
       }
     },
+    "/api/v1/nav": {
+      "get": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "list_nav",
+        "responses": {
+          "200": {
+            "description": "The caller's nav tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NavNodeDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "create_nav",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNavNodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavNodeDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dashboard target not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/nav/{id}": {
+      "get": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "get_nav",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Nav node id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The nav node",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavNodeDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this node"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "delete_nav",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Nav node id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this node"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "nav"
+        ],
+        "operationId": "update_nav",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Nav node id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNavNodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NavNodeDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dashboard target not found in this tenant"
+          },
+          "403": {
+            "description": "Not allowed to edit this node"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/panels/{id}": {
       "delete": {
         "tags": [
@@ -2355,16 +2596,189 @@
         }
       }
     },
+    "/api/v1/query-kinds": {
+      "get": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "list_query_kinds_admin",
+        "responses": {
+          "200": {
+            "description": "Query-kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QueryKindDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "create_query_kind",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQueryKindRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The SQL failed a save-time lint"
+          },
+          "409": {
+            "description": "Name already used in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/query-kinds/{id}": {
+      "get": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "get_query_kind",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Query-kind id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query-kind",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this query-kind"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "update_query_kind",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Query-kind id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQueryKindRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryKindDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The merged SQL failed a save-time lint"
+          },
+          "403": {
+            "description": "Not allowed to edit this query-kind"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "query-kinds"
+        ],
+        "operationId": "delete_query_kind",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Query-kind id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not allowed to delete this query-kind"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/query/kinds": {
       "get": {
         "tags": [
           "query"
         ],
-        "summary": "Return the registry's kinds, name-ordered (the registry is a `BTreeMap`, so\niteration is already sorted). A read-only catalogue — no datasource work.",
+        "summary": "Return the file-pack kinds (the registry is a `BTreeMap`, so already sorted)\nunioned with the caller's tenant-authored kinds. A read-only catalogue — no\ndatasource work. A DB read failure or an absent tenant degrades to the file\npack alone rather than failing the picker.",
         "operationId": "list_query_kinds",
         "responses": {
           "200": {
-            "description": "Registered query-kinds",
+            "description": "Available query-kinds",
             "content": {
               "application/json": {
                 "schema": {
@@ -3048,6 +3462,13 @@
           "prompt"
         ],
         "properties": {
+          "backend": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Which AI backend to run the assist against. A CLI agent backend\n(`claude`, `codex`, `gemini`, `ollama`) uses the locally-installed CLI's\nown auth — no provider API key needed. A raw provider (`anthropic`,\n`openai`, …) uses the inference tier and needs a key. Defaults to the CLI\ntier (`claude`) so assist works out of the box wherever a CLI is logged in."
+          },
           "current_sql": {
             "type": [
               "string",
@@ -3527,6 +3948,54 @@
           }
         }
       },
+      "CreateNavNodeRequest": {
+        "type": "object",
+        "description": "Create a nav node. `target` defaults to a `group` header when omitted so a\nclient can lay out structure first and bind pages later. `context` is only\nmeaningful for a `dashboard` target and is ignored (cleared) otherwise.",
+        "required": [
+          "title"
+        ],
+        "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavContext"
+              }
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "target": {
+            "$ref": "#/components/schemas/NavTarget"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "CreatePanelRequest": {
         "type": "object",
         "description": "Create a panel under the dashboard named in the path. The dashboard is keyed\nby its immutable id (resolved from the path slug at the request edge).",
@@ -3556,6 +4025,45 @@
               "null"
             ],
             "description": "Visualization kind; defaults to `table` when omitted."
+          }
+        }
+      },
+      "CreateQueryKindRequest": {
+        "type": "object",
+        "description": "Create a tenant-authored query-kind. `name` is a reverse-DNS id (e.g.\n`com.acme.foo`), `sql` the raw template, and `datasource_kind` the datasource\nshape it targets. `params_schema` is the kind's JSON Schema document; it and\n`tables` default to empty. The API lint-validates the SQL before insert.",
+        "required": [
+          "name",
+          "sql",
+          "datasource_kind"
+        ],
+        "properties": {
+          "datasource_binding": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datasource_kind": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "params_schema": {},
+          "sql": {
+            "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -4102,6 +4610,40 @@
           }
         }
       },
+      "FlowExport": {
+        "type": "object",
+        "description": "A self-contained, importable flow: its name plus the ArkFlow config blobs.",
+        "required": [
+          "schema_version",
+          "name",
+          "input",
+          "output"
+        ],
+        "properties": {
+          "input": {
+            "description": "ArkFlow input component (`{type, ...config}`), secrets redacted."
+          },
+          "name": {
+            "type": "string"
+          },
+          "output": {
+            "description": "ArkFlow output component (`{type, ...config}`), secrets redacted."
+          },
+          "pipeline": {
+            "description": "ArkFlow processor list (a JSON array of `{type, ...config}`)."
+          },
+          "redacted": {
+            "type": "boolean",
+            "description": "Whether [`redact_secrets`] blanked any field on export, so the UI can\ntell the user credentials were removed (and must be re-entered on\nimport). Skipped when false so a clean export stays minimal."
+          },
+          "schema_version": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Model version; must match [`FLOW_SCHEMA_VERSION`] to import.",
+            "minimum": 0
+          }
+        }
+      },
       "FlowMetrics": {
         "type": "object",
         "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, and the error that ended the last run (if\nany). All fields reflect this node's in-process\n[`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and\nare absent once the process restarts (single-node v1). Throughput counters\nwould require instrumenting every output sink, so they are intentionally\nomitted rather than reported as zero.",
@@ -4256,6 +4798,151 @@
             "description": "Tenant the session is bound to. `None` for an unbound principal; `\"*\"`\nmarks a super-admin that bypasses the cross-tenant predicate."
           }
         }
+      },
+      "NavContext": {
+        "type": "object",
+        "description": "A nav node's context payload — applied only to `dashboard` targets. EXACTLY\n`{ values?, tags? }` per the §1 merge contract: `values` become\n`PageContext.values` (explicit overrides a `context`/`values` variable\nreads), `tags` are merged *over* the dashboard's own tags. There is no\n`varOverrides` channel — a node overrides a variable's current value through\n`values` + a `context` variable on the normal WS-02 selection path.",
+        "properties": {
+          "tags": {
+            "type": "object",
+            "description": "Tag pins/overrides merged over the dashboard's own tags for this mount.\nA null value clears a tag for the mount without retagging the page.",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "values": {
+            "type": "object",
+            "description": "Explicit variable-value overrides for this mount (e.g. `{ building: \"b1\" }`).",
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "NavNodeDetail": {
+        "type": "object",
+        "description": "A nav node as returned to clients. `target`/`context` are the typed shapes\nabove; `path` is not stored — the tree is built client-side from `parent_id`.",
+        "required": [
+          "id",
+          "title",
+          "sort_order",
+          "target"
+        ],
+        "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavContext",
+                "description": "Present only for `dashboard` targets."
+              }
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The parent node, or `None` for a root node."
+          },
+          "sort_order": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Position among siblings; lower sorts first."
+          },
+          "target": {
+            "$ref": "#/components/schemas/NavTarget"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display label (\"Buildings\", \"Building-1\", \"Agents\")."
+          }
+        }
+      },
+      "NavTarget": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A non-clickable organisational header.",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "group"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A reusable dashboard page mounted at this node. The id is validated\nagainst a tenant-scoped lookup by the handler (a bare FK would not encode\nsame-tenant), never trusted from the client.",
+            "required": [
+              "dashboardId",
+              "kind"
+            ],
+            "properties": {
+              "dashboardId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "dashboard"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A built-in static app page, from the closed [`StaticRoute`] allow-list.",
+            "required": [
+              "route",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "route"
+                ]
+              },
+              "route": {
+                "$ref": "#/components/schemas/StaticRoute"
+              }
+            }
+          }
+        ],
+        "description": "What a nav node points at — exactly one of group / dashboard / route, an\ninternally-tagged union on `kind`. This is the wire shape of the stored\n`target` JSONB; the store persists it verbatim. A `group` is a non-clickable\nheader, a `dashboard` is a reusable page mount, a `route` is one of the app's\nbuilt-in static pages (a closed allow-list, not free-form)."
       },
       "NodeCategory": {
         "type": "string",
@@ -4683,6 +5370,58 @@
             "items": {
               "$ref": "#/components/schemas/QueryHistoryEntry"
             }
+          }
+        }
+      },
+      "QueryKindDetail": {
+        "type": "object",
+        "description": "A tenant-authored query-kind in full, including its `sql`. Unlike the\ncatalogue's [`QueryKindSummary`](crate::dto::query::kinds::QueryKindSummary),\nwhich hides the SQL, this is the authoring view returned to the admin who\nowns the kind.",
+        "required": [
+          "id",
+          "name",
+          "sql",
+          "datasource_kind",
+          "tables",
+          "params_schema"
+        ],
+        "properties": {
+          "datasource_binding": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datasource_kind": {
+            "type": "string",
+            "description": "The datasource shape the kind targets (e.g. `postgres`)."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `com.acme.foo`)."
+          },
+          "params_schema": {
+            "description": "The kind's params JSON Schema — the contract a request's `params`\nvalidates against, and what a schema-driven form renders."
+          },
+          "sql": {
+            "type": "string",
+            "description": "The raw SQL template, bound by the shared binder at run time."
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tables the kind reads."
           }
         }
       },
@@ -5177,6 +5916,20 @@
           }
         }
       },
+      "StaticRoute": {
+        "type": "string",
+        "description": "The closed allow-list of built-in app pages a `route` node may point at —\nthe router table's static entries (`ui/src/app/router.tsx`). A node cannot\npoint at an arbitrary URL; this is what lets a static page be access-gated by\na nav node exactly like a dashboard mount (WS-13 §4).",
+        "enum": [
+          "dashboards",
+          "explore",
+          "datasources",
+          "flows",
+          "alerts",
+          "agents",
+          "access",
+          "audit"
+        ]
+      },
       "StreamEvent": {
         "type": "object",
         "description": "One `data:` frame on a live stream. `seq` is the monotonic per-stream event\nid echoed in the SSE `id:` field so a reconnecting client can send\n`Last-Event-ID` to resume; `rows` is the batch shaped by the stream's SQL.",
@@ -5664,6 +6417,78 @@
           }
         }
       },
+      "UpdateNavNodeRequest": {
+        "type": "object",
+        "description": "Partially update a nav node. Omitted fields are left unchanged. The\nthree-valued fields (parent, context, icon, accent) pair an optional value\nwith a `clear_*` flag so JSON can express \"leave / set / clear\" without a\nnested-`null` ambiguity: `clear_*` wins, then an explicit value, else leave.\nRe-targeting (e.g. dashboard → group) sends `target` + `clear_context: true`.",
+        "properties": {
+          "accent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clear_accent": {
+            "type": "boolean"
+          },
+          "clear_context": {
+            "type": "boolean",
+            "description": "Drop the context (e.g. when retargeting a dashboard mount to a group)."
+          },
+          "clear_icon": {
+            "type": "boolean"
+          },
+          "clear_parent": {
+            "type": "boolean",
+            "description": "Re-root the node (move to top level), overriding `parent_id`."
+          },
+          "context": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavContext"
+              }
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parent_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "sort_order": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NavTarget"
+              }
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "UpdatePanelRequest": {
         "type": "object",
         "description": "Partial update of a panel. `None` fields are left unchanged.",
@@ -5693,6 +6518,46 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "UpdateQueryKindRequest": {
+        "type": "object",
+        "description": "Partially update a query-kind; omitted fields are left unchanged. `name` is\nimmutable — a kind is not renamed — so it is absent here.",
+        "properties": {
+          "datasource_binding": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datasource_kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "params_schema": {},
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tables": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

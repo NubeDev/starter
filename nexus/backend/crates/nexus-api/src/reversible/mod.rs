@@ -17,7 +17,9 @@ mod dashboard;
 mod datasource;
 mod folder;
 mod manifest;
+mod nav_node;
 mod panel;
+mod query_kind;
 
 use std::sync::Arc;
 
@@ -30,7 +32,9 @@ pub use dashboard::snapshot_json as dashboard_snapshot_json;
 pub use datasource::snapshot_json as datasource_snapshot_json;
 pub use folder::snapshot_json as folder_snapshot_json;
 pub use manifest::{is_known_mutable_kind, KNOWN_MUTABLE_KINDS};
+pub use nav_node::snapshot_json as nav_node_snapshot_json;
 pub use panel::snapshot_json as panel_snapshot_json;
+pub use query_kind::snapshot_json as query_kind_snapshot_json;
 
 /// Register every nexus [`Reversible`] into `registry`. Called once at boot. Each
 /// impl closes over the metadata pool (and, for secret-bearing kinds, the secret
@@ -45,6 +49,8 @@ pub fn register_all(
         .insert(Arc::new(dashboard::DashboardReversible::new(metadata.clone())))
         .insert(Arc::new(panel::PanelReversible::new(metadata.clone())))
         .insert(Arc::new(folder::FolderReversible::new(metadata.clone())))
+        .insert(Arc::new(nav_node::NavNodeReversible::new(metadata.clone())))
+        .insert(Arc::new(query_kind::QueryKindReversible::new(metadata.clone())))
         .insert(Arc::new(datasource::DatasourceReversible::new(metadata, envelope)))
 }
 
@@ -59,6 +65,8 @@ pub const REGISTERED_KINDS: &[&str] = &[
     crate::authz::KIND_PANEL,
     crate::authz::KIND_FOLDER,
     crate::authz::KIND_DATASOURCE,
+    crate::authz::KIND_QUERY_KIND,
+    crate::authz::KIND_NAV_NODE,
 ];
 
 #[cfg(test)]

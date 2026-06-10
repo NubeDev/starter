@@ -527,6 +527,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["import_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows/node-types": {
         parameters: {
             query?: never;
@@ -558,6 +574,22 @@ export interface paths {
         put: operations["update_flow"];
         post?: never;
         delete: operations["delete_flow"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["export_flow"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -672,6 +704,38 @@ export interface paths {
         patch: operations["patch_me_preferences"];
         trace?: never;
     };
+    "/api/v1/nav": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_nav"];
+        put?: never;
+        post: operations["create_nav"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/nav/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_nav"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_nav"];
+        options?: never;
+        head?: never;
+        patch: operations["update_nav"];
+        trace?: never;
+    };
     "/api/v1/panels/{id}": {
         parameters: {
             query?: never;
@@ -743,6 +807,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/query-kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_query_kinds_admin"];
+        put?: never;
+        post: operations["create_query_kind"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/query-kinds/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_query_kind"];
+        put: operations["update_query_kind"];
+        post?: never;
+        delete: operations["delete_query_kind"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/query/kinds": {
         parameters: {
             query?: never;
@@ -751,8 +847,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Return the registry's kinds, name-ordered (the registry is a `BTreeMap`, so
-         *     iteration is already sorted). A read-only catalogue — no datasource work.
+         * Return the file-pack kinds (the registry is a `BTreeMap`, so already sorted)
+         *     unioned with the caller's tenant-authored kinds. A read-only catalogue — no
+         *     datasource work. A DB read failure or an absent tenant degrades to the file
+         *     pack alone rather than failing the picker.
          */
         get: operations["list_query_kinds"];
         put?: never;
@@ -1004,6 +1102,14 @@ export interface components {
          *     grounding context.
          */
         AssistRequest: {
+            /**
+             * @description Which AI backend to run the assist against. A CLI agent backend
+             *     (`claude`, `codex`, `gemini`, `ollama`) uses the locally-installed CLI's
+             *     own auth — no provider API key needed. A raw provider (`anthropic`,
+             *     `openai`, …) uses the inference tier and needs a key. Defaults to the CLI
+             *     tier (`claude`) so assist works out of the box wherever a CLI is logged in.
+             */
+            backend?: string | null;
             /** @description Optional existing SQL to edit/improve rather than write from scratch. */
             current_sql?: string | null;
             /**
@@ -1244,6 +1350,22 @@ export interface components {
             parent_id?: string | null;
         };
         /**
+         * @description Create a nav node. `target` defaults to a `group` header when omitted so a
+         *     client can lay out structure first and bind pages later. `context` is only
+         *     meaningful for a `dashboard` target and is ignored (cleared) otherwise.
+         */
+        CreateNavNodeRequest: {
+            accent?: string | null;
+            context?: null | components["schemas"]["NavContext"];
+            icon?: string | null;
+            /** Format: uuid */
+            parent_id?: string | null;
+            /** Format: int32 */
+            sort_order?: number;
+            target?: components["schemas"]["NavTarget"];
+            title: string;
+        };
+        /**
          * @description Create a panel under the dashboard named in the path. The dashboard is keyed
          *     by its immutable id (resolved from the path slug at the request edge).
          */
@@ -1259,6 +1381,21 @@ export interface components {
             title: string;
             /** @description Visualization kind; defaults to `table` when omitted. */
             viz?: string | null;
+        };
+        /**
+         * @description Create a tenant-authored query-kind. `name` is a reverse-DNS id (e.g.
+         *     `com.acme.foo`), `sql` the raw template, and `datasource_kind` the datasource
+         *     shape it targets. `params_schema` is the kind's JSON Schema document; it and
+         *     `tables` default to empty. The API lint-validates the SQL before insert.
+         */
+        CreateQueryKindRequest: {
+            datasource_binding?: string | null;
+            datasource_kind: string;
+            description?: string | null;
+            name: string;
+            params_schema?: unknown;
+            sql: string;
+            tables?: string[];
         };
         /**
          * @description Open a session against an agent by sending its opening prompt. The agent's
@@ -1551,6 +1688,27 @@ export interface components {
             /** @description Whether the FlowManager currently has it running on this node. */
             running: boolean;
         };
+        /** @description A self-contained, importable flow: its name plus the ArkFlow config blobs. */
+        FlowExport: {
+            /** @description ArkFlow input component (`{type, ...config}`), secrets redacted. */
+            input: unknown;
+            name: string;
+            /** @description ArkFlow output component (`{type, ...config}`), secrets redacted. */
+            output: unknown;
+            /** @description ArkFlow processor list (a JSON array of `{type, ...config}`). */
+            pipeline?: unknown;
+            /**
+             * @description Whether [`redact_secrets`] blanked any field on export, so the UI can
+             *     tell the user credentials were removed (and must be re-entered on
+             *     import). Skipped when false so a clean export stays minimal.
+             */
+            redacted?: boolean;
+            /**
+             * Format: int32
+             * @description Model version; must match [`FLOW_SCHEMA_VERSION`] to import.
+             */
+            schema_version: number;
+        };
         /**
          * @description Live run state surfaced on the flows list and detail so an admin sees a
          *     flow's health without opening it: whether it is running, when its current
@@ -1644,6 +1802,71 @@ export interface components {
              *     marks a super-admin that bypasses the cross-tenant predicate.
              */
             tenant_id?: string | null;
+        };
+        /**
+         * @description A nav node's context payload — applied only to `dashboard` targets. EXACTLY
+         *     `{ values?, tags? }` per the §1 merge contract: `values` become
+         *     `PageContext.values` (explicit overrides a `context`/`values` variable
+         *     reads), `tags` are merged *over* the dashboard's own tags. There is no
+         *     `varOverrides` channel — a node overrides a variable's current value through
+         *     `values` + a `context` variable on the normal WS-02 selection path.
+         */
+        NavContext: {
+            /**
+             * @description Tag pins/overrides merged over the dashboard's own tags for this mount.
+             *     A null value clears a tag for the mount without retagging the page.
+             */
+            tags?: {
+                [key: string]: string | null;
+            };
+            /** @description Explicit variable-value overrides for this mount (e.g. `{ building: "b1" }`). */
+            values?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description A nav node as returned to clients. `target`/`context` are the typed shapes
+         *     above; `path` is not stored — the tree is built client-side from `parent_id`.
+         */
+        NavNodeDetail: {
+            accent?: string | null;
+            context?: null | components["schemas"]["NavContext"];
+            icon?: string | null;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The parent node, or `None` for a root node.
+             */
+            parent_id?: string | null;
+            /**
+             * Format: int32
+             * @description Position among siblings; lower sorts first.
+             */
+            sort_order: number;
+            target: components["schemas"]["NavTarget"];
+            /** @description Display label ("Buildings", "Building-1", "Agents"). */
+            title: string;
+        };
+        /**
+         * @description What a nav node points at — exactly one of group / dashboard / route, an
+         *     internally-tagged union on `kind`. This is the wire shape of the stored
+         *     `target` JSONB; the store persists it verbatim. A `group` is a non-clickable
+         *     header, a `dashboard` is a reusable page mount, a `route` is one of the app's
+         *     built-in static pages (a closed allow-list, not free-form).
+         */
+        NavTarget: {
+            /** @enum {string} */
+            kind: "group";
+        } | {
+            /** Format: uuid */
+            dashboardId: string;
+            /** @enum {string} */
+            kind: "dashboard";
+        } | {
+            /** @enum {string} */
+            kind: "route";
+            route: components["schemas"]["StaticRoute"];
         };
         /**
          * @description Which palette group a node belongs to. The visual builder groups the palette
@@ -1806,6 +2029,31 @@ export interface components {
         /** @description The history list response, newest (and starred) first. */
         QueryHistoryList: {
             entries: components["schemas"]["QueryHistoryEntry"][];
+        };
+        /**
+         * @description A tenant-authored query-kind in full, including its `sql`. Unlike the
+         *     catalogue's [`QueryKindSummary`](crate::dto::query::kinds::QueryKindSummary),
+         *     which hides the SQL, this is the authoring view returned to the admin who
+         *     owns the kind.
+         */
+        QueryKindDetail: {
+            datasource_binding?: string | null;
+            /** @description The datasource shape the kind targets (e.g. `postgres`). */
+            datasource_kind: string;
+            description?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Reverse-DNS id a `QueryRequest.kind` invokes (e.g. `com.acme.foo`). */
+            name: string;
+            /**
+             * @description The kind's params JSON Schema — the contract a request's `params`
+             *     validates against, and what a schema-driven form renders.
+             */
+            params_schema: unknown;
+            /** @description The raw SQL template, bound by the shared binder at run time. */
+            sql: string;
+            /** @description Tables the kind reads. */
+            tables: string[];
         };
         /** @description The registered query-kinds, name-ordered, for the editor's kind picker. */
         QueryKindList: {
@@ -2118,6 +2366,14 @@ export interface components {
             starred: boolean;
         };
         /**
+         * @description The closed allow-list of built-in app pages a `route` node may point at —
+         *     the router table's static entries (`ui/src/app/router.tsx`). A node cannot
+         *     point at an arbitrary URL; this is what lets a static page be access-gated by
+         *     a nav node exactly like a dashboard mount (WS-13 §4).
+         * @enum {string}
+         */
+        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "alerts" | "agents" | "access" | "audit";
+        /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
          *     id echoed in the SSE `id:` field so a reconnecting client can send
          *     `Last-Event-ID` to resume; `rows` is the batch shaped by the stream's SQL.
@@ -2322,6 +2578,30 @@ export interface components {
              */
             parent_id?: string | null;
         };
+        /**
+         * @description Partially update a nav node. Omitted fields are left unchanged. The
+         *     three-valued fields (parent, context, icon, accent) pair an optional value
+         *     with a `clear_*` flag so JSON can express "leave / set / clear" without a
+         *     nested-`null` ambiguity: `clear_*` wins, then an explicit value, else leave.
+         *     Re-targeting (e.g. dashboard → group) sends `target` + `clear_context: true`.
+         */
+        UpdateNavNodeRequest: {
+            accent?: string | null;
+            clear_accent?: boolean;
+            /** @description Drop the context (e.g. when retargeting a dashboard mount to a group). */
+            clear_context?: boolean;
+            clear_icon?: boolean;
+            /** @description Re-root the node (move to top level), overriding `parent_id`. */
+            clear_parent?: boolean;
+            context?: null | components["schemas"]["NavContext"];
+            icon?: string | null;
+            /** Format: uuid */
+            parent_id?: string | null;
+            /** Format: int32 */
+            sort_order?: number | null;
+            target?: null | components["schemas"]["NavTarget"];
+            title?: string | null;
+        };
         /** @description Partial update of a panel. `None` fields are left unchanged. */
         UpdatePanelRequest: {
             /** Format: uuid */
@@ -2330,6 +2610,18 @@ export interface components {
             sql?: string | null;
             title?: string | null;
             viz?: string | null;
+        };
+        /**
+         * @description Partially update a query-kind; omitted fields are left unchanged. `name` is
+         *     immutable — a kind is not renamed — so it is absent here.
+         */
+        UpdateQueryKindRequest: {
+            datasource_binding?: string | null;
+            datasource_kind?: string | null;
+            description?: string | null;
+            params_schema?: unknown;
+            sql?: string | null;
+            tables?: string[] | null;
         };
         /**
          * @description Partial update. Every field is optional — `None` leaves the stored value
@@ -2540,8 +2832,8 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Session run already finished */
-            410: {
+            /** @description Session not found in this tenant */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3975,6 +4267,37 @@ export interface operations {
             };
         };
     };
+    import_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlowExport"];
+            };
+        };
+        responses: {
+            /** @description Imported */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDetail"];
+                };
+            };
+            /** @description Unknown schema_version */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_node_types: {
         parameters: {
             query?: never;
@@ -4091,6 +4414,43 @@ export interface operations {
                 content?: never;
             };
             /** @description Not allowed to delete this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    export_flow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Portable flow model */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowExport"];
+                };
+            };
+            /** @description Not allowed to view this flow */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4399,6 +4759,177 @@ export interface operations {
             };
         };
     };
+    list_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's nav tree */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"][];
+                };
+            };
+        };
+    };
+    create_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateNavNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"];
+                };
+            };
+            /** @description Dashboard target not found in this tenant */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Nav node id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The nav node */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"];
+                };
+            };
+            /** @description Not allowed to view this node */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Nav node id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this node */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_nav: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Nav node id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateNavNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NavNodeDetail"];
+                };
+            };
+            /** @description Dashboard target not found in this tenant */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this node */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     delete_panel: {
         parameters: {
             query?: never;
@@ -4553,6 +5084,184 @@ export interface operations {
             };
         };
     };
+    list_query_kinds_admin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Query-kinds */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"][];
+                };
+            };
+        };
+    };
+    create_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateQueryKindRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"];
+                };
+            };
+            /** @description The SQL failed a save-time lint */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Name already used in this tenant */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Query-kind id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Query-kind */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"];
+                };
+            };
+            /** @description Not allowed to view this query-kind */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Query-kind id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateQueryKindRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryKindDetail"];
+                };
+            };
+            /** @description The merged SQL failed a save-time lint */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to edit this query-kind */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_query_kind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Query-kind id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not allowed to delete this query-kind */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_query_kinds: {
         parameters: {
             query?: never;
@@ -4562,7 +5271,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Registered query-kinds */
+            /** @description Available query-kinds */
             200: {
                 headers: {
                     [name: string]: unknown;
