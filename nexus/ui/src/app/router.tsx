@@ -6,12 +6,18 @@ import { DashboardPage } from "@/features/dashboards/DashboardPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
 import { DatasourcesPage } from "@/features/datasources/DatasourcesPage";
 import { FlowsPage } from "@/features/flows/FlowsPage";
+import { InsightsPage } from "@/features/insights/InsightsPage";
 import { Explore } from "@/features/query-editor/Explore";
 import { AgentsPage } from "@/features/agents";
-import { AccessPage } from "@/features/access/AccessPage";
+import {
+  AccessPage,
+  AccessNavigationTab,
+  AccessNavManagerTab,
+  AccessTeamsTab,
+  AccessMembersTab,
+} from "@/features/access/AccessPage";
 import { AuditPage } from "@/features/audit/AuditPage";
 import { ExtensionsPage } from "@/features/extensions/ExtensionsPage";
-import { NavBuilderPage } from "@/features/nav/NavBuilderPage";
 import { ExportPage } from "@/features/portability/ExportPage";
 import { ImportPage } from "@/features/portability/ImportPage";
 
@@ -32,12 +38,24 @@ export const router = createBrowserRouter([
       { path: "explore", element: <Explore /> },
       { path: "datasources", element: <DatasourcesPage /> },
       { path: "flows", element: <FlowsPage /> },
+      { path: "insights", element: <InsightsPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "agents", element: <AgentsPage /> },
-      { path: "access", element: <AccessPage /> },
+      {
+        path: "access",
+        element: <AccessPage />,
+        children: [
+          // The four Access surfaces are real routes now (deep-linkable,
+          // back/forward works). `/access` lands on Navigation.
+          { index: true, element: <Navigate to="navigation" replace /> },
+          { path: "navigation", element: <AccessNavigationTab /> },
+          { path: "nav-manager", element: <AccessNavManagerTab /> },
+          { path: "teams", element: <AccessTeamsTab /> },
+          { path: "members", element: <AccessMembersTab /> },
+        ],
+      },
       { path: "audit", element: <AuditPage /> },
       { path: "extensions", element: <ExtensionsPage /> },
-      { path: "nav", element: <NavBuilderPage /> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },

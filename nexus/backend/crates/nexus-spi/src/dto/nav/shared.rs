@@ -38,6 +38,7 @@ pub enum StaticRoute {
     Explore,
     Datasources,
     Flows,
+    Insights,
     Alerts,
     Agents,
     Access,

@@ -34,7 +34,8 @@ use starter_spi::auth::Principal;
 use crate::admin::{create_admin, AdminError};
 use crate::role::Role;
 use crate::store::{
-    is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
+    is_reserved_slug, MembershipRecord, TeamMemberRecord, TeamRecord, TenantRecord, TenantStore,
+    TenantStoreError,
     UserStore,
 };
 
@@ -190,7 +191,7 @@ where
         )
         .route(
             "/v1/tenants/{id}/teams/{team_id}/members",
-            post(add_team_member_h),
+            post(add_team_member_h).get(list_team_members_h),
         )
         .route(
             "/v1/tenants/{id}/teams/{team_id}/members/{user_id}",
@@ -503,6 +504,25 @@ impl From<TeamRecord> for TeamView {
     }
 }
 
+/// JSON view of a team member. Mirrors the shape used for tenant
+/// members so the admin UI can label rows by email.
+#[derive(Debug, Serialize)]
+pub struct TeamMemberView {
+    /// User id.
+    pub user_id: String,
+    /// Human-readable email label, when the store joined the users table.
+    pub email: Option<String>,
+}
+
+impl From<TeamMemberRecord> for TeamMemberView {
+    fn from(r: TeamMemberRecord) -> Self {
+        Self {
+            user_id: r.user_id,
+            email: r.email,
+        }
+    }
+}
+
 async fn create_team_h(
     State(tenants): State<Arc<dyn TenantStore>>,
     Path(tenant_id): Path<String>,
@@ -547,6 +567,19 @@ async fn delete_team_h(
 ) -> Response {
     match tenants.delete_team(&team_id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn list_team_members_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path((_tenant_id, team_id)): Path<(String, String)>,
+) -> Response {
+    match tenants.members_of_team(&team_id).await {
+        Ok(rows) => {
+            let views: Vec<TeamMemberView> = rows.into_iter().map(TeamMemberView::from).collect();
+            (StatusCode::OK, Json(views)).into_response()
+        }
         Err(e) => map_err(e),
     }
 }

@@ -1,16 +1,26 @@
+import { useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { Badge } from "@nube/starter-ui-kit/components/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@nube/starter-ui-kit/components/table";
+import { cn } from "@nube/starter-ui-kit/lib/utils";
 
 import type { Change } from "@/api/types";
 import { useDateTime } from "@/datetime";
 import { actorLabel, opLabel } from "@/features/audit/actorLabel";
 import { ChangeDiff } from "@/features/audit/ChangeDiff";
 
-// A newest-first list of changes, each showing who/what/when and an expandable
-// before -> after diff. Shared by the admin audit screen and a per-resource
+// A newest-first table of changes, one compact row per change (who/what/when),
+// with an expandable before -> after diff so the ledger stays scannable even
+// with hundreds of entries. Shared by the admin audit screen and a per-resource
 // History tab. Empty/loading/error are the caller's concern (F0).
 export function ChangeList({ changes }: { changes: Change[] }) {
-  const { dateTime } = useDateTime();
-
   if (changes.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -20,32 +30,74 @@ export function ChangeList({ changes }: { changes: Change[] }) {
   }
 
   return (
-    <ul className="flex flex-col gap-3">
-      {changes.map((change) => (
-        <li
-          key={change.id}
-          className="rounded-md border border-border bg-card p-3"
-        >
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Badge variant="secondary">{opLabel(change.op)}</Badge>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-8" />
+          <TableHead>Operation</TableHead>
+          <TableHead>Resource</TableHead>
+          <TableHead>Actor</TableHead>
+          <TableHead className="text-right">When</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {changes.map((change) => (
+          <ChangeRow key={change.id} change={change} />
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function ChangeRow({ change }: { change: Change }) {
+  const { dateTime } = useDateTime();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <TableRow
+        className="cursor-pointer"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <TableCell className="text-muted-foreground">
+          <ChevronRight
+            className={cn(
+              "size-4 transition-transform",
+              open && "rotate-90",
+            )}
+          />
+        </TableCell>
+        <TableCell>
+          <Badge variant="secondary">{opLabel(change.op)}</Badge>
+        </TableCell>
+        <TableCell>
+          <div className="flex flex-col">
             <span className="font-medium">{change.resource.kind}</span>
             {change.resource.id ? (
               <span className="font-mono text-xs text-muted-foreground">
                 {change.resource.id}
               </span>
             ) : null}
-            <span className="ml-auto text-xs text-muted-foreground">
-              {actorLabel(change.actor)} · {dateTime(change.at)}
-            </span>
           </div>
-          <div className="mt-2">
+        </TableCell>
+        <TableCell className="text-muted-foreground">
+          {actorLabel(change.actor)}
+        </TableCell>
+        <TableCell className="text-right text-xs text-muted-foreground">
+          {dateTime(change.at)}
+        </TableCell>
+      </TableRow>
+      {open ? (
+        <TableRow className="hover:bg-transparent">
+          <TableCell colSpan={5} className="bg-muted/30">
             <ChangeDiff
               before={change.before as Record<string, unknown> | null}
               after={change.after as Record<string, unknown> | null}
             />
-          </div>
-        </li>
-      ))}
-    </ul>
+          </TableCell>
+        </TableRow>
+      ) : null}
+    </>
   );
 }

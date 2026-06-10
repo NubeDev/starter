@@ -691,6 +691,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/insights/functions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_insight_functions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview_insight"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/insights/{id}": {
         parameters: {
             query?: never;
@@ -750,6 +782,24 @@ export interface paths {
          *     explicit `null` reverts it to inherit. 401 without a tenant-bound principal.
          */
         patch: operations["patch_me_preferences"];
+        trace?: never;
+    };
+    "/api/v1/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /api/v1/me/settings` — the caller's settings bag, `{}` when never saved. */
+        get: operations["get_me_settings"];
+        /** `PUT /api/v1/me/settings` — replace the caller's settings bag (full replace). */
+        put: operations["set_me_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/nav": {
@@ -1355,22 +1405,37 @@ export interface components {
             slug: string;
         };
         /**
-         * @description Body for creating a datasource. The `password` is write-only: it is accepted
-         *     here, envelope-encrypted at rest, and never echoed back by any read
+         * @description Body for creating a datasource. SQL connectors (postgres) carry their
+         *     connection in the flat `host`/`port`/`database`/`user`/`password` fields;
+         *     non-SQL connectors (`mqtt`/`zenoh`) and file kinds (`parquet`/`csv`) supply
+         *     their parameters in [`config`] — the same per-kind shape their
+         *     datasource-kind config schema declares — so one create endpoint serves every
+         *     connector. The flat SQL fields are optional so a stream/file create need not
+         *     send placeholder host/port values. The `password` is write-only: it is
+         *     accepted here, envelope-encrypted at rest, and never echoed back by any read
          *     endpoint.
          */
         CreateDatasourceRequest: {
-            database: string;
-            host: string;
+            /**
+             * @description Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,
+             *     `{host, port, client_id, …}` for mqtt, `{path, has_header}` for files).
+             *     Ignored for postgres, which uses the flat fields.
+             */
+            config?: unknown;
+            database?: string | null;
+            host?: string | null;
             /** @description Which connector to use. */
             kind: components["schemas"]["DatasourceKind"];
             /** @description Human-readable name shown in the datasource picker. */
             name: string;
-            /** @description Write-only secret. Stored as ciphertext; absent from every response. */
-            password: string;
+            /**
+             * @description Write-only secret (SQL connectors). Stored as ciphertext; absent from
+             *     every response. Optional — file kinds have no secret.
+             */
+            password?: string | null;
             /** Format: int32 */
-            port: number;
-            user: string;
+            port?: number | null;
+            user?: string | null;
         };
         /**
          * @description Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the
@@ -1912,6 +1977,33 @@ export interface components {
              */
             accepted: number;
         };
+        /** @description The whole curated catalog — every function a script may call. */
+        InsightFunctionCatalog: {
+            /** @description Every curated insight function the sandbox exposes. */
+            functions: components["schemas"]["InsightFunctionDoc"][];
+        };
+        /**
+         * @description One curated insight function, as the UI's cheatsheet / autocomplete renders
+         *     it. Every field is display copy — the engine remains the enforcing authority.
+         */
+        InsightFunctionDoc: {
+            /**
+             * @description The bucket the UI groups it under: `select | filter | window | shape |
+             *     resample | anomaly`.
+             */
+            category: string;
+            /** @description A runnable example call, e.g. `zscore("value")`. */
+            example: string;
+            /** @description The bare function name as called on a frame, e.g. `zscore`. */
+            name: string;
+            /**
+             * @description The full signature with argument names and types, e.g.
+             *     `zscore(col: string)`.
+             */
+            signature: string;
+            /** @description A one-line description of what the function does. */
+            summary: string;
+        };
         /**
          * @description How a query attaches a post-query insight transform. A request may either
          *     inline a `script` (the ad-hoc / preview case) or name a stored insight by
@@ -2153,6 +2245,53 @@ export interface components {
             timezone?: string | null;
             unit_system?: null | components["schemas"]["UnitSystem"];
             week_start?: null | components["schemas"]["WeekStart"];
+        };
+        /**
+         * @description A tenant-safe script error. `kind` classifies the phase that failed so the UI
+         *     can colour/label it: `"compile"` (syntax), `"runtime"` (logic against the
+         *     data), or `"limit"` (a sandbox bound tripped). `message` is the full
+         *     position-annotated detail.
+         */
+        PreviewInsightError: {
+            /** @description One of `"compile" | "runtime" | "limit"`. */
+            kind: string;
+            /** @description The full, tenant-safe error message. */
+            message: string;
+        };
+        /**
+         * @description Run an inline Rhai script against `rows` without saving anything. The frontend
+         *     already holds query results, so preview is rows-in / rows-out and decoupled
+         *     from re-querying — there is deliberately no datasource/sql path in v1.
+         */
+        PreviewInsightRequest: {
+            /** @description Optional parameters bound as the script's `params` object. */
+            params?: unknown;
+            /** @description The sample input rows (JSON objects) to transform. */
+            rows?: unknown[];
+            /** @description The inline Rhai script to run over the sample rows. */
+            script: string;
+        };
+        /**
+         * @description The preview outcome. A successful run carries the transformed result and the
+         *     input row count (so the UI can show "120 → 87 rows"); a script error carries a
+         *     structured, tenant-safe message. Untagged so the wire shape is simply one of
+         *     the two object forms keyed by `ok`.
+         */
+        PreviewInsightResponse: {
+            /** @description Always `true` for this variant — lets the client discriminate. */
+            ok: boolean;
+            /** @description The transformed rows, columns, and stats — ready for the ResultGrid. */
+            result: components["schemas"]["QueryResponse"];
+            /**
+             * Format: int64
+             * @description The number of input rows submitted (for the "in → out" row delta).
+             */
+            row_count_in: number;
+        } | {
+            /** @description The structured error detail. */
+            error: components["schemas"]["PreviewInsightError"];
+            /** @description Always `false` for this variant. */
+            ok: boolean;
         };
         /**
          * @description Machine-readable error body.
@@ -2562,7 +2701,7 @@ export interface components {
          *     a nav node exactly like a dashboard mount (WS-13 §4).
          * @enum {string}
          */
-        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "alerts" | "agents" | "access" | "audit";
+        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "insights" | "alerts" | "agents" | "access" | "audit";
         /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
          *     id echoed in the SSE `id:` field so a reconnecting client can send
@@ -2849,6 +2988,17 @@ export interface components {
             options_config?: unknown;
             /** Format: int32 */
             sort_order?: number | null;
+        };
+        /**
+         * @description The caller's freeform settings bag — `GET`/`PUT /api/v1/me/settings`.
+         *
+         *     An opaque envelope around the per-user `jsonb` the frontend owns (starred
+         *     dashboards, collapsed sidebar groups, …). The server neither defines nor
+         *     validates the keys; `PUT` is a full replace, so the client reads, modifies,
+         *     and writes the whole bag. `settings` is always an object (defaults to `{}`).
+         */
+        UserSettings: {
+            settings: unknown;
         };
         /**
          * @description A dashboard variable definition. `options_config` carries the kind-specific
@@ -4969,6 +5119,64 @@ export interface operations {
             };
         };
     };
+    list_insight_functions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The curated insight function catalog */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightFunctionCatalog"];
+                };
+            };
+        };
+    };
+    preview_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewInsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Preview result — `ok:true` with the transformed result, or `ok:false` with a script error */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewInsightResponse"];
+                };
+            };
+            /** @description Too many sample rows */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_insight: {
         parameters: {
             query?: never;
@@ -5171,6 +5379,64 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_me_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSettings"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_me_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserSettings"];
+            };
+        };
+        responses: {
+            /** @description The caller's settings after the write */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSettings"];
+                };
             };
             /** @description Unauthenticated */
             401: {

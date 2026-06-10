@@ -43,6 +43,7 @@ import type {
   RuleResponse,
   RulesListResponse,
   SetShareScopeBody,
+  TeamMemberView,
   TeamView,
   TenantView,
 } from "@nube/starter-client-ts";
@@ -55,6 +56,8 @@ export const authzKeys = {
   tenant: (id: string) => ["authz", "tenants", id] as const,
   members: (tenantId: string) => ["authz", "tenants", tenantId, "members"] as const,
   teams: (tenantId: string) => ["authz", "tenants", tenantId, "teams"] as const,
+  teamMembers: (tenantId: string, teamId: string) =>
+    ["authz", "tenants", tenantId, "teams", teamId, "members"] as const,
   rules: () => ["authz", "rules"] as const,
   assignments: () => ["authz", "assignments"] as const,
   resources: () => ["authz", "resources"] as const,
@@ -200,6 +203,18 @@ export function useTeams(tenantId: string | null): UseQueryResult<TeamView[], Er
   });
 }
 
+export function useTeamMembers(
+  tenantId: string | null,
+  teamId: string | null,
+): UseQueryResult<TeamMemberView[], Error> {
+  const c = useStarterClient();
+  return useQuery({
+    queryKey: authzKeys.teamMembers(tenantId ?? "", teamId ?? ""),
+    queryFn: () => c.listTeamMembers(tenantId ?? "", teamId ?? ""),
+    enabled: !!tenantId && !!teamId,
+  });
+}
+
 export interface CreateTeamArgs {
   tenantId: string;
   body: CreateTeamBody;
@@ -244,8 +259,9 @@ export function useAddTeamMember(): UseMutationResult<void, Error, AddTeamMember
   return useMutation({
     mutationFn: ({ tenantId, teamId, body }) =>
       c.addTeamMember(tenantId, teamId, body),
-    onSuccess: (_v, { tenantId }) => {
+    onSuccess: (_v, { tenantId, teamId }) => {
       qc.invalidateQueries({ queryKey: authzKeys.teams(tenantId) });
+      qc.invalidateQueries({ queryKey: authzKeys.teamMembers(tenantId, teamId) });
     },
   });
 }
@@ -262,8 +278,9 @@ export function useRemoveTeamMember(): UseMutationResult<void, Error, RemoveTeam
   return useMutation({
     mutationFn: ({ tenantId, teamId, userId }) =>
       c.removeTeamMember(tenantId, teamId, userId),
-    onSuccess: (_v, { tenantId }) => {
+    onSuccess: (_v, { tenantId, teamId }) => {
       qc.invalidateQueries({ queryKey: authzKeys.teams(tenantId) });
+      qc.invalidateQueries({ queryKey: authzKeys.teamMembers(tenantId, teamId) });
     },
   });
 }

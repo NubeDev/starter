@@ -14,3 +14,4 @@
 mod apply;
 
 pub use apply::apply_insight;
+pub(crate) use apply::reshape;

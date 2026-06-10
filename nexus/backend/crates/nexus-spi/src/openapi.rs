@@ -18,7 +18,10 @@ use crate::dto::dashboard::{
     UpdateDashboardRequest, VariableExport,
 };
 use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
-use crate::dto::insight::{CreateInsightRequest, InsightRef, InsightSummary, UpdateInsightRequest};
+use crate::dto::insight::{
+    CreateInsightRequest, InsightFunctionCatalog, InsightFunctionDoc, InsightRef, InsightSummary,
+    PreviewInsightError, PreviewInsightRequest, PreviewInsightResponse, UpdateInsightRequest,
+};
 use crate::dto::nav::{
     CreateNavNodeRequest, NavContext, NavNodeDetail, NavTarget, StaticRoute, UpdateNavNodeRequest,
 };
@@ -36,7 +39,7 @@ use crate::dto::flow::{
     FlowSummary, NodeCategory, NodeType, NodeTypeList, UpdateFlowRequest,
 };
 use crate::dto::ingest::IngestAccepted;
-use crate::dto::me::MeResponse;
+use crate::dto::me::{MeResponse, UserSettings};
 use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
 use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
@@ -56,6 +59,7 @@ use crate::Problem;
 #[openapi(components(schemas(
     Problem,
     MeResponse,
+    UserSettings,
     QueryRequest,
     QueryTimeRange,
     QueryVariable,
@@ -102,6 +106,11 @@ use crate::Problem;
     CreateInsightRequest,
     UpdateInsightRequest,
     InsightRef,
+    PreviewInsightRequest,
+    PreviewInsightResponse,
+    PreviewInsightError,
+    InsightFunctionCatalog,
+    InsightFunctionDoc,
     NavNodeDetail,
     NavTarget,
     StaticRoute,

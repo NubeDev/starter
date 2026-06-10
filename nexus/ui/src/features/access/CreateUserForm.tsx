@@ -30,7 +30,15 @@ import {
 
 const ROLES: TenantRole[] = ["reader", "writer", "admin"];
 
-export function CreateUserForm({ tenantId }: { tenantId: string }) {
+export function CreateUserForm({
+  tenantId,
+  embedded = false,
+}: {
+  tenantId: string;
+  /** When true, render without the outer Card (for use inside a dialog) and
+   * lay the fields out vertically. */
+  embedded?: boolean;
+}) {
   const client = useStarterClient();
   const queryClient = useQueryClient();
 
@@ -55,6 +63,74 @@ export function CreateUserForm({ tenantId }: { tenantId: string }) {
     if (email.trim() && password) create.mutate();
   }
 
+  const formClass = embedded
+    ? "grid grid-cols-1 gap-3"
+    : "grid grid-cols-1 gap-3 sm:grid-cols-[1.5fr_1.5fr_1fr_auto] sm:items-end";
+
+  const body = (
+    <>
+      <form onSubmit={onSubmit} className={formClass}>
+        <div className="grid gap-1">
+          <Label htmlFor="cu-email">Email</Label>
+          <Input
+            id="cu-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.currentTarget.value)}
+            placeholder="person@company.com"
+            required
+          />
+        </div>
+        <div className="grid gap-1">
+          <Label htmlFor="cu-password">Temporary password</Label>
+          <Input
+            id="cu-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.currentTarget.value)}
+            placeholder="at least 12 characters"
+            required
+          />
+        </div>
+        <div className="grid gap-1">
+          <Label htmlFor="cu-role">Role</Label>
+          <Select value={role} onValueChange={(v) => setRole(v as TenantRole)}>
+            <SelectTrigger id="cu-role">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {r}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button type="submit" disabled={create.isPending} className={embedded ? "w-full" : undefined}>
+          {create.isPending ? "Creating…" : "Create user"}
+        </Button>
+      </form>
+      {create.error ? (
+        <p role="alert" className="mt-2 text-xs text-destructive">
+          {humanError(create.error.message)}
+        </p>
+      ) : null}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="grid gap-3">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <UserPlus className="size-4" />
+          Invite a new user
+        </div>
+        {body}
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -63,58 +139,7 @@ export function CreateUserForm({ tenantId }: { tenantId: string }) {
           Invite a new user
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <form
-          onSubmit={onSubmit}
-          className="grid grid-cols-1 gap-3 sm:grid-cols-[1.5fr_1.5fr_1fr_auto] sm:items-end"
-        >
-          <div className="grid gap-1">
-            <Label htmlFor="cu-email">Email</Label>
-            <Input
-              id="cu-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.currentTarget.value)}
-              placeholder="person@company.com"
-              required
-            />
-          </div>
-          <div className="grid gap-1">
-            <Label htmlFor="cu-password">Temporary password</Label>
-            <Input
-              id="cu-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.currentTarget.value)}
-              placeholder="at least 12 characters"
-              required
-            />
-          </div>
-          <div className="grid gap-1">
-            <Label htmlFor="cu-role">Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as TenantRole)}>
-              <SelectTrigger id="cu-role">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button type="submit" disabled={create.isPending}>
-            {create.isPending ? "Creating…" : "Create user"}
-          </Button>
-        </form>
-        {create.error ? (
-          <p role="alert" className="mt-2 text-xs text-destructive">
-            {humanError(create.error.message)}
-          </p>
-        ) : null}
-      </CardContent>
+      <CardContent>{body}</CardContent>
     </Card>
   );
 }

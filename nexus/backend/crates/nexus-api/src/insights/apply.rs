@@ -71,7 +71,10 @@ async fn resolve_script(
 /// Rebuild a `QueryResponse` from the transformed rows: derive the column schema
 /// and byte count from the rows, keep the elapsed time, and preserve the upstream
 /// `truncated` flag (the insight cannot truncate further — it never grows rows).
-fn reshape(rows: Vec<Value>, elapsed_ms: u64, truncated: bool) -> QueryResponse {
+///
+/// Exposed crate-wide so the preview handler shapes its inline-script result
+/// identically to the query path — one reshape, one rendered grid.
+pub(crate) fn reshape(rows: Vec<Value>, elapsed_ms: u64, truncated: bool) -> QueryResponse {
     let columns = derive_columns(&rows);
     let byte_count = serde_json::to_vec(&rows).map(|b| b.len() as u64).unwrap_or(0);
     let row_count = rows.len() as u64;

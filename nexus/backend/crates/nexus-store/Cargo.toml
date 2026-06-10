@@ -122,3 +122,7 @@ path = "tests/query_history/crud_test.rs"
 [[test]]
 name = "variable_crud"
 path = "tests/variable/crud_test.rs"
+
+[[test]]
+name = "user_settings_crud"
+path = "tests/user_settings/crud_test.rs"

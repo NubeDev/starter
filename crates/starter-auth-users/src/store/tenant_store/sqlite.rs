@@ -5,8 +5,8 @@ use sqlx::Row;
 use starter_store_sqlite::Pool;
 
 use super::{
-    is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
-    MAX_TENANT_DEPTH,
+    is_reserved_slug, MembershipRecord, TeamMemberRecord, TeamRecord, TenantRecord, TenantStore,
+    TenantStoreError, MAX_TENANT_DEPTH,
 };
 
 /// sqlite-backed [`TenantStore`].
@@ -398,6 +398,30 @@ impl TenantStore for SqliteTenantStore {
                 tenant_id: r.get(1),
                 slug: r.get(2),
                 display_name: r.get(3),
+            })
+            .collect())
+    }
+
+    async fn members_of_team(
+        &self,
+        team_id: &str,
+    ) -> Result<Vec<TeamMemberRecord>, TenantStoreError> {
+        let rows = sqlx::query(
+            "SELECT m.user_id, u.email \
+             FROM starter_auth_users_team_members m \
+             JOIN starter_auth_users_users u ON u.id = m.user_id \
+             WHERE m.team_id = ?1 \
+             ORDER BY u.email ASC",
+        )
+        .bind(team_id)
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(err)?;
+        Ok(rows
+            .into_iter()
+            .map(|r| TeamMemberRecord {
+                user_id: r.get::<String, _>(0),
+                email: r.get::<Option<String>, _>(1),
             })
             .collect())
     }

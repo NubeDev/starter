@@ -68,6 +68,7 @@ pub fn describe() -> Vec<NodeDescriptor> {
         collector(),
         sse(),
         postgres(),
+        datasource(),
     ];
     // The zenoh subscriber is feature-gated OFF by default; only describe it when
     // the engine was compiled with its builder registered, so the palette never
@@ -258,6 +259,40 @@ fn postgres() -> NodeDescriptor {
     }
 }
 
+fn datasource() -> NodeDescriptor {
+    NodeDescriptor {
+        kind: "datasource",
+        category: NodeCategory::Output,
+        // The config the editor serialises is the flow-config form the API's
+        // `resolve_output` reads — a datasource *reference* by id plus a table
+        // and optional batching. The referenced datasource's connection material
+        // (and secrets) are resolved server-side at flow start through the
+        // audited datasource store, never carried in the flow config. This is the
+        // RW-04 "any-DB store" sink: target any registered datasource by id.
+        label: "Datasource sink",
+        description: "Write each batch to a table in a registered datasource (resolved by id; creds stay server-side).",
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "datasource": str_prop("Id of the registered datasource to write into."),
+                "table": str_prop("Table the shaped rows are written to."),
+                "batch_rows": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Flush after this many buffered rows (batches the write).",
+                },
+                "batch_ms": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Flush after this many milliseconds even if the row count is short.",
+                },
+            },
+            "required": ["datasource", "table"],
+            "additionalProperties": false,
+        }),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -275,6 +310,7 @@ mod tests {
             "collector",
             "sse",
             "postgres",
+            "datasource",
         ] {
             assert!(kinds.contains(&expected), "missing descriptor for {expected}");
         }

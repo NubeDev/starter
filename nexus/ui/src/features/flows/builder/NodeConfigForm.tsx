@@ -41,22 +41,28 @@ export function NodeConfigForm({
   schema,
   config,
   onChange,
+  secretFields,
+  emptyHint = "This node has no configuration.",
 }: {
   schema: unknown;
   config: Record<string, unknown>;
   onChange: (config: Record<string, unknown>) => void;
+  // Property names the schema declares as write-only secrets. Rendered as
+  // password inputs. Shared with the datasource create form, which marks its
+  // kind's `secret_fields` this way; flow nodes pass none.
+  secretFields?: readonly string[];
+  // Override for the no-properties placeholder so callers other than the flow
+  // builder read naturally.
+  emptyHint?: string;
 }) {
   const s = (schema ?? {}) as JsonSchema;
   const props = s.properties ?? {};
   const required = new Set(s.required ?? []);
+  const secrets = new Set(secretFields ?? []);
   const keys = Object.keys(props);
 
   if (keys.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        This node has no configuration.
-      </p>
-    );
+    return <p className="text-xs text-muted-foreground">{emptyHint}</p>;
   }
 
   const set = (key: string, prop: PropertySchema, raw: string) => {
@@ -97,7 +103,14 @@ export function NodeConfigForm({
               <Input
                 id={id}
                 value={value}
-                type={prop.type === "integer" || prop.type === "number" ? "number" : "text"}
+                type={
+                  secrets.has(key)
+                    ? "password"
+                    : prop.type === "integer" || prop.type === "number"
+                      ? "number"
+                      : "text"
+                }
+                autoComplete={secrets.has(key) ? "new-password" : "off"}
                 onChange={(e) => set(key, prop, e.target.value)}
                 placeholder={prop.description}
                 className="h-8"

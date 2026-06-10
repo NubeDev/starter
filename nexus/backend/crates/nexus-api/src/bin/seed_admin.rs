@@ -97,16 +97,19 @@ async fn main() -> Result<(), String> {
         Err(e) => return Err(format!("insert assignment: {e}")),
     }
 
-    // Default navigation tree (WS-13 §6): seed one `route` node per built-in
+    // Default navigation tree (WS-13 §6): ensure one `route` node per built-in
     // static page so the tenant has a navigable sidebar, then grant each node
     // `tenant`-scope `view` so *non-admin* members see them too (admins already
-    // see every node via the built-in admin rule). Idempotent: re-seeding is a
-    // no-op once the tenant has any node, so re-runs add no duplicate grants.
-    let seeded = nexus_store::nav_node::seed_default_tree_if_empty(tenants.pool().sqlx(), &tenant_slug)
+    // see every node via the built-in admin rule). Reconciling (not just
+    // seed-if-empty) backfills routes added after the tenant was first seeded —
+    // e.g. `insights` on an established tenant — so re-running seed-admin surfaces
+    // new built-in pages. Idempotent: only missing routes are created, and the
+    // grant insert tolerates conflicts, so re-runs add no duplicates.
+    let seeded = nexus_store::nav_node::reconcile_default_routes(tenants.pool().sqlx(), &tenant_slug)
         .await
         .map_err(|e| format!("seed nav tree: {e}"))?;
     if seeded.is_empty() {
-        println!("nav tree already present");
+        println!("nav tree already complete");
     } else {
         for node in &seeded {
             // A tenant-wide allow on this specific node id: role `*` matches any
@@ -132,7 +135,7 @@ async fn main() -> Result<(), String> {
                 Err(e) => return Err(format!("grant nav node view: {e}")),
             }
         }
-        println!("seeded default nav tree ({} nodes, tenant-view granted)", seeded.len());
+        println!("reconciled default nav tree (+{} node(s), tenant-view granted)", seeded.len());
     }
 
     println!("seed complete — login {email}");

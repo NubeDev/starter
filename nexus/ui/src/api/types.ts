@@ -16,12 +16,17 @@ export type CreateDatasourceRequest = S["CreateDatasourceRequest"];
 export type UpdateDatasourceRequest = S["UpdateDatasourceRequest"];
 export type TestDatasourceResponse = S["TestDatasourceResponse"];
 export type TestConnectionRequest = S["TestConnectionRequest"];
+export type DatasourceKindList = S["DatasourceKindList"];
+export type DatasourceKindSummary = S["DatasourceKindSummary"];
 export type DatasourceSchema = S["DatasourceSchema"];
 export type SchemaTable = S["SchemaTable"];
 export type SchemaColumn = S["SchemaColumn"];
 
 export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];
+// Federation + insight refs that ride on a QueryRequest (additive contract).
+export type FederatedSourceRef = S["FederatedSourceRef"];
+export type InsightRef = S["InsightRef"];
 export type QueryKindList = S["QueryKindList"];
 export type QueryKindSummary = S["QueryKindSummary"];
 export type QueryKindDetail = S["QueryKindDetail"];
@@ -56,6 +61,18 @@ export type FolderSummary = S["FolderSummary"];
 export type CreateFolderRequest = S["CreateFolderRequest"];
 export type UpdateFolderRequest = S["UpdateFolderRequest"];
 
+// Insights (Rhai transforms applied to query results).
+export type InsightSummary = S["InsightSummary"];
+export type CreateInsightRequest = S["CreateInsightRequest"];
+export type UpdateInsightRequest = S["UpdateInsightRequest"];
+// Insights Workbench: live preview (rows-in / rows-out) + the curated
+// function surface that feeds the cheatsheet and editor autocomplete.
+export type PreviewInsightRequest = S["PreviewInsightRequest"];
+export type PreviewInsightResponse = S["PreviewInsightResponse"];
+export type PreviewInsightError = S["PreviewInsightError"];
+export type InsightFunctionCatalog = S["InsightFunctionCatalog"];
+export type InsightFunctionDoc = S["InsightFunctionDoc"];
+
 export type FlowSummary = S["FlowSummary"];
 export type FlowDetail = S["FlowDetail"];
 export type FlowMetrics = S["FlowMetrics"];
@@ -83,6 +100,11 @@ export type Tag = S["Tag"];
 export type TaggableKind = S["TaggableKind"];
 export type SetTagsRequest = S["SetTagsRequest"];
 export type TaggedEntity = S["TaggedEntity"];
+
+// The caller's freeform per-user settings bag (`GET`/`PUT /api/v1/me/settings`).
+// An opaque envelope the frontend owns: starred dashboards live under
+// `starredDashboards`. `PUT` is a full replace, so callers read-modify-write.
+export type UserSettings = S["UserSettings"];
 
 // Nav tree (WS-13): a node mounts a dashboard page (with context) or a static
 // route into the access-gated navigation tree.

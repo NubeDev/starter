@@ -58,6 +58,17 @@ pub struct TeamRecord {
     pub display_name: String,
 }
 
+/// Team-member row (Phase 7b — R13). Joins a user to a team, with an
+/// optional email label populated when the read joins the users table.
+#[derive(Debug, Clone)]
+pub struct TeamMemberRecord {
+    /// User id.
+    pub user_id: String,
+    /// The user's email, populated when the read joins the users table.
+    /// `None` for stores that do not populate it — a human-readable label.
+    pub email: Option<String>,
+}
+
 /// Membership row joining a user to a tenant with a role.
 #[derive(Debug, Clone)]
 pub struct MembershipRecord {
@@ -210,6 +221,14 @@ pub trait TenantStore: Send + Sync {
 
     /// List the teams in a tenant.
     async fn list_teams(&self, tenant_id: &str) -> Result<Vec<TeamRecord>, TenantStoreError>;
+
+    /// List the members of a team (used by admin UIs). Joins the
+    /// users table for a human-readable email label, mirroring
+    /// [`members_of_tenant`](Self::members_of_tenant).
+    async fn members_of_team(
+        &self,
+        team_id: &str,
+    ) -> Result<Vec<TeamMemberRecord>, TenantStoreError>;
 
     /// Add a user to a team.
     async fn add_team_member(&self, team_id: &str, user_id: &str) -> Result<(), TenantStoreError>;

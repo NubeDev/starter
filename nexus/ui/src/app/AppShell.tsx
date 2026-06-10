@@ -21,6 +21,7 @@ const TITLES: Record<string, string> = {
   "/explore": "Explore",
   "/datasources": "Datasources",
   "/flows": "Flows",
+  "/insights": "Insights",
   "/alerts": "Alerts",
   "/agents": "Agents",
   "/access": "Access",

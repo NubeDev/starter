@@ -30,15 +30,19 @@ pub async fn create_datasource(
         Ok(t) => t,
         Err(resp) => return resp,
     };
+    // SQL connectors fill the flat columns; stream/file kinds carry their
+    // parameters in `config` and leave these defaulted (empty host, port 0).
+    // The secret is only sealed when present, so a secret-less kind (parquet/csv)
+    // stores no ciphertext.
     let new = NewDatasource {
         name: req.name,
         kind: kind_to_stored(req.kind).into(),
-        host: req.host,
-        port: req.port as i32,
-        database: req.database,
-        db_user: req.user,
-        secret: Some(req.password),
-        config: None,
+        host: req.host.unwrap_or_default(),
+        port: req.port.map(i32::from).unwrap_or(0),
+        database: req.database.unwrap_or_default(),
+        db_user: req.user.unwrap_or_default(),
+        secret: req.password.filter(|p| !p.is_empty()),
+        config: req.config,
     };
     match datasource::insert(&state.metadata, &state.envelope, &tenant, &new).await {
         Ok(rec) => Json(to_detail(&rec)).into_response(),

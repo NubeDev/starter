@@ -2270,6 +2270,62 @@
         }
       }
     },
+    "/api/v1/insights/functions": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "list_insight_functions",
+        "responses": {
+          "200": {
+            "description": "The curated insight function catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightFunctionCatalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/insights/preview": {
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "preview_insight",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewInsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Preview result — `ok:true` with the transformed result, or `ok:false` with a script error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewInsightResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Too many sample rows"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
     "/api/v1/insights/{id}": {
       "get": {
         "tags": [
@@ -2462,6 +2518,62 @@
           },
           "400": {
             "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/me/settings": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`GET /api/v1/me/settings` — the caller's settings bag, `{}` when never saved.",
+        "operationId": "get_me_settings",
+        "responses": {
+          "200": {
+            "description": "The caller's settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`PUT /api/v1/me/settings` — replace the caller's settings bag (full replace).",
+        "operationId": "set_me_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The caller's settings after the write",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettings"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthenticated"
@@ -4094,22 +4206,26 @@
       },
       "CreateDatasourceRequest": {
         "type": "object",
-        "description": "Body for creating a datasource. The `password` is write-only: it is accepted\nhere, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
+        "description": "Body for creating a datasource. SQL connectors (postgres) carry their\nconnection in the flat `host`/`port`/`database`/`user`/`password` fields;\nnon-SQL connectors (`mqtt`/`zenoh`) and file kinds (`parquet`/`csv`) supply\ntheir parameters in [`config`] — the same per-kind shape their\ndatasource-kind config schema declares — so one create endpoint serves every\nconnector. The flat SQL fields are optional so a stream/file create need not\nsend placeholder host/port values. The `password` is write-only: it is\naccepted here, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
         "required": [
           "name",
-          "kind",
-          "host",
-          "port",
-          "database",
-          "user",
-          "password"
+          "kind"
         ],
         "properties": {
+          "config": {
+            "description": "Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,\n`{host, port, client_id, …}` for mqtt, `{path, has_header}` for files).\nIgnored for postgres, which uses the flat fields."
+          },
           "database": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "host": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "kind": {
             "$ref": "#/components/schemas/DatasourceKind",
@@ -4120,16 +4236,25 @@
             "description": "Human-readable name shown in the datasource picker."
           },
           "password": {
-            "type": "string",
-            "description": "Write-only secret. Stored as ciphertext; absent from every response."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Write-only secret (SQL connectors). Stored as ciphertext; absent from\nevery response. Optional — file kinds have no secret."
           },
           "port": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "minimum": 0
           },
           "user": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -5093,6 +5218,55 @@
           }
         }
       },
+      "InsightFunctionCatalog": {
+        "type": "object",
+        "description": "The whole curated catalog — every function a script may call.",
+        "required": [
+          "functions"
+        ],
+        "properties": {
+          "functions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InsightFunctionDoc"
+            },
+            "description": "Every curated insight function the sandbox exposes."
+          }
+        }
+      },
+      "InsightFunctionDoc": {
+        "type": "object",
+        "description": "One curated insight function, as the UI's cheatsheet / autocomplete renders\nit. Every field is display copy — the engine remains the enforcing authority.",
+        "required": [
+          "name",
+          "signature",
+          "summary",
+          "category",
+          "example"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "The bucket the UI groups it under: `select | filter | window | shape |\nresample | anomaly`."
+          },
+          "example": {
+            "type": "string",
+            "description": "A runnable example call, e.g. `zscore(\"value\")`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The bare function name as called on a frame, e.g. `zscore`."
+          },
+          "signature": {
+            "type": "string",
+            "description": "The full signature with argument names and types, e.g.\n`zscore(col: string)`."
+          },
+          "summary": {
+            "type": "string",
+            "description": "A one-line description of what the function does."
+          }
+        }
+      },
       "InsightRef": {
         "type": "object",
         "description": "How a query attaches a post-query insight transform. A request may either\ninline a `script` (the ad-hoc / preview case) or name a stored insight by\n`insight_id` (the panel case); `params` feeds either as the script's `params`\nobject. Both fields are optional and the whole `InsightRef` is optional on the\nrequest, so a query without one behaves exactly as before — this is a purely\nadditive contract, like the RW-05 `sources` field.\n\nA request may also name an extension-contributed insight by `insight_name`\n(the global registry an installed extension contributes via\n`contributes.insights[]`). Precedence when more than one is set: a stored\n`insight_id` (tenant-authored) wins, then `insight_name` (global, admin-\ncurated), then an inline `script`. Caps still apply *after* the insight runs:\nit can aggregate the result down but the surface guarantees it never grows it.",
@@ -5663,6 +5837,93 @@
             ]
           }
         }
+      },
+      "PreviewInsightError": {
+        "type": "object",
+        "description": "A tenant-safe script error. `kind` classifies the phase that failed so the UI\ncan colour/label it: `\"compile\"` (syntax), `\"runtime\"` (logic against the\ndata), or `\"limit\"` (a sandbox bound tripped). `message` is the full\nposition-annotated detail.",
+        "required": [
+          "message",
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "One of `\"compile\" | \"runtime\" | \"limit\"`."
+          },
+          "message": {
+            "type": "string",
+            "description": "The full, tenant-safe error message."
+          }
+        }
+      },
+      "PreviewInsightRequest": {
+        "type": "object",
+        "description": "Run an inline Rhai script against `rows` without saving anything. The frontend\nalready holds query results, so preview is rows-in / rows-out and decoupled\nfrom re-querying — there is deliberately no datasource/sql path in v1.",
+        "required": [
+          "script"
+        ],
+        "properties": {
+          "params": {
+            "description": "Optional parameters bound as the script's `params` object."
+          },
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "The sample input rows (JSON objects) to transform."
+          },
+          "script": {
+            "type": "string",
+            "description": "The inline Rhai script to run over the sample rows."
+          }
+        }
+      },
+      "PreviewInsightResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "The script ran. `result` is the QueryResponse-shaped transformed output;\n`row_count_in` is the number of input rows the script saw.",
+            "required": [
+              "ok",
+              "result",
+              "row_count_in"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "Always `true` for this variant — lets the client discriminate."
+              },
+              "result": {
+                "$ref": "#/components/schemas/QueryResponse",
+                "description": "The transformed rows, columns, and stats — ready for the ResultGrid."
+              },
+              "row_count_in": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The number of input rows submitted (for the \"in → out\" row delta).",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The script failed to compile or run. Returned with HTTP 200 so the UI\nrenders it inline rather than as a failed request.",
+            "required": [
+              "ok",
+              "error"
+            ],
+            "properties": {
+              "error": {
+                "$ref": "#/components/schemas/PreviewInsightError",
+                "description": "The structured error detail."
+              },
+              "ok": {
+                "type": "boolean",
+                "description": "Always `false` for this variant."
+              }
+            }
+          }
+        ],
+        "description": "The preview outcome. A successful run carries the transformed result and the\ninput row count (so the UI can show \"120 → 87 rows\"); a script error carries a\nstructured, tenant-safe message. Untagged so the wire shape is simply one of\nthe two object forms keyed by `ok`."
       },
       "Problem": {
         "type": "object",
@@ -6333,6 +6594,7 @@
           "explore",
           "datasources",
           "flows",
+          "insights",
           "alerts",
           "agents",
           "access",
@@ -7066,6 +7328,16 @@
             ],
             "format": "int32"
           }
+        }
+      },
+      "UserSettings": {
+        "type": "object",
+        "description": "The caller's freeform settings bag — `GET`/`PUT /api/v1/me/settings`.\n\nAn opaque envelope around the per-user `jsonb` the frontend owns (starred\ndashboards, collapsed sidebar groups, …). The server neither defines nor\nvalidates the keys; `PUT` is a full replace, so the client reads, modifies,\nand writes the whole bag. `settings` is always an object (defaults to `{}`).",
+        "required": [
+          "settings"
+        ],
+        "properties": {
+          "settings": {}
         }
       },
       "VariableDetail": {

@@ -25,6 +25,7 @@ pub mod query_history;
 pub mod query_kind;
 pub mod tag;
 pub mod tenant_tx;
+pub mod user_settings;
 pub mod variable;
 
 #[cfg(feature = "testing")]

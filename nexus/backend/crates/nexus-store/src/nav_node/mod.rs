@@ -24,5 +24,5 @@ pub use delete::{delete, sweep_dashboard_targets};
 pub use fetch::{by_id, list};
 pub use insert::{insert, insert_with_id};
 pub use record::{NavNodePatch, NavNodeRecord, NewNavNode};
-pub use seed::seed_default_tree_if_empty;
+pub use seed::{reconcile_default_routes, seed_default_tree_if_empty};
 pub use update::update;

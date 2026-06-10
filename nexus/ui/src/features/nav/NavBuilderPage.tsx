@@ -39,7 +39,11 @@ type Editing =
 // siblings, and manage each node's access inline (the same permissions drawer
 // the Access section uses). The signed-in admin sees the tree filtered to nodes
 // they hold `view` on, like everyone else.
-export function NavBuilderPage() {
+//
+// This lives as the Navigation tab of the Access section (nav + access in one
+// place), so the body is split out as an embeddable component without the
+// standalone page chrome (max-width wrapper / h1).
+export function NavBuilder() {
   const client = useStarterClient();
   const { tree, isPending, isError } = useNavTree();
   const create = useCreateNavNode();
@@ -80,15 +84,11 @@ export function NavBuilderPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 p-6">
+    <div className="flex h-full w-full flex-col gap-4">
       <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Navigation</h1>
-          <p className="text-sm text-muted-foreground">
-            Build the sidebar: mount pages, group them, and grant access per
-            node.
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          Build the sidebar: mount pages, group them, and grant access per node.
+        </p>
         <Button
           onClick={() =>
             setEditing({ mode: "create", parentId: null, sortOrder: tree.length })
