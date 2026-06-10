@@ -19,6 +19,7 @@
 | 7 | RW-07 | Extension data-plane: sources/sinks/insights contributions | ⬜ | | | | ingest.write host method |
 | 8 | RW-08 | Backpressure hardening + soak + flow metrics | ⬜ | | | | BACKPRESSURE.md + make soak |
 | 9 | RW-09 | Transport breadth: http_ingest + Zenoh source | ⬜ | | | | human-added 2026-06-10; zenoh feature-gated OFF |
+| 10 | RW-04b | File-datasource persistence (RW-04 fix pass) | ⬜ | | | | supervisor-queued from RW-05's TODO; spec = TODOs.md entry "File datasource cannot be persisted" (its Proposed section is the scope): nullable `config jsonb` + nullable secret cols (20xx block), record/insert/get/resolve updates, stored-Parquet⋈PG e2e; RW-04 lane files only |
 
 ## Loop log (append one line per wake)
 

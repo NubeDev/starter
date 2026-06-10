@@ -124,8 +124,68 @@
   branch, never a new branch) — charter + done-gate + roadmap §7 updated; gate pushes if the
   session forgot; supervisor checks remote freshness from now on. Supervisor will push all
   outstanding local commits this wake.
-- 2026-06-10 02:44 — All healthy, NO action. Cron firing + correctly skipping on held lock
-  (02:35, 02:40). RW-02 🔵 wake PID 737438 ALIVE 14min (within the 20-25min WS envelope),
+- 2026-06-10 02:56 — All healthy, NO action. RW-02 ✅ gated clean (6b25bb7d, 40 engine tests +
+  workspace green, clippy clean; the deferred core deltas correctly did NOT fail the gate —
+  they're RW-03 step 0). RW-03 (cutover/ArkFlow delete) 🔵 — fresh wake PID 793827 ALIVE 1min
+  (02:55:01 firing), doc-reading phase, no files touched yet (normal). Lock kernel-HELD, no
+  STOP. Queue 2✅/1🔵/6⬜ incl. human-added RW-09. TODOs: 3 real entries, all known (core
+  deltas + JSON-UDF check — both now RW-03 step 0 by design). Remote: origin at 27082659;
+  local +1 (df70313e, cron's spawn narration) — unpushed spawn commits are fine, the gate
+  pushes at ✅ per the new rule. NEXT WAKE: RW-03 is the biggest WS (alignment + 3 runners +
+  deletion); expect 20-30min envelope; watch for core/node.rs gaining &mut process/commit()
+  and vendor/ shrinking.
+- 2026-06-10 03:00 — All healthy, NO action. WATCH ITEM RESOLVED: RW-03 (wake PID 793827
+  ALIVE 5.5min) has landed the §6 core alignment — node.rs:34 `commit(&mut self)` default
+  hook + node.rs:48 `process(&mut self, …)`; core/{node,mod,config}.rs touched <4min (step 0
+  exactly per spec, the contract gap from both reviews is CLOSED in the working tree).
+  44 files still reference arkflow + vendor/ present — expected, deletion is step 3 of its
+  pass. Cron firing + correctly skipping (03:00). Lock kernel-HELD, no STOP, no new TODOs.
+  Queue 2✅/1🔵/6⬜. NEXT WAKE: expect runner cutover underway (runner/*.rs churn), then
+  vendor deletion; gate checks = grep-zero arkflow + fixture flow-config compat test.
+- 2026-06-10 03:05 — All healthy, NO action. RW-03 wake PID 793827 ALIVE 10min, exactly on
+  the predicted path: runner cutover IN PROGRESS (runner/{query,live,mod,cancel}.rs touched
+  <4min) + core/slice.rs NEW (the max_batch_rows zero-copy slicing from §6 — third and last
+  alignment delta now has its own file) + core pipeline tests being written. ArkFlow file
+  refs falling 44→37; vendor/ still present (deletion is its last step, correct order —
+  runners must compile native first). Cron firing + skipping correctly (03:00, 03:05). Lock
+  kernel-HELD, no STOP, TODOs unchanged (3, all addressed by this WS). Queue 2✅/1🔵/6⬜.
+  NEXT WAKE: ~15min mark — expect flow/manager.rs cutover + Cargo.toml dep removal +
+  vendor/ deletion, then its commit/gate.
+- 2026-06-10 03:10 — All healthy, NO action. POINT OF NO RETURN PASSED: vendor/ DELETED,
+  backend Cargo.toml arkflow refs = 0 (git pins + patch block gone), .rs file refs falling
+  37→12 (cleanup sweep in progress: lib.rs, native_registry.rs NEW, stream_registry,
+  processors, runner/poll.rs all touched <4min). RW-03 wake PID 793827 ALIVE 15min, within
+  envelope. Cron firing + skipping correctly (03:00/05/10). Lock kernel-HELD, no STOP,
+  queue 2✅/1🔵/6⬜, TODOs unchanged. NEXT WAKE: expect refs→0, fixture compat test, full
+  workspace test run, then commit+push+gate. RW-03 ✅ = ArkFlow is fully out of the tree.
+- 2026-06-10 03:15 — All healthy, NO action. GREP-ZERO REACHED: arkflow .rs refs 12→0,
+  vendor gone, Cargo.tomls clean (engine Cargo.toml touched <4min). RW-03 wake PID 793827
+  ALIVE 20min, in TEST phase: stored_config_parity_test.rs (the spec's fixture compat
+  acceptance!), collector/sse native sink tests, pipeline tests + nexus-api flows/dry_run.rs
+  wiring all touched <4min. No commit yet (RW-03.md In-progress) — normal finishing order:
+  tests green first. Cron firing + skipping (03:00-10), lock kernel-HELD, no STOP, queue
+  2✅/1🔵/6⬜. Envelope note: 20min in, prior WS took 23-28 wall (clock-skewed rows aside);
+  not approaching the 25min/3-firing stall threshold given continuous file progress. NEXT
+  WAKE: expect the RW-03 commit + push + gate ✅, then RW-04 (any-DB store) spawn.
+- 2026-06-10 03:20 — ✅ MILESTONE: RW-03 DONE, COMMITTED, PUSHED — ARKFLOW IS OUT OF THE TREE.
+  Read-race false alarm closed in-wake: first check showed row ✅ with no code commit (would
+  be a gate violation) but the working tree was clean of engine changes — second read 60s
+  later found 8d679c5b (cutover + deletion) + ab2c18b0 (hash record), origin == HEAD (push
+  rule honored, 0 ahead). Row: grep-zero arkflow, vendor/ gone, 207 tests green. I caught
+  the wake mid-commit-sequence; durable signals converged on the next read exactly as the
+  recovery doc predicts. Wake PID 793827 in tail (25min). Queue 3✅/6⬜, no STOP, no new
+  TODOs. LESSON for future wakes: a ✅ row + "(pending)" commit cell + live PID = check
+  twice before escalating. NEXT WAKE: expect RW-04 (any-DB store) spawned. Timestamp note:
+  row says Finished 04:35 UTC — subagent clock skew again (real 03:20Z); cosmetic.
+- 2026-06-10 03:24 — All healthy, NO action. FIRST LOCK-FREE BUILD CHECK SINCE CUTOVER:
+  `cargo check --workspace` GREEN against committed HEAD (ab2c18b0) with ArkFlow fully
+  deleted — real integration proof of the post-ArkFlow tree, not a mid-edit snapshot
+  (cached, 0.45s — the RW-03 wake left a fresh build). RW-03 wake exited CLEAN (heartbeat
+  wake-complete, PID 793827 gone, lock FREE). Queue 3✅/6⬜, RW-04 next — the 03:25 firing
+  spawns it. Cron INSTALLED + firing, no STOP, TODOs unchanged (3; the two RW-03-targeted
+  ones should now be closeable — verify next wake that RW-03 actually did the JSON-UDF grep
+  + core alignment items and strike them if so). NEXT WAKE: confirm RW-04 🔵 + check
+  whether TODOs 2/3 can be marked resolved. RW-02 🔵 wake PID 737438 ALIVE 14min (within the 20-25min WS envelope),
   PROGRESSING strongly: processor/{sql,json_to_arrow,declared_schema}.rs + native pipeline/
   generate tests all touched <4min. KEY POSITIVE SIGNAL: `declared_schema.rs` exists — that's
   the schema-stability contract from the 02:31 peer-review update, so the subagent IS reading
@@ -135,3 +195,95 @@
   Runtime files untracked + gitignored this wake (8345ddee) — committed lock/heartbeat would
   have dirtied the tree every firing. NEXT WAKE: RW-02 likely in finishing phase or committed;
   gate must verify &mut self + max_batch_rows + commit() in core.
+- 2026-06-10 03:43 — SUPERVISOR SELF-REPAIR: my in-session 5-min schedule (job d94816eb) had
+  silently died (~17min gap, caught by the HUMAN — CronList showed no jobs). Re-armed as job
+  48c168b4. THE BUILD WAS NEVER AT RISK: the OS worker cron fired on schedule throughout
+  (03:30/35/40 correct lock-held skips) — the two-loop design degraded exactly as intended;
+  the worker doesn't depend on the watchdog. Catch-up: RW-04 wake PID 834939 ALIVE 17min,
+  late phase (datasource_kinds/resolve_output.rs + flows/start.rs wiring + sink_e2e_test.rs
+  <4min = API integration + e2e tests, nearing commit). Queue 3✅/1🔵/5⬜, TODOs 3 unchanged.
+  TWO LESSONS: (1) each wake must verify the supervisor's OWN schedule too — a watchdog that
+  dies silently needs watching; (2) earlier log entries were Edit-inserted mid-file out of
+  order (02:50–03:24 sit above older lines) — entries are all present, just jumbled; from now
+  on APPEND strictly at end-of-file.
+- 2026-06-10 03:47 — All healthy, NO action. Self-check first (new rule): supervisor job
+  48c168b4 alive in CronList. Worker cron firing + skipping correctly (03:35/40/45). RW-04 🔵
+  wake PID 834939 ALIVE 22min — churn narrowed to nexus-store/datasource/mod.rs (<4min, in-lane
+  creds-path append); low file activity at 22min = likely cargo test/build phase, within the
+  22-28min envelope set by RW-02/03. Lock kernel-HELD, no STOP. Queue 3✅/1🔵/5⬜, TODOs 3
+  (unchanged). Remote 1 behind local (cron's spawn commit 0473b1ec — gate pushes at ✅).
+  NEXT WAKE: expect RW-04 commit+push+gate; if still 🔵 with no commit at ~28min, check
+  progress signals harder (not yet a stall — threshold 25min+3 firings with NO progress;
+  progress exists).
+- 2026-06-10 03:51 — All healthy, NO action. RW-04 ✅ DONE+COMMITTED+PUSHED within its wake
+  (70a48deb + 17d9f865, origin == HEAD): datasource sink vertical complete — sqlx PgCopyIn
+  COPY writer (spec spike resolved: text format, no second pg client), rotating Parquet
+  part-files, rows-or-timer batch accumulator, strict identifier guard (codex acceptance
+  item), audited secret resolve kept in store/api seam so the engine has zero nexus-store
+  dep (clean layering). Legacy postgres sink parity test + docker e2e + DataFusion parquet
+  read-back all green. HALF-WAY: 4✅/5⬜ in ~92min. Wake PID 834939 in tail (26min); 03:55
+  firing spawns RW-05 (federation). Self-check: supervisor job 48c168b4 alive. Cron firing +
+  skipping correctly, lock kernel-HELD, no STOP. TODOs 4 (palette follow-up from RW-04 —
+  correctly lane-deferred to RW-07). NEXT WAKE: confirm RW-05 🔵 + its table-providers/
+  datafusion-federation evaluation recorded in session log.
+- 2026-06-10 03:56 — All healthy, NO action. Clean handoff: RW-04 wake exited (03:51:38
+  wake-complete), 03:55:01 firing spawned RW-05 (Federation) — fresh wake PID 892403 ALIVE
+  1min, row 🔵, doc-reading phase (no files yet, RW-05.md not yet — normal at 1min). Lock
+  kernel-HELD by new wake, cron INSTALLED + firing, no STOP. Self-check: supervisor job
+  48c168b4 alive. Queue 4✅/1🔵/4⬜, TODOs 4 (unchanged). NEXT WAKE: RW-05 build underway —
+  watch for the table-providers/datafusion-federation evaluation note (spec FIRST ACTION)
+  and federation/ module scaffolding; this WS has the trickiest deps (catalog providers,
+  MemoryPool bound), envelope may run longer than 25min.
+- 2026-06-10 04:01 — All healthy, NO action. RW-05 wake PID 892403 ALIVE 6min and the spec's
+  FIRST ACTION is already discharged + recorded in RW-05.md: evaluated table-providers +
+  datafusion-federation TOGETHER, REJECTED datafusion-table-providers for Postgres (it pulls
+  tokio-postgres — a second pg client stack, the exact thing RW-04's sqlx/PgCopyIn choice
+  avoided; consistent reasoning, recorded per spec). No src churn in the last 4min = reading/
+  designing phase post-eval, normal. Cron firing + skipping (04:00), lock kernel-HELD, no
+  STOP, supervisor job 48c168b4 alive. Queue 4✅/1🔵/4⬜, TODOs 4. NEXT WAKE: expect
+  federation/ scaffolding (catalog provider, alias→datasource authz map) underway.
+- 2026-06-10 04:05 — All healthy, NO action. RW-05 wake PID 892403 ALIVE 10min, federation/
+  module taking shape exactly per spec: federation/{mod,context,postgres_table,identifier}.rs
+  + lib.rs barrel append + nexus-spi dto/query/run.rs (the multi-source request DTO — DTO-first
+  being followed) all touched <4min. context.rs = the catalog/session setup (where the
+  MemoryPool bound + alias map live — verify at gate), postgres_table.rs = hand-rolled
+  TableProvider (consistent with its recorded table-providers rejection), identifier.rs =
+  the strict-ident pattern propagating to a third module. Cron firing + skipping (04:05),
+  lock kernel-HELD, no STOP, supervisor job alive. Queue 4✅/1🔵/4⬜, TODOs 4. NEXT WAKE:
+  expect openapi/codegen churn + route dispatch seam, then tests; gate checks = single-
+  datasource byte-parity fixture + cross-tenant denial + MemoryPool bound present.
+- 2026-06-10 04:10 — All healthy, NO action. RW-05 wake PID 892403 ALIVE 15min, progressed
+  engine→api layer: nexus-api/src/federation/{resolve,run,mod}.rs touched <4min — the
+  alias→datasource authz resolve + the run seam (the dispatch split: single-source untouched
+  push-down vs federated path). Cron firing + skipping (04:10), lock kernel-HELD, no STOP,
+  supervisor job alive. Queue 4✅/1🔵/4⬜, TODOs 4. Wake at 15min of an expected longer-than-
+  usual envelope; continuous progress, no stall signals. NEXT WAKE: expect DTO/openapi/codegen
+  + tests phase, possibly commit.
+- 2026-06-10 04:15 — All healthy, NO action. RW-05 wake PID 892403 ALIVE 20min, now on spec
+  step 3: file datasource kinds — datasource-kinds/parquet_config.json + csv_config.json
+  (new declarative pack entries, the WS-08b format) + datasource_kinds/mod.rs wiring, all
+  <4min. Engine federation + api dispatch layers already written earlier in the pass. Cron
+  firing + skipping (04:15), lock kernel-HELD, no STOP, supervisor job alive. Queue
+  4✅/1🔵/4⬜, TODOs 4. 20min into a long-envelope WS with steady layer-by-layer progress
+  (engine → api → kinds) — healthy. NEXT WAKE: tests + openapi/codegen, then commit+gate.
+- 2026-06-10 04:20 — All healthy, NO action. RW-05 wake PID 892403 ALIVE 25min, FINISHING
+  phase: openapi.json + nexus-spi/openapi.rs regenerated (DTO-first codegen step, runs near
+  commit) + federation tests being written on BOTH layers (engine tests/federation/query_test
+  + api routes federation_e2e_test) — the spec's acceptance tests incl. presumably the
+  cross-tenant denial. Cron firing + skipping, lock kernel-HELD, no STOP, supervisor job
+  alive. Queue 4✅/1🔵/4⬜, TODOs 4. 25min = at envelope edge but unambiguously progressing
+  (codegen+tests = final phase; RW-03 took 25 wall too). NEXT WAKE: expect commit+push+gate
+  ✅ then RW-06 (insights) spawn.
+- 2026-06-10 04:27 — RW-05 ✅ COMMITTED+PUSHED (a8dc7274 + 8059cb35, origin == HEAD): federation
+  across datasources via hand-written sqlx TableProvider (table-providers rejected per recorded
+  eval) + native parquet/csv kinds; push-down path byte-identical per its row note. LOCK-FREE
+  BUILD CHECK: cargo check --workspace GREEN (1.64s) at RW-05 HEAD. Wake exited clean; 04:25
+  firing spawned RW-06 (insights, DataFusion-first spike) — fresh 🔵. NEW TODO (real gap,
+  well-written): file datasources can't be PERSISTED — nexus_datasources schema is Postgres-
+  shaped (NOT NULL host/port/secret), so stored parquet/csv rows can't exist; postgres↔postgres
+  federation fully wired, stored-file leg missing. SUPERVISOR ACTION (queue extension, WS-08b
+  precedent + human's standing "I want this done"): added STATUS row 10 "RW-04b — File-
+  datasource persistence" ⬜, scoped strictly to the TODO's Proposed section (nullable config
+  jsonb + nullable secrets in the 20xx block, RW-04 lane). Loop picks it up after RW-09.
+  Self-check: supervisor job alive. Queue 5✅/1🔵/4⬜, TODOs 5. NEXT WAKE: RW-06 progress —
+  watch its session log record the DataFusion-vs-Polars spike outcome (§8 requires it).
