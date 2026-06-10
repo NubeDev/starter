@@ -13,8 +13,10 @@
 //! [`ResourceRef`] must be set for the check to pass.
 
 mod dashboard_instances;
+mod nav_node_instances;
 
 pub use dashboard_instances::DashboardInstancesProvider;
+pub use nav_node_instances::NavNodeInstancesProvider;
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};

@@ -22,7 +22,10 @@ use starter_spi::auth::Authenticator;
 use starter_spi::authz::ResourceRegistry;
 use starter_store_postgres::Pool;
 
-use crate::authz::{register_nexus_resources, DashboardInstancesProvider, KIND_DASHBOARD};
+use crate::authz::{
+    register_nexus_resources, DashboardInstancesProvider, NavNodeInstancesProvider, KIND_DASHBOARD,
+    KIND_NAV_NODE,
+};
 use crate::state::AppState;
 
 /// The mounted identity surface plus the authenticator that protects the product
@@ -88,6 +91,16 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
     instances.register(
         KIND_DASHBOARD,
         Arc::new(DashboardInstancesProvider::new(
+            pool.sqlx().clone(),
+            policy_store_dyn.clone(),
+        )),
+    );
+    // The nav tree is the navigation + access surface (WS-13 §6): the Access UI
+    // grants `view`/`edit`/`delete` on each node. This is the kind the
+    // restructured Access section lists, replacing the per-dashboard share view.
+    instances.register(
+        KIND_NAV_NODE,
+        Arc::new(NavNodeInstancesProvider::new(
             pool.sqlx().clone(),
             policy_store_dyn,
         )),

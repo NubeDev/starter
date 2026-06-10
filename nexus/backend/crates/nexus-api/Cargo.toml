@@ -142,6 +142,10 @@ name = "routes_tags_authz"
 path = "tests/routes/tags/authz_test.rs"
 
 [[test]]
+name = "routes_nav_e2e"
+path = "tests/routes/nav/nav_e2e_test.rs"
+
+[[test]]
 name = "routes_flows_e2e"
 path = "tests/routes/flows/flow_e2e_test.rs"
 

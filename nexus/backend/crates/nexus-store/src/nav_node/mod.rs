@@ -15,6 +15,7 @@
 mod delete;
 mod fetch;
 mod insert;
+mod seed;
 mod update;
 
 pub mod record;
@@ -23,4 +24,5 @@ pub use delete::{delete, sweep_dashboard_targets};
 pub use fetch::{by_id, list};
 pub use insert::{insert, insert_with_id};
 pub use record::{NavNodePatch, NavNodeRecord, NewNavNode};
+pub use seed::seed_default_tree_if_empty;
 pub use update::update;
