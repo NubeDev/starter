@@ -22,7 +22,9 @@ Format per entry:
   subagent was already building. Deltas affecting RW-01's lane:
   (1) `Processor::process` is now `&mut self` (was `&self`),
   (2) new `max_batch_rows` slicing contract at source/processor output boundary,
-  (3) single-output config shape needs the one-grep fan-out check before freeze.
+  (3) single-output config shape needs the one-grep fan-out check before freeze,
+  (4) [codex review] `Source::commit()` default-no-op ack hook — the pipeline calls it
+      after each successful sink write (§6 delivery semantics; MQTT implements it later).
   Unaffected-but-frozen-later: schema stability rule (RW-02), source_on_error policy (RW-08).
 - **Why:** §6 freezes when RW-02 starts; cheaper to align now than after the freeze.
 - **Proposed:** Whoever gates RW-01: if it shipped `&self` or lacks the batch bound, do NOT

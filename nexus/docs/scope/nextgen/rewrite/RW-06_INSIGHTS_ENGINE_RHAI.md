@@ -27,8 +27,9 @@ rows; it composes vetted vectorized primitives. That keeps it fast AND sandboxab
      DataFrame-handle methods, not the engine.
    - `sandbox.rs` — Rhai `Engine` factory: `set_max_operations`, `set_max_call_levels`,
      `set_max_string_size`/`array_size`, wall-clock timeout via `on_progress` + deadline;
-     NO file/network/eval/module APIs registered. One engine per execution (cheap), no
-     cross-tenant state.
+     NO file/network/eval APIs registered, and imports disabled EXPLICITLY via
+     `DummyModuleResolver` (per the Rhai safety book — absence of registration is not
+     enough for `import`). One engine per execution (cheap), no cross-tenant state.
    - `api.rs` — the curated surface registered into Rhai, first set:
      `select/rename/filter_gt/filter_lt/filter_eq`, `rolling_mean/min/max/sum(col, window)`,
      `zscore(col)`, `resample(time_col, every, aggs)`, `lag/diff/pct_change(col)`,
@@ -44,7 +45,8 @@ rows; it composes vetted vectorized primitives. That keeps it fast AND sandboxab
    request — `{ "script": "...", "params": {...} }` or a stored insight reference —
    applied to the result batches before the collector/SSE serialization. Caps still apply
    AFTER the insight (it can aggregate down, never explode past caps). DTO-first.
-3. Stored insights: `18xx` migration — tenant-scoped `insights` table (id, name, script,
+3. Stored insights: `21xx` migration (roadmap §5 — `18xx` is TAKEN by
+   `1801_extension_query_kinds.sql`) — tenant-scoped `insights` table (id, name, script,
    params_schema, RLS like dashboards) + CRUD routes, mirroring an existing small CRUD
    vertical (folders is a good template). Panels reference an insight id.
 4. Tests: every api.rs primitive (golden frames); sandbox kill-switch tests — infinite

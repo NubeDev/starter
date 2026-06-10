@@ -38,8 +38,9 @@
    contributed names at extension boot, deregistered on disable/purge. A flow referencing
    a missing extension node fails to build with a clear error (test).
 4. Authz: gate `ingest.*` host-method categories the same way `warehouse` is gated
-   (see the kernel category gate noted in host_methods.rs comments). Migration `19xx`
-   only if registration state needs persistence beyond the existing extension tables.
+   (see the kernel category gate noted in host_methods.rs comments). Migration `22xx`
+   (roadmap §5 — `19xx` superseded after the 17xx/18xx collision was found) only if
+   registration state needs persistence beyond the existing extension tables.
 5. Update `com.nexus.hello` to contribute one demo insight (e.g. `hello.zscore`) so the
    e2e example covers the new path.
 

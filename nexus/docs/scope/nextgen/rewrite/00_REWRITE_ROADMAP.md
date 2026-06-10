@@ -46,7 +46,7 @@ Rule: extensions contribute **into** the pipeline via host methods; they never b
 | 3 | RW-03 | Cutover: runners on the new engine; delete ArkFlow entirely | RW-02 |
 | 4 | RW-04 | Any-DB store: sinks target a datasource id (datasource-kinds) | RW-03 |
 | 5 | RW-05 | Federation: DataFusion across datasources + file/object-store kinds | RW-04 |
-| 6 | RW-06 | nexus-insights: Polars + Rhai sandbox + query-path insight stage | RW-03 |
+| 6 | RW-06 | nexus-insights: vectorized engine (DataFusion-first) + Rhai sandbox | RW-03 |
 | 7 | RW-07 | Extension data-plane: contributes.sources/sinks/insights + ingest.write | RW-04, RW-06 |
 | 8 | RW-08 | Backpressure hardening + soak test + flow metrics | RW-04 |
 
@@ -72,8 +72,10 @@ Rule: extensions contribute **into** the pipeline via host methods; they never b
 
 ## §5 Migration numbers
 
-Reserve SQL migration blocks: RW-04 → `17xx`, RW-06 → `18xx`, RW-07 → `19xx`.
-Check `nexus-store` migrations dir for the actual latest before numbering.
+Reserve SQL migration blocks: RW-04 → `20xx`, RW-06 → `21xx`, RW-07 → `22xx`.
+(`17xx`/`18xx` are TAKEN — `1701_nav_tree.sql` and `1801_extension_query_kinds.sql`
+already exist in `nexus-store/migrations/nexus/`. Re-check the dir for the actual
+latest before numbering; never reuse a block.)
 
 ## §6 Shared contracts
 
@@ -96,6 +98,13 @@ Check `nexus-store` migrations dir for the actual latest before numbering.
   sinks) or the first batch's inferred schema becomes the stream schema and later batches
   are coerced to it; an incoercible batch is a source error (policy below), never a silent
   sink-side mutation.
+- **Delivery semantics (ack/commit):** "no silent data loss" requires that a source MUST NOT
+  acknowledge/commit upstream delivery (MQTT ack, queue commit) before the batch has been
+  written by the sink. The trait carries `async fn commit(&mut self) -> EngineResult<()>`
+  with a default no-op; the pipeline calls it after each successful sink write. Sources that
+  cannot defer upstream acks (plain HTTP poll, simulator) keep the no-op and are documented
+  at-most-once for in-flight batches; QoS-capable sources (MQTT, future queues) implement it
+  for at-least-once.
 - **Source error policy:** `read()` returning `Err` does not kill the flow by default —
   per-flow `source_on_error: retry_backoff (default, capped attempts) | halt`; exhausted
   retries → flow `last_error` state. Sink-side policy is RW-08's `on_error: halt|drop`,

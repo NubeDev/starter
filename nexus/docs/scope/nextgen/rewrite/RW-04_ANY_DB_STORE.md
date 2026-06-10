@@ -21,10 +21,20 @@
    dispatches to a writer by datasource kind.
 2. Writer trait `DatasourceWriter { async fn write_batch(&mut self, &RecordBatch);
    async fn flush(&mut self) }` + the first two impls:
-   - `postgres` (covers Timescale): use tokio-postgres `BinaryCopyInWriter`
-     (`COPY … FROM STDIN BINARY`) — that is the right primitive; do not reinvent
-     multi-row INSERT batching and call it done. Keep the existing Arrow→param mapping
-     rules; fall back to multi-row INSERT only for types COPY BINARY can't carry.
+   - `postgres` (covers Timescale): COPY-based bulk writes — that is the right primitive;
+     do not reinvent multi-row INSERT batching and call it done. Spike BOTH
+     `sqlx::postgres::PgCopyIn` (no second Postgres client stack — sqlx is already the
+     workspace's driver — but you own the COPY encoding) and tokio-postgres
+     `BinaryCopyInWriter` (typed encoding done for you, but a second client dep; its
+     `finish()` MUST be called to complete the COPY). Record the choice + why in the
+     session log. Keep the existing Arrow→param mapping rules; fall back to multi-row
+     INSERT only for types COPY can't carry.
+   - **SQL identifier safety (acceptance item):** the current sink interpolates the table
+     name and JSON-derived column names into SQL (`sink/postgres.rs` ~84-95 — quoting
+     alone is not validation). The datasource writer must validate table + column
+     identifiers through a strict allowlisted-shape check, reusing the precedent in
+     `nexus-store/src/query/bind/identifier.rs` (the binder's one text-path guard).
+     A device payload key may never reach SQL text unvalidated.
    - `file`: Parquet part-files via `parquet::arrow::AsyncArrowWriter` + `object_store`
      (local-fs first, S3 config accepted but may be feature-gated). Small-files guard:
      the Parquet writer rotates on SIZE/ROWS (≥64MB or N-minutes, whichever first), NOT

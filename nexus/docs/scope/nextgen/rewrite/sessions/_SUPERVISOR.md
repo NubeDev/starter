@@ -87,3 +87,27 @@
   RW-02 gate. node.rs:33 currently still `&self` (expected — RW-02 just started). Cosmetic:
   RW-01's row says Finished 02:58 UTC, which is in the future vs real 02:32Z — subagent wrote
   a bad timestamp; harmless, not touching another session's log line.
+- 2026-06-10 02:37 — All healthy, NO action. Cron firing correctly (02:35 firing skipped on
+  held lock — exactly the designed behavior). RW-02 🔵 wake PID 737438 ALIVE ~7min, ACTIVELY
+  building its exact lane: processor/sql.rs + processor/json_to_arrow.rs + arrow_json.rs +
+  source/interval.rs all touched <4min (DataFusion-direct processors = the spec's step 1-2).
+  Lock kernel-HELD, no STOP, build not evaluated (check #3). Queue 1✅/1🔵/6⬜. WATCH stands:
+  node.rs:33 still `&self` — fine mid-build; judge ONLY at RW-02's gate (step-0 alignment may
+  land late in its pass). NOTED out-of-lane: new commit 6e75fc5d "got extesions working"
+  (extensions lane — concurrent session/human); not touched per lane rules; the RW-02 gate's
+  full `cargo test --workspace` will integrate-check it anyway.
+- 2026-06-10 02:44 — CODEX REVIEW APPLIED (human-directed, doc lane only). Verified its claims
+  first: migrations 1701_nav_tree + 1801_extension_query_kinds EXIST (roadmap §5 was stale →
+  re-reserved RW-04→20xx, RW-06→21xx, RW-07→22xx); identifier.rs strict-allowlist precedent
+  real; sink/postgres.rs interpolates quoted-but-unvalidated table/column names. Landed:
+  §6 delivery-semantics contract (Source::commit() default-no-op ack hook, called post-sink-
+  write; QoS sources implement for at-least-once) + added to RW-02 step 0 and the TODOs entry;
+  RW-04 gains identifier-validation acceptance item + PgCopyIn-vs-BinaryCopyInWriter spike
+  (sqlx already in tree; finish() caveat noted); RW-05 table discovery now via DataFusion
+  catalog/SchemaProvider resolution with request-level alias→datasource authz map (manual SQL
+  scraping demoted) + evaluate datafusion-federation TOGETHER with table-providers; RW-06
+  spec renamed (git mv) RW-06_INSIGHTS_POLARS_RHAI.md → RW-06_INSIGHTS_ENGINE_RHAI.md +
+  DummyModuleResolver explicit-import-disable + 21xx migration; roadmap §3 queue title
+  updated. Declined nothing — all six points verified sound. STATUS row-6 title cell left
+  for the cron (its lane); RW-02 still 🔵 mid-build, its step-0 gate check now also covers
+  commit(). Committing docs only.

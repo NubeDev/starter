@@ -14,12 +14,17 @@
 ## Scope
 
 1. `nexus-engine/src/federation/` — a `FederatedQuery` runner:
-   - parse the incoming SQL's table references (DataFusion sqlparser);
-   - resolve each `ds_<alias>.<table>` (define and document the naming convention)
-     to a tenant datasource;
+   - table discovery via DataFusion's OWN catalog/planning resolution, NOT manual SQL
+     scraping as the authority — register a custom `CatalogProvider`/`SchemaProvider`
+     keyed by datasource alias so DataFusion resolves `ds_<alias>.<table>` during
+     planning (manual parsing breaks on CTEs, quoted identifiers, schemas, aliases).
+     The request carries an explicit alias→datasource-id map used for authz BEFORE
+     planning; an alias resolving outside that map is an error;
    - register a DataFusion `TableProvider` per referenced table. FIRST ACTION of this
-     step: evaluate `datafusion-table-providers` (datafusion-contrib, used by Spice AI) —
-     Postgres/MySQL/SQLite providers with predicate+projection pushdown already done.
+     step: evaluate `datafusion-table-providers` AND `datafusion-federation` TOGETHER
+     (datafusion-contrib; the provider README describes federation-pushdown integration,
+     so they're designed as a pair) — Postgres/MySQL/SQLite providers with
+     predicate+projection pushdown already done.
      Adopt it if it supports our DataFusion major and our read-only-role/envelope-creds
      path can be threaded through its pool machinery; if rejected, READ its pushdown code
      before hand-writing one (remote pushdown has sharp edges: operator support tables,
