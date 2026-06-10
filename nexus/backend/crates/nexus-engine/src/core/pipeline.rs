@@ -66,6 +66,47 @@ impl Pipeline {
         })
     }
 
+    /// Assemble a pipeline from already-built nodes. The flow layer uses this to
+    /// wrap each node from [`Pipeline::build`] in a debug tap before running,
+    /// without `core` having to know about the flow debug machinery. `processors`
+    /// run in the given order.
+    pub fn from_parts(
+        source: Box<dyn Source>,
+        processors: Vec<Box<dyn Processor>>,
+        sink: Box<dyn Sink>,
+        buffer_capacity: usize,
+        max_batch_rows: usize,
+    ) -> Self {
+        Self {
+            source,
+            processors,
+            sink,
+            buffer_capacity,
+            max_batch_rows,
+        }
+    }
+
+    /// Decompose a built pipeline back into its nodes and tuning, so a caller can
+    /// wrap individual nodes and rebuild with [`Pipeline::from_parts`].
+    #[allow(clippy::type_complexity)]
+    pub fn into_parts(
+        self,
+    ) -> (
+        Box<dyn Source>,
+        Vec<Box<dyn Processor>>,
+        Box<dyn Sink>,
+        usize,
+        usize,
+    ) {
+        (
+            self.source,
+            self.processors,
+            self.sink,
+            self.buffer_capacity,
+            self.max_batch_rows,
+        )
+    }
+
     /// Run the pipeline to completion, cancellation, or first error.
     ///
     /// `close()` is called on the sink exactly once before returning, on every

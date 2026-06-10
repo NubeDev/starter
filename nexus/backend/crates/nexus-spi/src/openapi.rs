@@ -35,8 +35,9 @@ use crate::dto::alert::{
     CreateChannelRequest, CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
 };
 use crate::dto::flow::{
-    CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDetail, FlowExport, FlowMetrics,
-    FlowSummary, NodeCategory, NodeType, NodeTypeList, UpdateFlowRequest,
+    CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDebugEnableResponse, FlowDebugEvent,
+    FlowDebugStatus, FlowDetail, FlowExport, FlowMetrics, FlowSummary, LogLevel, NodeCategory,
+    NodeCounters, NodeRole, NodeType, NodeTypeList, UpdateFlowRequest,
 };
 use crate::dto::ingest::IngestAccepted;
 use crate::dto::me::{MeResponse, UserSettings};
@@ -123,6 +124,12 @@ use crate::Problem;
     FlowSummary,
     FlowDetail,
     FlowMetrics,
+    FlowDebugEvent,
+    FlowDebugStatus,
+    FlowDebugEnableResponse,
+    NodeCounters,
+    NodeRole,
+    LogLevel,
     CreateFlowRequest,
     UpdateFlowRequest,
     FlowExport,

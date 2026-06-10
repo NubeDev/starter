@@ -1925,6 +1925,126 @@
         }
       }
     },
+    "/api/v1/flows/{id}/debug/disable": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "disable_flow_debug",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Debug disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDebugStatus"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to debug this flow"
+          },
+          "404": {
+            "description": "Flow not found or not running"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/debug/enable": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "enable_flow_debug",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Debug enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDebugEnableResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to debug this flow"
+          },
+          "404": {
+            "description": "Flow not found or not running"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/debug/stream": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "SSE subscription to a running flow's debug events. Authed by the signed token\nminted on enable, never a Bearer (a browser `EventSource` cannot set headers).",
+        "operationId": "stream_flow_debug",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Signed debug token from enable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE event stream",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "401": {
+            "description": "Missing/expired/invalid token"
+          },
+          "404": {
+            "description": "Flow not running"
+          }
+        }
+      }
+    },
     "/api/v1/flows/{id}/export": {
       "get": {
         "tags": [
@@ -2035,6 +2155,64 @@
           },
           "403": {
             "description": "Not allowed to stop this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/table/query": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "query_flow_table",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowTableQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Flow has no queryable table, or the query was rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this flow"
           },
           "404": {
             "description": "Not found in this tenant"
@@ -4973,6 +5151,189 @@
           }
         }
       },
+      "FlowDebugEnableResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FlowDebugStatus"
+          },
+          {
+            "type": "object",
+            "required": [
+              "stream_url",
+              "token",
+              "expires_in_secs"
+            ],
+            "properties": {
+              "expires_in_secs": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Seconds until the token expires.",
+                "minimum": 0
+              },
+              "stream_url": {
+                "type": "string",
+                "description": "The SSE endpoint to open, with the token already in the query string."
+              },
+              "token": {
+                "type": "string",
+                "description": "The signed stream token, also returned separately for clients that build\ntheir own URL."
+              }
+            }
+          }
+        ],
+        "description": "The response to enabling debug on a running flow: the resulting status plus a\nshort-lived signed token and the SSE URL to open. A browser `EventSource`\ncannot send an `Authorization` header, so the stream is authed by this token\nin the query string — minted only after the Bearer-authed enable call passed\nthe flow's edit grant."
+      },
+      "FlowDebugEvent": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NodeCounters"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Monotonic sequence number, assigned by the producer.",
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "description": "A periodic per-node counter tick.",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "counters"
+                    ]
+                  }
+                }
+              }
+            ],
+            "description": "A periodic per-node counter tick."
+          },
+          {
+            "type": "object",
+            "description": "A bounded sample of rows that crossed a node boundary, as JSON objects.",
+            "required": [
+              "seq",
+              "node_index",
+              "role",
+              "rows",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "sample"
+                ]
+              },
+              "node_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Reserved for a future branching shape; prefer over `node_index` when\npresent."
+              },
+              "node_index": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "role": {
+                "$ref": "#/components/schemas/NodeRole"
+              },
+              "rows": {
+                "type": "array",
+                "items": {},
+                "description": "Up to the per-node sample cap; each row is a JSON object."
+              },
+              "seq": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A log line — a retry attempt, a policy drop/DLQ, or the run-ending error.",
+            "required": [
+              "seq",
+              "level",
+              "message",
+              "at_ms",
+              "kind"
+            ],
+            "properties": {
+              "at_ms": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Wall-clock millis since the epoch when the line was emitted.",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "log"
+                ]
+              },
+              "level": {
+                "$ref": "#/components/schemas/LogLevel"
+              },
+              "message": {
+                "type": "string"
+              },
+              "node_index": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32",
+                "description": "The node the log relates to, when known.",
+                "minimum": 0
+              },
+              "seq": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              }
+            }
+          }
+        ],
+        "description": "One event in a running flow's debug stream. `kind`-tagged so the UI can switch\non the variant; every variant carries a monotonic `seq` for `Last-Event-ID`\nresume parity with the transport."
+      },
+      "FlowDebugStatus": {
+        "type": "object",
+        "description": "The state returned by the enable/disable endpoints so the UI can reflect\nwhether debug is currently capturing and how many nodes to expect.",
+        "required": [
+          "enabled",
+          "node_count"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether value/sample capture is currently on for the running flow."
+          },
+          "node_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total node count (source + processors + sink) so the UI can validate its\npositional mapping against the backend chain.",
+            "minimum": 0
+          }
+        }
+      },
       "FlowDetail": {
         "type": "object",
         "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
@@ -5143,6 +5504,28 @@
           },
           "running": {
             "type": "boolean"
+          }
+        }
+      },
+      "FlowTableQueryRequest": {
+        "type": "object",
+        "description": "Query the table a flow's `postgres`/`datasource` sink writes to. `sql` is\noptional: when omitted the server runs a default \"most recent rows\" preview\nagainst the sink table. The `{table}` token in `sql` expands to the flow's\nconfigured table name, so a saved query need not hardcode it.",
+        "properties": {
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Cap on returned rows for the preview; clamped to the server maximum.",
+            "minimum": 0
+          },
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SQL to run (read-only). `{table}` expands to the flow's sink table. When\nomitted, the server runs its default recent-rows preview."
           }
         }
       },
@@ -5322,6 +5705,15 @@
             "description": "The Rhai transform script."
           }
         }
+      },
+      "LogLevel": {
+        "type": "string",
+        "description": "Severity of a [`FlowDebugEvent::Log`] line.",
+        "enum": [
+          "info",
+          "warn",
+          "error"
+        ]
       },
       "MeResponse": {
         "type": "object",
@@ -5516,6 +5908,56 @@
           "input",
           "processor",
           "output"
+        ]
+      },
+      "NodeCounters": {
+        "type": "object",
+        "description": "A periodic snapshot of one node's throughput since the run started. Rows in\nand out differ for a processor that filters or fans out; for the source `in`\nequals `out`, and for the sink `out` is what actually reached the writer.",
+        "required": [
+          "node_index",
+          "role",
+          "rows_in",
+          "rows_out",
+          "batches"
+        ],
+        "properties": {
+          "batches": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Batches the node has handled since the run started.",
+            "minimum": 0
+          },
+          "node_index": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Positional node index: 0 = source, 1..=N = processors, N+1 = sink.",
+            "minimum": 0
+          },
+          "role": {
+            "$ref": "#/components/schemas/NodeRole",
+            "description": "The node's role."
+          },
+          "rows_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows that entered the node since the run started.",
+            "minimum": 0
+          },
+          "rows_out": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows the node produced since the run started.",
+            "minimum": 0
+          }
+        }
+      },
+      "NodeRole": {
+        "type": "string",
+        "description": "Which kind of node a debug event came from. Pairs with `node_index` so the UI\ncan label and colour the node without re-deriving its role from the position.",
+        "enum": [
+          "source",
+          "processor",
+          "sink"
         ]
       },
       "NodeType": {

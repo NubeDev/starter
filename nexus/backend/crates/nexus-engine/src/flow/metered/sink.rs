@@ -27,6 +27,9 @@ pub struct MeteredSink {
     /// Lazily-opened dead-letter sink; only built when `on_error` is `dlq` and a
     /// write actually fails, so a healthy `dlq` flow opens no dead-letter file.
     dlq: Option<Box<dyn Sink>>,
+    /// The flow id whose debug stream receives retry/drop/dlq log lines. `None`
+    /// outside a managed flow run (e.g. tests), where logging is skipped.
+    flow_id: Option<String>,
 }
 
 impl MeteredSink {
@@ -37,6 +40,20 @@ impl MeteredSink {
             metrics,
             policy,
             dlq: None,
+            flow_id: None,
+        }
+    }
+
+    /// Bind the flow id so policy events publish to its debug log stream.
+    pub fn with_flow_id(mut self, flow_id: impl Into<String>) -> Self {
+        self.flow_id = Some(flow_id.into());
+        self
+    }
+
+    /// Emit a debug log line to the flow's stream, if bound.
+    fn debug_log(&self, level: nexus_spi::dto::flow::LogLevel, message: String) {
+        if let Some(id) = &self.flow_id {
+            crate::flow::debug::log(id, level, None, message);
         }
     }
 
@@ -58,6 +75,10 @@ impl MeteredSink {
                         attempt,
                         error = %e,
                         "flow sink write failed; retrying after backoff"
+                    );
+                    self.debug_log(
+                        nexus_spi::dto::flow::LogLevel::Warn,
+                        format!("sink write failed (attempt {attempt}), retrying: {e}"),
                     );
                     tokio::time::sleep(self.policy.backoff.delay_for(attempt)).await;
                 }
@@ -97,11 +118,19 @@ impl Sink for MeteredSink {
                 // counted via the write-error counter for each failed attempt.
                 SinkOnError::Drop => {
                     tracing::warn!(error = %e, rows = batch.num_rows(), "flow sink dropping batch per on_error=drop");
+                    self.debug_log(
+                        nexus_spi::dto::flow::LogLevel::Warn,
+                        format!("dropping {} rows per on_error=drop: {e}", batch.num_rows()),
+                    );
                     Ok(())
                 }
                 // Dlq: persist the failed batch to the dead-letter writer.
                 SinkOnError::Dlq => {
                     tracing::warn!(error = %e, rows = batch.num_rows(), "flow sink dead-lettering batch per on_error=dlq");
+                    self.debug_log(
+                        nexus_spi::dto::flow::LogLevel::Warn,
+                        format!("dead-lettering {} rows per on_error=dlq: {e}", batch.num_rows()),
+                    );
                     self.to_dlq(batch).await
                 }
             },

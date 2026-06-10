@@ -246,12 +246,28 @@ fn postgres() -> NodeDescriptor {
         kind: "postgres",
         category: NodeCategory::Output,
         label: "Postgres sink",
-        description: "Insert each batch's rows into a table in a datasource Postgres.",
+        description: "Insert each batch's rows into a table in a datasource Postgres. The table can be auto-created from the stream's schema with the column types it declares.",
         config_schema: json!({
             "type": "object",
             "properties": {
                 "uri": str_prop("Connection string for the target Postgres."),
                 "table": str_prop("Table the shaped rows are inserted into."),
+                "create": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Create the table from the stream schema on first write if missing. Set false to require a pre-existing table.",
+                },
+                "primary_key": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Columns that form the primary key when the table is created; also the conflict target for on_conflict.",
+                },
+                "on_conflict": {
+                    "type": "string",
+                    "enum": ["error", "nothing", "upsert"],
+                    "default": "error",
+                    "description": "On a primary-key collision: error (fail), nothing (skip the row), or upsert (update non-key columns).",
+                },
             },
             "required": ["uri", "table"],
             "additionalProperties": false,

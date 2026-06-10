@@ -92,6 +92,11 @@ lettre = { version = "0.11", default-features = false, features = ["builder", "s
 # Postgres helper for HTTP integration tests. Off by default so production
 # builds stay lean.
 testing = ["starter-server/testing", "starter-store-postgres/testing", "nexus-store/testing"]
+# Compiles the optional Zenoh ingest source into the engine so a flow can use the
+# `zenoh` input node. OFF by default — a plain build carries none of zenoh's
+# transitive deps. Enable for the testing data path: `cargo run --features zenoh`
+# (or `make dev-be FEATURES=zenoh`).
+zenoh = ["nexus-engine/zenoh"]
 
 [[bin]]
 name = "nexus-api"

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import {
   AlertTriangle,
+  Bug,
   Download,
   Pause,
   Pencil,
@@ -25,6 +26,7 @@ import {
   readJsonFile,
 } from "@/features/flows/portabilityFile";
 import { FlowBuilder } from "@/features/flows/builder/FlowBuilder";
+import { DebugDrawer } from "@/features/flows/DebugDrawer";
 import { Empty } from "@/features/state/Empty";
 import { ErrorState } from "@/features/state/ErrorState";
 import { Loading } from "@/features/state/Loading";
@@ -39,6 +41,8 @@ export function FlowsPage() {
   const [creating, setCreating] = useState(false);
   // The flow currently open for editing, or null when authoring a new one.
   const [editingId, setEditingId] = useState<string | null>(null);
+  // The running flow currently open in the debug drawer, or null.
+  const [debugging, setDebugging] = useState<FlowSummary | null>(null);
 
   // Which flow id (if any) each mutation is currently acting on, so only the
   // affected row shows the busy/disabled state instead of the whole list.
@@ -196,6 +200,7 @@ export function FlowsPage() {
                 actions={actions}
                 onEdit={() => setEditingId(flow.id)}
                 onExport={() => onExport(flow)}
+                onDebug={() => setDebugging(flow)}
               />
             ))}
           </ul>
@@ -212,6 +217,15 @@ export function FlowsPage() {
           }
         }}
       />
+
+      <DebugDrawer
+        open={debugging !== null}
+        flowId={debugging?.id ?? null}
+        flowName={debugging?.name ?? ""}
+        onOpenChange={(open) => {
+          if (!open) setDebugging(null);
+        }}
+      />
     </div>
   );
 }
@@ -224,6 +238,7 @@ function FlowRow({
   actions,
   onEdit,
   onExport,
+  onDebug,
 }: {
   flow: FlowSummary;
   busy: boolean;
@@ -234,6 +249,7 @@ function FlowRow({
   actions: ReturnType<typeof useFlowActions>;
   onEdit: () => void;
   onExport: () => void;
+  onDebug: () => void;
 }) {
   return (
     <li className="glass flex items-center gap-3 rounded-lg px-4 py-3">
@@ -300,6 +316,20 @@ function FlowRow({
           </>
         )}
       </Button>
+      {/* Debug a running flow: open the live values/per-node drawer. Only
+          meaningful while the flow is running on this node. */}
+      {flow.running ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Debug ${flow.name}`}
+          title="Debug live values"
+          onClick={onDebug}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Bug className="size-4" />
+        </Button>
+      ) : null}
       <Button
         variant="ghost"
         size="icon"

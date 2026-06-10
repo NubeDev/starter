@@ -26,6 +26,7 @@ import {
 } from "@/features/query-editor/QueryHistoryDrawer";
 import { QuickQueries } from "@/features/query-editor/QuickQueries";
 import { ResultGrid } from "@/features/query-editor/ResultGrid";
+import { SchemaSidebar } from "@/features/query-editor/SchemaSidebar";
 import { SaveKindDialog } from "@/features/query-editor/SaveKindDialog";
 import { SqlEditor } from "@/features/sql-editor";
 import { ErrorState } from "@/features/state/ErrorState";
@@ -48,6 +49,7 @@ export function Explore() {
   const [mode, setMode] = useState<Mode>("sql");
   const [kind, setKind] = useState<string | undefined>();
   const [saveOpen, setSaveOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Federation (RW-05): optional extra datasources the SQL can JOIN across,
   // each bound to an alias. Folded away by default; when non-empty the run
@@ -169,7 +171,19 @@ export function Explore() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full min-h-0 gap-4">
+      {/* Persistent schema browser (SQL mode only): a grouped, searchable tree
+          that scales to any database size. Kind-mode has no datasource to
+          browse, so it's hidden then. */}
+      {mode === "sql" ? (
+        <SchemaSidebar
+          datasourceId={datasourceId}
+          onPeek={runSql}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        />
+      ) : null}
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
       <div className="glass flex flex-col gap-3 rounded-xl p-4">
         <div className="flex items-center gap-3">
           <div className="inline-flex overflow-hidden rounded-md border">
@@ -299,6 +313,7 @@ export function Explore() {
         ) : active.data ? (
           <ResultGrid result={active.data} />
         ) : null}
+      </div>
       </div>
       <SaveKindDialog
         sql={sql}

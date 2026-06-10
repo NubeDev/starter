@@ -64,15 +64,15 @@ pub fn metered_registry(
     let snk_metrics = metrics;
     let snk_inner = inner;
     let snk_type = sink_type.to_string();
+    let snk_flow_id = flow_id.to_string();
     registry.register_sink(
         sink_type,
         Box::new(move |config| {
             let node = snk_inner.build_sink(&snk_type, config)?;
-            Ok(Box::new(MeteredSink::new(
-                node,
-                snk_metrics.clone(),
-                snk_policy.clone(),
-            )))
+            Ok(Box::new(
+                MeteredSink::new(node, snk_metrics.clone(), snk_policy.clone())
+                    .with_flow_id(snk_flow_id.clone()),
+            ))
         }),
     );
 

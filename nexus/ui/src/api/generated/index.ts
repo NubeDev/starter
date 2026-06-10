@@ -579,6 +579,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows/{id}/debug/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["disable_flow_debug"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/debug/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["enable_flow_debug"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/debug/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SSE subscription to a running flow's debug events. Authed by the signed token
+         *     minted on enable, never a Bearer (a browser `EventSource` cannot set headers).
+         */
+        get: operations["stream_flow_debug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows/{id}/export": {
         parameters: {
             query?: never;
@@ -621,6 +673,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["stop_flow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/table/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["query_flow_table"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1820,6 +1888,88 @@ export interface components {
             table?: string | null;
         };
         /**
+         * @description The response to enabling debug on a running flow: the resulting status plus a
+         *     short-lived signed token and the SSE URL to open. A browser `EventSource`
+         *     cannot send an `Authorization` header, so the stream is authed by this token
+         *     in the query string — minted only after the Bearer-authed enable call passed
+         *     the flow's edit grant.
+         */
+        FlowDebugEnableResponse: components["schemas"]["FlowDebugStatus"] & {
+            /**
+             * Format: int64
+             * @description Seconds until the token expires.
+             */
+            expires_in_secs: number;
+            /** @description The SSE endpoint to open, with the token already in the query string. */
+            stream_url: string;
+            /**
+             * @description The signed stream token, also returned separately for clients that build
+             *     their own URL.
+             */
+            token: string;
+        };
+        /**
+         * @description One event in a running flow's debug stream. `kind`-tagged so the UI can switch
+         *     on the variant; every variant carries a monotonic `seq` for `Last-Event-ID`
+         *     resume parity with the transport.
+         */
+        FlowDebugEvent: (components["schemas"]["NodeCounters"] & {
+            /**
+             * Format: int64
+             * @description Monotonic sequence number, assigned by the producer.
+             */
+            seq: number;
+        } & {
+            /** @enum {string} */
+            kind: "counters";
+        }) | {
+            /** @enum {string} */
+            kind: "sample";
+            /**
+             * @description Reserved for a future branching shape; prefer over `node_index` when
+             *     present.
+             */
+            node_id?: string | null;
+            /** Format: int32 */
+            node_index: number;
+            role: components["schemas"]["NodeRole"];
+            /** @description Up to the per-node sample cap; each row is a JSON object. */
+            rows: unknown[];
+            /** Format: int64 */
+            seq: number;
+        } | {
+            /**
+             * Format: int64
+             * @description Wall-clock millis since the epoch when the line was emitted.
+             */
+            at_ms: number;
+            /** @enum {string} */
+            kind: "log";
+            level: components["schemas"]["LogLevel"];
+            message: string;
+            /**
+             * Format: int32
+             * @description The node the log relates to, when known.
+             */
+            node_index?: number | null;
+            /** Format: int64 */
+            seq: number;
+        };
+        /**
+         * @description The state returned by the enable/disable endpoints so the UI can reflect
+         *     whether debug is currently capturing and how many nodes to expect.
+         */
+        FlowDebugStatus: {
+            /** @description Whether value/sample capture is currently on for the running flow. */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description Total node count (source + processors + sink) so the UI can validate its
+             *     positional mapping against the backend chain.
+             */
+            node_count: number;
+        };
+        /**
          * @description A saved ingestion flow in full. The three config blobs are opaque JSON on the
          *     wire — the input connector, the processor pipeline, and the output sink the
          *     FlowManager hands to the engine.
@@ -1925,6 +2075,24 @@ export interface components {
             metrics: components["schemas"]["FlowMetrics"];
             name: string;
             running: boolean;
+        };
+        /**
+         * @description Query the table a flow's `postgres`/`datasource` sink writes to. `sql` is
+         *     optional: when omitted the server runs a default "most recent rows" preview
+         *     against the sink table. The `{table}` token in `sql` expands to the flow's
+         *     configured table name, so a saved query need not hardcode it.
+         */
+        FlowTableQueryRequest: {
+            /**
+             * Format: int64
+             * @description Cap on returned rows for the preview; clamped to the server maximum.
+             */
+            limit?: number | null;
+            /**
+             * @description SQL to run (read-only). `{table}` expands to the flow's sink table. When
+             *     omitted, the server runs its default recent-rows preview.
+             */
+            sql?: string | null;
         };
         /**
          * @description One folder: its immutable id, its parent (NULL = root), and display name. The
@@ -2056,6 +2224,11 @@ export interface components {
             /** @description The Rhai transform script. */
             script: string;
         };
+        /**
+         * @description Severity of a [`FlowDebugEvent::Log`] line.
+         * @enum {string}
+         */
+        LogLevel: "info" | "warn" | "error";
         /** @description The authenticated caller's full context. */
         MeResponse: {
             /** @description Coarse role: `reader` | `writer` | `admin`. */
@@ -2146,6 +2319,41 @@ export interface components {
          * @enum {string}
          */
         NodeCategory: "input" | "processor" | "output";
+        /**
+         * @description A periodic snapshot of one node's throughput since the run started. Rows in
+         *     and out differ for a processor that filters or fans out; for the source `in`
+         *     equals `out`, and for the sink `out` is what actually reached the writer.
+         */
+        NodeCounters: {
+            /**
+             * Format: int64
+             * @description Batches the node has handled since the run started.
+             */
+            batches: number;
+            /**
+             * Format: int32
+             * @description Positional node index: 0 = source, 1..=N = processors, N+1 = sink.
+             */
+            node_index: number;
+            /** @description The node's role. */
+            role: components["schemas"]["NodeRole"];
+            /**
+             * Format: int64
+             * @description Rows that entered the node since the run started.
+             */
+            rows_in: number;
+            /**
+             * Format: int64
+             * @description Rows the node produced since the run started.
+             */
+            rows_out: number;
+        };
+        /**
+         * @description Which kind of node a debug event came from. Pairs with `node_index` so the UI
+         *     can label and colour the node without re-deriving its role from the position.
+         * @enum {string}
+         */
+        NodeRole: "source" | "processor" | "sink";
         /**
          * @description A node type the engine can build, described for the editor: its engine
          *     `type` discriminant, palette grouping, labels, and a JSON Schema for its
@@ -4789,6 +4997,120 @@ export interface operations {
             };
         };
     };
+    disable_flow_debug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Debug disabled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDebugStatus"];
+                };
+            };
+            /** @description Not allowed to debug this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow not found or not running */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    enable_flow_debug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Debug enabled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDebugEnableResponse"];
+                };
+            };
+            /** @description Not allowed to debug this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow not found or not running */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    stream_flow_debug: {
+        parameters: {
+            query: {
+                /** @description Signed debug token from enable */
+                token: string;
+            };
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Missing/expired/invalid token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow not running */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     export_flow: {
         parameters: {
             query?: never;
@@ -4892,6 +5214,56 @@ export interface operations {
                 };
             };
             /** @description Not allowed to stop this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    query_flow_table: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlowTableQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Query result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponse"];
+                };
+            };
+            /** @description Flow has no queryable table, or the query was rejected */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not allowed to view this flow */
             403: {
                 headers: {
                     [name: string]: unknown;

@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { History, Play, Star, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, History, Play, Star, Pencil } from "lucide-react";
 import { useStarterClient } from "@nube/starter-client-react";
 
 import { listQueryHistory } from "@/api/query-history/list";
@@ -48,6 +49,9 @@ export function QueryHistoryDrawer({
     queryFn: () => listQueryHistory(client),
   });
 
+  // Collapsed by default — the editor is the focus; history is recall-on-demand.
+  const [open, setOpen] = useState(false);
+
   const star = useMutation({
     mutationFn: ({ id, starred }: { id: string; starred: boolean }) =>
       starQueryHistory(client, id, { starred }),
@@ -66,21 +70,36 @@ export function QueryHistoryDrawer({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        aria-expanded={open}
+      >
+        {open ? (
+          <ChevronDown className="size-3.5" />
+        ) : (
+          <ChevronRight className="size-3.5" />
+        )}
         <History className="size-3.5" />
         Recent queries
-      </div>
-      <ul className="flex max-h-56 flex-col gap-1 overflow-auto">
-        {entries.map((e) => (
-          <HistoryRow
-            key={e.sql}
-            entry={e}
-            onRecall={() => onRecall(e.sql)}
-            onRerun={() => onRerun(e.sql)}
-            onToggleStar={() => star.mutate({ id: e.id, starred: !e.starred })}
-          />
-        ))}
-      </ul>
+        <span className="tabular-nums text-muted-foreground/60">
+          {entries.length}
+        </span>
+      </button>
+      {open ? (
+        <ul className="flex max-h-56 flex-col gap-1 overflow-auto">
+          {entries.map((e) => (
+            <HistoryRow
+              key={e.sql}
+              entry={e}
+              onRecall={() => onRecall(e.sql)}
+              onRerun={() => onRerun(e.sql)}
+              onToggleStar={() => star.mutate({ id: e.id, starred: !e.starred })}
+            />
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

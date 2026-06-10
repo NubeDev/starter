@@ -2,6 +2,7 @@
 //! per-flow ingest metrics, the failure policy, and the metered node wrappers
 //! that enforce both.
 
+pub mod debug;
 pub mod manager;
 pub mod metered;
 pub mod metrics;

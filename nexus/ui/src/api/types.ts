@@ -86,6 +86,14 @@ export type DryRunResponse = S["DryRunResponse"];
 export type UpdateFlowRequest = S["UpdateFlowRequest"];
 // Flow portability (share/import): the self-contained, secret-redacted model.
 export type FlowExport = S["FlowExport"];
+// Flow debug & values (live per-node tap): the SSE event union and toggle DTOs.
+export type FlowDebugEvent = S["FlowDebugEvent"];
+export type FlowDebugStatus = S["FlowDebugStatus"];
+export type FlowDebugEnableResponse = S["FlowDebugEnableResponse"];
+export type FlowTableQueryRequest = S["FlowTableQueryRequest"];
+export type NodeCounters = S["NodeCounters"];
+export type NodeRole = S["NodeRole"];
+export type LogLevel = S["LogLevel"];
 
 export type AlertRuleDetail = S["AlertRuleDetail"];
 export type CreateAlertRuleRequest = S["CreateAlertRuleRequest"];

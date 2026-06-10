@@ -8,6 +8,10 @@
 #   make test        run backend + UI tests
 #   make db          start a local Postgres for the backend in Docker
 #   make db-stop     stop and remove that Postgres container
+#   make nats-install   build/start a no-auth NATS broker for testing
+#   make zenoh-install  build/start a no-auth Zenoh router for testing
+#   make brokers        start both testing brokers
+#   make brokers-stop   stop and remove both testing brokers
 #   make bootstrap   from zero: start db, build, seed the admin user
 #   make seed        seed/refresh the admin tenant + user + grant (idempotent)
 #   make seed-sim    seed synthetic test data (hvac/energy/door) into the datasource
@@ -34,6 +38,15 @@ UI_PKG   := @nube/nexus-ui
 BE_PORT  ?= 4780
 UI_PORT  ?= 4790
 
+# Optional cargo features for the backend, applied by every target that runs or
+# builds nexus-api (dev, dev-be, dev-all, build, build-be). Empty by default;
+# set FEATURES=zenoh to compile in the Zenoh ingest source (needed for the
+# datapump --transport zenoh testing path). Examples:
+#   make dev FEATURES=zenoh
+#   make dev-be FEATURES=zenoh
+FEATURES ?=
+CARGO_FEATURES := $(if $(FEATURES),--features $(FEATURES),)
+
 # Local dev Postgres (see `make db`). The backend reads its connection + key
 # material from these env vars (backend/crates/nexus-api/src/main.rs):
 # NEXUS_MASTER_KEY is validated as exactly 32 bytes and NEXUS_STREAM_TOKEN_KEY
@@ -45,6 +58,18 @@ DB_USER      ?= nexus
 DB_PASS      ?= nexus
 DB_NAME      ?= nexus
 DB_URL       ?= postgres://$(DB_USER):$(DB_PASS)@127.0.0.1:$(DB_PORT)/$(DB_NAME)
+
+# No-auth local brokers for tests and manual integration work. These use
+# Dockerfiles under docker/ so the test images and exposed ports are explicit.
+NATS_CONTAINER ?= nexus-test-nats
+NATS_IMAGE     ?= nexus/test-nats:local
+NATS_PORT      ?= 4222
+NATS_HTTP_PORT ?= 8222
+
+ZENOH_CONTAINER ?= nexus-test-zenoh
+ZENOH_IMAGE     ?= nexus/test-zenoh:local
+ZENOH_PORT      ?= 7447
+ZENOH_REST_PORT ?= 8000
 
 export NEXUS_METADATA_URL     ?= $(DB_URL)
 export NEXUS_DATASOURCE_URL   ?= $(DB_URL)
@@ -76,8 +101,10 @@ export ADMIN_PASSWORD ?= change-me-admin
 FLY_APP    ?= nexus
 IMAGE      ?= nexus:local
 
-.PHONY: build dev dev-all dev-be dev-ui test soak db db-stop bootstrap seed seed-sim \
-        docker-build docker-run fly-secrets fly-deploy clean kill build-be build-ui
+.PHONY: build dev dev-all dev-be dev-ui test soak db db-stop \
+        nats-build nats-install nats-stop zenoh-build zenoh-install zenoh-stop brokers brokers-stop \
+        bootstrap seed seed-sim docker-build docker-run fly-secrets fly-deploy clean kill \
+        build-be build-ui
 
 # Rows per profile for `make seed-sim` (hvac/energy/door); override on the CLI.
 SIM_ROWS ?= 200
@@ -85,7 +112,7 @@ SIM_ROWS ?= 200
 build: build-be build-ui
 
 build-be:
-	cd $(BE_DIR) && cargo build
+	cd $(BE_DIR) && cargo build $(CARGO_FEATURES)
 
 build-ui:
 	cd $(ROOT) && pnpm --filter $(UI_PKG) build
@@ -98,14 +125,14 @@ build-ui:
 dev: db
 	@echo "backend → http://127.0.0.1:$(BE_PORT)   ui → http://127.0.0.1:$(UI_PORT)"
 	@trap 'kill 0' EXIT INT TERM; \
-	( cd $(BE_DIR) && cargo run --bin nexus-api ) & \
+	( cd $(BE_DIR) && cargo run --bin nexus-api $(CARGO_FEATURES) ) & \
 	( cd $(ROOT) && pnpm --filter $(UI_PKG) dev ) & \
 	wait
 
 # Run one side alone. dev-be applies migrations at startup against the database
 # pointed to by NEXUS_METADATA_URL; depends on `db` so that database is up first.
 dev-be: db
-	cd $(BE_DIR) && cargo run --bin nexus-api
+	cd $(BE_DIR) && cargo run --bin nexus-api $(CARGO_FEATURES)
 
 dev-ui:
 	cd $(ROOT) && pnpm --filter $(UI_PKG) dev
@@ -158,6 +185,64 @@ db:
 db-stop:
 	-@docker rm -f $(DB_CONTAINER) >/dev/null 2>&1 || true
 	@echo "removed $(DB_CONTAINER)"
+
+nats-build:
+	docker build -f docker/testing-nats.Dockerfile -t $(NATS_IMAGE) docker
+
+nats-install: nats-build
+	@existing="$$(docker ps -aq -f name=^/$(NATS_CONTAINER)$$)"; \
+	if [ -n "$$existing" ]; then \
+		client_port="$$(docker port $(NATS_CONTAINER) 4222/tcp 2>/dev/null | head -1 | sed 's/.*://')"; \
+		http_port="$$(docker port $(NATS_CONTAINER) 8222/tcp 2>/dev/null | head -1 | sed 's/.*://')"; \
+		if [ "$$client_port" != "$(NATS_PORT)" ] || [ "$$http_port" != "$(NATS_HTTP_PORT)" ]; then \
+			echo "recreating $(NATS_CONTAINER): mapped :$$client_port/:$$http_port != wanted :$(NATS_PORT)/:$(NATS_HTTP_PORT)"; \
+			docker rm -f $(NATS_CONTAINER) >/dev/null; existing=""; \
+		fi; \
+	fi; \
+	if [ -z "$$existing" ]; then \
+		docker run -d --name $(NATS_CONTAINER) \
+			-p $(NATS_PORT):4222 -p $(NATS_HTTP_PORT):8222 \
+			$(NATS_IMAGE) >/dev/null; \
+		echo "started $(NATS_CONTAINER): nats://127.0.0.1:$(NATS_PORT), http://127.0.0.1:$(NATS_HTTP_PORT)"; \
+	else \
+		docker start $(NATS_CONTAINER) >/dev/null; \
+		echo "reused $(NATS_CONTAINER): nats://127.0.0.1:$(NATS_PORT), http://127.0.0.1:$(NATS_HTTP_PORT)"; \
+	fi
+
+nats-stop:
+	-@docker rm -f $(NATS_CONTAINER) >/dev/null 2>&1 || true
+	@echo "removed $(NATS_CONTAINER)"
+
+zenoh-build:
+	docker build -f docker/testing-zenoh.Dockerfile -t $(ZENOH_IMAGE) docker
+
+zenoh-install: zenoh-build
+	@existing="$$(docker ps -aq -f name=^/$(ZENOH_CONTAINER)$$)"; \
+	if [ -n "$$existing" ]; then \
+		router_port="$$(docker port $(ZENOH_CONTAINER) 7447/tcp 2>/dev/null | head -1 | sed 's/.*://')"; \
+		rest_port="$$(docker port $(ZENOH_CONTAINER) 8000/tcp 2>/dev/null | head -1 | sed 's/.*://')"; \
+		if [ "$$router_port" != "$(ZENOH_PORT)" ] || [ "$$rest_port" != "$(ZENOH_REST_PORT)" ]; then \
+			echo "recreating $(ZENOH_CONTAINER): mapped :$$router_port/:$$rest_port != wanted :$(ZENOH_PORT)/:$(ZENOH_REST_PORT)"; \
+			docker rm -f $(ZENOH_CONTAINER) >/dev/null; existing=""; \
+		fi; \
+	fi; \
+	if [ -z "$$existing" ]; then \
+		docker run -d --init --name $(ZENOH_CONTAINER) \
+			-p $(ZENOH_PORT):7447/tcp -p $(ZENOH_REST_PORT):8000/tcp \
+			$(ZENOH_IMAGE) >/dev/null; \
+		echo "started $(ZENOH_CONTAINER): tcp/127.0.0.1:$(ZENOH_PORT), http://127.0.0.1:$(ZENOH_REST_PORT)"; \
+	else \
+		docker start $(ZENOH_CONTAINER) >/dev/null; \
+		echo "reused $(ZENOH_CONTAINER): tcp/127.0.0.1:$(ZENOH_PORT), http://127.0.0.1:$(ZENOH_REST_PORT)"; \
+	fi
+
+zenoh-stop:
+	-@docker rm -f $(ZENOH_CONTAINER) >/dev/null 2>&1 || true
+	@echo "removed $(ZENOH_CONTAINER)"
+
+brokers: nats-install zenoh-install
+
+brokers-stop: nats-stop zenoh-stop
 
 # Zero-to-running: database up, everything built, admin seeded. After this,
 # `make dev` (or `make dev-be`) serves against a seeded database.

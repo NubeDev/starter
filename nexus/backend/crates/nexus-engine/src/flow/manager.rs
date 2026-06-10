@@ -25,6 +25,7 @@ use serde_json::{json, Value};
 use tokio_util::sync::CancellationToken;
 
 use crate::core::{Pipeline, PipelineConfig};
+use crate::flow::debug;
 use crate::flow::metered::metered_registry;
 use crate::flow::metrics::{FlowMetrics, MetricsSnapshot};
 use crate::source::IngestChannels;
@@ -143,6 +144,14 @@ impl FlowManager {
             .map_err(|e| format!("invalid flow config: {e}"))?;
         let pipeline = Pipeline::build(&registry, &cfg).map_err(|e| e.to_string())?;
 
+        // Install per-node debug taps for the whole run so debug can be toggled
+        // mid-run without a rebuild. Node count is source + processors + sink; the
+        // taps publish only while the channel is enabled (default off), so an
+        // undebugged flow pays only a relaxed atomic load per batch per node.
+        let node_count = (cfg.processors.len() + 2) as u32;
+        let debug_channel = debug::open(id, node_count);
+        let pipeline = debug::with_debug(pipeline, debug_channel);
+
         let token = CancellationToken::new();
         self.running
             .lock()
@@ -165,12 +174,23 @@ impl FlowManager {
         tokio::spawn(async move {
             if let Err(e) = pipeline.run(token).await {
                 tracing::warn!(flow_id = %id_owned, error = %e, "flow ended with error");
+                // Surface the run-ending error on the debug log stream too, so an
+                // operator watching debug sees why the flow stopped.
+                debug::log(
+                    &id_owned,
+                    nexus_spi::dto::flow::LogLevel::Error,
+                    None,
+                    format!("flow ended with error: {e}"),
+                );
                 if let Some(s) = state.lock().unwrap().get_mut(&id_owned) {
                     s.last_error = Some(e.to_string());
                 }
             }
             // Whether it ended by cancel or error, it is no longer running.
             running.lock().unwrap().remove(&id_owned);
+            // Tear down the debug channel on every terminal path so the registry
+            // does not leak a stale channel after the run.
+            debug::close(&id_owned);
         });
         Ok(())
     }
