@@ -111,3 +111,27 @@
   updated. Declined nothing — all six points verified sound. STATUS row-6 title cell left
   for the cron (its lane); RW-02 still 🔵 mid-build, its step-0 gate check now also covers
   commit(). Committing docs only.
+- 2026-06-10 02:50 — Wake + two human-directed doc actions. (a) RW-02 returned Done-but-
+  uncommitted (RW-02.md Status: Done; wake PID 737438 ALIVE 19min, in commit phase — normal,
+  no action; gate runs next firing). RW-02's TODOs are HIGH QUALITY: it correctly REFUSED the
+  step-0 core edit as out-of-lane (my step-0 asked it to edit RW-01's lane — its pushback is
+  right) and flagged the vendored sql's JSON UDFs (datafusion_functions_json) missing from the
+  native port. REPAIR (doc lane): roadmap §4 now explicitly transfers core/** to RW-03 for
+  contract-alignment ONLY; RW-03 spec gains step 0 (three §6 deltas: &mut self, max_batch_rows
+  slice, commit() hook) + the JSON-UDF grep check before vendor delete. GATE NOTE: do NOT
+  fail RW-02 over the deferred core deltas — they're now RW-03 step 0 by design. (b) HUMAN
+  REQUIREMENT added mid-wake: every RW must COMMIT AND PUSH to origin nexus-rewrite (current
+  branch, never a new branch) — charter + done-gate + roadmap §7 updated; gate pushes if the
+  session forgot; supervisor checks remote freshness from now on. Supervisor will push all
+  outstanding local commits this wake.
+- 2026-06-10 02:44 — All healthy, NO action. Cron firing + correctly skipping on held lock
+  (02:35, 02:40). RW-02 🔵 wake PID 737438 ALIVE 14min (within the 20-25min WS envelope),
+  PROGRESSING strongly: processor/{sql,json_to_arrow,declared_schema}.rs + native pipeline/
+  generate tests all touched <4min. KEY POSITIVE SIGNAL: `declared_schema.rs` exists — that's
+  the schema-stability contract from the 02:31 peer-review update, so the subagent IS reading
+  the post-review specs (race fear from 02:32 wake largely resolved); expect step-0 trait
+  alignment in the same pass (node.rs still `&self` right now — judge at gate only). Lock
+  kernel-HELD, no STOP, build not evaluated (check #3). Queue 1✅/1🔵/6⬜, no new TODOs.
+  Runtime files untracked + gitignored this wake (8345ddee) — committed lock/heartbeat would
+  have dirtied the tree every firing. NEXT WAKE: RW-02 likely in finishing phase or committed;
+  gate must verify &mut self + max_batch_rows + commit() in core.

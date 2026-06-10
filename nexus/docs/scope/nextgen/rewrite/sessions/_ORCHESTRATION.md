@@ -35,6 +35,10 @@ proven by the 2026-06-09 nextgen run (13/13 landed).
    - The session wrote a **Done** status line in its own `sessions/RW-xx.md` with a finish timestamp
      (grep format-agnostic: `[Ss]tatus.*Done` — bold markdown variants count).
    - Working tree changes are **committed** on `nexus-rewrite` with an `RW-xx:` prefixed message.
+   - The commit is **PUSHED**: `git push origin nexus-rewrite` (human requirement 2026-06-10 —
+     every finished RW must be on the remote, on the CURRENT branch, never a new branch).
+     If the session forgot to push, the gate pushes before marking ✅. If push fails
+     (auth/network), still mark ✅ locally but log the failed push to TODOs.md loudly.
    - If all pass → mark the row ✅, fill Finished + Commit columns, append a loop-log line.
    - If the build/tests are **red** and the session didn't flag a blocker → the session is NOT done.
      Spawn a fresh subagent to *fix the build for that RW only* (same charter). Do not advance.
@@ -72,9 +76,13 @@ CODING STANDARD (the load-bearing rules):
   Bare TODOs forbidden — use `// TODO(loop):`.
 
 HARD RULES (this is an unattended run — violating these poisons every later session):
-- BRANCH: work on `nexus-rewrite`. Do NOT create branches or worktrees. Do NOT switch branches.
-  Commit only YOUR hunks (`git add -p` the files your RW owns), never `git add -A`, never revert
-  changes you didn't make.
+- BRANCH: work on `nexus-rewrite` (the CURRENT branch). Do NOT create branches or worktrees.
+  Do NOT switch branches. Commit only YOUR hunks (`git add -p` the files your RW owns), never
+  `git add -A`, never revert changes you didn't make.
+- PUSH (MANDATORY): after your final commit, `git push origin nexus-rewrite`. A finished RW
+  that exists only locally is NOT done. Never push to any other branch, never force-push.
+  If the push is rejected because the remote moved, `git pull --rebase origin nexus-rewrite`
+  (your commits are own-lane hunks, so rebase is safe) and push again.
 - NO QUESTIONS: if you hit genuine ambiguity or need work a not-yet-run session owns, DO NOT guess
   and DO NOT hack/stub. Instead: (a) append a dated entry to rewrite/sessions/TODOs.md,
   (b) set your row in STATUS.md to ⛔ blocked with a one-line reason, (c) commit whatever compiles

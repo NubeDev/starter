@@ -55,7 +55,10 @@ Rule: extensions contribute **into** the pipeline via host methods; they never b
 - RW-01: `nexus-engine/src/core/**` (new). May add `mod core;` to `lib.rs` (🔶 append-only).
 - RW-02: `nexus-engine/src/{source,sink,processor}/**`, `arrow_json.rs`.
 - RW-03: `nexus-engine/src/{runner,registry,flow}/**`, `nexus-engine/Cargo.toml`,
-  `backend/Cargo.toml` (dep removal only), `backend/vendor/` (deletion).
+  `backend/Cargo.toml` (dep removal only), `backend/vendor/` (deletion),
+  PLUS `nexus-engine/src/core/**` for the §6 contract alignment ONLY (lane explicitly
+  transferred — RW-02 correctly refused it as out-of-lane; see TODOs.md "three core
+  deltas still open": `&mut self`, `max_batch_rows` slice, `commit()` hook).
 - RW-04: `nexus-engine/src/sink/datasource.rs` (new), `nexus-store/src/datasource/**`
   (append), `nexus-api/src/datasource_kinds/**` (append).
 - RW-05: `nexus-engine/src/federation/**` (new), `nexus-api/src/routes/**/query*` (dispatch
@@ -131,6 +134,8 @@ latest before numbering; never reuse a block.)
   (collector caps, SSE seq/resume, postgres sink, flows e2e) pass unmodified or with
   changes limited to import paths.
 - Session log `rewrite/sessions/RW-xx.md` with Status/Started/Finished + commits.
+- Final commit **pushed** to `origin nexus-rewrite` (the current branch — never a new
+  branch, never force-push). Unpushed = not done.
 
 ## §8 Hard constraints
 

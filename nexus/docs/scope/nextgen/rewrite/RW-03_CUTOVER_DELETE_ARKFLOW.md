@@ -16,6 +16,17 @@
 
 ## Scope
 
+0. **Core contract alignment (lane transferred from RW-01/02 — roadmap §4, TODOs.md):**
+   apply the three open §6 deltas to `core/` BEFORE switching the runners onto it:
+   `Processor::process(&mut self, …)` (RW-02's ported processors compile unchanged),
+   `max_batch_rows` zero-copy slicing at source/processor output in `core::pipeline.rs`,
+   and the default-no-op `Source::commit()` hook called after each successful sink write.
+   This is the LAST cheap moment — after cutover the runners freeze these traits for good.
+   ALSO per TODOs.md: before deleting the vendored sql processor, grep stored tenant flow
+   configs/fixtures for JSON-UDF usage (`json_get` etc. from datafusion_functions_json);
+   any hit = blocker to approve `datafusion-functions-json` as a direct dep, no hits =
+   omission is safe (record the grep in the session log).
+
 1. Switch all three runners (and poll/cancel helpers) from ArkFlow StreamConfig/Stream to
    `core::PipelineConfig`/`Pipeline::run`. The JSON config shape, public fn signatures,
    HTTP/SSE wire behavior, caps, and FlowStats are FROZEN — this is an engine swap, not
