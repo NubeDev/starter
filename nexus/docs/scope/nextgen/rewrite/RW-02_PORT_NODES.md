@@ -19,6 +19,11 @@ All of these are nexus-authored but implement **ArkFlow traits** (`Input`/`Outpu
 
 ## Scope
 
+0. **Contract alignment first (peer-review delta):** RW-01 shipped before the 2026-06-10
+   roadmap §6 update — `core/node.rs:33` has `process(&self, …)` and `max_batch_rows`
+   slicing is absent. Align core to §6 (`&mut self`; slice oversized batches zero-copy at
+   source/processor output) BEFORE porting nodes; core has a single consumer right now so
+   this is mechanical. See sessions/TODOs.md entry "RW-01 — Peer-review contract updates".
 1. Re-home every nexus source/sink onto the RW-01 traits. This is mostly mechanical:
    same struct, same config parsing, `read()/write()/close()` instead of ArkFlow's
    trait surface. Do NOT change behavior — caps, SSE seq numbers, Last-Event-ID resume,

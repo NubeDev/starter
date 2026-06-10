@@ -61,3 +61,17 @@
   created (charter followed early — good sign). Build NOT evaluated (lock HELD = mid-edit, per
   check #3). No TODOs, queue progressing (0✅/1🔵/7⬜). NEXT WAKE: expect RW-01 nearing tests or
   commit; gate fires on the cron side when its row reads Done.
+- 2026-06-10 03:05 — PEER REVIEW APPLIED (human-directed doc updates, my doc lane only).
+  RW-01 ✅ committed+gated fast (9757df7c + 84ae2962, 5 core tests green, 02:58). Landed review
+  edits as c046ebaf: §6 gains &mut-self processors, max_batch_rows slicing, schema-stability,
+  source_on_error policy, post-RW-03 dep-bump note; §8 de-approves Polars (RW-06 now
+  DataFusion-first spike, Arrow-C-FFI condition if Polars returns); RW-04 → COPY BINARY +
+  Parquet size-rotation; RW-05 → evaluate datafusion-table-providers + MemoryPool input bound;
+  RW-08 → fat-batch soak case + dlq option. DELTA: RW-01 shipped pre-review contract
+  (&self, no batch bound) — logged in TODOs.md as a non-gate-failing follow-up AND pinned as
+  step 0 in RW-02's spec. RW-02 went 🔵 (spawned 02:30 per loop log; may have read the
+  pre-review spec — step 0 + TODOs cover reconciliation either way; if its commit lacks the
+  alignment, next supervisor wake escalates it as an RW-03-blocking note, since traits freeze
+  at RW-02 gate). Cron healthy, lock state not relevant to this doc-only action. Left
+  uncommitted: STATUS.md RW-02 row (cron's lane) + out-of-lane diffs (nexus-store bind/scan,
+  extensions/boot.rs, WS-14 doc — concurrent session, untouched).
