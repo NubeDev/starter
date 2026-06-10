@@ -14604,7 +14604,6 @@ function ConnectPicker({
     return props.length > 0 ? { ...g, props } : null;
   }).filter((g) => g !== null) : groups;
   const create = async (target) => {
-    const { addEdge } = await Promise.resolve().then(() => rest);
     const payload = sourceCategory === "output" ? {
       sourceUid: sourceComponentUid,
       sourcePropUid,
@@ -14617,7 +14616,12 @@ function ConnectPicker({
       targetPropUid: sourcePropUid
     };
     try {
-      await addEdge(payload);
+      if (ctx?.connectEdge) {
+        await ctx.connectEdge(payload);
+      } else {
+        const { addEdge } = await Promise.resolve().then(() => rest);
+        await addEdge(payload);
+      }
     } catch (e) {
       console.error("add edge failed:", e.message);
     }
@@ -14628,7 +14632,8 @@ function ConnectPicker({
   );
   const createAndConnect = async (type) => {
     if (!ctx) return;
-    const c = await ctx.createComponent(type);
+    const side = sourceCategory === "output" ? "right" : "left";
+    const c = await ctx.createComponent(type, { nearUid: sourceComponentUid, side });
     if (!c) {
       onClose();
       return;
@@ -17225,6 +17230,9 @@ function Inner({ base }) {
       },
       onTopology: (msg) => {
         if (msg.type === "topologyAdded") {
+          const st = useStructural.getState();
+          const haveAll = msg.components.every((c) => st.components.has(c.uid)) && msg.edges.every((e) => st.edges.has(e.uid));
+          if (haveAll) return;
           scheduleTopologyReload();
         } else if (msg.type === "topologyRemoved") {
           const dropC = new Set(msg.componentUids.map(String));
@@ -17386,7 +17394,7 @@ function Inner({ base }) {
     }
   }, []);
   const onEdgesChange = useCallback((changes) => {
-    setEdges((es) => applyEdgeChanges(changes, es));
+    setEdges((es) => applyEdgeChanges(changes.filter((c) => c.type !== "select"), es));
   }, []);
   const [edgeMenu, setEdgeMenu] = useState(
     null
@@ -17417,7 +17425,7 @@ function Inner({ base }) {
   }, [reload]);
   const onNodesChange = useCallback((changes) => {
     setNodes((ns) => {
-      const next = applyNodeChanges(changes, ns);
+      const next = applyNodeChanges(changes.filter((c) => c.type !== "select"), ns);
       const movedAnchors = /* @__PURE__ */ new Map();
       for (const ch of changes) {
         if (ch.type !== "position" || !ch.position) continue;
@@ -17512,13 +17520,28 @@ function Inner({ base }) {
   const onConnect = useCallback(async (c) => {
     if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) return;
     try {
-      await addEdge({
+      const created = await addEdge({
         sourceUid: Number(c.source),
         sourcePropUid: Number(c.sourceHandle),
         targetUid: Number(c.target),
         targetPropUid: Number(c.targetHandle)
       });
-      await reload();
+      if (created?.uid != null) {
+        useStructural.getState().upsertEdge(created);
+        const isLoop = created.loopBack === true;
+        const rfEdge = {
+          id: String(created.uid),
+          source: c.source,
+          sourceHandle: c.sourceHandle,
+          target: c.target,
+          targetHandle: c.targetHandle,
+          style: isLoop ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 },
+          animated: false
+        };
+        setEdges((es) => es.some((e) => e.id === rfEdge.id) ? es : [...es, rfEdge]);
+      } else {
+        await reload();
+      }
     } catch (e) {
       setError(e.message);
     }
@@ -17588,13 +17611,25 @@ function Inner({ base }) {
         });
         if (created?.uid != null) {
           pushUndo({ kind: "delete", componentUids: [created.uid] });
+          useStructural.getState().upsertComponent(created);
+          const [rfNode] = buildRfNodes(
+            [created],
+            enter,
+            openNodeContextMenu,
+            void 0,
+            actionTypesRef.current
+          );
+          if (rfNode) {
+            setNodes((ns) => ns.some((n2) => n2.id === rfNode.id) ? ns : [...ns, rfNode]);
+          }
+        } else {
+          await reload();
         }
-        await reload();
       } catch (e) {
         setError(e.message);
       }
     },
-    [rf, reload, currentParentUid, pushUndo]
+    [rf, reload, currentParentUid, pushUndo, enter, openNodeContextMenu]
   );
   const componentTypes = useMemo(
     () => palette.flatMap(
@@ -17603,7 +17638,7 @@ function Inner({ base }) {
     [palette]
   );
   const createComponent = useCallback(
-    async (type) => {
+    async (type, opts) => {
       const baseName = sanitizeName(type);
       const siblings = new Set(
         Array.from(useStructural.getState().components.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
@@ -17614,11 +17649,19 @@ function Inner({ base }) {
         n += 1;
         name = `${baseName}${n}`;
       }
-      const vp = rf.getViewport();
-      const pos = {
-        x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
-        y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom)
-      };
+      const near = opts?.nearUid != null ? useStructural.getState().components.get(opts.nearUid) : void 0;
+      let pos;
+      if (near?.metadata?.position) {
+        const GAP = 80;
+        const dx = (NODE_W + GAP) * (opts?.side === "left" ? -1 : 1);
+        pos = { x: near.metadata.position.x + dx, y: near.metadata.position.y };
+      } else {
+        const vp = rf.getViewport();
+        pos = {
+          x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
+          y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom)
+        };
+      }
       try {
         const created = await addNode({
           type,
@@ -17626,19 +17669,54 @@ function Inner({ base }) {
           parentUid: currentParentUid,
           defaultValues: { position: { x: Math.round(pos.x), y: Math.round(pos.y) } }
         });
-        if (created?.uid != null) pushUndo({ kind: "delete", componentUids: [created.uid] });
-        await reload();
+        if (created?.uid != null) {
+          pushUndo({ kind: "delete", componentUids: [created.uid] });
+          useStructural.getState().upsertComponent(created);
+          const [rfNode] = buildRfNodes(
+            [created],
+            enter,
+            openNodeContextMenu,
+            void 0,
+            actionTypesRef.current
+          );
+          if (rfNode) setNodes((ns) => ns.some((n2) => n2.id === rfNode.id) ? ns : [...ns, rfNode]);
+        }
         return created ?? null;
       } catch (e) {
         setError(e.message);
         return null;
       }
     },
-    [rf, reload, currentParentUid, pushUndo]
+    [rf, currentParentUid, pushUndo, enter, openNodeContextMenu]
+  );
+  const connectEdge = useCallback(
+    async (payload) => {
+      const created = await addEdge(payload);
+      if (created?.uid == null) return;
+      useStructural.getState().upsertEdge(created);
+      const st = useStructural.getState();
+      const inView = st.components.has(payload.sourceUid) && st.components.has(payload.targetUid);
+      if (inView) {
+        const isLoop = created.loopBack === true;
+        const rfEdge = {
+          id: String(created.uid),
+          source: String(payload.sourceUid),
+          sourceHandle: String(payload.sourcePropUid),
+          target: String(payload.targetUid),
+          targetHandle: String(payload.targetPropUid),
+          style: isLoop ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 },
+          animated: false
+        };
+        setEdges((es) => es.some((e) => e.id === rfEdge.id) ? es : [...es, rfEdge]);
+      } else {
+        await reload();
+      }
+    },
+    [reload]
   );
   const ceCtx = useMemo(
-    () => ({ componentTypes, createComponent }),
-    [componentTypes, createComponent]
+    () => ({ componentTypes, createComponent, connectEdge }),
+    [componentTypes, createComponent, connectEdge]
   );
   const onDragOver = useCallback((e) => {
     if (e.dataTransfer.types.includes(DND_TYPE)) {
@@ -17694,6 +17772,7 @@ function Inner({ base }) {
             panOnDrag: [0],
             selectionMode: SelectionMode.Partial,
             multiSelectionKeyCode: ["Shift", "Meta", "Control"],
+            selectionKeyCode: null,
             nodeDragThreshold: 4,
             panOnScroll: false,
             panOnScrollMode: PanOnScrollMode.Free,
@@ -19025,7 +19104,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-03T14:24:57.046Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-10T04:58:40.616Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

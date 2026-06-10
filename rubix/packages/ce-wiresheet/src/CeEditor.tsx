@@ -1407,9 +1407,16 @@ function Inner({ base }: { base: string }) {
       },
       onTopology: (msg) => {
         if (msg.type === "topologyAdded") {
-          // New components need their REST metadata (properties, path, parent,
-          // values). The schema indices are built off REST too, so a reload
-          // backfills everything.
+          // Skip the (expensive, scales-with-sheet) reload if we already have
+          // everything this event adds — i.e. we appended it optimistically
+          // (onAddNode adds the node, onConnect adds the edge). Anything we DON'T
+          // have locally — another session, paste, the Connect-to picker, or a
+          // cross-folder edge needing a ghost — still reloads to backfill.
+          const st = useStructural.getState();
+          const haveAll =
+            msg.components.every((c) => st.components.has(c.uid)) &&
+            msg.edges.every((e) => st.edges.has(e.uid));
+          if (haveAll) return;
           scheduleTopologyReload();
         } else if (msg.type === "topologyRemoved") {
           // Splice the removed nodes/edges out of the live RF state without a refetch.
@@ -1688,7 +1695,10 @@ function Inner({ base }: { base: string }) {
   // and explicit selection emits from our document-level handler both come
   // through here, and applyEdgeChanges is idempotent on equal updates.
   const onEdgesChange = useCallback((changes: EdgeChange<RfEdge>[]) => {
-    setEdges((es) => applyEdgeChanges(changes, es));
+    // Drop RF's own `select` changes — the document-level pointer handler owns
+    // selection (nodes AND edges), so applying RF's too would fight it. Keep
+    // everything else (remove, etc.). Elements stay interactive (clickable).
+    setEdges((es) => applyEdgeChanges(changes.filter((c) => c.type !== "select"), es));
   }, []);
 
   // Right-click on an edge → context menu (Reevaluate, Delete).
@@ -1737,7 +1747,11 @@ function Inner({ base }: { base: string }) {
   // stay attached as the parent moves.
   const onNodesChange = useCallback((changes: NodeChange<AnyNode>[]) => {
     setNodes((ns) => {
-      const next = applyNodeChanges(changes, ns);
+      // Drop RF's own `select` changes — the document-level pointer handler owns
+      // selection. Without this, RF and our handler both toggle and race (that's
+      // what made shift-click take several attempts). Everything else (position,
+      // dimensions, etc.) still applies.
+      const next = applyNodeChanges(changes.filter((c) => c.type !== "select"), ns);
       // Collect new positions of anchor components from this batch so we can
       // recompute the positions of their ghosts in a single pass.
       const movedAnchors = new Map<string, { x: number; y: number }>();
@@ -1872,13 +1886,34 @@ function Inner({ base }: { base: string }) {
   const onConnect = useCallback(async (c: Connection) => {
     if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) return;
     try {
-      await restAddEdge({
+      const created = await restAddEdge({
         sourceUid: Number(c.source),
         sourcePropUid: Number(c.sourceHandle),
         targetUid: Number(c.target),
         targetPropUid: Number(c.targetHandle),
       });
-      await reload();
+      if (created?.uid != null) {
+        // Fast path: append just this edge instead of reloading the whole sheet.
+        // onConnect only fires for a drag between two VISIBLE handles, so both
+        // endpoints are on-canvas — the edge is in-folder, no ghost needed. The
+        // WS topologyAdded echo is skipped because the store already has it.
+        useStructural.getState().upsertEdge(created);
+        const isLoop = created.loopBack === true;
+        const rfEdge: RfEdge = {
+          id: String(created.uid),
+          source: c.source,
+          sourceHandle: c.sourceHandle,
+          target: c.target,
+          targetHandle: c.targetHandle,
+          style: isLoop
+            ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" }
+            : { stroke: "#4a9eff", strokeWidth: 1.5 },
+          animated: false,
+        };
+        setEdges((es) => (es.some((e) => e.id === rfEdge.id) ? es : [...es, rfEdge]));
+      } else {
+        await reload(); // unexpected: no edge returned — fall back
+      }
     } catch (e) {
       setError((e as Error).message);
     }
@@ -1968,13 +2003,30 @@ function Inner({ base }: { base: string }) {
         });
         if (created?.uid != null) {
           pushUndo({ kind: "delete", componentUids: [created.uid] });
+          // Fast path: append just this node instead of reloading the whole
+          // sheet (a full reload re-fetches + rebuilds every node, so on a large
+          // sheet it's the add lag spike). restAddNode returns the full
+          // component, so no extra fetch is needed; the WS topologyAdded echo
+          // for our own session is suppressed (see onTopology).
+          useStructural.getState().upsertComponent(created);
+          const [rfNode] = buildRfNodes(
+            [created],
+            enter,
+            openNodeContextMenu,
+            undefined,
+            actionTypesRef.current,
+          );
+          if (rfNode) {
+            setNodes((ns) => (ns.some((n) => n.id === rfNode.id) ? ns : [...ns, rfNode]));
+          }
+        } else {
+          await reload(); // unexpected: no component returned — fall back
         }
-        await reload();
       } catch (e) {
         setError((e as Error).message);
       }
     },
-    [rf, reload, currentParentUid, pushUndo],
+    [rf, reload, currentParentUid, pushUndo, enter, openNodeContextMenu],
   );
 
   // Creatable component types for the ConnectPicker's "New" flow.
@@ -1990,7 +2042,10 @@ function Inner({ base }: { base: string }) {
   // properties) so the caller can wire up to it. Mirrors onAddNode but returns
   // the created Component instead of being fire-and-forget.
   const createComponent = useCallback(
-    async (type: string): Promise<Component | null> => {
+    async (
+      type: string,
+      opts?: { nearUid?: number; side?: "left" | "right" },
+    ): Promise<Component | null> => {
       const baseName = sanitizeName(type);
       const siblings = new Set(
         Array.from(useStructural.getState().components.values())
@@ -2003,11 +2058,26 @@ function Inner({ base }: { base: string }) {
         n += 1;
         name = `${baseName}${n}`;
       }
-      const vp = rf.getViewport();
-      const pos = {
-        x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
-        y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom),
-      };
+      // Place next to the source component when the picker passes one — to its
+      // right for an output→input link, to its left for an input←output link —
+      // so the new node lands beside it, not at screen center. Fall back to the
+      // viewport center when there's no anchor.
+      const near =
+        opts?.nearUid != null
+          ? useStructural.getState().components.get(opts.nearUid)
+          : undefined;
+      let pos: { x: number; y: number };
+      if (near?.metadata?.position) {
+        const GAP = 80;
+        const dx = (NODE_W + GAP) * (opts?.side === "left" ? -1 : 1);
+        pos = { x: near.metadata.position.x + dx, y: near.metadata.position.y };
+      } else {
+        const vp = rf.getViewport();
+        pos = {
+          x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
+          y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom),
+        };
+      }
       try {
         const created = await restAddNode({
           type,
@@ -2015,20 +2085,68 @@ function Inner({ base }: { base: string }) {
           parentUid: currentParentUid,
           defaultValues: { position: { x: Math.round(pos.x), y: Math.round(pos.y) } },
         });
-        if (created?.uid != null) pushUndo({ kind: "delete", componentUids: [created.uid] });
-        await reload();
+        if (created?.uid != null) {
+          pushUndo({ kind: "delete", componentUids: [created.uid] });
+          // Incremental append — same fast path as onAddNode, no full reload.
+          useStructural.getState().upsertComponent(created);
+          const [rfNode] = buildRfNodes(
+            [created],
+            enter,
+            openNodeContextMenu,
+            undefined,
+            actionTypesRef.current,
+          );
+          if (rfNode) setNodes((ns) => (ns.some((n) => n.id === rfNode.id) ? ns : [...ns, rfNode]));
+        }
         return created ?? null;
       } catch (e) {
         setError((e as Error).message);
         return null;
       }
     },
-    [rf, reload, currentParentUid, pushUndo],
+    [rf, currentParentUid, pushUndo, enter, openNodeContextMenu],
+  );
+
+  // Edge add for the Connect-to picker. Appends the edge if both endpoints are
+  // in the current view (in-folder); falls back to a reload only when the target
+  // is in another folder (needs a ghost). Keeps connect-to-existing AND
+  // connect-to-new fast instead of full-reloading.
+  const connectEdge = useCallback(
+    async (payload: {
+      sourceUid: number;
+      sourcePropUid: number;
+      targetUid: number;
+      targetPropUid: number;
+    }) => {
+      const created = await restAddEdge(payload);
+      if (created?.uid == null) return;
+      useStructural.getState().upsertEdge(created);
+      const st = useStructural.getState();
+      const inView = st.components.has(payload.sourceUid) && st.components.has(payload.targetUid);
+      if (inView) {
+        const isLoop = created.loopBack === true;
+        const rfEdge: RfEdge = {
+          id: String(created.uid),
+          source: String(payload.sourceUid),
+          sourceHandle: String(payload.sourcePropUid),
+          target: String(payload.targetUid),
+          targetHandle: String(payload.targetPropUid),
+          style: isLoop
+            ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" }
+            : { stroke: "#4a9eff", strokeWidth: 1.5 },
+          animated: false,
+        };
+        setEdges((es) => (es.some((e) => e.id === rfEdge.id) ? es : [...es, rfEdge]));
+      } else {
+        await reload(); // cross-folder target → needs a ghost
+      }
+    },
+    [reload],
   );
 
   const ceCtx = useMemo(
-    () => ({ componentTypes, createComponent }),
-    [componentTypes, createComponent],
+    () => ({ componentTypes, createComponent, connectEdge }),
+    [componentTypes, createComponent, connectEdge],
   );
 
   // DnD: dragging a palette item into the canvas drops a new component at the cursor.
@@ -2097,6 +2215,16 @@ function Inner({ base }: { base: string }) {
           panOnDrag={[0]}
           selectionMode={SelectionMode.Partial}
           multiSelectionKeyCode={["Shift", "Meta", "Control"]}
+          // Disable RF's own Shift rubber-band: its default selectionKeyCode is
+          // "Shift", which puts RF into box-select mode on Shift-press and lets
+          // its d3 layer swallow the pointer events. We marquee-select via the
+          // custom right-drag instead.
+          selectionKeyCode={null}
+          // NB: elements stay selectable (interactive) so edges/nodes remain
+          // clickable; we instead drop RF's `select` changes in onNodes/Edges
+          // Change so the document-level handler is the single selection
+          // authority. (elementsSelectable={false} would also kill edge
+          // pointer-events → unclickable edges.)
           // Treat any mouse movement under 4px as a click — fixes occasional missed
           // selects when the cursor wobbles a pixel between mousedown and mouseup.
           nodeDragThreshold={4}

@@ -35,7 +35,18 @@ import type { DecodedValue } from "../lib/wire";
 // Supplied by CeEditor via context (crosses the picker's createPortal).
 export interface CeWiresheetCtx {
   componentTypes: Array<{ name: string; type: string; group: string }>;
-  createComponent: (type: string) => Promise<Component | null>;
+  createComponent: (
+    type: string,
+    opts?: { nearUid?: number; side?: "left" | "right" },
+  ) => Promise<Component | null>;
+  // Add an edge and update the view incrementally (append in-folder; reload only
+  // for a cross-folder target that needs a ghost). Avoids a full reload per link.
+  connectEdge: (payload: {
+    sourceUid: number;
+    sourcePropUid: number;
+    targetUid: number;
+    targetPropUid: number;
+  }) => Promise<void>;
 }
 export const CeWiresheetContext = createContext<CeWiresheetCtx | null>(null);
 
@@ -608,7 +619,6 @@ function ConnectPicker({
     : groups;
 
   const create = async (target: { componentUid: number; propUid: number }) => {
-    const { addEdge } = await import("../lib/rest");
     // Engine convention: source = output side, target = input side. Flip based
     // on which end the user right-clicked from.
     const payload =
@@ -626,7 +636,14 @@ function ConnectPicker({
             targetPropUid: sourcePropUid,
           };
     try {
-      await addEdge(payload);
+      // Incremental edge add (append in-folder, reload only for cross-folder).
+      // Falls back to a plain addEdge + WS reload if no context is present.
+      if (ctx?.connectEdge) {
+        await ctx.connectEdge(payload);
+      } else {
+        const { addEdge } = await import("../lib/rest");
+        await addEdge(payload);
+      }
     } catch (e) {
       console.error("add edge failed:", (e as Error).message);
     }
@@ -643,7 +660,10 @@ function ConnectPicker({
   // the source to its first matching-category property.
   const createAndConnect = async (type: string) => {
     if (!ctx) return;
-    const c = await ctx.createComponent(type);
+    // Connecting FROM an output → the new node is downstream (place it right);
+    // FROM an input → the new node is upstream (place it left of the source).
+    const side = sourceCategory === "output" ? "right" : "left";
+    const c = await ctx.createComponent(type, { nearUid: sourceComponentUid, side });
     if (!c) {
       onClose();
       return;
