@@ -4,6 +4,7 @@ use sqlx::PgPool;
 use starter_spi::Error;
 use uuid::Uuid;
 
+use crate::nav_node;
 use crate::tag::{self, EntityRef};
 use crate::tenant_tx;
 
@@ -33,6 +34,11 @@ pub async fn delete(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<bool, Er
             },
         )
         .await?;
+        // Sweep any nav nodes that mounted this page back to plain `group`
+        // headers (WS-13): losing the page must not delete the navigation node,
+        // only blank its target so the user can retarget it. Same separate-tx
+        // rationale as the tag sweep above.
+        nav_node::sweep_dashboard_targets(pool, tenant_id, id).await?;
     }
     Ok(removed)
 }

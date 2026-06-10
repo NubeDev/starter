@@ -91,6 +91,10 @@ name = "folder_crud"
 path = "tests/folder/crud_test.rs"
 
 [[test]]
+name = "nav_node_crud"
+path = "tests/nav_node/crud_test.rs"
+
+[[test]]
 name = "flow_crud"
 path = "tests/flow/crud_test.rs"
 
