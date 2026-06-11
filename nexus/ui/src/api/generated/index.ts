@@ -3367,11 +3367,17 @@ export interface components {
         /** @description Partially update a detection; omitted fields are unchanged. */
         UpdateDetectionRequest: {
             /**
+             * @description Clear the datasource (run against the dev pool). Takes precedence over
+             *     `datasource_id`.
+             */
+            clear_datasource?: boolean;
+            /**
              * Format: uuid
-             * @description The datasource the query runs against. Double-option so a patch can
-             *     distinguish three cases: field absent ⇒ unchanged; `null` ⇒ clear it (run
-             *     against the dev pool); a uuid ⇒ point at that datasource. `skip_serializing_if`
-             *     keeps an unset field out of the wire body.
+             * @description Point the query at this datasource. `None` (with `clear_datasource` false)
+             *     leaves it unchanged. A `clear_datasource` bool carries the "detach → dev
+             *     pool" intent rather than an `Option<Option<_>>` — serde can't distinguish
+             *     an explicit JSON `null` from "absent" on the wire (the same bug the panel
+             *     `clear_insight` flag avoids; confirmed live for detections too).
              */
             datasource_id?: string | null;
             enabled?: boolean | null;

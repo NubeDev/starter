@@ -190,14 +190,36 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)(terser@5.48.0)
 
-  nexus/backend/crates/nexus-api/extensions/com.nexus.hello/ui-src:
+  nexus/extensions/com.nexus.demo/ui-src:
     dependencies:
       '@nube/starter-client-ts':
         specifier: workspace:*
-        version: link:../../../../../../../packages/starter-client-ts
+        version: link:../../../../packages/starter-client-ts
       '@nube/starter-ext-sdk-ts':
         specifier: workspace:*
-        version: link:../../../../../../../starter-extensions/packages/starter-ext-sdk-ts
+        version: link:../../../../starter-extensions/packages/starter-ext-sdk-ts
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      react:
+        specifier: 19.1.0
+        version: 19.1.0
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0)
+
+  nexus/extensions/com.nexus.hello/ui-src:
+    dependencies:
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../../../packages/starter-client-ts
+      '@nube/starter-ext-sdk-ts':
+        specifier: workspace:*
+        version: link:../../../../starter-extensions/packages/starter-ext-sdk-ts
     devDependencies:
       '@types/react':
         specifier: ^19.0.0

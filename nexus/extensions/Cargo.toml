@@ -1,0 +1,21 @@
+# nexus/extensions/ — sibling cargo workspace holding nexus-owned extension
+# binaries. Excluded from the root `starter` workspace (see the repo-root
+# Cargo.toml `exclude` list) and a sibling of `nexus/backend/`, so the process
+# crates' `workspace = true` aliases resolve here, not against either tree.
+#
+# Mirrors `rubix/extensions/Cargo.toml`. Members pick up `starter-ext-sdk` (and
+# friends) by path dependency into `../../starter-extensions/crates/*`, keeping
+# the dependency arrow the SCOPE-prescribed direction (nexus → starter-extensions,
+# never the other way).
+[workspace]
+resolver = "2"
+members = [
+    "com.nexus.hello/process",
+]
+
+[workspace.package]
+version      = "0.0.0"
+edition      = "2021"
+license      = "Apache-2.0"
+rust-version = "1.80"
+publish      = false

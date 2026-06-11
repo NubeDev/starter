@@ -1,4 +1,4 @@
-import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
+import { jsx, jsxs } from 'react/jsx-runtime';
 import * as React from 'react';
 
 const HOST_CLIENT_CTX_KEY = "__starterExtSdkHostClientContextV1";
@@ -23,6 +23,9 @@ function useSlotContext() {
     );
   }
   return ctx;
+}
+function useExtensionRoute() {
+  return useSlotContext().route;
 }
 
 const DEFAULT_BLOCK_SHELL_MESSAGES = {
@@ -213,87 +216,171 @@ async function fetchJson(client, path, init = {}) {
   return await res.json();
 }
 
-const EXTENSION_ID = "com.nexus.hello";
-const KIND = "com.nexus.hello.ping";
-function HelloPanel() {
-  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(PanelInner, {}) });
+const EXTENSION_ID = "com.nexus.demo";
+function Main() {
+  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
 }
-function PanelInner() {
+function MainRouter() {
+  const route = useExtensionRoute();
+  const page = route === "readings" || route?.startsWith("readings") ? "readings" : route === "about" || route?.startsWith("about") ? "about" : "overview";
+  return /* @__PURE__ */ jsxs("div", { className: "mx-auto flex max-w-5xl flex-col gap-6", children: [
+    /* @__PURE__ */ jsx(Header, { page }),
+    page === "overview" ? /* @__PURE__ */ jsx(OverviewPage, {}) : null,
+    page === "readings" ? /* @__PURE__ */ jsx(ReadingsPage, {}) : null,
+    page === "about" ? /* @__PURE__ */ jsx(AboutPage, {}) : null
+  ] });
+}
+function Header({ page }) {
+  const titles = {
+    overview: "Overview",
+    readings: "Readings",
+    about: "About"
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
+    /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Nexus Demo extension" }),
+    /* @__PURE__ */ jsx("h1", { className: "text-2xl font-semibold tracking-tight", children: titles[page] }),
+    /* @__PURE__ */ jsxs("nav", { className: "mt-2 flex gap-1 border-b", children: [
+      /* @__PURE__ */ jsx(Tab, { to: "/x/com.nexus.demo", active: page === "overview", children: "Overview" }),
+      /* @__PURE__ */ jsx(Tab, { to: "/x/com.nexus.demo/readings", active: page === "readings", children: "Readings" }),
+      /* @__PURE__ */ jsx(Tab, { to: "/x/com.nexus.demo/about", active: page === "about", children: "About" })
+    ] })
+  ] });
+}
+function Tab({
+  to,
+  active,
+  children
+}) {
+  return /* @__PURE__ */ jsx(
+    "a",
+    {
+      href: to,
+      className: "-mb-px border-b-2 px-3 py-2 text-sm transition-colors " + (active ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"),
+      children
+    }
+  );
+}
+function OverviewPage() {
   const client = useHostClient();
-  const slot = useSlotContext();
-  const [result, setResult] = React.useState(null);
+  const [ping, setPing] = React.useState(null);
   const [error, setError] = React.useState(null);
   React.useEffect(() => {
     let cancelled = false;
     fetchJson(client, `${client.apiPrefix}/query`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sql: "", kind: KIND })
-    }).then((r) => {
-      if (!cancelled) setResult(r);
-    }).catch((e) => {
-      if (!cancelled) setError(e instanceof Error ? e.message : String(e));
-    });
+      body: JSON.stringify({ sql: "", kind: `${EXTENSION_ID}.ping` })
+    }).then((r) => !cancelled && setPing(r)).catch(
+      (e) => !cancelled ? setError(e instanceof Error ? e.message : String(e)) : void 0
+    );
     return () => {
       cancelled = true;
     };
   }, [client]);
-  const row = result?.rows?.[0];
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      "data-ext-id": EXTENSION_ID,
-      "data-ext-slot": slot.slotId,
-      style: {
-        margin: "4px 8px",
-        padding: "8px 10px",
-        borderRadius: 8,
-        border: "1px solid color-mix(in oklab, currentColor 15%, transparent)",
-        fontSize: 12,
-        lineHeight: 1.5,
-        opacity: 0.9
-      },
-      children: [
-        /* @__PURE__ */ jsxs("div", { style: { fontWeight: 600 }, children: [
-          "👋 ",
-          EXTENSION_ID
-        ] }),
-        error ? /* @__PURE__ */ jsxs("div", { style: { opacity: 0.7 }, children: [
-          "kind query failed: ",
-          error
-        ] }) : row ? /* @__PURE__ */ jsxs(Fragment, { children: [
-          /* @__PURE__ */ jsx("div", { children: row.greeting }),
-          /* @__PURE__ */ jsx("div", { style: { opacity: 0.6, fontVariantNumeric: "tabular-nums" }, children: row.server_time })
-        ] }) : /* @__PURE__ */ jsxs("div", { style: { opacity: 0.6 }, children: [
-          "running ",
-          KIND,
-          "…"
-        ] })
-      ]
-    }
-  );
+  const row = ping?.rows?.[0];
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-6", children: [
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-3", children: [
+      /* @__PURE__ */ jsx(Card, { title: "Status", value: error ? "error" : row ? "live" : "…" }),
+      /* @__PURE__ */ jsx(Card, { title: "Sites", value: "12", hint: "across 3 regions" }),
+      /* @__PURE__ */ jsx(Card, { title: "Open alerts", value: "2", hint: "1 critical" })
+    ] }),
+    /* @__PURE__ */ jsx(Panel, { title: "Live ping (contributed kind)", children: error ? /* @__PURE__ */ jsx("p", { className: "text-sm text-destructive", children: error }) : row ? /* @__PURE__ */ jsxs("dl", { className: "grid grid-cols-2 gap-2 text-sm", children: [
+      /* @__PURE__ */ jsx("dt", { className: "text-muted-foreground", children: "Greeting" }),
+      /* @__PURE__ */ jsx("dd", { className: "font-mono", children: row.greeting }),
+      /* @__PURE__ */ jsx("dt", { className: "text-muted-foreground", children: "Server time" }),
+      /* @__PURE__ */ jsx("dd", { className: "font-mono", children: row.server_time })
+    ] }) : /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Loading…" }) })
+  ] });
+}
+const READINGS = [
+  { site: "HQ — Roof", metric: "Power", value: "42.1 kW", trend: "▲ 3%" },
+  { site: "HQ — Floor 2", metric: "Temp", value: "21.4 °C", trend: "▼ 1%" },
+  { site: "Depot A", metric: "Water", value: "118 L/min", trend: "▲ 8%" },
+  { site: "Depot B", metric: "Power", value: "9.7 kW", trend: "—" }
+];
+function ReadingsPage() {
+  return /* @__PURE__ */ jsx(Panel, { title: "Latest readings", children: /* @__PURE__ */ jsx("div", { className: "overflow-hidden rounded-lg border", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+    /* @__PURE__ */ jsx("thead", { className: "bg-muted/50 text-left text-muted-foreground", children: /* @__PURE__ */ jsxs("tr", { children: [
+      /* @__PURE__ */ jsx("th", { className: "px-3 py-2 font-medium", children: "Site" }),
+      /* @__PURE__ */ jsx("th", { className: "px-3 py-2 font-medium", children: "Metric" }),
+      /* @__PURE__ */ jsx("th", { className: "px-3 py-2 font-medium", children: "Value" }),
+      /* @__PURE__ */ jsx("th", { className: "px-3 py-2 font-medium", children: "Trend" })
+    ] }) }),
+    /* @__PURE__ */ jsx("tbody", { children: READINGS.map((r) => /* @__PURE__ */ jsxs("tr", { className: "border-t", children: [
+      /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children: r.site }),
+      /* @__PURE__ */ jsx("td", { className: "px-3 py-2 text-muted-foreground", children: r.metric }),
+      /* @__PURE__ */ jsx("td", { className: "px-3 py-2 font-mono", children: r.value }),
+      /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children: r.trend })
+    ] }, `${r.site}-${r.metric}`)) })
+  ] }) }) });
+}
+function AboutPage() {
+  return /* @__PURE__ */ jsx(Panel, { title: "About this extension", children: /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground", children: [
+    /* @__PURE__ */ jsxs("p", { children: [
+      /* @__PURE__ */ jsx("span", { className: "font-medium text-foreground", children: "com.nexus.demo" }),
+      " is a worked WS-14 example: it contributes a sidebar nav group and a full page rendered into the host's content area, plus two query-kinds and an insight on the backend."
+    ] }),
+    /* @__PURE__ */ jsxs("p", { children: [
+      "The page you're reading is the extension's own federated UI (the",
+      " ",
+      /* @__PURE__ */ jsx("code", { className: "rounded bg-muted px-1 py-0.5", children: "main" }),
+      " slot), mounted by the host route",
+      " ",
+      /* @__PURE__ */ jsx("code", { className: "rounded bg-muted px-1 py-0.5", children: "/x/:extId/*" }),
+      ". The tabs above change the slot route; the extension dispatches its own sub-pages — the host registers no routes for it."
+    ] })
+  ] }) });
+}
+function Card({
+  title,
+  value,
+  hint
+}) {
+  return /* @__PURE__ */ jsxs("div", { className: "rounded-xl border bg-card p-4 text-card-foreground shadow-sm", children: [
+    /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: title }),
+    /* @__PURE__ */ jsx("p", { className: "mt-1 text-2xl font-semibold tracking-tight", children: value }),
+    hint ? /* @__PURE__ */ jsx("p", { className: "mt-1 text-xs text-muted-foreground", children: hint }) : null
+  ] });
+}
+function Panel({
+  title,
+  children
+}) {
+  return /* @__PURE__ */ jsxs("section", { className: "rounded-xl border bg-card p-5 text-card-foreground shadow-sm", children: [
+    /* @__PURE__ */ jsx("h2", { className: "mb-3 text-sm font-medium", children: title }),
+    children
+  ] });
 }
 
-const HREF = "/extensions";
-function HelloNav() {
-  return /* @__PURE__ */ jsxs(
-    "a",
-    {
-      href: HREF,
-      className: "flex h-8 items-center gap-2 rounded-md px-2 text-sm text-sidebar-foreground/80 outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2",
-      children: [
-        /* @__PURE__ */ jsx(
-          "span",
-          {
-            "aria-hidden": true,
-            className: "grid size-5 shrink-0 place-items-center rounded bg-primary/15 text-primary",
-            children: "👋"
-          }
-        ),
-        /* @__PURE__ */ jsx("span", { className: "truncate", children: "Hello Nav" })
-      ]
-    }
-  );
+const BASE = "/x/com.nexus.demo";
+const LINKS = [
+  { label: "Overview", to: BASE, icon: "▦" },
+  { label: "Readings", to: `${BASE}/readings`, icon: "≣" },
+  { label: "About", to: `${BASE}/about`, icon: "ⓘ" }
+];
+function DemoNav() {
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-0.5 px-2 py-1", children: [
+    /* @__PURE__ */ jsx("div", { className: "px-2 pb-1 text-xs font-medium text-sidebar-foreground/50", children: "Nexus Demo" }),
+    LINKS.map((l) => /* @__PURE__ */ jsxs(
+      "a",
+      {
+        href: l.to,
+        className: "flex h-8 items-center gap-2 rounded-md px-2 text-sm text-sidebar-foreground/80 outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2",
+        children: [
+          /* @__PURE__ */ jsx(
+            "span",
+            {
+              "aria-hidden": true,
+              className: "grid size-5 shrink-0 place-items-center rounded bg-primary/15 text-primary",
+              children: l.icon
+            }
+          ),
+          /* @__PURE__ */ jsx("span", { className: "truncate", children: l.label })
+        ]
+      },
+      l.to
+    ))
+  ] });
 }
 
 const factory = {
@@ -304,7 +391,7 @@ const factory = {
   },
   init(handle) {
     registerExtensionContributions(handle, {
-      components: { HelloPanel, HelloNav }
+      components: { Main, DemoNav }
     });
   }
 };

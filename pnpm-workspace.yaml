@@ -24,7 +24,7 @@ packages:
   - "rubix/mobile"
   - "rubix/apps/*"
   - "nexus/ui"
-  - "nexus/backend/crates/nexus-api/extensions/*/ui-src"
+  - "nexus/extensions/*/ui-src"
 
 allowBuilds:
   esbuild: true

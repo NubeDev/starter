@@ -8154,13 +8154,17 @@
         "type": "object",
         "description": "Partially update a detection; omitted fields are unchanged.",
         "properties": {
+          "clear_datasource": {
+            "type": "boolean",
+            "description": "Clear the datasource (run against the dev pool). Takes precedence over\n`datasource_id`."
+          },
           "datasource_id": {
             "type": [
               "string",
               "null"
             ],
             "format": "uuid",
-            "description": "The datasource the query runs against. Double-option so a patch can\ndistinguish three cases: field absent ⇒ unchanged; `null` ⇒ clear it (run\nagainst the dev pool); a uuid ⇒ point at that datasource. `skip_serializing_if`\nkeeps an unset field out of the wire body."
+            "description": "Point the query at this datasource. `None` (with `clear_datasource` false)\nleaves it unchanged. A `clear_datasource` bool carries the \"detach → dev\npool\" intent rather than an `Option<Option<_>>` — serde can't distinguish\nan explicit JSON `null` from \"absent\" on the wire (the same bug the panel\n`clear_insight` flag avoids; confirmed live for detections too)."
           },
           "enabled": {
             "type": [

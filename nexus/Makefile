@@ -83,11 +83,12 @@ export NEXUS_STREAM_TOKEN_KEY ?= 0123456789abcdef0123456789abcdef
 # "No kinds". Point them at the real pack dirs (relative to $(BE_DIR)).
 export NEXUS_KINDS_DIR            ?= crates/nexus-api/kinds
 export NEXUS_DATASOURCE_KINDS_DIR ?= crates/nexus-api/datasource-kinds
-# WS-14 extensions runtime. Same CWD=$(BE_DIR) story as the kinds packs: point
-# the read-only in-repo pack at the real dir; the installs + pidfile dirs go to a
-# gitignored scratch dir under $(BE_DIR) so `make dev-be` can accept uploads and
-# the supervisor can write pidfiles without polluting the source tree.
-export NEXUS_EXTENSIONS_DIR          ?= crates/nexus-api/extensions
+# WS-14 extensions runtime. The read-only in-repo pack lives at `nexus/extensions/`
+# (a top-level sibling of `backend/`, matching rubix's `rubix/extensions/` layout)
+# — so from $(BE_DIR) it resolves as `../extensions`. The installs + pidfile dirs
+# go to a gitignored scratch dir under $(BE_DIR) so `make dev-be` can accept uploads
+# and the supervisor can write pidfiles without polluting the source tree.
+export NEXUS_EXTENSIONS_DIR          ?= ../extensions
 export NEXUS_EXTENSIONS_INSTALLS_DIR ?= .nexus-ext/installs
 export NEXUS_EXTENSIONS_PIDFILE_DIR  ?= .nexus-ext/pids
 
@@ -265,13 +266,17 @@ dev-all:
 seed:
 	cd $(BE_DIR) && cargo run --bin seed-admin
 
-# WS-14 example extension passthrough: `make ext-hello-<target>` runs <target>
-# in the com.nexus.hello bundle's own Makefile against the dev server —
-# e.g. `make ext-hello-test`, `make ext-hello-load`, `make ext-hello-unload`,
-# `make ext-hello-install`, `make ext-hello-status`, `make ext-hello-help`.
-# Admin creds + API port flow through the exported env above.
+# WS-14 example extension passthroughs: `make ext-hello-<target>` /
+# `make ext-demo-<target>` run <target> in that bundle's own Makefile against
+# the dev server — e.g. `make ext-demo-ui-build`, `make ext-hello-test`,
+# `make ext-demo-install`, `make ext-hello-status`. The bundles live at the
+# top-level `nexus/extensions/` (rubix-style layout). Admin creds + API port
+# flow through the exported env above.
 ext-hello-%:
-	$(MAKE) -C $(BE_DIR)/crates/nexus-api/extensions/com.nexus.hello $*
+	$(MAKE) -C extensions/com.nexus.hello $*
+
+ext-demo-%:
+	$(MAKE) -C extensions/com.nexus.demo $*
 
 # Seed synthetic test data into the datasource DB: SIM_ROWS rows each of three
 # device profiles (hvac numeric floats, energy monotonic counter, door bool+str)

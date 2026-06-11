@@ -57,9 +57,16 @@ impl ExtensionsConfig {
             .map(PathBuf::from)
             .unwrap_or(default_pids);
         Self {
-            extensions_dir,
-            installs_dir,
-            pidfile_dir,
+            // Absolutise every path. The process-flavour supervisor execs
+            // `bundle_dir.join(runtime.bin)` *with* `current_dir(bundle_dir)`
+            // set — so a **relative** bundle_dir (e.g. dev's `../extensions`)
+            // would be resolved twice and the exec would fail with ENOENT. An
+            // absolute `extensions_dir` makes `bundle_dir` (derived from it)
+            // absolute, so the spawn is CWD-independent. `absolutize` keeps the
+            // value verbatim if it's already absolute or can't be resolved.
+            extensions_dir: absolutize(extensions_dir),
+            installs_dir: absolutize(installs_dir),
+            pidfile_dir: absolutize(pidfile_dir),
         }
     }
 
@@ -104,5 +111,20 @@ impl ExtensionsConfig {
         std::fs::create_dir_all(&self.installs_dir)?;
         std::fs::create_dir_all(&self.pidfile_dir)?;
         Ok(())
+    }
+}
+
+/// Resolve `p` to an absolute path. Already-absolute paths are returned
+/// unchanged. A relative path is joined onto the process CWD (it is *not*
+/// canonicalised — the dir may not exist yet, e.g. the installs dir before
+/// `ensure_writable_dirs`). On any error (no CWD) the input is returned
+/// verbatim so behaviour never gets worse than before.
+fn absolutize(p: PathBuf) -> PathBuf {
+    if p.is_absolute() {
+        return p;
+    }
+    match std::env::current_dir() {
+        Ok(cwd) => cwd.join(p),
+        Err(_) => p,
     }
 }

@@ -1,63 +1,52 @@
 v: 1
-id: com.nexus.hello
+id: com.nexus.demo
 version: 0.1.0
-display_name: "Nexus Hello"
+display_name: "Nexus Demo"
 description_file: docs/README.md
 authors: ["ap@nube-io.com"]
 
-# The simplest flavour: `builtin` has no process to supervise — the value here
-# is the *contributions*, not a running binary. This extension demonstrates the
-# WS-14 backend-contribution path end to end:
+# A fuller WS-14 example than `com.nexus.hello`: where hello proves the
+# minimal contribution loop, this one demonstrates a real **page** an
+# extension owns — reached from a sidebar nav item, rendered in the host's
+# main content area as a shadcn-styled dashboard.
 #
-#   - `contributes.warehouse_templates[]` → nexus query-kinds (the dispatcher's
-#     third source). On boot they are linted and materialised into
-#     `nexus_extension_query_kinds`; a `POST /query { kind: "com.nexus.hello.ping" }`
-#     resolves and runs them; `DELETE /extensions/com.nexus.hello?purge=true`
-#     removes them via the query-kind cleanup provider.
-#   - `contributes.ui` → a federation panel the FE host mounts into the sidebar
-#     slot. `ui/remoteEntry.js` is BUILT from `ui-src/` (vite library mode, React
-#     external — resolved to the host's instance via the importmap in
-#     nexus/ui/index.html). Rebuild with `pnpm -C ui-src build`; the panel runs
-#     this extension's own contributed kind and renders the result, proving the
-#     whole loop.
+# Mechanism (ported from rubix's `com.nubeio.rubixos`):
+#   - `DemoNav`  → `slot: sidebar-nav` — a nav entry. Its `<a href>` points at
+#     `/x/com.nexus.demo`; the host's sidebar interceptor turns the click into
+#     SPA navigation.
+#   - `Main`     → `slot: main` — the page body. The host route `/x/:extId/*`
+#     mounts it into the content area and forwards the path tail as the slot
+#     route, so `Main` dispatches its own sub-pages via `useExtensionRoute()`.
+#
+# Still `builtin` (no process to supervise) — the value is the contributions,
+# not a running binary. The query-kinds + insight below back the page's data.
 runtime:
   kind: builtin
-  crate_name: nexus_hello_ext
+  crate_name: nexus_demo_ext
 
 contributes:
   warehouse_templates:
-    # A self-contained kind that needs no fixture table: it echoes a greeting and
-    # the server clock. `tables: []` means the lint requires no
-    # `$caller_tenant_id` predicate, so the example is robust on a fresh DB.
-    - name: com.nexus.hello.ping
+    # Self-contained kind (no fixture table): echoes a greeting + server clock,
+    # so the page has live data to render on a fresh DB.
+    - name: com.nexus.demo.ping
       params_schema: kinds/ping_params.json
       sql_file: kinds/ping.sql
       tables: []
-    # A second kind taking a param, to show schema validation flows through the
-    # same path file-pack kinds use.
-    - name: com.nexus.hello.echo
+    # A param-taking kind, to show schema validation on the same path.
+    - name: com.nexus.demo.echo
       params_schema: kinds/echo_params.json
       sql_file: kinds/echo.sql
       tables: []
 
-  # `contributes.insights[]` → global extension-insight registry (RW-07). On
-  # boot the script is compiled against the insight sandbox and materialised into
-  # `nexus_extension_insights`; a `POST /query { insight: { insight_name:
-  # "com.nexus.hello.zscore" } }` resolves and runs it post-query;
-  # `DELETE /extensions/com.nexus.hello?purge=true` removes it via the insight
-  # cleanup provider. The dual of `warehouse_templates[]` for the insight stage.
   insights:
-    - name: com.nexus.hello.zscore
+    - name: com.nexus.demo.zscore
       script_file: insights/zscore.rhai
       params_schema: insights/zscore_params.json
 
-  # `contributes.ui` → federation components the FE host mounts into named slots.
-  # `HelloNav` lands in the primary `sidebar-nav` slot (a real navigation entry,
-  # like rubix's extensions add). The host wraps that slot in a click interceptor
-  # so the plain `<a href>` navigates as SPA routing. (The old decorative
-  # `slot: sidebar` floating card was removed — that slot no longer exists in the
-  # nexus host.)
   ui:
     entry: ui/remoteEntry.js
     exposes:
-      - { name: HelloNav, module: "./Nav", slot: sidebar-nav }
+      # The full page, mounted by the host's `/x/:extId/*` route.
+      - { name: Main, module: "./Main", slot: main }
+      # The sidebar nav entry that links to that page.
+      - { name: DemoNav, module: "./Nav", slot: sidebar-nav }

@@ -3739,6 +3739,7 @@ dependencies = [
  "starter-ext-store-pg",
  "starter-ext-supervisor",
  "starter-observability",
+ "starter-paths",
  "starter-prefs",
  "starter-server",
  "starter-spi",
@@ -6360,6 +6361,14 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "starter-paths"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

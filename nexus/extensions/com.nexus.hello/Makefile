@@ -48,7 +48,16 @@ COOKIE_JAR ?= /tmp/$(EXT_ID).cookies
 TARBALL    ?= /tmp/$(EXT_ID).tar.gz
 UI_SRC_DIR := $(BUNDLE_DIR)/ui-src
 
-.PHONY: all ui-build ui-dev pack login install load unload uninstall \
+# Process-flavour binary: the cargo crate under `process/`, built into the
+# `nexus/extensions/` sibling workspace's target dir, then installed next to
+# `block.yaml` as the manifest's `runtime.bin`.
+BIN_NAME         := nexus-hello-extension
+WORKSPACE_DIR    := $(abspath $(BUNDLE_DIR)/..)
+CARGO_TARGET_DIR := $(abspath $(WORKSPACE_DIR)/../../target/nexus-extensions)
+BUILT_BIN        := $(CARGO_TARGET_DIR)/release/$(BIN_NAME)
+INSTALLED_BIN    := $(BUNDLE_DIR)/$(BIN_NAME)
+
+.PHONY: all build bin-build ui-build ui-dev pack login install load unload uninstall \
         test status cleanup-preview help
 
 all: ui-build pack install
@@ -66,6 +75,20 @@ help:
 	@echo "  make cleanup-preview  dry-run cleanup manifest"
 
 # ----- build ------------------------------------------------------------
+
+# Build both halves of the bundle: the supervised process binary + the UI.
+build: bin-build ui-build
+
+# cargo build --release; install the binary next to block.yaml where the
+# supervisor execs it (`runtime.bin`).
+bin-build:
+	@echo "==> cargo build -p $(BIN_NAME) (release, target=$(CARGO_TARGET_DIR))"
+	cd $(WORKSPACE_DIR) && CARGO_TARGET_DIR='$(CARGO_TARGET_DIR)' \
+	    cargo build --release -p $(BIN_NAME)
+	@test -x $(BUILT_BIN) || { echo "build did not produce $(BUILT_BIN)"; exit 1; }
+	@echo "==> install $(BIN_NAME) -> $(INSTALLED_BIN)"
+	@install -m 0755 $(BUILT_BIN) $(INSTALLED_BIN)
+	@ls -lh $(INSTALLED_BIN)
 
 ui-build:
 	@echo "==> vite build → ui/remoteEntry.js"

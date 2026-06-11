@@ -1,4 +1,4 @@
-# com.nexus.hello — bundle lifecycle against a running nexus-api.
+# com.nexus.demo — bundle lifecycle against a running nexus-api.
 #
 # Mirrors the rubix `extensions/extension.mk` contract, trimmed for a
 # builtin-flavour bundle (no Rust binary to build — the contributions are the
@@ -6,15 +6,15 @@
 # `nexus/` (API on 127.0.0.1:4780, admin seeded by `make seed`).
 #
 #   make ui-build         vite build ui-src/ → ui/remoteEntry.js
-#   make pack             tar -czf /tmp/com.nexus.hello.tar.gz (the bundle)
+#   make pack             tar -czf /tmp/com.nexus.demo.tar.gz (the bundle)
 #   make install          POST /api/v1/extensions/install (multipart upload)
-#   make load             POST /api/v1/extensions/com.nexus.hello/enable
-#   make unload           POST /api/v1/extensions/com.nexus.hello/disable
-#   make uninstall        DELETE /api/v1/extensions/com.nexus.hello?purge=true
+#   make load             POST /api/v1/extensions/com.nexus.demo/enable
+#   make unload           POST /api/v1/extensions/com.nexus.demo/disable
+#   make uninstall        DELETE /api/v1/extensions/com.nexus.demo?purge=true
 #   make test             end-to-end probe: list → detail → ui bytes → run the
 #                         contributed kinds (ping + echo)
 #   make status           one-line state summary
-#   make cleanup-preview  GET /extensions/com.nexus.hello/cleanup (dry run)
+#   make cleanup-preview  GET /extensions/com.nexus.demo/cleanup (dry run)
 #   make all              ui-build + pack + install
 #
 # Notes:
@@ -32,7 +32,7 @@ SHELL := /bin/bash
 # test` must fail loudly when a probe step fails.
 .SHELLFLAGS := -o pipefail -c
 
-EXT_ID     := com.nexus.hello
+EXT_ID     := com.nexus.demo
 BUNDLE_DIR := $(abspath $(CURDIR))
 PACK_DIR   := $(abspath $(BUNDLE_DIR)/..)
 

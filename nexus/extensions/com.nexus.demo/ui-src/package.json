@@ -1,5 +1,5 @@
 {
-  "name": "@nexus-ext/com.nexus.hello-ui",
+  "name": "@nexus-ext/com.nexus.demo-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",

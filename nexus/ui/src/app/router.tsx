@@ -21,12 +21,17 @@ import {
 } from "@/features/access/AccessPage";
 import { AuditPage } from "@/features/audit/AuditPage";
 import { ExtensionsPage } from "@/features/extensions/ExtensionsPage";
+import { ExtensionPage } from "@/features/extensions/ExtensionPage";
 import { ExportPage } from "@/features/portability/ExportPage";
 import { ImportPage } from "@/features/portability/ImportPage";
 
-// Routing is a host-only concern (F4): extensions contribute to named
-// slots, never routes. React Router — not TanStack Router — owns the
-// route table; only TanStack Query is the shared federation singleton.
+// Routing is a host-only concern (F4): the host owns the route table;
+// extensions contribute to named slots, never to routes directly. The one
+// `/x/:extId/*` route is still host-owned — it just mounts an extension's
+// `main`-slot contribution and forwards the path tail as the slot route, so
+// the extension dispatches its own sub-pages without registering routes.
+// React Router — not TanStack Router — owns the table; only TanStack Query is
+// the shared federation singleton.
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -62,6 +67,12 @@ export const router = createBrowserRouter([
       },
       { path: "audit", element: <AuditPage /> },
       { path: "extensions", element: <ExtensionsPage /> },
+      // Per-extension page surface (rubix `/extensions/$extId/$` mechanism):
+      // the extension's `main`-slot contribution renders here, with the path
+      // tail forwarded as its route. Lives under `/x/` so it never collides
+      // with the `/extensions` admin page above.
+      { path: "x/:extId", element: <ExtensionPage /> },
+      { path: "x/:extId/*", element: <ExtensionPage /> },
       { path: "*", element: <Navigate to="/" replace /> },
     ],
   },
