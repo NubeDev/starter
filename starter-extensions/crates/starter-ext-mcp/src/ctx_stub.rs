@@ -19,7 +19,8 @@
 use std::sync::Arc;
 
 use starter_ext_sdk::ctx::{
-    AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend,
+    AuthzBackend, CtxInner, DashboardBackend, DatasourceBackend, EventBusBackend, FsBackend,
+    HttpOutBackend,
     NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend,
     WarehouseReadBackend, WarehouseWriteBackend,
 };
@@ -43,6 +44,7 @@ pub(crate) fn make_stub_ctx() -> CtxInner {
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
         Arc::new(StubWarehouseWrite),
+        Arc::new(StubDatasource),
         Arc::new(StubEventBus),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
@@ -122,6 +124,27 @@ struct StubWarehouseWrite;
 impl WarehouseWriteBackend for StubWarehouseWrite {
     fn insert(&self, _table: &str, _rows: Vec<Row>) -> starter_ext_spi::Result<u64> {
         Err(deny("warehouse_write"))
+    }
+}
+
+#[derive(Debug)]
+struct StubDatasource;
+impl DatasourceBackend for StubDatasource {
+    fn query(
+        &self,
+        _id: &str,
+        _sql: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<Vec<Row>> {
+        Err(deny("datasource"))
+    }
+    fn execute(
+        &self,
+        _id: &str,
+        _stmt: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<u64> {
+        Err(deny("datasource"))
     }
 }
 

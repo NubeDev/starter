@@ -46,6 +46,26 @@ pub const CAPABILITY_HOST_METHODS: &[(&str, &str)] = &[
     ("warehouse", "warehouse_read"),
     ("event_bus", "event_bus"),
     ("ingest", "ingest"),
+    ("datasource", "datasource"),
+];
+
+/// Full-method-name overrides, checked **before** the namespace-prefix table.
+///
+/// A namespace can split into more than one capability category: the
+/// `warehouse.*` namespace is read by default (`warehouse.query`), but the
+/// mutating methods (`warehouse.write` / `.update` / `.delete`) need the
+/// stronger `warehouse_write` grant — an extension that may read its tables
+/// should not implicitly be able to write them. So these specific method names
+/// map to `warehouse_write`, while every other `warehouse.*` method falls
+/// through to `warehouse_read` via [`CAPABILITY_HOST_METHODS`]. Same shape for
+/// `datasource.execute` (write) vs `datasource.query` (read).
+///
+/// Additive within a minor: an older extension never invokes a new method, so a
+/// new entry cannot retroactively gate a call it was already making.
+pub const CAPABILITY_HOST_METHOD_OVERRIDES: &[(&str, &str)] = &[
+    ("warehouse.write", "warehouse_write"),
+    ("warehouse.update", "warehouse_write"),
+    ("warehouse.delete", "warehouse_write"),
 ];
 
 /// Per-extension capability gate. Cheap to clone — the granted set is
@@ -90,11 +110,20 @@ impl CapabilityGate {
             return Ok(None);
         }
 
-        let head = method.split('.').next().unwrap_or(method);
-        let category = CAPABILITY_HOST_METHODS
+        // Full-method-name overrides win over the namespace-prefix table, so a
+        // namespace that splits read/write (warehouse.*, datasource.*) routes
+        // each mutating method to its stronger category.
+        let category = CAPABILITY_HOST_METHOD_OVERRIDES
             .iter()
-            .find(|(prefix, _)| *prefix == head)
-            .map(|(_, cat)| *cat);
+            .find(|(name, _)| *name == method)
+            .map(|(_, cat)| *cat)
+            .or_else(|| {
+                let head = method.split('.').next().unwrap_or(method);
+                CAPABILITY_HOST_METHODS
+                    .iter()
+                    .find(|(prefix, _)| *prefix == head)
+                    .map(|(_, cat)| *cat)
+            });
 
         match category {
             None => {
@@ -151,6 +180,13 @@ fn category_of(c: &Capability) -> &'static str {
         Capability::DashboardRead { .. } => "dashboard_read",
         Capability::DashboardWrite { .. } => "dashboard_write",
         Capability::AuthzCheck { .. } => "authz_check",
+        // Both datasource.query (read) and datasource.execute (write) gate on the
+        // single `datasource` category — the read/write split is enforced
+        // host-side (the prefix rule + allow_foreign_tables), not by a second
+        // capability, since one grant names the datasources and the flag widens
+        // it. The method-name override below routes `datasource.execute` to the
+        // same category; both still require this one grant.
+        Capability::Datasource { .. } => "datasource",
         Capability::Custom { .. } => "custom",
     }
 }
@@ -174,6 +210,7 @@ mod tests {
                 "fs" => Capability::Fs { paths: vec![] },
                 "wall_clock" => Capability::WallClock { granted: true },
                 "warehouse_read" => Capability::WarehouseRead { tables: vec![] },
+                "warehouse_write" => Capability::WarehouseWrite { tables: vec![] },
                 "event_bus" => Capability::EventBus {
                     publish: vec![],
                     subscribe: vec![],
@@ -259,6 +296,30 @@ mod tests {
         let g = gate(&["secrets"]);
         let err = g.check("warehouse.query").unwrap_err();
         assert!(matches!(err, Error::Capability(_)));
+    }
+
+    #[test]
+    fn warehouse_write_methods_need_write_grant() {
+        // warehouse.query maps to warehouse_read; warehouse.write/.update/.delete
+        // map to warehouse_write — a read grant does not authorise a write.
+        let read_only = gate(&["warehouse_read"]);
+        assert_eq!(read_only.check("warehouse.query").unwrap().unwrap(), "warehouse_read");
+        for m in ["warehouse.write", "warehouse.update", "warehouse.delete"] {
+            assert!(
+                matches!(read_only.check(m).unwrap_err(), Error::Capability(_)),
+                "{m} must be refused with only warehouse_read"
+            );
+        }
+        // With the write grant, the mutating methods pass and map to the write
+        // category; the read method is independent (needs its own grant).
+        let writer = gate(&["warehouse_write"]);
+        for m in ["warehouse.write", "warehouse.update", "warehouse.delete"] {
+            assert_eq!(writer.check(m).unwrap().unwrap(), "warehouse_write");
+        }
+        assert!(matches!(
+            writer.check("warehouse.query").unwrap_err(),
+            Error::Capability(_)
+        ));
     }
 
     #[test]

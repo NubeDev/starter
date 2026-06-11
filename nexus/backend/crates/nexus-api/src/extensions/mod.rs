@@ -40,12 +40,24 @@ pub mod config;
 pub mod contribute;
 pub mod contribute_insights;
 pub mod contribute_nodes;
+pub mod datasource;
 pub mod host_methods;
 pub mod ingest;
 pub mod post_install;
 pub mod router;
+pub mod warehouse;
 
-pub use boot::{boot, load_extension_kinds, ExtensionRuntime};
+pub use boot::{boot, load_extension_kinds, ExtensionRuntime, LoadedExtensions};
 pub use config::ExtensionsConfig;
+
+/// An empty, sealed [`ExtensionRegistry`](starter_ext_host::ExtensionRegistry)
+/// for `AppState.extensions` in tests and any boot path with no bundles. The
+/// production path builds the real one in [`load_extension_kinds`].
+pub fn empty_registry() -> std::sync::Arc<starter_ext_host::ExtensionRegistry> {
+    let mut reg = starter_ext_host::ExtensionRegistry::new();
+    reg.seal();
+    std::sync::Arc::new(reg)
+}
+
 pub use host_methods::NexusHostMethods;
 pub use router::router;

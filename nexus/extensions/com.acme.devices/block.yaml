@@ -37,6 +37,17 @@ supervision:
   health:  { interval_ms: 5000, timeout_ms: 2000 }
   shutdown_grace_ms: 5000
 
+# WS-17 capability grants. `warehouse_write` authorises the tenant-stamped
+# `warehouse.write` host method over the extension's OWN tables (unprefixed
+# names; the host resolves each to `com_acme_devices__<name>`). `warehouse_read`
+# authorises the `warehouse.query` host method used by the read kinds. Both are
+# never broader than the caller's own grants (WS-14 §4.3).
+capabilities:
+  - kind: warehouse_write
+    tables: [devices]
+  - kind: warehouse_read
+    tables: [devices]
+
 contributes:
   # The domain side-effect operations the setup automation invokes (DOCS §9).
   # They are declared two ways:
@@ -79,10 +90,35 @@ contributes:
     - id: com.acme.add-device
       file: templates/add-device.yaml
 
-  # The verify/site-checkout query-kind for the post-provision check page. Scoped
-  # by `$caller_team_ids` (the P3a host token) so an installer sees only their
-  # site's meters. `tables: []` keeps the example robust on a fresh DB.
+  # WS-17 Wave A — the extension OWNS a table in the nexus Postgres DB. The host
+  # creates `com_acme_devices__devices` at boot (the `com_acme_devices__` prefix
+  # is the ownership boundary), prepending a host-owned `tenant_id` column. The
+  # `device_create` node persists rows here via the tenant-stamped
+  # `warehouse.write` host method; `order_by: [device_id]` becomes the PRIMARY
+  # KEY `(tenant_id, device_id)` and the upsert conflict target, so re-running
+  # the same barcode upserts instead of duplicating (DOCS §8c idempotency).
+  warehouse_tables:
+    - name: devices
+      columns:
+        - { name: device_id,  type: text }        # tenant_id prepended by host
+        - { name: barcode,    type: text }
+        - { name: location,   type: text }
+        - { name: owner,      type: text }
+        - { name: team,       type: text }         # P3a team scope for the read kind
+        - { name: created_at, type: timestamptz, default: "now()" }
+      order_by: [device_id]                        # PK (tenant_id, device_id) + upsert key
+
+  # Read APIs over the owned table + the post-provision verify page.
+  #   - `devices_list` reads back the persisted devices, tenant- and team-scoped
+  #     ($caller_tenant_id / $caller_team_ids), so a hvac-ops installer sees only
+  #     their team's rows (WS-17 acceptance).
+  #   - `site_checkout` is the verify-page query-kind (echoes the team scope on a
+  #     fresh DB; `tables: []` keeps it robust).
   warehouse_templates:
+    - name: com.acme.devices.devices_list
+      params_schema: kinds/devices_list_params.json
+      sql_file: kinds/devices_list.sql
+      tables: [devices]
     - name: com.acme.devices.site_checkout
       params_schema: kinds/site_checkout_params.json
       sql_file: kinds/site_checkout.sql

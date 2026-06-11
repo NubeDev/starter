@@ -587,6 +587,7 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
         Arc::new(StubWarehouseWrite),
+        Arc::new(StubDatasource),
         Arc::new(StubEventBus),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
@@ -675,6 +676,27 @@ impl starter_ext_sdk::ctx::WarehouseWriteBackend for StubWarehouseWrite {
         Err(Error::capability(
             "warehouse_write not wired in gRPC adapter",
         ))
+    }
+}
+
+#[derive(Debug)]
+struct StubDatasource;
+impl starter_ext_sdk::ctx::DatasourceBackend for StubDatasource {
+    fn query(
+        &self,
+        _id: &str,
+        _sql: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<Vec<starter_ext_spi::warehouse::Row>> {
+        Err(Error::capability("datasource not wired in gRPC adapter"))
+    }
+    fn execute(
+        &self,
+        _id: &str,
+        _stmt: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<u64> {
+        Err(Error::capability("datasource not wired in gRPC adapter"))
     }
 }
 

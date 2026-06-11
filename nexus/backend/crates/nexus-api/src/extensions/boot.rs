@@ -101,6 +101,12 @@ pub async fn boot(
     let registry = scan_and_seal(cfg);
     let registry = Arc::new(registry);
 
+    // 2b. WS-17 Wave A: create every validated extension's declared
+    //     `warehouse_tables[]` as `<ext>__<name>` in the nexus Postgres before
+    //     any supervisor (and thus any `warehouse.write`) can run. Idempotent;
+    //     per-table failure is logged + skipped inside.
+    super::warehouse::create_extension_tables(&metadata, &registry).await;
+
     // 3. Persistence: PG enablement store. Hydrate enabled state for the spawn
     //    decision below.
     let store = Arc::new(PgEnablementStore::new(metadata.clone()));
@@ -177,6 +183,10 @@ pub async fn boot(
 
     // 5. Build the admin: PG store, host-method factory, the query-kind cleanup
     //    provider + post-install hook, and the nexus audit sink.
+    let table_cleanup = Arc::new(super::cleanup::WarehouseTableCleanupProvider::new(
+        metadata.clone(),
+        registry.clone(),
+    ));
     let admin = ExtensionAdmin::builder(registry)
         .with_enablement_store(store)
         .with_supervisor_factory(factory)
@@ -184,6 +194,7 @@ pub async fn boot(
         .with_installs_dir(cfg.installs_dir.clone())
         .with_cleanup_provider(Arc::new(QueryKindCleanupProvider::new(metadata.clone())))
         .with_cleanup_provider(Arc::new(InsightCleanupProvider::new(metadata.clone())))
+        .with_cleanup_provider(table_cleanup)
         .with_post_install_hook(Arc::new(ContributionPostInstall::new(
             metadata.clone(),
             cfg.installs_dir.clone(),
@@ -250,7 +261,7 @@ fn scan_roots(cfg: &ExtensionsConfig) -> Vec<starter_ext_host::ExtensionRecord> 
 pub async fn load_extension_kinds(
     cfg: &ExtensionsConfig,
     metadata: &PgPool,
-) -> Result<KindRegistry, String> {
+) -> Result<LoadedExtensions, String> {
     // Re-scan to read manifests + bundle dirs. Cheap (filesystem walk of a small
     // dir); keeps this independent of `boot`'s sealed registry so ordering is
     // simple. One commit over both roots — `install` replaces, so a per-root
@@ -324,7 +335,27 @@ pub async fn load_extension_kinds(
         }
     }
 
-    KindRegistry::from_kinds(all).map_err(|e| format!("building extension-kinds registry: {e}"))
+    let kinds = KindRegistry::from_kinds(all)
+        .map_err(|e| format!("building extension-kinds registry: {e}"))?;
+    Ok(LoadedExtensions {
+        kinds: Arc::new(kinds),
+        registry: Arc::new(registry),
+    })
+}
+
+/// What [`load_extension_kinds`] hands back to `main`: the extension-contributed
+/// query-kinds registry (the dispatcher's third source) **and** the sealed
+/// extension registry. Both are placed on `AppState` — the kinds drive the
+/// dispatcher, and the registry lets host methods consult the calling
+/// extension's manifest at request time (WS-17 `warehouse.write` own-table
+/// allowlist).
+pub struct LoadedExtensions {
+    /// Placed on `AppState.extension_kinds`.
+    pub kinds: Arc<KindRegistry>,
+    /// Placed on `AppState.extensions`. Shared with [`boot`] (which re-scans its
+    /// own copy for the supervisor spawn loop); the two are equivalent snapshots
+    /// of the same on-disk bundles.
+    pub registry: Arc<ExtensionRegistry>,
 }
 
 #[cfg(test)]

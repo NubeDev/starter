@@ -37,6 +37,8 @@ import {
   Radio,
   XCircle,
   Circle,
+  Table2,
+  RefreshCw,
 } from "lucide-react";
 import { fetchJson } from "@nube/starter-client-ts";
 import { BlockShell, useHostClient } from "@nube/starter-ext-sdk-ts";
@@ -520,7 +522,123 @@ function PageInner(): React.ReactElement {
           ) : null}
         </Card>
       ) : null}
+
+      {/* WS-17: the devices PERSISTED into the extension's own nexus table,
+          read back through the `devices_list` query-kind — tenant- and
+          team-scoped by the host's $caller_tenant_id / $caller_team_ids tokens,
+          so you only ever see your own team's rows. Refreshes after each run. */}
+      <DevicesTable reloadKey={status === "completed" ? runId : null} />
     </>
+  );
+}
+
+/** One row of `com.acme.devices.devices_list`. */
+type DeviceRow = {
+  device_id?: string;
+  barcode?: string;
+  location?: string;
+  owner?: string;
+  team?: string;
+  created_at?: string;
+};
+
+/**
+ * Reads the persisted devices back via `POST /api/v1/query` naming the
+ * extension's `devices_list` query-kind. No params — the scope is the caller's
+ * identity (the host binds `$caller_tenant_id` / `$caller_team_ids`), so this
+ * renders exactly the rows the viewer's tenant + team may see. `reloadKey`
+ * bumps the fetch after a provisioning run completes so the new device appears.
+ */
+function DevicesTable({ reloadKey }: { reloadKey: string | null }): React.ReactElement {
+  const client = useHostClient();
+  const [rows, setRows] = React.useState<DeviceRow[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+
+  const load = React.useCallback(() => {
+    setLoading(true);
+    setErr(null);
+    fetchJson<{ rows: DeviceRow[] }>(client, `${client.apiPrefix}/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "com.acme.devices.devices_list", params: {} }),
+    })
+      .then((r) => setRows(Array.isArray(r.rows) ? r.rows : []))
+      .catch((e: unknown) => setErr(friendlyError(e)))
+      .finally(() => setLoading(false));
+  }, [client]);
+
+  // Initial load + reload whenever a run completes.
+  React.useEffect(() => {
+    load();
+  }, [load, reloadKey]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Table2 className="size-4" /> Provisioned devices
+          </CardTitle>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={load}
+            disabled={loading}
+            title="Reload from the server"
+          >
+            <RefreshCw className={loading ? "animate-spin" : ""} /> Refresh
+          </Button>
+        </div>
+        <CardDescription>
+          Persisted in the extension's own nexus table
+          (<code className="font-mono">com_acme_devices__devices</code>), read back
+          via the <code className="font-mono">devices_list</code> kind — scoped to
+          your tenant &amp; team.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {err ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {err}
+          </div>
+        ) : rows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {loading ? "Loading…" : "No devices yet — provision one above."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="py-2 pr-4 font-medium">device_id</th>
+                  <th className="py-2 pr-4 font-medium">barcode</th>
+                  <th className="py-2 pr-4 font-medium">location</th>
+                  <th className="py-2 pr-4 font-medium">team</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((d, i) => (
+                  <tr key={d.device_id ?? i} className="border-b last:border-0">
+                    <td className="py-2 pr-4 font-mono text-xs">{d.device_id ?? "—"}</td>
+                    <td className="py-2 pr-4 font-mono text-xs">{d.barcode ?? "—"}</td>
+                    <td className="py-2 pr-4">{d.location || "—"}</td>
+                    <td className="py-2 pr-4">
+                      {d.team ? (
+                        <Badge variant="secondary">{d.team}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">tenant-wide</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

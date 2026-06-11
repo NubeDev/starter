@@ -26,7 +26,9 @@ pub struct Devices;
 
 starter_ext_sdk::requires! {
     name = DevicesCtx,
-    capabilities = [],
+    // WS-17: `warehouse_write` grants `ctx.warehouse_write()` — the
+    // tenant-stamped persist path into the extension's own `devices` table.
+    capabilities = [warehouse_write],
 }
 
 /// A stable, collision-resistant-enough id derived purely from a natural key.
@@ -58,19 +60,49 @@ impl DevicesToolHandlers for Devices {
     /// `device_id`, so resume re-entry creates no second device (DOCS §8c).
     fn handle_com_acme_devices_device_create(
         &self,
-        _ctx: &Self::Ctx,
+        ctx: &Self::Ctx,
         params: Value,
     ) -> starter_ext_sdk::Result<Value> {
         let barcode = require_str(&params, "barcode")?;
         // Identity is read from the server-seeded trusted slots, never the
-        // form (DOCS §9). Optional here — used only for the tag/summary.
+        // form (DOCS §9). Optional here — used for the row's `owner`/`team`.
         let owner = params
             .get("caller_user_id")
             .and_then(|v| v.as_str())
             .unwrap_or("system");
+        // The caller's first team scopes the row for the read kind's
+        // `$caller_team_ids` filter (P3a). Empty ⇒ visible to the whole tenant.
+        let team = params
+            .get("caller_team_ids")
+            .and_then(|v| v.as_array())
+            .and_then(|a| a.first())
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let location = params.get("location").and_then(|v| v.as_str()).unwrap_or("");
         let device_id = stable_id("dev", barcode);
+
+        // WS-17: PERSIST the device into the extension's own table. The host
+        // stamps `tenant_id` from the caller and upserts on `device_id` (the
+        // table's natural key), so re-running the same barcode updates the row
+        // in place rather than creating a duplicate (DOCS §8c idempotency, now
+        // proven against the table, not just a derived id).
+        // `created_at` is omitted — the column's `DEFAULT now()` stamps it
+        // server-side, so the extension needs no clock dependency.
+        let row = match json!({
+            "device_id": device_id,
+            "barcode": barcode,
+            "location": location,
+            "owner": owner,
+            "team": team,
+        }) {
+            Value::Object(map) => starter_ext_sdk::Row::from_map(map),
+            _ => unreachable!("json! object literal is always an object"),
+        };
+        let inserted = ctx.warehouse_write().insert("devices", vec![row])?;
+
         Ok(json!({
             "device_id": device_id,
+            "persisted": inserted,
             "out": format!("device {device_id} provisioned for {owner} (barcode {barcode})"),
         }))
     }

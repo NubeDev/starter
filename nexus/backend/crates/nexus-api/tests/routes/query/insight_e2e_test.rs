@@ -42,6 +42,8 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         engine: std::sync::Arc::new(starter_authz::testing::AllowAll),
         kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
         extension_kinds: std::sync::Arc::new(nexus_api::kinds::Registry::empty()),
+
+        extensions: nexus_api::extensions::empty_registry(),
         datasource_kinds: std::sync::Arc::new(nexus_api::datasource_kinds::Registry::empty()),
         prefs: nexus_api::prefs::prefs_store(pool.clone()),
         changelog: nexus_api::changelog::ChangelogHandles::new(

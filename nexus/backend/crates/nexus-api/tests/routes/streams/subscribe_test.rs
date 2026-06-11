@@ -51,6 +51,8 @@ fn state_with_dev(metadata: &sqlx::PgPool, dev: sqlx::PgPool) -> AppState {
         engine: Arc::new(AllowAll),
         kinds: Arc::new(nexus_api::kinds::Registry::empty()),
         extension_kinds: Arc::new(nexus_api::kinds::Registry::empty()),
+
+        extensions: nexus_api::extensions::empty_registry(),
         datasource_kinds: Arc::new(nexus_api::datasource_kinds::Registry::empty()),
         prefs: nexus_api::prefs::prefs_store(metadata.clone()),
         changelog: nexus_api::changelog::ChangelogHandles::new(

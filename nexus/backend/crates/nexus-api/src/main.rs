@@ -83,9 +83,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Err(e) = ext_cfg.ensure_writable_dirs() {
         tracing::warn!(err = %e, "creating extension installs/pidfile dirs failed (install/reaper may degrade)");
     }
-    let extension_kinds = std::sync::Arc::new(
-        nexus_api::extensions::load_extension_kinds(&ext_cfg, &metadata).await?,
-    );
+    let loaded_extensions =
+        nexus_api::extensions::load_extension_kinds(&ext_cfg, &metadata).await?;
+    let extension_kinds = loaded_extensions.kinds;
+    let extension_registry = loaded_extensions.registry;
     tracing::info!(
         count = extension_kinds.len(),
         "loaded extension-contributed query-kinds"
@@ -114,6 +115,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
         kinds: std::sync::Arc::new(kinds),
         extension_kinds: extension_kinds.clone(),
+        extensions: extension_registry,
         datasource_kinds: std::sync::Arc::new(datasource_kinds),
         prefs,
         changelog,

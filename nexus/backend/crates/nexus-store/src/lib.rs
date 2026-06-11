@@ -35,7 +35,8 @@ pub mod testing;
 
 pub use datasource::{Envelope, NewDatasource};
 pub use query::{
-    bind, bind_with, introspect, run_bound_query, run_kind_request, run_query, run_request, BindCtx,
-    BindError, BoundQuery, ColumnInfo, Dialect, HostTokens, ParamValue, Postgres, QueryGuards,
-    QueryIdentity, ScalarValue, SqlValue, TableInfo, TimeRange, VarValue,
+    bind, bind_with, columns_of, introspect, row_to_object, run_bound_query, run_kind_request,
+    run_query, run_request, BindCtx, BindError, BoundQuery, ColumnInfo, Dialect, HostTokens,
+    ParamValue, Postgres, QueryGuards, QueryIdentity, ScalarValue, SqlValue, TableInfo, TimeRange,
+    VarValue,
 };

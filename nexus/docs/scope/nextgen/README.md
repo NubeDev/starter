@@ -31,6 +31,7 @@ Grafana/Power-BI-class dashboarding platform**, built by **multiple AI sessions 
 | [WS-12](./WS-12_AUDIT_AND_UNDO.md) | **Audit log + undo/redo — one changelog substrate, for everything (SOLE audit owner)** | medium — *mostly wiring existing `starter-changelog`/`starter-undo`* | 1+2 | substrate-only (C6) |
 | [WS-13](./WS-13_NAV_AND_CONTEXT.md) | **Navigation tree, page context & access — reuse one page across a fleet; nav nodes (dashboard *or* static pages) become the single access surface, replacing per-dashboard sharing** | large — *the fleet-reuse payoff of WS-02* | 3 | WS-02, WS-05, tags + authz seam |
 | [WS-14](./WS-14_EXTENSIONS_RUNTIME.md) | **Extensions runtime — mount the `starter-extensions` kernel into nexus (host + supervisor + lifecycle + cleanup)** | medium — *integration, not build; kernel exists. FE host already wired, backend not mounted* | 2+3 | NEXUS.md §7, WS-10 (kind contrib), WS-12 (audit) |
+| [WS-17](./WS-17_EXTENSION_DATA_ACCESS.md) | **Extension data access — own tables in the nexus DB (`<ext>__<table>`) + full datasource CRUD via `warehouse.write`/`datasource.*` host-methods** | medium — *Wave A ports rubix to Postgres; Wave B adds the nexus-native datasource path* | extends WS-14 §4.3 | WS-08 (datasources), WS-10 (read kinds) |
 
 ## The one-paragraph summary
 

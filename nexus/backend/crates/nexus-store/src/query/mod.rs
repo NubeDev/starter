@@ -3,7 +3,7 @@
 mod bind;
 mod introspect;
 mod request;
-mod row_json;
+pub mod row_json;
 mod run;
 
 use std::time::Duration;
@@ -14,7 +14,8 @@ pub use bind::{
 };
 pub use introspect::{introspect, ColumnInfo, TableInfo};
 pub use request::{run_kind_request, run_request, QueryIdentity};
-pub use run::{run_bound_query, run_query};
+pub use row_json::{columns_of, row_to_object};
+pub use run::{run_bound_query, run_query, run_query_tenant_ro};
 
 /// The server-enforced safety bounds applied to every datasource query. None of
 /// these are expressible by the caller — they are set from server config and the

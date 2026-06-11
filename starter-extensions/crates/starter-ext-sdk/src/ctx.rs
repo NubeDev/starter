@@ -318,6 +318,44 @@ impl WarehouseWriteHandle {
     }
 }
 
+/// Datasource CRUD handle (granted by `capabilities.datasource.datasources:`).
+///
+/// WS-17 Wave B: lets an extension run full CRUD against a configured host
+/// datasource it is authorised for, scoped to the caller's tenant exactly like
+/// the human `POST /datasources/{id}/query` route. `query` is read-only;
+/// `execute` is write/DDL, bounded host-side by the ownership-prefix rule (a
+/// CREATE must target `<ext>__<table>`) and the operator `allow_foreign_tables`
+/// grant. A system frame (no caller) is refused with `Error::Capability`.
+#[derive(Debug, Clone)]
+pub struct DatasourceHandle {
+    inner: Arc<dyn private::DatasourceBackend>,
+}
+
+impl DatasourceHandle {
+    /// Run a read query against datasource `datasource_id`, returning the rows.
+    /// `params` bind as `$1`, `$2`, … in `sql`.
+    pub fn query(
+        &self,
+        datasource_id: &str,
+        sql: &str,
+        params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<Vec<Row>> {
+        self.inner.query(datasource_id, sql, params)
+    }
+
+    /// Run a write/DDL statement against datasource `datasource_id`, returning
+    /// the affected-row count. A `CREATE` must target an `<ext>__<table>`; CRUD
+    /// against a non-owned table needs the `allow_foreign_tables` grant.
+    pub fn execute(
+        &self,
+        datasource_id: &str,
+        statement: &str,
+        params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<u64> {
+        self.inner.execute(datasource_id, statement, params)
+    }
+}
+
 /// In-process publish/subscribe bus handle (granted by
 /// `capabilities.event_bus.publish:` / `subscribe:`).
 ///
@@ -432,6 +470,7 @@ pub struct CtxInner {
     tracing: TracingHandle,
     warehouse_read: WarehouseReadHandle,
     warehouse_write: WarehouseWriteHandle,
+    datasource: DatasourceHandle,
     event_bus: EventBusHandle,
     dashboard: DashboardHandle,
     authz: AuthzHandle,
@@ -453,6 +492,7 @@ impl CtxInner {
         tracing: Arc<dyn private::TracingBackend>,
         warehouse_read: Arc<dyn private::WarehouseReadBackend>,
         warehouse_write: Arc<dyn private::WarehouseWriteBackend>,
+        datasource: Arc<dyn private::DatasourceBackend>,
         event_bus: Arc<dyn private::EventBusBackend>,
         dashboard: Arc<dyn private::DashboardBackend>,
         authz: Arc<dyn private::AuthzBackend>,
@@ -472,6 +512,7 @@ impl CtxInner {
             warehouse_write: WarehouseWriteHandle {
                 inner: warehouse_write,
             },
+            datasource: DatasourceHandle { inner: datasource },
             event_bus: EventBusHandle { inner: event_bus },
             dashboard: DashboardHandle { inner: dashboard },
             authz: AuthzHandle { inner: authz },
@@ -542,6 +583,10 @@ impl CtxInner {
     pub fn warehouse_write(&self) -> &WarehouseWriteHandle {
         &self.warehouse_write
     }
+    /// Borrow the datasource handle (named by `requires!(datasource)`).
+    pub fn datasource(&self) -> &DatasourceHandle {
+        &self.datasource
+    }
     /// Borrow the event-bus handle (named by `requires!(event_bus)`).
     pub fn event_bus(&self) -> &EventBusHandle {
         &self.event_bus
@@ -572,8 +617,8 @@ impl std::fmt::Debug for CtxInner {
 // ---------------------------------------------------------------------------
 
 pub use private::{
-    AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend,
-    TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
+    AuthzBackend, DashboardBackend, DatasourceBackend, EventBusBackend, FsBackend, HttpOutBackend,
+    SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 
 mod private {
@@ -662,6 +707,25 @@ mod private {
                 "warehouse_write.delete not implemented by this backend",
             ))
         }
+    }
+
+    /// Host-side backing for [`super::DatasourceHandle`].
+    pub trait DatasourceBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Run a read query against `datasource_id`.
+        fn query(
+            &self,
+            datasource_id: &str,
+            sql: &str,
+            params: Vec<serde_json::Value>,
+        ) -> starter_ext_spi::Result<Vec<super::Row>>;
+
+        /// Run a write/DDL statement against `datasource_id`.
+        fn execute(
+            &self,
+            datasource_id: &str,
+            statement: &str,
+            params: Vec<serde_json::Value>,
+        ) -> starter_ext_spi::Result<u64>;
     }
 
     /// Host-side backing for [`super::EventBusHandle`].
@@ -756,6 +820,24 @@ mod tests {
                 Ok(0)
             }
         }
+        impl DatasourceBackend for Noop {
+            fn query(
+                &self,
+                _: &str,
+                _: &str,
+                _: Vec<serde_json::Value>,
+            ) -> starter_ext_spi::Result<Vec<Row>> {
+                Ok(Vec::new())
+            }
+            fn execute(
+                &self,
+                _: &str,
+                _: &str,
+                _: Vec<serde_json::Value>,
+            ) -> starter_ext_spi::Result<u64> {
+                Ok(0)
+            }
+        }
         impl EventBusBackend for Noop {
             fn publish(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<()> {
                 Ok(())
@@ -778,16 +860,17 @@ mod tests {
         let inner = CtxInner::new(
             tx,
             Arc::new(NeverCancel),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
+            Arc::new(Noop), // secrets
+            Arc::new(Noop), // http_out
+            Arc::new(Noop), // fs
+            Arc::new(Noop), // wall_clock
+            Arc::new(Noop), // tracing
+            Arc::new(Noop), // warehouse_read
+            Arc::new(Noop), // warehouse_write
+            Arc::new(Noop), // datasource
+            Arc::new(Noop), // event_bus
+            Arc::new(Noop), // dashboard
+            Arc::new(Noop), // authz
         );
         assert!(inner.caller().is_none(), "fresh CtxInner has no caller");
         let stamped = inner.clone().with_caller(Some(CallerIdentity {

@@ -164,6 +164,7 @@ impl WasiCategory {
             // boundary.
             Capability::WarehouseRead { .. }
             | Capability::WarehouseWrite { .. }
+            | Capability::Datasource { .. }
             | Capability::EventBus { .. }
             | Capability::DashboardRead { .. }
             | Capability::DashboardWrite { .. }

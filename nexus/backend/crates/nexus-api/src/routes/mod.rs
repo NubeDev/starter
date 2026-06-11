@@ -14,6 +14,7 @@ pub mod ingest;
 pub mod insights;
 pub mod me;
 pub mod nav;
+pub mod nexus_db;
 pub mod query;
 pub mod query_kinds;
 pub mod streams;
@@ -44,6 +45,7 @@ pub fn product_router() -> Router<AppState> {
         .merge(folders::router())
         .merge(insights::router())
         .merge(nav::router())
+        .merge(nexus_db::router())
         .merge(detections::router())
         .merge(tags::router())
         .merge(agents::router())

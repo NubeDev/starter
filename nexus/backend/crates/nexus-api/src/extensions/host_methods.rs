@@ -33,7 +33,11 @@ use async_trait::async_trait;
 use starter_ext_spi::authz::{AuthzCheckRequest, AuthzCheckResponse};
 use starter_ext_spi::dashboard::{DashboardReadRequest, DashboardReadResponse};
 use starter_ext_spi::identity::CallerIdentity;
-use starter_ext_spi::warehouse::{Row, WarehouseReadRequest, WarehouseReadResponse};
+use starter_ext_spi::warehouse::{
+    Row, WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest,
+    WarehouseReadResponse, WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest,
+    WarehouseWriteResponse,
+};
 use starter_ext_spi::{Error as ExtError, ExtensionId, Result as ExtResult};
 use starter_ext_supervisor::HostMethodHandler;
 use starter_spi::auth::{Principal, Role};
@@ -132,11 +136,25 @@ impl HostMethodHandler for NexusHostMethods {
             // The kernel's gate maps the `warehouse` category to `warehouse_read`;
             // the conventional method name is `warehouse.query`.
             "warehouse.query" | "warehouse.read" => self.warehouse_query(extension, params, caller).await,
+            // WS-17 Wave A: write/upsert/update/delete into the calling
+            // extension's own `<ext>__<table>`. Own-table allowlist + tenant
+            // clamp enforced in `warehouse_write`. Gated by the `warehouse_write`
+            // capability category at the supervisor.
+            "warehouse.write" => self.warehouse_write(extension, params, caller).await,
+            "warehouse.update" => self.warehouse_update(extension, params, caller).await,
+            "warehouse.delete" => self.warehouse_delete(extension, params, caller).await,
             // Data-plane: push rows into a named flow source. The host stamps the
             // caller's tenant; a full channel returns a `retry_after_secs`
             // back-pressure response. Gated by the supervisor's `ingest`
             // capability category exactly as `warehouse` is.
             "ingest.write" => super::ingest::write(self.state.flows.ingest(), params, caller),
+            // WS-17 Wave B: full CRUD against a configured datasource the
+            // extension is granted, tenant-scoped. `datasource.execute` is
+            // additionally bounded host-side by the ownership-prefix rule + the
+            // `allow_foreign_tables` grant. Gated by the `datasource` capability
+            // category (execute via the gate's method-name override).
+            "datasource.query" => super::datasource::query(&self.state, extension, params, caller).await,
+            "datasource.execute" => super::datasource::execute(&self.state, extension, params, caller).await,
             other => Err(ExtError::extension_internal(format!(
                 "host method {other:?} is not implemented by nexus"
             ))),
@@ -318,5 +336,103 @@ impl NexusHostMethods {
             .collect();
         serde_json::to_value(WarehouseReadResponse { rows })
             .map_err(|e| ExtError::extension_internal(format!("warehouse.query response: {e}")))
+    }
+
+    /// Resolve the calling extension's `contributes.warehouse_tables[]` specs
+    /// and its `warehouse_write` grant from the sealed registry. A non-validated
+    /// or manifest-less extension (or one that never declared the capability)
+    /// yields an empty grant ⇒ every write is refused downstream.
+    fn write_specs(
+        &self,
+        extension: &ExtensionId,
+    ) -> (
+        Vec<starter_ext_spi::manifest::ContributeWarehouseTable>,
+        Option<std::collections::BTreeSet<String>>,
+    ) {
+        match self
+            .state
+            .extensions
+            .get_by_id_str(extension.as_str())
+            .and_then(|r| r.manifest.as_ref())
+        {
+            Some(manifest) => (
+                manifest.contributes.warehouse_tables.clone(),
+                super::warehouse::write_grant(manifest),
+            ),
+            None => (Vec::new(), None),
+        }
+    }
+
+    /// `warehouse.write` → insert/upsert rows into one of the calling
+    /// extension's own tables, tenant-stamped (WS-17 §4.1.2).
+    async fn warehouse_write(
+        &self,
+        extension: &ExtensionId,
+        params: serde_json::Value,
+        caller: Option<&CallerIdentity>,
+    ) -> ExtResult<serde_json::Value> {
+        let req: WarehouseWriteRequest = serde_json::from_value(params)
+            .map_err(|e| ExtError::extension_internal(format!("warehouse.write params: {e}")))?;
+        let (_principal, tenant) = principal_from_caller(caller)?;
+        let (specs, granted) = self.write_specs(extension);
+        let exec = super::warehouse::WriteExecutor::new(
+            &self.state.metadata,
+            extension,
+            &tenant,
+            &specs,
+            granted.as_ref(),
+        );
+        let rows_inserted = exec.insert(&req.table, req.rows).await?;
+        serde_json::to_value(WarehouseWriteResponse { rows_inserted })
+            .map_err(|e| ExtError::extension_internal(format!("warehouse.write response: {e}")))
+    }
+
+    /// `warehouse.update` → update rows in one of the calling extension's own
+    /// tables, matched by `key_column` and clamped to the caller's tenant.
+    async fn warehouse_update(
+        &self,
+        extension: &ExtensionId,
+        params: serde_json::Value,
+        caller: Option<&CallerIdentity>,
+    ) -> ExtResult<serde_json::Value> {
+        let req: WarehouseUpdateRequest = serde_json::from_value(params)
+            .map_err(|e| ExtError::extension_internal(format!("warehouse.update params: {e}")))?;
+        let (_principal, tenant) = principal_from_caller(caller)?;
+        let (specs, granted) = self.write_specs(extension);
+        let exec = super::warehouse::WriteExecutor::new(
+            &self.state.metadata,
+            extension,
+            &tenant,
+            &specs,
+            granted.as_ref(),
+        );
+        let rows_affected = exec.update(&req.table, &req.key_column, req.rows).await?;
+        serde_json::to_value(WarehouseUpdateResponse { rows_affected })
+            .map_err(|e| ExtError::extension_internal(format!("warehouse.update response: {e}")))
+    }
+
+    /// `warehouse.delete` → delete rows from one of the calling extension's own
+    /// tables, matched by `key_column IN (keys)` and clamped to the caller's
+    /// tenant.
+    async fn warehouse_delete(
+        &self,
+        extension: &ExtensionId,
+        params: serde_json::Value,
+        caller: Option<&CallerIdentity>,
+    ) -> ExtResult<serde_json::Value> {
+        let req: WarehouseDeleteRequest = serde_json::from_value(params)
+            .map_err(|e| ExtError::extension_internal(format!("warehouse.delete params: {e}")))?;
+        let (_principal, tenant) = principal_from_caller(caller)?;
+        let (specs, granted) = self.write_specs(extension);
+        let exec = super::warehouse::WriteExecutor::new(
+            &self.state.metadata,
+            extension,
+            &tenant,
+            &specs,
+            granted.as_ref(),
+        );
+        let rows_affected = exec.delete(&req.table, &req.key_column, req.keys).await?;
+        serde_json::to_value(WarehouseDeleteResponse { rows_affected })
+            .map_err(|e| ExtError::extension_internal(format!("warehouse.delete response: {e}")))
     }
 }

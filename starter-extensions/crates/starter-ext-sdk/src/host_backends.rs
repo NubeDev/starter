@@ -46,9 +46,14 @@ use starter_ext_spi::warehouse::{
 };
 use starter_ext_spi::{Error, Result};
 
+use starter_ext_spi::datasource::{
+    DatasourceExecuteRequest, DatasourceExecuteResponse, DatasourceQueryRequest,
+    DatasourceQueryResponse,
+};
+
 use crate::ctx::{
-    AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend,
-    TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
+    AuthzBackend, DashboardBackend, DatasourceBackend, EventBusBackend, FsBackend, HttpOutBackend,
+    SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 use crate::host_rpc::HostRpc;
 
@@ -230,6 +235,60 @@ impl WarehouseWriteBackend for RealWarehouseWriteBackend {
         let raw = self.rpc.call_sync("warehouse.delete", wire_params)?;
         let res: WarehouseDeleteResponse = serde_json::from_value(raw)
             .map_err(|e| Error::transport(format!("decoding warehouse.delete: {e}")))?;
+        Ok(res.rows_affected)
+    }
+}
+
+/// `DatasourceBackend` whose `query` / `execute` hop to the host via
+/// `datasource.query` / `datasource.execute` (WS-17 Wave B).
+#[derive(Debug, Clone)]
+pub struct RealDatasourceBackend {
+    rpc: HostRpc,
+}
+
+impl RealDatasourceBackend {
+    /// Construct over the shared `HostRpc`.
+    pub fn new(rpc: HostRpc) -> Self {
+        Self { rpc }
+    }
+}
+
+impl DatasourceBackend for RealDatasourceBackend {
+    fn query(
+        &self,
+        datasource_id: &str,
+        sql: &str,
+        params: Vec<serde_json::Value>,
+    ) -> Result<Vec<Row>> {
+        let req = DatasourceQueryRequest {
+            datasource_id: datasource_id.to_owned(),
+            sql: sql.to_owned(),
+            params,
+        };
+        let wire_params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding datasource.query: {e}")))?;
+        let raw = self.rpc.call_sync("datasource.query", wire_params)?;
+        let res: DatasourceQueryResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding datasource.query: {e}")))?;
+        Ok(res.rows)
+    }
+
+    fn execute(
+        &self,
+        datasource_id: &str,
+        statement: &str,
+        params: Vec<serde_json::Value>,
+    ) -> Result<u64> {
+        let req = DatasourceExecuteRequest {
+            datasource_id: datasource_id.to_owned(),
+            statement: statement.to_owned(),
+            params,
+        };
+        let wire_params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding datasource.execute: {e}")))?;
+        let raw = self.rpc.call_sync("datasource.execute", wire_params)?;
+        let res: DatasourceExecuteResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding datasource.execute: {e}")))?;
         Ok(res.rows_affected)
     }
 }

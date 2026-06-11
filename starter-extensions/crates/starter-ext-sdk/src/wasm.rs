@@ -43,8 +43,8 @@ use serde_json::Value;
 use starter_ext_spi::{Error, Result};
 
 use crate::ctx::{
-    AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, EventSender, FsBackend,
-    HttpOutBackend, NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend,
+    AuthzBackend, CtxInner, DashboardBackend, DatasourceBackend, EventBusBackend, EventSender,
+    FsBackend, HttpOutBackend, NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend,
     WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 use crate::meta::ExtensionDispatch;
@@ -174,6 +174,20 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
             )))
         }
     }
+    impl DatasourceBackend for Stub {
+        fn query(&self, _id: &str, _sql: &str, _params: Vec<Value>) -> Result<Vec<Row>> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+        fn execute(&self, _id: &str, _stmt: &str, _params: Vec<Value>) -> Result<u64> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+    }
     impl EventBusBackend for Stub {
         fn publish(&self, _topic: &str, _payload: Value) -> Result<()> {
             Err(Error::capability(format!(
@@ -214,6 +228,7 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
         Arc::new(Stub("tracing")),
         Arc::new(Stub("warehouse_read")),
         Arc::new(Stub("warehouse_write")),
+        Arc::new(Stub("datasource")),
         Arc::new(Stub("event_bus")),
         Arc::new(Stub("dashboard")),
         Arc::new(Stub("authz")),

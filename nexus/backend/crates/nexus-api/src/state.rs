@@ -73,6 +73,14 @@ pub struct AppState {
     /// extension contributes a kind. Replaced wholesale on the next boot after an
     /// install/uninstall (the registry is sealed-by-restart, like the file pack).
     pub extension_kinds: Arc<KindRegistry>,
+    /// The sealed extension registry (WS-14/WS-17) — every validated bundle's
+    /// `ExtensionRecord` (manifest + bundle dir). Host methods that must consult
+    /// the **calling** extension's manifest at request time read it from here:
+    /// `warehouse.write` builds its per-call own-table allowlist from the
+    /// caller's `contributes.warehouse_tables[]`, and `datasource.*` reads the
+    /// caller's declared datasource grant. Built once at boot and shared
+    /// read-only (sealed-by-restart, like the kind registries).
+    pub extensions: Arc<starter_ext_host::ExtensionRegistry>,
     /// Registered declarative datasource-kinds (WS-08b), loaded from the built-in
     /// pack at boot. A connector type (`postgres`, `mqtt`) declared by manifest:
     /// its config schema validates a config before save, its `secret_fields`

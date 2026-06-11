@@ -20,6 +20,7 @@ pub mod authz;
 pub mod behavior;
 pub mod capability;
 pub mod dashboard;
+pub mod datasource;
 pub mod error;
 pub mod event_bus;
 pub mod fs_ext;
@@ -40,6 +41,10 @@ pub mod warehouse;
 
 pub use behavior::ExtensionBehavior;
 pub use capability::{Authority, Capability, PathSpec};
+pub use datasource::{
+    DatasourceExecuteRequest, DatasourceExecuteResponse, DatasourceQueryRequest,
+    DatasourceQueryResponse,
+};
 pub use error::{Error, Result};
 pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use id::ExtensionId;

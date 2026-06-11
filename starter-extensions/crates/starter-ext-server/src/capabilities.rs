@@ -54,7 +54,8 @@
 use std::sync::Arc;
 
 use starter_ext_sdk::ctx::{
-    AuthzBackend, DashboardBackend, EventBusBackend, WarehouseReadBackend, WarehouseWriteBackend,
+    AuthzBackend, DashboardBackend, DatasourceBackend, EventBusBackend, WarehouseReadBackend,
+    WarehouseWriteBackend,
 };
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::warehouse::{Row, TemplateSpec};
@@ -100,6 +101,17 @@ pub trait CapabilityFactory: Send + Sync + 'static {
         _caller: Option<&CallerIdentity>,
     ) -> Arc<dyn WarehouseWriteBackend> {
         Arc::new(StubWarehouseWrite)
+    }
+
+    /// Backend for `ctx.datasource()` (WS-17 Wave B). Default returns a
+    /// fail-closed stub so hosts that haven't wired the datasource path yet
+    /// keep compiling — same shape as `warehouse_write` / `dashboard`.
+    fn datasource(
+        &self,
+        _extension: &ExtensionId,
+        _caller: Option<&CallerIdentity>,
+    ) -> Arc<dyn DatasourceBackend> {
+        Arc::new(StubDatasource)
     }
 
     /// Backend for `ctx.dashboard()`. Default returns a fail-closed
@@ -192,6 +204,32 @@ impl WarehouseWriteBackend for StubWarehouseWrite {
     fn insert(&self, _table: &str, _rows: Vec<Row>) -> Result<u64> {
         Err(Error::capability(
             "warehouse_write not wired: install a host CapabilityFactory",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubDatasource;
+
+impl DatasourceBackend for StubDatasource {
+    fn query(
+        &self,
+        _datasource_id: &str,
+        _sql: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> Result<Vec<Row>> {
+        Err(Error::capability(
+            "datasource not wired: install a host CapabilityFactory",
+        ))
+    }
+    fn execute(
+        &self,
+        _datasource_id: &str,
+        _statement: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> Result<u64> {
+        Err(Error::capability(
+            "datasource not wired: install a host CapabilityFactory",
         ))
     }
 }

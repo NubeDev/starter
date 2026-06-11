@@ -192,6 +192,32 @@ pub enum Capability {
         names: Vec<String>,
     },
 
+    /// Full CRUD against configured host **datasources** via the `datasource.*`
+    /// host methods (`datasource.query` reads; `datasource.execute` writes /
+    /// DDLs). The grant enumerates the datasource ids the extension may reach;
+    /// `datasource.execute` is further bounded by the host (WS-17 §4.2): a CREATE
+    /// inside a datasource must target an `<extension_id>__<table>` (the
+    /// ownership prefix), and CRUD against a non-owned (non-prefixed) table is
+    /// allowed only under the broader `allow_foreign_tables` flag an operator
+    /// sets deliberately. Empty `datasources` is the neutralised form: the
+    /// extension loads, every datasource call is denied.
+    ///
+    /// Tenancy is the caller's, bound by the host exactly like the human
+    /// `POST /datasources/{id}/query` route — the extension cannot widen past
+    /// its caller's tenant.
+    Datasource {
+        /// Allowed datasource ids (UUID strings). Cross-checked against the
+        /// `datasource_id` of each `datasource.*` request at the host backend.
+        #[serde(default)]
+        datasources: Vec<String>,
+        /// When `true`, `datasource.execute` may CRUD tables the extension does
+        /// **not** own (no `<ext>__` prefix) — the deliberate "full CRUD of any
+        /// data" grant (WS-17 Q3). Defaults to `false`: owned-prefix tables are
+        /// writable freely, foreign tables are refused.
+        #[serde(default)]
+        allow_foreign_tables: bool,
+    },
+
     /// An opaque, host-defined capability. Used as the escape hatch for
     /// consumer-specific grants the kernel does not know about.
     Custom {

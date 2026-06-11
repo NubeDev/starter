@@ -20,6 +20,7 @@ use utoipa::OpenApi;
         crate::routes::me::settings::get_me_settings,
         crate::routes::me::settings::set_me_settings,
         crate::routes::query::run::run_query,
+        crate::routes::nexus_db::query::query_nexus_db,
         crate::routes::query::kinds::list_query_kinds,
         crate::routes::query_kinds::list::list_query_kinds_admin,
         crate::routes::query_kinds::create::create_query_kind,
@@ -126,6 +127,9 @@ use utoipa::OpenApi;
         crate::routes::undo::apply::redo,
     ),
     components(schemas(
+        // The admin nexus-DB inspector's request body lives in the route module
+        // (not nexus-spi), so register it here for the document's `$ref`.
+        crate::routes::nexus_db::query::NexusDbQueryRequest,
         // Preferences (WS-11) — starter-spi types referenced by the
         // `/api/v1/me/preferences` handlers. Registered here so the document's
         // `$ref`s resolve without nexus-spi re-exporting starter types.

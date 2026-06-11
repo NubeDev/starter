@@ -41,9 +41,9 @@ use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Re
 
 use crate::ctx::{CtxInner, EventSender, NeverCancel};
 use crate::host_backends::{
-    RealAuthzBackend, RealDashboardBackend, RealEventBusBackend, RealFsBackend, RealHttpOutBackend,
-    RealSecretsBackend, RealTracingBackend, RealWallClockBackend, RealWarehouseReadBackend,
-    RealWarehouseWriteBackend,
+    RealAuthzBackend, RealDashboardBackend, RealDatasourceBackend, RealEventBusBackend,
+    RealFsBackend, RealHttpOutBackend, RealSecretsBackend, RealTracingBackend,
+    RealWallClockBackend, RealWarehouseReadBackend, RealWarehouseWriteBackend,
 };
 use crate::host_rpc::{self, HostRpc};
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
@@ -388,6 +388,7 @@ fn real_ctx_inner(events: EventSender, host_rpc: HostRpc) -> CtxInner {
         Arc::new(RealTracingBackend::new(host_rpc.clone())),
         Arc::new(RealWarehouseReadBackend::new(host_rpc.clone())),
         Arc::new(RealWarehouseWriteBackend::new(host_rpc.clone())),
+        Arc::new(RealDatasourceBackend::new(host_rpc.clone())),
         Arc::new(RealEventBusBackend::new(host_rpc.clone())),
         Arc::new(RealDashboardBackend::new(host_rpc.clone())),
         Arc::new(RealAuthzBackend::new(host_rpc)),

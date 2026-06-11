@@ -235,6 +235,11 @@ path = "tests/extensions/ingest_write_e2e_test.rs"
 name = "extensions_insight_purge_e2e"
 path = "tests/extensions/insight_purge_e2e_test.rs"
 
+# WS-17 Wave A: extension owns a nexus-DB table; write/upsert/isolation/drop (docker).
+[[test]]
+name = "extensions_warehouse_write_e2e"
+path = "tests/extensions/warehouse_write_e2e_test.rs"
+
 # RW-08 backpressure soak — opt-in (`#[ignore]`), needs Docker. See BACKPRESSURE.md.
 [[test]]
 name = "routes_soak_backpressure"
