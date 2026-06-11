@@ -11,6 +11,7 @@ members = [
     "crates/nexus-api",
     "crates/nexus-ai",
     "crates/nexus-skills",
+    "crates/nexus-watchdog",
 ]
 
 [workspace.package]
@@ -94,6 +95,12 @@ chrono     = { version = "0.4", default-features = false, features = ["serde", "
 async-trait = "0.1"
 thiserror   = "1"
 tracing     = "0.1"
+# WS-16 watchdog supervisor: a tiny error-context crate and raw `kill(2)` for the
+# signal-escalation path. Only the `nexus-watchdog` binary uses these; keeping
+# the dep set minimal is the point — a build break elsewhere must not break the
+# supervisor.
+anyhow      = "1"
+libc        = "0.2"
 
 # Sandboxed insight scripting (RW-06). `sync` makes the engine + scope `Send` so a
 # script can run inside an async handler; `no_closure` removes the one Rhai feature

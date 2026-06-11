@@ -1,6 +1,11 @@
 # WS-16 — Operational Resilience: liveness canary, task watchdog, supervisor
 
-> **Status:** Not started · **Wave:** 2 (production hardening — slots beside WS-09) · **Owner:** _unassigned_
+> **Status:** Implemented (all three phases) · **Wave:** 2 (production hardening — slots beside WS-09) · **Owner:** ap
+> **Landed 2026-06-11** on branch `nexus-rewrite`. Phase A: `nexus-api/src/boot/runtime_canary.rs`
+> + `routes/health.rs` (`/livez` `/readyz`). Phase B: `nexus-api/src/boot/task_watchdog.rs`, wrapping
+> the canary + the alert/detection/changelog-prune schedulers in `main.rs`. Phase C: the
+> `nexus-watchdog` crate (`make watchdog`). Verified: 4 boot unit tests + 3 `/livez` `/readyz` e2e
+> tests pass; the supervisor's wedge→restart and recovery paths exercised against a mock `/livez`.
 > **Depends on:** nothing new. Pure additive boot wiring in `nexus-api`. No schema, no migration, no DTO.
 > **Source of the idea:** ported from the sibling `rubix` workspace, which earned these the hard way
 > (a tokio runtime wedge that took hours to diagnose by absence-of-log archaeology). See

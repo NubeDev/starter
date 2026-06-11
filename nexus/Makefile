@@ -5,6 +5,7 @@
 #   make dev-all     fresh start: bootstrap + seed test data + run (one command)
 #   make dev-be      run just the backend (needs a database — see `make db`)
 #   make dev-ui      run just the UI
+#   make watchdog    run the external liveness supervisor (WS-16) against dev-be
 #   make test        run backend + UI tests
 #   make db          start a local Postgres for the backend in Docker
 #   make db-stop     stop and remove that Postgres container
@@ -105,7 +106,7 @@ IMAGE      ?= nexus:local
 .PHONY: build dev dev-all dev-be dev-ui test soak db db-stop \
         nats-build nats-install nats-stop zenoh-build zenoh-install zenoh-stop brokers brokers-stop \
         bootstrap seed seed-sim docker-build docker-run fly-secrets fly-deploy clean kill \
-        build-be build-ui
+        build-be build-ui watchdog
 
 # Rows per profile for `make seed-sim` (hvac/energy/door); override on the CLI.
 SIM_ROWS ?= 200
@@ -134,6 +135,18 @@ dev: db
 # pointed to by NEXUS_METADATA_URL; depends on `db` so that database is up first.
 dev-be: db
 	cd $(BE_DIR) && cargo run --bin nexus-api $(CARGO_FEATURES)
+
+# WS-16 Phase C: the external liveness supervisor. Probes the backend's /livez
+# (default http://127.0.0.1:$(BE_PORT)/livez) and, on sustained failure,
+# escalates SIGUSR1 -> SIGABRT -> SIGKILL then runs the restart command. Run it
+# in a second terminal alongside `make dev-be`. It is an OS-peer process by
+# design (a defence inside a wedged tokio runtime cannot fire), so it lives
+# outside the server's lifecycle. Override the knobs via NEXUS_WATCHDOG_* env.
+watchdog:
+	cd $(BE_DIR) && \
+	NEXUS_WATCHDOG_URL=http://127.0.0.1:$(BE_PORT)/livez \
+	NEXUS_WATCHDOG_RESTART_CMD='cd $(CURDIR) && make dev-be' \
+		cargo run --bin nexus-watchdog
 
 dev-ui:
 	cd $(ROOT) && pnpm --filter $(UI_PKG) dev
