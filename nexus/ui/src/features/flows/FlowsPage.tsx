@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
+  Bug,
   Download,
   Pause,
   Pencil,
@@ -36,9 +38,16 @@ import { Loading } from "@/features/state/Loading";
 export function FlowsPage() {
   const { data, isPending, isError, error } = useFlows();
   const actions = useFlowActions();
+  const navigate = useNavigate();
   const [creating, setCreating] = useState(false);
-  // The flow currently open for editing, or null when authoring a new one.
-  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Editing and debugging both happen on the flow's own full-page route
+  // (`/flows/<name>`), which is deep-linkable and gives the canvas/node config
+  // the whole viewport. `?debug` opens that page with the live debug view on.
+  const openFlow = (flow: FlowSummary, opts?: { debug?: boolean }) =>
+    navigate(
+      `/flows/${encodeURIComponent(flow.name)}${opts?.debug ? "?debug=1" : ""}`,
+    );
 
   // Which flow id (if any) each mutation is currently acting on, so only the
   // affected row shows the busy/disabled state instead of the whole list.
@@ -194,8 +203,9 @@ export function FlowsPage() {
                   actionError?.id === flow.id ? actionError.message : null
                 }
                 actions={actions}
-                onEdit={() => setEditingId(flow.id)}
+                onEdit={() => openFlow(flow)}
                 onExport={() => onExport(flow)}
+                onDebug={() => openFlow(flow, { debug: true })}
               />
             ))}
           </ul>
@@ -203,13 +213,9 @@ export function FlowsPage() {
       </div>
 
       <FlowBuilder
-        open={creating || editingId !== null}
-        flowId={editingId}
+        open={creating}
         onOpenChange={(open) => {
-          if (!open) {
-            setCreating(false);
-            setEditingId(null);
-          }
+          if (!open) setCreating(false);
         }}
       />
     </div>
@@ -224,6 +230,7 @@ function FlowRow({
   actions,
   onEdit,
   onExport,
+  onDebug,
 }: {
   flow: FlowSummary;
   busy: boolean;
@@ -234,6 +241,7 @@ function FlowRow({
   actions: ReturnType<typeof useFlowActions>;
   onEdit: () => void;
   onExport: () => void;
+  onDebug: () => void;
 }) {
   return (
     <li className="glass flex items-center gap-3 rounded-lg px-4 py-3">
@@ -300,6 +308,20 @@ function FlowRow({
           </>
         )}
       </Button>
+      {/* Debug a running flow: open the live values/per-node drawer. Only
+          meaningful while the flow is running on this node. */}
+      {flow.running ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Debug ${flow.name}`}
+          title="Debug live values"
+          onClick={onDebug}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Bug className="size-4" />
+        </Button>
+      ) : null}
       <Button
         variant="ghost"
         size="icon"

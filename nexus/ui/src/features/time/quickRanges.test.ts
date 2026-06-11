@@ -16,6 +16,18 @@ describe("quick ranges", () => {
     }
   });
 
+  it("every quick range is a non-empty window (from strictly before to)", () => {
+    // Guards the "Yesterday" class of bug: tokens that resolve fine but to the
+    // SAME instant → "From must be before to" → empty range → no data. Use a
+    // mid-week, mid-month `now` so week/month boundaries are exercised.
+    const ref = new Date("2026-06-11T06:49:00.000Z"); // a Thursday
+    for (const q of QUICK_RANGES) {
+      const from = resolveBound(q.range.from, ref).getTime();
+      const to = resolveBound(q.range.to, ref).getTime();
+      expect(from, `${q.label}: from must be < to`).toBeLessThan(to);
+    }
+  });
+
   it("labels a known range by its catalogue name", () => {
     expect(rangeLabel({ from: "now-6h", to: "now" })).toBe("Last 6 hours");
   });

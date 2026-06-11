@@ -45,6 +45,24 @@ describe("datetime regions", () => {
     expect(formatDateWith(INSTANT, prefs)).toBe("2026/03/09");
     expect(formatTimeWith(INSTANT, prefs)).toBe("22:05");
   });
+
+  it("explicit date_format forces field order even when the locale disagrees", () => {
+    // Regression: the backend commonly resolves `locale: en-US` (the
+    // language) together with an explicit `date_format` the user picked
+    // (e.g. EU day-first). The formatter must honour the *format's* field
+    // order, not the locale's — otherwise an en-US user who selects
+    // DD/MM/YYYY still saw month-first (06/10 instead of 10/06).
+    const base = { ...prefsForRegion("usa"), locale: "en-US", timezone: "UTC" };
+    expect(formatDateWith(INSTANT, { ...base, date_format: "DD/MM/YYYY" })).toBe(
+      "09/03/2026",
+    );
+    expect(formatDateWith(INSTANT, { ...base, date_format: "MM/DD/YYYY" })).toBe(
+      "03/09/2026",
+    );
+    expect(formatDateWith(INSTANT, { ...base, date_format: "YYYY-MM-DD" })).toBe(
+      "2026-03-09",
+    );
+  });
 });
 
 describe("datetime helpers", () => {

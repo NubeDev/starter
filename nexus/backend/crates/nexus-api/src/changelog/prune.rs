@@ -27,9 +27,10 @@ const BATCH: i32 = 5_000;
 /// never spin this task. The remainder is picked up on the next tick.
 const MAX_CALLS_PER_SWEEP: usize = 1_000;
 
-/// Spawn the retention sweep. Returns immediately; the loop runs in the
-/// background for the process's lifetime.
-pub fn spawn(state: AppState, policy: RetentionPolicy) {
+/// Spawn the retention sweep. Returns the task's `JoinHandle` so the caller can
+/// wrap it in the task watchdog (WS-16); the loop runs in the background for the
+/// process's lifetime.
+pub fn spawn(state: AppState, policy: RetentionPolicy) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         let mut ticker = tokio::time::interval(TICK);
         loop {
@@ -40,7 +41,7 @@ pub fn spawn(state: AppState, policy: RetentionPolicy) {
                 Err(e) => tracing::warn!(error = %e, "audit retention sweep failed"),
             }
         }
-    });
+    })
 }
 
 /// One sweep: delete rows older than the horizon in batches until caught up.

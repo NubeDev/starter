@@ -10,6 +10,7 @@ default-run = "nexus-api"
 [dependencies]
 nexus-spi.workspace = true
 nexus-engine.workspace = true
+nexus-insights.workspace = true
 nexus-store.workspace = true
 # The `agent` feature pulls in the zag tier so sessions can drive the local
 # coding-agent CLIs (Claude Code, Codex, Gemini, Ollama) using their own auth —
@@ -38,6 +39,7 @@ starter-authz = { workspace = true, features = ["postgres"] }
 starter-store-postgres.workspace = true
 starter-config.workspace = true
 starter-observability.workspace = true
+starter-paths.workspace = true
 
 # WS-14 extensions runtime. `starter-ext-server` mounts the admin router
 # (`/extensions/*`) over nexus's `starter-server` auth stack; `-host` scans +
@@ -91,6 +93,11 @@ lettre = { version = "0.11", default-features = false, features = ["builder", "s
 # Postgres helper for HTTP integration tests. Off by default so production
 # builds stay lean.
 testing = ["starter-server/testing", "starter-store-postgres/testing", "nexus-store/testing"]
+# Compiles the optional Zenoh ingest source into the engine so a flow can use the
+# `zenoh` input node. OFF by default — a plain build carries none of zenoh's
+# transitive deps. Enable for the testing data path: `cargo run --features zenoh`
+# (or `make dev-be FEATURES=zenoh`).
+zenoh = ["nexus-engine/zenoh"]
 
 [[bin]]
 name = "nexus-api"
@@ -115,6 +122,10 @@ tokio = { workspace = true, features = ["test-util", "io-util", "net"] }
 tokio-util = { workspace = true, features = ["io"] }
 futures.workspace = true
 starter-store-postgres.workspace = true
+# The stored-Parquet ⋈ Postgres federation e2e writes a small Parquet fixture via
+# arrow/parquet (already in the tree through datafusion) to register a file
+# datasource; test-only, no new runtime dep.
+datafusion.workspace = true
 
 [[test]]
 name = "routes_query_run"
@@ -123,6 +134,14 @@ path = "tests/routes/query/run_test.rs"
 [[test]]
 name = "routes_datasources_query_e2e"
 path = "tests/routes/datasources/query_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_federation_e2e"
+path = "tests/routes/datasources/federation_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_sink_e2e"
+path = "tests/routes/datasources/sink_e2e_test.rs"
 
 [[test]]
 name = "routes_datasources_update_e2e"
@@ -145,6 +164,10 @@ name = "routes_me_preferences_e2e"
 path = "tests/routes/me/preferences_e2e_test.rs"
 
 [[test]]
+name = "routes_health_liveness_e2e"
+path = "tests/routes/health/liveness_e2e_test.rs"
+
+[[test]]
 name = "routes_authz_grant_gate"
 path = "tests/routes/authz/grant_gate_test.rs"
 
@@ -161,8 +184,16 @@ name = "routes_flows_e2e"
 path = "tests/routes/flows/flow_e2e_test.rs"
 
 [[test]]
+name = "routes_ingest_e2e"
+path = "tests/routes/ingest/push_e2e_test.rs"
+
+[[test]]
 name = "routes_alerts_e2e"
 path = "tests/routes/alerts/alert_e2e_test.rs"
+
+[[test]]
+name = "routes_detections_e2e"
+path = "tests/routes/detections/detection_e2e_test.rs"
 
 [[test]]
 name = "routes_agents_e2e"
@@ -171,3 +202,29 @@ path = "tests/routes/agents/agent_e2e_test.rs"
 [[test]]
 name = "routes_audit_e2e"
 path = "tests/routes/audit/audit_e2e_test.rs"
+
+[[test]]
+name = "routes_insights_e2e"
+path = "tests/routes/insights/insights_e2e_test.rs"
+
+[[test]]
+name = "routes_query_insight_e2e"
+path = "tests/routes/query/insight_e2e_test.rs"
+
+[[test]]
+name = "routes_query_extension_insight_e2e"
+path = "tests/routes/query/extension_insight_e2e_test.rs"
+
+# RW-07b extension data-plane: ingest.write tenant-stamp + insight purge (docker).
+[[test]]
+name = "extensions_ingest_write_e2e"
+path = "tests/extensions/ingest_write_e2e_test.rs"
+
+[[test]]
+name = "extensions_insight_purge_e2e"
+path = "tests/extensions/insight_purge_e2e_test.rs"
+
+# RW-08 backpressure soak — opt-in (`#[ignore]`), needs Docker. See BACKPRESSURE.md.
+[[test]]
+name = "routes_soak_backpressure"
+path = "tests/soak/backpressure_soak.rs"

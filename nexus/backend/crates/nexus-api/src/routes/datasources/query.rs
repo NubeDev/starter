@@ -62,6 +62,12 @@ pub async fn query_datasource(
     {
         return resp;
     }
+    // RW-05 dispatch seam: a request naming federated `sources` runs the
+    // cross-datasource engine path (each source authorised against the tenant);
+    // an ordinary request stays on the push-down path below, unchanged.
+    if crate::federation::is_federated(&req) {
+        return crate::federation::respond(&state, caller_principal, &tenant, &req).await;
+    }
     let pool = match state
         .datasource_pools
         .get_or_connect(
@@ -80,7 +86,20 @@ pub async fn query_datasource(
         tenant_id: Some(tenant.clone()),
         user_id: Some(caller_principal.subject.clone()),
     };
-    let result = crate::cache::run_cached(&state, &pool, &req, &identity, &id.to_string()).await;
+    let mut result = crate::cache::run_cached(&state, &pool, &req, &identity, &id.to_string()).await;
+    // RW-06 insight seam: an attached insight (inline script or a stored,
+    // tenant-scoped reference) runs the result frame through the sandboxed engine
+    // before history/serialization. Without one the response is unchanged.
+    if let (Ok(out), Some(insight)) = (&result, &req.insight) {
+        result = crate::insights::apply_insight(
+            &state,
+            &state.metadata,
+            Some(&tenant),
+            insight,
+            out.clone(),
+        )
+        .await;
+    }
     // History records what the caller ran: a kind invocation by name, or the raw
     // SQL. A kind-mode request has no author-written SQL to store.
     let recorded = match &req.kind {

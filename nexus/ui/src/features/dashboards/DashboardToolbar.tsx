@@ -31,6 +31,8 @@ import { useSaveDashboard } from "@/features/dashboards/useSaveDashboard";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { AiBuildDialog } from "@/features/canvas/AiBuildDialog";
 import { ShareDashboardDialog } from "@/features/dashboards/ShareDashboardDialog";
+import { DashboardStarButton } from "@/features/dashboards/DashboardStarButton";
+import { DashboardTagsButton } from "@/features/dashboards/DashboardTagsButton";
 import { TimeRangePicker } from "@/features/time/TimeRangePicker";
 import { RefreshControl } from "@/features/time/RefreshControl";
 import { VariableEditorDialog } from "@/features/variables/VariableEditorDialog";
@@ -76,6 +78,11 @@ export function DashboardToolbar({ dashboard }: { dashboard: Dashboard }) {
         {dashboard.name}
       </h2>
       <div className="flex items-center gap-1.5">
+        {/* Personal / metadata — always present. Star is per-user (the caller's
+            own favourites); tags reuse the generic tagging system. */}
+        <DashboardStarButton dashboardId={dashboard.id} />
+        <DashboardTagsButton dashboardId={dashboard.id} />
+        <ToolbarDivider />
         {/* Viewing context — always present. */}
         <TimeRangePicker />
         <RefreshControl />

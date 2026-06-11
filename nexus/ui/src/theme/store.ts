@@ -11,7 +11,7 @@ import {
   type PaletteId,
   type ThemePreference,
 } from "@/theme/theme";
-import { invalidateThemeCache } from "@/features/widgets/palette";
+import { invalidateThemeCache } from "@/features/widgets/_shared/palette";
 
 // Re-apply tokens to <html>, drop ECharts' cached (canvas) colours so
 // charts re-tint, and return the mode. Every mutator funnels through

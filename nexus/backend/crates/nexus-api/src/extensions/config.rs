@@ -35,20 +35,69 @@ pub struct ExtensionsConfig {
 impl ExtensionsConfig {
     /// Resolve from the environment, applying defaults derived from
     /// `extensions_dir` so a single env var is enough for a dev setup.
+    ///
+    /// `extensions_dir` stays the read-only in-repo **seed** pack (env
+    /// `NEXUS_EXTENSIONS_DIR`, default `./extensions`). The *writable* dirs
+    /// (`installs_dir`, `pidfile_dir`), when not pinned by their own env vars,
+    /// resolve under an **external data root** via `starter-paths` — the same
+    /// convention rubix uses (`Paths::resolve("rubix", …)`): override-arg >
+    /// `$NEXUS_DATA_ROOT` > OS XDG. This keeps uploaded bundles + supervisor
+    /// pidfiles out of the repo tree. If that resolution fails, we fall back to
+    /// the historical in-repo `.installs`/`.pids` siblings so boot never aborts
+    /// over a path-resolution error (logged by the helper).
     pub fn from_env() -> Self {
         let extensions_dir: PathBuf = std::env::var("NEXUS_EXTENSIONS_DIR")
             .unwrap_or_else(|_| "./extensions".into())
             .into();
+        let (default_installs, default_pids) = Self::resolve_data_dirs(&extensions_dir);
         let installs_dir: PathBuf = std::env::var("NEXUS_EXTENSIONS_INSTALLS_DIR")
             .map(PathBuf::from)
-            .unwrap_or_else(|_| extensions_dir.join(".installs"));
+            .unwrap_or(default_installs);
         let pidfile_dir: PathBuf = std::env::var("NEXUS_EXTENSIONS_PIDFILE_DIR")
             .map(PathBuf::from)
-            .unwrap_or_else(|_| extensions_dir.join(".pids"));
+            .unwrap_or(default_pids);
         Self {
-            extensions_dir,
-            installs_dir,
-            pidfile_dir,
+            // Absolutise every path. The process-flavour supervisor execs
+            // `bundle_dir.join(runtime.bin)` *with* `current_dir(bundle_dir)`
+            // set — so a **relative** bundle_dir (e.g. dev's `../extensions`)
+            // would be resolved twice and the exec would fail with ENOENT. An
+            // absolute `extensions_dir` makes `bundle_dir` (derived from it)
+            // absolute, so the spawn is CWD-independent. `absolutize` keeps the
+            // value verbatim if it's already absolute or can't be resolved.
+            extensions_dir: absolutize(extensions_dir),
+            installs_dir: absolutize(installs_dir),
+            pidfile_dir: absolutize(pidfile_dir),
+        }
+    }
+
+    /// Default `(installs_dir, pidfile_dir)` under the external data root
+    /// resolved by `starter-paths` for app `"nexus"` (`$NEXUS_DATA_ROOT` +
+    /// XDG). Installs land at `<root>/extensions/installed/` (the crate's
+    /// canonical `installs_dir()`), pidfiles at `<root>/extensions/pids/` (a
+    /// sibling, mirroring rubix's `supervisor-pids/`). On any resolution error,
+    /// falls back to the in-repo `<extensions_dir>/.installs` + `.pids` so a
+    /// missing/unwritable data root degrades gracefully instead of aborting boot.
+    fn resolve_data_dirs(extensions_dir: &std::path::Path) -> (PathBuf, PathBuf) {
+        match starter_paths::Paths::resolve("nexus", None) {
+            Ok(paths) => match paths.subdir("extensions/pids") {
+                Ok(pids) => (paths.installs_dir(), pids),
+                Err(e) => {
+                    tracing::warn!(
+                        target: "nexus.extensions.config",
+                        err = %e,
+                        "resolve pids subdir failed; falling back to in-repo .installs/.pids"
+                    );
+                    (extensions_dir.join(".installs"), extensions_dir.join(".pids"))
+                }
+            },
+            Err(e) => {
+                tracing::warn!(
+                    target: "nexus.extensions.config",
+                    err = %e,
+                    "resolve nexus data root failed; falling back to in-repo .installs/.pids"
+                );
+                (extensions_dir.join(".installs"), extensions_dir.join(".pids"))
+            }
         }
     }
 
@@ -62,5 +111,20 @@ impl ExtensionsConfig {
         std::fs::create_dir_all(&self.installs_dir)?;
         std::fs::create_dir_all(&self.pidfile_dir)?;
         Ok(())
+    }
+}
+
+/// Resolve `p` to an absolute path. Already-absolute paths are returned
+/// unchanged. A relative path is joined onto the process CWD (it is *not*
+/// canonicalised — the dir may not exist yet, e.g. the installs dir before
+/// `ensure_writable_dirs`). On any error (no CWD) the input is returned
+/// verbatim so behaviour never gets worse than before.
+fn absolutize(p: PathBuf) -> PathBuf {
+    if p.is_absolute() {
+        return p;
+    }
+    match std::env::current_dir() {
+        Ok(cwd) => cwd.join(p),
+        Err(_) => p,
     }
 }

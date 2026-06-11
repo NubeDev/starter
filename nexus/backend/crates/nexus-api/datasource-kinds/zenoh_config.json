@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Zenoh datasource config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["key_expr"],
+  "properties": {
+    "endpoints": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "title": "Endpoints",
+      "description": "Routers/peers to connect to, e.g. tcp/127.0.0.1:7447. Empty in peer mode."
+    },
+    "key_expr": { "type": "string", "minLength": 1, "title": "Key expression", "description": "Subscription key, e.g. site/**." },
+    "mode": { "type": "string", "enum": ["client", "peer"], "default": "client", "title": "Session mode" }
+  }
+}

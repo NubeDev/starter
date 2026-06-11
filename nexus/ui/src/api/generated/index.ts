@@ -489,6 +489,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/detections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_detections"];
+        put?: never;
+        post: operations["create_detection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_detection"];
+        put: operations["update_detection"];
+        post?: never;
+        delete: operations["delete_detection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/{id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Manually run a detection now, outside its schedule — the deterministic seam
+         *     the WS acceptance leans on ("runs on its interval … verified the same way the
+         *     alert scheduler was"). Returns the upsert/resolve counts. Requires `edit`.
+         */
+        post: operations["run_detection_now"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/{id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run stats for a detection: next run time + its findings by status. A
+         *     glanceable summary for the list and editor. Requires `view`.
+         */
+        get: operations["detection_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_findings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_finding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings/{id}/ack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ack_finding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resolve_finding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows": {
         parameters: {
             query?: never;
@@ -579,6 +716,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows/{id}/debug/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["disable_flow_debug"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/debug/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["enable_flow_debug"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flows/{id}/debug/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SSE subscription to a running flow's debug events. Authed by the signed token
+         *     minted on enable, never a Bearer (a browser `EventSource` cannot set headers).
+         */
+        get: operations["stream_flow_debug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows/{id}/export": {
         parameters: {
             query?: never;
@@ -627,6 +816,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/flows/{id}/table/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["query_flow_table"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/folders": {
         parameters: {
             query?: never;
@@ -657,6 +862,86 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["update_folder"];
+        trace?: never;
+    };
+    "/api/v1/ingest/{flow_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["push_ingest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_insights"];
+        put?: never;
+        post: operations["create_insight"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/functions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_insight_functions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview_insight"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/insights/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_insight"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_insight"];
+        options?: never;
+        head?: never;
+        patch: operations["update_insight"];
         trace?: never;
     };
     "/api/v1/me": {
@@ -702,6 +987,24 @@ export interface paths {
          *     explicit `null` reverts it to inherit. 401 without a tenant-bound principal.
          */
         patch: operations["patch_me_preferences"];
+        trace?: never;
+    };
+    "/api/v1/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** `GET /api/v1/me/settings` — the caller's settings bag, `{}` when never saved. */
+        get: operations["get_me_settings"];
+        /** `PUT /api/v1/me/settings` — replace the caller's settings bag (full replace). */
+        put: operations["set_me_settings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/nav": {
@@ -1307,25 +1610,78 @@ export interface components {
             slug: string;
         };
         /**
-         * @description Body for creating a datasource. The `password` is write-only: it is accepted
-         *     here, envelope-encrypted at rest, and never echoed back by any read
+         * @description Body for creating a datasource. SQL connectors (postgres) carry their
+         *     connection in the flat `host`/`port`/`database`/`user`/`password` fields;
+         *     non-SQL connectors (`mqtt`/`zenoh`) and file kinds (`parquet`/`csv`) supply
+         *     their parameters in [`config`] — the same per-kind shape their
+         *     datasource-kind config schema declares — so one create endpoint serves every
+         *     connector. The flat SQL fields are optional so a stream/file create need not
+         *     send placeholder host/port values. The `password` is write-only: it is
+         *     accepted here, envelope-encrypted at rest, and never echoed back by any read
          *     endpoint.
          */
         CreateDatasourceRequest: {
-            database: string;
-            host: string;
+            /**
+             * @description Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,
+             *     `{host, port, client_id, …}` for mqtt, `{path, has_header}` for files).
+             *     Ignored for postgres, which uses the flat fields.
+             */
+            config?: unknown;
+            database?: string | null;
+            host?: string | null;
             /** @description Which connector to use. */
             kind: components["schemas"]["DatasourceKind"];
             /** @description Human-readable name shown in the datasource picker. */
             name: string;
-            /** @description Write-only secret. Stored as ciphertext; absent from every response. */
-            password: string;
+            /**
+             * @description Write-only secret (SQL connectors). Stored as ciphertext; absent from
+             *     every response. Optional — file kinds have no secret.
+             */
+            password?: string | null;
             /** Format: int32 */
-            port: number;
-            user: string;
+            port?: number | null;
+            user?: string | null;
         };
         /**
-         * @description Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the
+         * @description Create a detection. `insight_id` is the stored Rhai rule (required — a
+         *     detection with no rule is meaningless); `flag_column` names the insight
+         *     output column whose truthy value marks a flagged row; `target_columns`
+         *     identify the finding's target and form its dedup key; `value_column` is the
+         *     numeric column carried onto the finding.
+         */
+        CreateDetectionRequest: {
+            /** Format: uuid */
+            datasource_id?: string | null;
+            enabled?: boolean | null;
+            flag_column: string;
+            /**
+             * Format: int32
+             * @description Optional dwell in seconds before a flagged row becomes a finding
+             *     (default 0 — most analytic findings are point-in-time).
+             */
+            for_secs?: number | null;
+            /** Format: uuid */
+            insight_id: string;
+            /**
+             * Format: int32
+             * @description Run cadence in seconds (default 300).
+             */
+            interval_secs?: number | null;
+            name: string;
+            /** @description Params passed to the insight (thresholds, window, z, …). */
+            params?: unknown;
+            /**
+             * @description RW-05 federated sources the `sql` joins over (alias → datasource ref).
+             *     Empty (the default) runs the single-datasource push-down path; non-empty
+             *     dispatches through the federation engine, exactly like a panel query.
+             */
+            sources?: unknown;
+            sql: string;
+            target_columns?: string[];
+            value_column?: string | null;
+        };
+        /**
+         * @description Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the
          *     FlowManager validates them when it builds the stream, so a malformed config
          *     surfaces on start, not here. `enabled` defaults to false so a flow can be
          *     created and reviewed before it runs.
@@ -1348,6 +1704,19 @@ export interface components {
              * @description Parent folder id; omit/`null` for a root folder.
              */
             parent_id?: string | null;
+        };
+        /**
+         * @description Create a tenant-scoped insight. `script` is the Rhai transform; `params_schema`
+         *     is an optional JSON-Schema describing the params a caller may pass when running
+         *     it (advisory metadata for the UI — the sandbox enforces safety regardless).
+         */
+        CreateInsightRequest: {
+            /** @description Human-readable name, unique enough for the tenant's list. */
+            name: string;
+            /** @description Optional JSON-Schema for the script's params, for UI form generation. */
+            params_schema?: unknown;
+            /** @description The Rhai script orchestrating the curated vectorized surface. */
+            script: string;
         };
         /**
          * @description Create a nav node. `target` defaults to a `group` header when omitted so a
@@ -1375,6 +1744,13 @@ export interface components {
              * @description Datasource this panel queries.
              */
             datasource_id: string;
+            /**
+             * Format: uuid
+             * @description Optional post-query insight (RW-06) to attach at creation. Omitted = none.
+             */
+            insight_id?: string | null;
+            /** @description Params bound as the insight script's `params`. */
+            insight_params?: unknown;
             /** @description Grid layout; defaults to empty when omitted. */
             layout?: unknown;
             sql: string;
@@ -1565,12 +1941,13 @@ export interface components {
             name: string;
         };
         /**
-         * @description The kind of datasource, which selects the ArkFlow input builder. v1 ships
-         *     SQL-over-Postgres as the first connector; the enum is the extension point as
-         *     more `register_input_builder` connectors land.
+         * @description The kind of datasource, which selects the engine's input builder. SQL over
+         *     Postgres is the queryable connector; `mqtt`/`zenoh` are stream connectors whose
+         *     pre-save probe opens a short-lived session (no ad-hoc query target). The enum
+         *     is the extension point as more registry input builders land.
          * @enum {string}
          */
-        DatasourceKind: "postgres";
+        DatasourceKind: "postgres" | "mqtt" | "zenoh";
         /** @description The registered datasource-kinds, name-ordered. */
         DatasourceKindList: {
             /** @description One entry per declared connector type. */
@@ -1635,6 +2012,48 @@ export interface components {
          * @enum {string}
          */
         DateFormat: "auto" | "YYYY-MM-DD" | "DD/MM/YYYY" | "MM/DD/YYYY";
+        /** @description A detection as returned by the API. */
+        DetectionDetail: {
+            /** Format: uuid */
+            datasource_id?: string | null;
+            enabled: boolean;
+            flag_column: string;
+            /** Format: int32 */
+            for_secs: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            insight_id: string;
+            /** Format: int32 */
+            interval_secs: number;
+            name: string;
+            params: unknown;
+            sources: unknown;
+            sql: string;
+            target_columns: string[];
+            value_column?: string | null;
+        };
+        /** @description Run stats for a detection — a glanceable summary for the list/editor. */
+        DetectionStats: {
+            /** Format: int64 */
+            acknowledged: number;
+            /**
+             * Format: date-time
+             * @description The most recent finding time across all this detection's findings.
+             */
+            last_finding_at?: string | null;
+            /**
+             * Format: date-time
+             * @description When the scheduler will next run this detection.
+             */
+            next_eval_at: string;
+            /** Format: int64 */
+            open: number;
+            /** Format: int64 */
+            resolved: number;
+            /** Format: int64 */
+            total: number;
+        };
         /**
          * @description Test a flow's `input` + `pipeline` without persisting it or running its real
          *     output. The engine swaps in the bounded collector sink, runs the stream to
@@ -1670,6 +2089,138 @@ export interface components {
             stats: components["schemas"]["QueryStats"];
         };
         /**
+         * @description One federated input reference: a SQL alias bound to a datasource id. The alias
+         *     becomes the `ds_<alias>` table the request's `sql` reads; the id is resolved
+         *     and tenant-authorised server-side. A file datasource (kind `parquet`/`csv`)
+         *     references its configured path; a `postgres` datasource references its `table`.
+         */
+        FederatedSourceRef: {
+            /**
+             * @description SQL alias for this input — referenced as `ds_<alias>` in the statement.
+             *     Restricted to a plain identifier server-side so it is a safe table name.
+             */
+            alias: string;
+            /**
+             * @description The datasource id (UUID string) this alias resolves to. Must be visible to
+             *     the caller's tenant; an id the tenant cannot view is rejected, never read.
+             */
+            datasource: string;
+            /**
+             * @description For a `postgres` datasource, the remote table to read into the join. A
+             *     file datasource ignores this (its path is the table).
+             */
+            table?: string | null;
+        };
+        /** @description One persistent finding emitted by a detection run. */
+        Finding: {
+            /** Format: date-time */
+            acked_at?: string | null;
+            acked_by?: string | null;
+            /** Format: date-time */
+            at: string;
+            /** @description The flagged row's other derived columns — the "why". */
+            context: unknown;
+            /** Format: uuid */
+            detection_id: string;
+            /** Format: uuid */
+            id: string;
+            note?: string | null;
+            /** Format: date-time */
+            resolved_at?: string | null;
+            /** @description open | acknowledged | resolved. */
+            status: string;
+            /** @description The identifying column values, e.g. `{"site":"s1","meter":"m7"}`. */
+            target: unknown;
+            /** Format: double */
+            value?: number | null;
+        };
+        /** @description Acknowledge or manually resolve a finding; both accept an optional note. */
+        FindingActionRequest: {
+            note?: string | null;
+        };
+        /**
+         * @description The response to enabling debug on a running flow: the resulting status plus a
+         *     short-lived signed token and the SSE URL to open. A browser `EventSource`
+         *     cannot send an `Authorization` header, so the stream is authed by this token
+         *     in the query string — minted only after the Bearer-authed enable call passed
+         *     the flow's edit grant.
+         */
+        FlowDebugEnableResponse: components["schemas"]["FlowDebugStatus"] & {
+            /**
+             * Format: int64
+             * @description Seconds until the token expires.
+             */
+            expires_in_secs: number;
+            /** @description The SSE endpoint to open, with the token already in the query string. */
+            stream_url: string;
+            /**
+             * @description The signed stream token, also returned separately for clients that build
+             *     their own URL.
+             */
+            token: string;
+        };
+        /**
+         * @description One event in a running flow's debug stream. `kind`-tagged so the UI can switch
+         *     on the variant; every variant carries a monotonic `seq` for `Last-Event-ID`
+         *     resume parity with the transport.
+         */
+        FlowDebugEvent: (components["schemas"]["NodeCounters"] & {
+            /**
+             * Format: int64
+             * @description Monotonic sequence number, assigned by the producer.
+             */
+            seq: number;
+        } & {
+            /** @enum {string} */
+            kind: "counters";
+        }) | {
+            /** @enum {string} */
+            kind: "sample";
+            /**
+             * @description Reserved for a future branching shape; prefer over `node_index` when
+             *     present.
+             */
+            node_id?: string | null;
+            /** Format: int32 */
+            node_index: number;
+            role: components["schemas"]["NodeRole"];
+            /** @description Up to the per-node sample cap; each row is a JSON object. */
+            rows: unknown[];
+            /** Format: int64 */
+            seq: number;
+        } | {
+            /**
+             * Format: int64
+             * @description Wall-clock millis since the epoch when the line was emitted.
+             */
+            at_ms: number;
+            /** @enum {string} */
+            kind: "log";
+            level: components["schemas"]["LogLevel"];
+            message: string;
+            /**
+             * Format: int32
+             * @description The node the log relates to, when known.
+             */
+            node_index?: number | null;
+            /** Format: int64 */
+            seq: number;
+        };
+        /**
+         * @description The state returned by the enable/disable endpoints so the UI can reflect
+         *     whether debug is currently capturing and how many nodes to expect.
+         */
+        FlowDebugStatus: {
+            /** @description Whether value/sample capture is currently on for the running flow. */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description Total node count (source + processors + sink) so the UI can validate its
+             *     positional mapping against the backend chain.
+             */
+            node_count: number;
+        };
+        /**
          * @description A saved ingestion flow in full. The three config blobs are opaque JSON on the
          *     wire — the input connector, the processor pipeline, and the output sink the
          *     FlowManager hands to the engine.
@@ -1688,14 +2239,14 @@ export interface components {
             /** @description Whether the FlowManager currently has it running on this node. */
             running: boolean;
         };
-        /** @description A self-contained, importable flow: its name plus the ArkFlow config blobs. */
+        /** @description A self-contained, importable flow: its name plus the engine config blobs. */
         FlowExport: {
-            /** @description ArkFlow input component (`{type, ...config}`), secrets redacted. */
+            /** @description Engine input component (`{type, ...config}`), secrets redacted. */
             input: unknown;
             name: string;
-            /** @description ArkFlow output component (`{type, ...config}`), secrets redacted. */
+            /** @description Engine output component (`{type, ...config}`), secrets redacted. */
             output: unknown;
-            /** @description ArkFlow processor list (a JSON array of `{type, ...config}`). */
+            /** @description Engine processor list (a JSON array of `{type, ...config}`). */
             pipeline?: unknown;
             /**
              * @description Whether [`redact_secrets`] blanked any field on export, so the UI can
@@ -1712,14 +2263,28 @@ export interface components {
         /**
          * @description Live run state surfaced on the flows list and detail so an admin sees a
          *     flow's health without opening it: whether it is running, when its current
-         *     (or most recent) run started, and the error that ended the last run (if
-         *     any). All fields reflect this node's in-process
-         *     [`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and
-         *     are absent once the process restarts (single-node v1). Throughput counters
-         *     would require instrumenting every output sink, so they are intentionally
-         *     omitted rather than reported as zero.
+         *     (or most recent) run started, the error that ended the last run (if any),
+         *     and the ingest throughput counters for the current run. All fields reflect
+         *     this node's in-process [`FlowManager`](nexus_engine::FlowManager) state; they
+         *     reset on restart and are absent once the process restarts (single-node v1).
          */
         FlowMetrics: {
+            /**
+             * Format: int64
+             * @description Batches read from the source since this run started.
+             */
+            batches_in: number;
+            /**
+             * Format: int64
+             * @description Approximate depth of the bounded source→sink channel (batches read but
+             *     not yet drained to the sink) — the live backpressure gauge.
+             */
+            channel_depth: number;
+            /**
+             * Format: int64
+             * @description Number of batches handed to the underlying sink writer.
+             */
+            flush_count: number;
             /**
              * @description The error that ended the most recent run, or `None` if it ended cleanly
              *     (or is still running).
@@ -1730,8 +2295,24 @@ export interface components {
              *     `None` if the flow has never run this process.
              */
             last_started_at?: string | null;
+            /**
+             * Format: int64
+             * @description Wall-clock millis (since the epoch) of the last successful sink write, or
+             *     `None` if no write has succeeded yet this run.
+             */
+            last_write_ms?: number | null;
+            /**
+             * Format: int64
+             * @description Rows the sink has successfully written since this run started.
+             */
+            rows_written: number;
             /** @description Whether the manager currently has the flow running on this node. */
             running: boolean;
+            /**
+             * Format: int64
+             * @description Failed sink write attempts (each errored attempt, including retries).
+             */
+            write_errors: number;
         };
         /**
          * @description A flow as it appears in the list: identity and run state, without the config
@@ -1745,6 +2326,24 @@ export interface components {
             metrics: components["schemas"]["FlowMetrics"];
             name: string;
             running: boolean;
+        };
+        /**
+         * @description Query the table a flow's `postgres`/`datasource` sink writes to. `sql` is
+         *     optional: when omitted the server runs a default "most recent rows" preview
+         *     against the sink table. The `{table}` token in `sql` expands to the flow's
+         *     configured table name, so a saved query need not hardcode it.
+         */
+        FlowTableQueryRequest: {
+            /**
+             * Format: int64
+             * @description Cap on returned rows for the preview; clamped to the server maximum.
+             */
+            limit?: number | null;
+            /**
+             * @description SQL to run (read-only). `{table}` expands to the flow's sink table. When
+             *     omitted, the server runs its default recent-rows preview.
+             */
+            sql?: string | null;
         };
         /**
          * @description One folder: its immutable id, its parent (NULL = root), and display name. The
@@ -1784,6 +2383,103 @@ export interface components {
          *     on whole groups.
          */
         GroupId: string;
+        /**
+         * @description Acknowledges that a push was enqueued onto a flow's bounded channel. The rows
+         *     are accepted, not yet written — the flow's sink writes them asynchronously, so
+         *     this is a `202`-style accept, not a write confirmation.
+         */
+        IngestAccepted: {
+            /**
+             * Format: int64
+             * @description How many JSON documents the push contributed (one for a single object, the
+             *     element count for an array).
+             */
+            accepted: number;
+        };
+        /** @description The whole curated catalog — every function a script may call. */
+        InsightFunctionCatalog: {
+            /** @description Every curated insight function the sandbox exposes. */
+            functions: components["schemas"]["InsightFunctionDoc"][];
+        };
+        /**
+         * @description One curated insight function, as the UI's cheatsheet / autocomplete renders
+         *     it. Every field is display copy — the engine remains the enforcing authority.
+         */
+        InsightFunctionDoc: {
+            /**
+             * @description The bucket the UI groups it under: `select | filter | window | shape |
+             *     resample | anomaly`.
+             */
+            category: string;
+            /** @description A runnable example call, e.g. `zscore("value")`. */
+            example: string;
+            /** @description The bare function name as called on a frame, e.g. `zscore`. */
+            name: string;
+            /**
+             * @description The full signature with argument names and types, e.g.
+             *     `zscore(col: string)`.
+             */
+            signature: string;
+            /** @description A one-line description of what the function does. */
+            summary: string;
+        };
+        /**
+         * @description How a query attaches a post-query insight transform. A request may either
+         *     inline a `script` (the ad-hoc / preview case) or name a stored insight by
+         *     `insight_id` (the panel case); `params` feeds either as the script's `params`
+         *     object. Both fields are optional and the whole `InsightRef` is optional on the
+         *     request, so a query without one behaves exactly as before — this is a purely
+         *     additive contract, like the RW-05 `sources` field.
+         *
+         *     A request may also name an extension-contributed insight by `insight_name`
+         *     (the global registry an installed extension contributes via
+         *     `contributes.insights[]`). Precedence when more than one is set: a stored
+         *     `insight_id` (tenant-authored) wins, then `insight_name` (global, admin-
+         *     curated), then an inline `script`. Caps still apply *after* the insight runs:
+         *     it can aggregate the result down but the surface guarantees it never grows it.
+         */
+        InsightRef: {
+            /**
+             * Format: uuid
+             * @description A stored insight id to run. Resolved and tenant-authorised server-side.
+             */
+            insight_id?: string | null;
+            /**
+             * @description An extension-contributed insight name to run (e.g. `com.nexus.hello.zscore`).
+             *     Resolved against the global extension-insight registry server-side; the
+             *     script runs against the caller's own result rows, so a global definition
+             *     only ever touches the caller's data. Additive and optional.
+             */
+            insight_name?: string | null;
+            /**
+             * @description Parameters bound as the script's `params` object. Arbitrary JSON; the
+             *     script reads `params.<field>`.
+             */
+            params?: unknown;
+            /**
+             * @description An inline Rhai script to run instead, when no `insight_id` is given. The
+             *     script orchestrates the curated vectorized surface over the result frame.
+             */
+            script?: string | null;
+        };
+        /**
+         * @description One stored insight: immutable id, name, the script, and its optional params
+         *     schema. The flat list carries every field the client needs to run or edit it.
+         */
+        InsightSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description Optional JSON-Schema for the script's params. */
+            params_schema?: unknown;
+            /** @description The Rhai transform script. */
+            script: string;
+        };
+        /**
+         * @description Severity of a [`FlowDebugEvent::Log`] line.
+         * @enum {string}
+         */
+        LogLevel: "info" | "warn" | "error";
         /** @description The authenticated caller's full context. */
         MeResponse: {
             /** @description Coarse role: `reader` | `writer` | `admin`. */
@@ -1875,7 +2571,42 @@ export interface components {
          */
         NodeCategory: "input" | "processor" | "output";
         /**
-         * @description A node type the engine can build, described for the editor: its ArkFlow
+         * @description A periodic snapshot of one node's throughput since the run started. Rows in
+         *     and out differ for a processor that filters or fans out; for the source `in`
+         *     equals `out`, and for the sink `out` is what actually reached the writer.
+         */
+        NodeCounters: {
+            /**
+             * Format: int64
+             * @description Batches the node has handled since the run started.
+             */
+            batches: number;
+            /**
+             * Format: int32
+             * @description Positional node index: 0 = source, 1..=N = processors, N+1 = sink.
+             */
+            node_index: number;
+            /** @description The node's role. */
+            role: components["schemas"]["NodeRole"];
+            /**
+             * Format: int64
+             * @description Rows that entered the node since the run started.
+             */
+            rows_in: number;
+            /**
+             * Format: int64
+             * @description Rows the node produced since the run started.
+             */
+            rows_out: number;
+        };
+        /**
+         * @description Which kind of node a debug event came from. Pairs with `node_index` so the UI
+         *     can label and colour the node without re-deriving its role from the position.
+         * @enum {string}
+         */
+        NodeRole: "source" | "processor" | "sink";
+        /**
+         * @description A node type the engine can build, described for the editor: its engine
          *     `type` discriminant, palette grouping, labels, and a JSON Schema for its
          *     config so the editor can render a schema-driven form instead of raw JSON.
          */
@@ -1886,7 +2617,7 @@ export interface components {
             config_schema: unknown;
             /** @description One-line description. */
             description: string;
-            /** @description The ArkFlow `type` value the serialised graph node carries. */
+            /** @description The engine `type` value the serialised graph node carries. */
             kind: string;
             /** @description Human label for the palette. */
             label: string;
@@ -1925,6 +2656,14 @@ export interface components {
             datasource_id?: string | null;
             /** Format: uuid */
             id: string;
+            /**
+             * Format: uuid
+             * @description Optional post-query insight (RW-06) applied to the panel's result. `None`
+             *     = none attached, or the referenced insight was deleted (FK SET NULL).
+             */
+            insight_id?: string | null;
+            /** @description Params bound as the insight script's `params`. `None` = no params. */
+            insight_params?: unknown;
             /** @description Opaque grid layout the canvas owns. */
             layout: unknown;
             /** @description The panel's SQL, run under the server query guards when refreshed. */
@@ -1944,6 +2683,18 @@ export interface components {
              *     or the importing tenant should re-bind it.
              */
             datasource_id?: string | null;
+            /**
+             * Format: uuid
+             * @description Optional post-query insight id (RW-06). Carried so a dashboard's insight
+             *     wiring survives export within a tenant. NOTE: insight ids are tenant-
+             *     scoped, so importing into a *different* tenant won't resolve this id —
+             *     import drops an unresolved id rather than failing (the same caveat as
+             *     `datasource_id`). The insight's script is not inlined (it lives in the
+             *     tenant's insight library).
+             */
+            insight_id?: string | null;
+            /** @description Params bound as the insight script's `params`. */
+            insight_params?: unknown;
             layout: unknown;
             sql: string;
             title: string;
@@ -1973,6 +2724,53 @@ export interface components {
             timezone?: string | null;
             unit_system?: null | components["schemas"]["UnitSystem"];
             week_start?: null | components["schemas"]["WeekStart"];
+        };
+        /**
+         * @description A tenant-safe script error. `kind` classifies the phase that failed so the UI
+         *     can colour/label it: `"compile"` (syntax), `"runtime"` (logic against the
+         *     data), or `"limit"` (a sandbox bound tripped). `message` is the full
+         *     position-annotated detail.
+         */
+        PreviewInsightError: {
+            /** @description One of `"compile" | "runtime" | "limit"`. */
+            kind: string;
+            /** @description The full, tenant-safe error message. */
+            message: string;
+        };
+        /**
+         * @description Run an inline Rhai script against `rows` without saving anything. The frontend
+         *     already holds query results, so preview is rows-in / rows-out and decoupled
+         *     from re-querying — there is deliberately no datasource/sql path in v1.
+         */
+        PreviewInsightRequest: {
+            /** @description Optional parameters bound as the script's `params` object. */
+            params?: unknown;
+            /** @description The sample input rows (JSON objects) to transform. */
+            rows?: unknown[];
+            /** @description The inline Rhai script to run over the sample rows. */
+            script: string;
+        };
+        /**
+         * @description The preview outcome. A successful run carries the transformed result and the
+         *     input row count (so the UI can show "120 → 87 rows"); a script error carries a
+         *     structured, tenant-safe message. Untagged so the wire shape is simply one of
+         *     the two object forms keyed by `ok`.
+         */
+        PreviewInsightResponse: {
+            /** @description Always `true` for this variant — lets the client discriminate. */
+            ok: boolean;
+            /** @description The transformed rows, columns, and stats — ready for the ResultGrid. */
+            result: components["schemas"]["QueryResponse"];
+            /**
+             * Format: int64
+             * @description The number of input rows submitted (for the "in → out" row delta).
+             */
+            row_count_in: number;
+        } | {
+            /** @description The structured error detail. */
+            error: components["schemas"]["PreviewInsightError"];
+            /** @description Always `false` for this variant. */
+            ok: boolean;
         };
         /**
          * @description Machine-readable error body.
@@ -2091,6 +2889,7 @@ export interface components {
          *     flow through the same binder.
          */
         QueryRequest: {
+            insight?: null | components["schemas"]["InsightRef"];
             /**
              * Format: int64
              * @description The bucket width (seconds) for `$__timeGroup(col, $__interval)` and a
@@ -2112,6 +2911,15 @@ export interface components {
              *     Ignored in raw-SQL mode.
              */
             params?: unknown;
+            /**
+             * @description RW-05 federation: an alias → datasource-id map naming the inputs a
+             *     cross-datasource (or file) `sql` joins over. Each alias is the SQL-visible
+             *     table `ds_<alias>`; the server authorises every referenced id against the
+             *     caller's tenant before planning. Absent (the default) keeps the request on
+             *     the single-datasource push-down path — exactly today's behaviour — so this
+             *     field is purely additive. Ignored in kind-mode.
+             */
+            sources?: components["schemas"]["FederatedSourceRef"][];
             /**
              * @description The SQL to run against the datasource. May carry macros (`$__timeFilter`)
              *     and variable references (`$region`) the binder expands into bound args.
@@ -2372,7 +3180,7 @@ export interface components {
          *     a nav node exactly like a dashboard mount (WS-13 §4).
          * @enum {string}
          */
-        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "alerts" | "agents" | "access" | "audit";
+        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "insights" | "alerts" | "findings" | "agents" | "access" | "audit";
         /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
          *     id echoed in the SSE `id:` field so a reconnecting client can send
@@ -2412,21 +3220,29 @@ export interface components {
             kind: components["schemas"]["TaggableKind"];
         };
         /**
-         * @description Body for a *pre-save* connection probe. Carries the same connection fields as
-         *     a create request, including the write-only secret, so the "Test connection"
-         *     affordance works before the datasource is persisted (and before a secret is
-         *     sealed). The secret is used transiently to connect and never stored or echoed.
+         * @description Body for a *pre-save* connection probe. The flat connection fields carry a
+         *     credentialed SQL connector's parameters (postgres), including the write-only
+         *     secret used transiently to connect and never stored or echoed. Stream
+         *     connectors (`mqtt`/`zenoh`) supply their non-SQL parameters in [`config`] —
+         *     the same `{endpoints, key_expr, …}` shape their datasource-kind config schema
+         *     declares — so one probe endpoint serves every connector. The SQL fields are
+         *     optional so a stream probe need not send placeholder host/port values.
          */
         TestConnectionRequest: {
-            database: string;
-            host: string;
+            /**
+             * @description Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,
+             *     `{host, port, client_id, …}` for mqtt). Ignored for postgres.
+             */
+            config?: unknown;
+            database?: string | null;
+            host?: string | null;
             /** @description Which connector to probe. */
             kind: components["schemas"]["DatasourceKind"];
-            /** @description Write-only secret used only to open the probe connection. */
-            password: string;
+            /** @description Write-only secret used only to open the probe connection (SQL connectors). */
+            password?: string | null;
             /** Format: int32 */
-            port: number;
-            user: string;
+            port?: number | null;
+            user?: string | null;
         };
         /**
          * @description Outcome of a connection probe. `ok` is the headline; on failure `message`
@@ -2548,6 +3364,37 @@ export interface components {
             port?: number | null;
             user?: string | null;
         };
+        /** @description Partially update a detection; omitted fields are unchanged. */
+        UpdateDetectionRequest: {
+            /**
+             * @description Clear the datasource (run against the dev pool). Takes precedence over
+             *     `datasource_id`.
+             */
+            clear_datasource?: boolean;
+            /**
+             * Format: uuid
+             * @description Point the query at this datasource. `None` (with `clear_datasource` false)
+             *     leaves it unchanged. A `clear_datasource` bool carries the "detach → dev
+             *     pool" intent rather than an `Option<Option<_>>` — serde can't distinguish
+             *     an explicit JSON `null` from "absent" on the wire (the same bug the panel
+             *     `clear_insight` flag avoids; confirmed live for detections too).
+             */
+            datasource_id?: string | null;
+            enabled?: boolean | null;
+            flag_column?: string | null;
+            /** Format: int32 */
+            for_secs?: number | null;
+            /** Format: uuid */
+            insight_id?: string | null;
+            /** Format: int32 */
+            interval_secs?: number | null;
+            name?: string | null;
+            params?: unknown;
+            sources?: unknown;
+            sql?: string | null;
+            target_columns?: string[] | null;
+            value_column?: string | null;
+        };
         /**
          * @description Partially update a flow; omitted fields are left unchanged. Toggling
          *     `enabled` here does not by itself start/stop the flow — the dedicated
@@ -2579,6 +3426,18 @@ export interface components {
             parent_id?: string | null;
         };
         /**
+         * @description Partial update. Any field left unset is unchanged. `params_schema` is updated
+         *     only when present — there is no separate "clear" since an absent schema and an
+         *     empty one are equivalent for the advisory UI use.
+         */
+        UpdateInsightRequest: {
+            name?: string | null;
+            /** @description Replace the params schema. */
+            params_schema?: unknown;
+            /** @description Replace the script. */
+            script?: string | null;
+        };
+        /**
          * @description Partially update a nav node. Omitted fields are left unchanged. The
          *     three-valued fields (parent, context, icon, accent) pair an optional value
          *     with a `clear_*` flag so JSON can express "leave / set / clear" without a
@@ -2604,8 +3463,29 @@ export interface components {
         };
         /** @description Partial update of a panel. `None` fields are left unchanged. */
         UpdatePanelRequest: {
+            /**
+             * @description Detach the panel's insight (and clear its params). Takes precedence over
+             *     `insight_id`.
+             */
+            clear_insight?: boolean;
             /** Format: uuid */
             datasource_id?: string | null;
+            /**
+             * Format: uuid
+             * @description Attach/replace this panel's post-query insight (RW-06). Ignored when
+             *     `clear_insight` is true; `None` (with `clear_insight` false) leaves the
+             *     insight unchanged. This mirrors the `folder_id` + `clear_folder` pair on
+             *     dashboards — a bool flag carries the "detach" intent rather than an
+             *     `Option<Option<_>>`, which serde can't distinguish from "absent" on the
+             *     wire (a bug found in live testing: an explicit JSON `null` deserialized to
+             *     "leave unchanged", so detach never fired).
+             */
+            insight_id?: string | null;
+            /**
+             * @description Set the insight's params. Ignored when `clear_insight` is true; cleared
+             *     alongside the insight on detach. `None` leaves params unchanged.
+             */
+            insight_params?: unknown;
             layout?: unknown;
             sql?: string | null;
             title?: string | null;
@@ -2639,6 +3519,17 @@ export interface components {
             options_config?: unknown;
             /** Format: int32 */
             sort_order?: number | null;
+        };
+        /**
+         * @description The caller's freeform settings bag — `GET`/`PUT /api/v1/me/settings`.
+         *
+         *     An opaque envelope around the per-user `jsonb` the frontend owns (starred
+         *     dashboards, collapsed sidebar groups, …). The server neither defines nor
+         *     validates the keys; `PUT` is a full replace, so the client reads, modifies,
+         *     and writes the whole bag. `settings` is always an object (defaults to `{}`).
+         */
+        UserSettings: {
+            settings: unknown;
         };
         /**
          * @description A dashboard variable definition. `options_config` carries the kind-specific
@@ -4192,6 +5083,321 @@ export interface operations {
             };
         };
     };
+    list_detections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detections */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionDetail"][];
+                };
+            };
+        };
+    };
+    create_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDetectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionDetail"];
+                };
+            };
+            /** @description References a missing insight */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionDetail"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDetectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted (findings cascade) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    run_detection_now: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ran */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    detection_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stats */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionStats"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_findings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Findings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Finding"][];
+                };
+            };
+        };
+    };
+    get_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Finding id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Finding */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Finding"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ack_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Finding id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FindingActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found / already resolved */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resolve_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Finding id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FindingActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Resolved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found / already resolved */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     list_flows: {
         parameters: {
             query?: never;
@@ -4429,6 +5635,120 @@ export interface operations {
             };
         };
     };
+    disable_flow_debug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Debug disabled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDebugStatus"];
+                };
+            };
+            /** @description Not allowed to debug this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow not found or not running */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    enable_flow_debug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Debug enabled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlowDebugEnableResponse"];
+                };
+            };
+            /** @description Not allowed to debug this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow not found or not running */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    stream_flow_debug: {
+        parameters: {
+            query: {
+                /** @description Signed debug token from enable */
+                token: string;
+            };
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE event stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Missing/expired/invalid token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow not running */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     export_flow: {
         parameters: {
             query?: never;
@@ -4532,6 +5852,56 @@ export interface operations {
                 };
             };
             /** @description Not allowed to stop this flow */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    query_flow_table: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Flow id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlowTableQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Query result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponse"];
+                };
+            };
+            /** @description Flow has no queryable table, or the query was rejected */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not allowed to view this flow */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4667,6 +6037,276 @@ export interface operations {
             };
         };
     };
+    push_ingest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Target http_ingest flow id */
+                flow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": unknown;
+            };
+        };
+        responses: {
+            /** @description Accepted onto the flow channel */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestAccepted"];
+                };
+            };
+            /** @description No such flow accepting pushes in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Flow channel full; retry after the given seconds */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_insights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Insights in the tenant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"][];
+                };
+            };
+        };
+    };
+    create_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"];
+                };
+            };
+            /** @description The script does not compile */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_insight_functions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The curated insight function catalog */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightFunctionCatalog"];
+                };
+            };
+        };
+    };
+    preview_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewInsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Preview result — `ok:true` with the transformed result, or `ok:false` with a script error */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviewInsightResponse"];
+                };
+            };
+            /** @description Too many sample rows */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Insight id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The insight */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"];
+                };
+            };
+            /** @description Not authorized to view this insight */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Insight id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authorized to delete this insight */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_insight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Insight id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInsightRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightSummary"];
+                };
+            };
+            /** @description The new script does not compile */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authorized to edit this insight */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     get_me: {
         parameters: {
             query?: never;
@@ -4749,6 +6389,64 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_me_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSettings"];
+                };
+            };
+            /** @description Unauthenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    set_me_settings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserSettings"];
+            };
+        };
+        responses: {
+            /** @description The caller's settings after the write */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSettings"];
+                };
             };
             /** @description Unauthenticated */
             401: {

@@ -1680,6 +1680,361 @@
         }
       }
     },
+    "/api/v1/detections": {
+      "get": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "list_detections",
+        "responses": {
+          "200": {
+            "description": "Detections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DetectionDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "create_detection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDetectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "References a missing insight"
+          }
+        }
+      }
+    },
+    "/api/v1/detections/{id}": {
+      "get": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "get_detection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "update_detection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDetectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "delete_detection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted (findings cascade)"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/detections/{id}/run": {
+      "post": {
+        "tags": [
+          "detections"
+        ],
+        "summary": "Manually run a detection now, outside its schedule — the deterministic seam\nthe WS acceptance leans on (\"runs on its interval … verified the same way the\nalert scheduler was\"). Returns the upsert/resolve counts. Requires `edit`.",
+        "operationId": "run_detection_now",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ran",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/detections/{id}/stats": {
+      "get": {
+        "tags": [
+          "detections"
+        ],
+        "summary": "Run stats for a detection: next run time + its findings by status. A\nglanceable summary for the list and editor. Requires `view`.",
+        "operationId": "detection_stats",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionStats"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/findings": {
+      "get": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "list_findings",
+        "responses": {
+          "200": {
+            "description": "Findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Finding"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}": {
+      "get": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "get_finding",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Finding id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Finding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Finding"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}/ack": {
+      "post": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "ack_finding",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Finding id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Acknowledged"
+          },
+          "404": {
+            "description": "Not found / already resolved"
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}/resolve": {
+      "post": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "resolve_finding",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Finding id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Resolved"
+          },
+          "404": {
+            "description": "Not found / already resolved"
+          }
+        }
+      }
+    },
     "/api/v1/flows": {
       "get": {
         "tags": [
@@ -1925,6 +2280,126 @@
         }
       }
     },
+    "/api/v1/flows/{id}/debug/disable": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "disable_flow_debug",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Debug disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDebugStatus"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to debug this flow"
+          },
+          "404": {
+            "description": "Flow not found or not running"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/debug/enable": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "enable_flow_debug",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Debug enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlowDebugEnableResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to debug this flow"
+          },
+          "404": {
+            "description": "Flow not found or not running"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/debug/stream": {
+      "get": {
+        "tags": [
+          "flows"
+        ],
+        "summary": "SSE subscription to a running flow's debug events. Authed by the signed token\nminted on enable, never a Bearer (a browser `EventSource` cannot set headers).",
+        "operationId": "stream_flow_debug",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "description": "Signed debug token from enable",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE event stream",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "401": {
+            "description": "Missing/expired/invalid token"
+          },
+          "404": {
+            "description": "Flow not running"
+          }
+        }
+      }
+    },
     "/api/v1/flows/{id}/export": {
       "get": {
         "tags": [
@@ -2035,6 +2510,64 @@
           },
           "403": {
             "description": "Not allowed to stop this flow"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
+    "/api/v1/flows/{id}/table/query": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "query_flow_table",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlowTableQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Flow has no queryable table, or the query was rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed to view this flow"
           },
           "404": {
             "description": "Not found in this tenant"
@@ -2170,6 +2703,278 @@
         }
       }
     },
+    "/api/v1/ingest/{flow_id}": {
+      "post": {
+        "tags": [
+          "flows"
+        ],
+        "operationId": "push_ingest",
+        "parameters": [
+          {
+            "name": "flow_id",
+            "in": "path",
+            "description": "Target http_ingest flow id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted onto the flow channel",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestAccepted"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such flow accepting pushes in this tenant"
+          },
+          "429": {
+            "description": "Flow channel full; retry after the given seconds"
+          }
+        }
+      }
+    },
+    "/api/v1/insights": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "list_insights",
+        "responses": {
+          "200": {
+            "description": "Insights in the tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InsightSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "create_insight",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The script does not compile"
+          }
+        }
+      }
+    },
+    "/api/v1/insights/functions": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "list_insight_functions",
+        "responses": {
+          "200": {
+            "description": "The curated insight function catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightFunctionCatalog"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/insights/preview": {
+      "post": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "preview_insight",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewInsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Preview result — `ok:true` with the transformed result, or `ok:false` with a script error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewInsightResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Too many sample rows"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/insights/{id}": {
+      "get": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "get_insight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Insight id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The insight",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightSummary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this insight"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "delete_insight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Insight id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "403": {
+            "description": "Not authorized to delete this insight"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "insights"
+        ],
+        "operationId": "update_insight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Insight id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInsightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The new script does not compile"
+          },
+          "403": {
+            "description": "Not authorized to edit this insight"
+          },
+          "404": {
+            "description": "Not found in this tenant"
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "tags": [
@@ -2246,6 +3051,62 @@
           },
           "400": {
             "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      }
+    },
+    "/api/v1/me/settings": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`GET /api/v1/me/settings` — the caller's settings bag, `{}` when never saved.",
+        "operationId": "get_me_settings",
+        "responses": {
+          "200": {
+            "description": "The caller's settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "me"
+        ],
+        "summary": "`PUT /api/v1/me/settings` — replace the caller's settings bag (full replace).",
+        "operationId": "set_me_settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The caller's settings after the write",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSettings"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthenticated"
@@ -3878,22 +4739,26 @@
       },
       "CreateDatasourceRequest": {
         "type": "object",
-        "description": "Body for creating a datasource. The `password` is write-only: it is accepted\nhere, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
+        "description": "Body for creating a datasource. SQL connectors (postgres) carry their\nconnection in the flat `host`/`port`/`database`/`user`/`password` fields;\nnon-SQL connectors (`mqtt`/`zenoh`) and file kinds (`parquet`/`csv`) supply\ntheir parameters in [`config`] — the same per-kind shape their\ndatasource-kind config schema declares — so one create endpoint serves every\nconnector. The flat SQL fields are optional so a stream/file create need not\nsend placeholder host/port values. The `password` is write-only: it is\naccepted here, envelope-encrypted at rest, and never echoed back by any read\nendpoint.",
         "required": [
           "name",
-          "kind",
-          "host",
-          "port",
-          "database",
-          "user",
-          "password"
+          "kind"
         ],
         "properties": {
+          "config": {
+            "description": "Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,\n`{host, port, client_id, …}` for mqtt, `{path, has_header}` for files).\nIgnored for postgres, which uses the flat fields."
+          },
           "database": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "host": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "kind": {
             "$ref": "#/components/schemas/DatasourceKind",
@@ -3904,22 +4769,103 @@
             "description": "Human-readable name shown in the datasource picker."
           },
           "password": {
-            "type": "string",
-            "description": "Write-only secret. Stored as ciphertext; absent from every response."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Write-only secret (SQL connectors). Stored as ciphertext; absent from\nevery response. Optional — file kinds have no secret."
           },
           "port": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "minimum": 0
           },
           "user": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CreateDetectionRequest": {
+        "type": "object",
+        "description": "Create a detection. `insight_id` is the stored Rhai rule (required — a\ndetection with no rule is meaningless); `flag_column` names the insight\noutput column whose truthy value marks a flagged row; `target_columns`\nidentify the finding's target and form its dedup key; `value_column` is the\nnumeric column carried onto the finding.",
+        "required": [
+          "name",
+          "insight_id",
+          "sql",
+          "flag_column"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "flag_column": {
             "type": "string"
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional dwell in seconds before a flagged row becomes a finding\n(default 0 — most analytic findings are point-in-time)."
+          },
+          "insight_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Run cadence in seconds (default 300)."
+          },
+          "name": {
+            "type": "string"
+          },
+          "params": {
+            "description": "Params passed to the insight (thresholds, window, z, …)."
+          },
+          "sources": {
+            "description": "RW-05 federated sources the `sql` joins over (alias → datasource ref).\nEmpty (the default) runs the single-datasource push-down path; non-empty\ndispatches through the federation engine, exactly like a panel query."
+          },
+          "sql": {
+            "type": "string"
+          },
+          "target_columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value_column": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
       "CreateFlowRequest": {
         "type": "object",
-        "description": "Create a flow. `input`/`pipeline`/`output` are the ArkFlow config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
+        "description": "Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
         "required": [
           "name",
           "input",
@@ -3957,6 +4903,27 @@
             ],
             "format": "uuid",
             "description": "Parent folder id; omit/`null` for a root folder."
+          }
+        }
+      },
+      "CreateInsightRequest": {
+        "type": "object",
+        "description": "Create a tenant-scoped insight. `script` is the Rhai transform; `params_schema`\nis an optional JSON-Schema describing the params a caller may pass when running\nit (advisory metadata for the UI — the sandbox enforces safety regardless).",
+        "required": [
+          "name",
+          "script"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name, unique enough for the tenant's list."
+          },
+          "params_schema": {
+            "description": "Optional JSON-Schema for the script's params, for UI form generation."
+          },
+          "script": {
+            "type": "string",
+            "description": "The Rhai script orchestrating the curated vectorized surface."
           }
         }
       },
@@ -4021,6 +4988,17 @@
             "type": "string",
             "format": "uuid",
             "description": "Datasource this panel queries."
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional post-query insight (RW-06) to attach at creation. Omitted = none."
+          },
+          "insight_params": {
+            "description": "Params bound as the insight script's `params`."
           },
           "layout": {
             "description": "Grid layout; defaults to empty when omitted."
@@ -4409,9 +5387,11 @@
       },
       "DatasourceKind": {
         "type": "string",
-        "description": "The kind of datasource, which selects the ArkFlow input builder. v1 ships\nSQL-over-Postgres as the first connector; the enum is the extension point as\nmore `register_input_builder` connectors land.",
+        "description": "The kind of datasource, which selects the engine's input builder. SQL over\nPostgres is the queryable connector; `mqtt`/`zenoh` are stream connectors whose\npre-save probe opens a short-lived session (no ad-hoc query target). The enum\nis the extension point as more registry input builders land.",
         "enum": [
-          "postgres"
+          "postgres",
+          "mqtt",
+          "zenoh"
         ]
       },
       "DatasourceKindList": {
@@ -4526,6 +5506,116 @@
           "MM/DD/YYYY"
         ]
       },
+      "DetectionDetail": {
+        "type": "object",
+        "description": "A detection as returned by the API.",
+        "required": [
+          "id",
+          "name",
+          "insight_id",
+          "sql",
+          "params",
+          "sources",
+          "flag_column",
+          "target_columns",
+          "for_secs",
+          "interval_secs",
+          "enabled"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "flag_column": {
+            "type": "string"
+          },
+          "for_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "insight_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "params": {},
+          "sources": {},
+          "sql": {
+            "type": "string"
+          },
+          "target_columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value_column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DetectionStats": {
+        "type": "object",
+        "description": "Run stats for a detection — a glanceable summary for the list/editor.",
+        "required": [
+          "next_eval_at",
+          "open",
+          "acknowledged",
+          "resolved",
+          "total"
+        ],
+        "properties": {
+          "acknowledged": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_finding_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The most recent finding time across all this detection's findings."
+          },
+          "next_eval_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the scheduler will next run this detection."
+          },
+          "open": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "resolved": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "DryRunRequest": {
         "type": "object",
         "description": "Test a flow's `input` + `pipeline` without persisting it or running its real\noutput. The engine swaps in the bounded collector sink, runs the stream to\nthe first breached cap (or a short wall-clock deadline), and returns the\nsample rows. `output` is intentionally absent — a dry run never writes to a\nreal sink. Optional `max_rows` lets the editor narrow the sample further\nthan the server default.",
@@ -4584,6 +5674,295 @@
           }
         }
       },
+      "FederatedSourceRef": {
+        "type": "object",
+        "description": "One federated input reference: a SQL alias bound to a datasource id. The alias\nbecomes the `ds_<alias>` table the request's `sql` reads; the id is resolved\nand tenant-authorised server-side. A file datasource (kind `parquet`/`csv`)\nreferences its configured path; a `postgres` datasource references its `table`.",
+        "required": [
+          "alias",
+          "datasource"
+        ],
+        "properties": {
+          "alias": {
+            "type": "string",
+            "description": "SQL alias for this input — referenced as `ds_<alias>` in the statement.\nRestricted to a plain identifier server-side so it is a safe table name."
+          },
+          "datasource": {
+            "type": "string",
+            "description": "The datasource id (UUID string) this alias resolves to. Must be visible to\nthe caller's tenant; an id the tenant cannot view is rejected, never read."
+          },
+          "table": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "For a `postgres` datasource, the remote table to read into the join. A\nfile datasource ignores this (its path is the table)."
+          }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "description": "One persistent finding emitted by a detection run.",
+        "required": [
+          "id",
+          "detection_id",
+          "at",
+          "target",
+          "context",
+          "status"
+        ],
+        "properties": {
+          "acked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "acked_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "context": {
+            "description": "The flagged row's other derived columns — the \"why\"."
+          },
+          "detection_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolved_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "description": "open | acknowledged | resolved."
+          },
+          "target": {
+            "description": "The identifying column values, e.g. `{\"site\":\"s1\",\"meter\":\"m7\"}`."
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "FindingActionRequest": {
+        "type": "object",
+        "description": "Acknowledge or manually resolve a finding; both accept an optional note.",
+        "properties": {
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "FlowDebugEnableResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FlowDebugStatus"
+          },
+          {
+            "type": "object",
+            "required": [
+              "stream_url",
+              "token",
+              "expires_in_secs"
+            ],
+            "properties": {
+              "expires_in_secs": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Seconds until the token expires.",
+                "minimum": 0
+              },
+              "stream_url": {
+                "type": "string",
+                "description": "The SSE endpoint to open, with the token already in the query string."
+              },
+              "token": {
+                "type": "string",
+                "description": "The signed stream token, also returned separately for clients that build\ntheir own URL."
+              }
+            }
+          }
+        ],
+        "description": "The response to enabling debug on a running flow: the resulting status plus a\nshort-lived signed token and the SSE URL to open. A browser `EventSource`\ncannot send an `Authorization` header, so the stream is authed by this token\nin the query string — minted only after the Bearer-authed enable call passed\nthe flow's edit grant."
+      },
+      "FlowDebugEvent": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NodeCounters"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "seq"
+                ],
+                "properties": {
+                  "seq": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Monotonic sequence number, assigned by the producer.",
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "description": "A periodic per-node counter tick.",
+                "required": [
+                  "kind"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "counters"
+                    ]
+                  }
+                }
+              }
+            ],
+            "description": "A periodic per-node counter tick."
+          },
+          {
+            "type": "object",
+            "description": "A bounded sample of rows that crossed a node boundary, as JSON objects.",
+            "required": [
+              "seq",
+              "node_index",
+              "role",
+              "rows",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "sample"
+                ]
+              },
+              "node_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Reserved for a future branching shape; prefer over `node_index` when\npresent."
+              },
+              "node_index": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "role": {
+                "$ref": "#/components/schemas/NodeRole"
+              },
+              "rows": {
+                "type": "array",
+                "items": {},
+                "description": "Up to the per-node sample cap; each row is a JSON object."
+              },
+              "seq": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A log line — a retry attempt, a policy drop/DLQ, or the run-ending error.",
+            "required": [
+              "seq",
+              "level",
+              "message",
+              "at_ms",
+              "kind"
+            ],
+            "properties": {
+              "at_ms": {
+                "type": "integer",
+                "format": "int64",
+                "description": "Wall-clock millis since the epoch when the line was emitted.",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "log"
+                ]
+              },
+              "level": {
+                "$ref": "#/components/schemas/LogLevel"
+              },
+              "message": {
+                "type": "string"
+              },
+              "node_index": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int32",
+                "description": "The node the log relates to, when known.",
+                "minimum": 0
+              },
+              "seq": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 0
+              }
+            }
+          }
+        ],
+        "description": "One event in a running flow's debug stream. `kind`-tagged so the UI can switch\non the variant; every variant carries a monotonic `seq` for `Last-Event-ID`\nresume parity with the transport."
+      },
+      "FlowDebugStatus": {
+        "type": "object",
+        "description": "The state returned by the enable/disable endpoints so the UI can reflect\nwhether debug is currently capturing and how many nodes to expect.",
+        "required": [
+          "enabled",
+          "node_count"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether value/sample capture is currently on for the running flow."
+          },
+          "node_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total node count (source + processors + sink) so the UI can validate its\npositional mapping against the backend chain.",
+            "minimum": 0
+          }
+        }
+      },
       "FlowDetail": {
         "type": "object",
         "description": "A saved ingestion flow in full. The three config blobs are opaque JSON on the\nwire — the input connector, the processor pipeline, and the output sink the\nFlowManager hands to the engine.",
@@ -4624,7 +6003,7 @@
       },
       "FlowExport": {
         "type": "object",
-        "description": "A self-contained, importable flow: its name plus the ArkFlow config blobs.",
+        "description": "A self-contained, importable flow: its name plus the engine config blobs.",
         "required": [
           "schema_version",
           "name",
@@ -4633,16 +6012,16 @@
         ],
         "properties": {
           "input": {
-            "description": "ArkFlow input component (`{type, ...config}`), secrets redacted."
+            "description": "Engine input component (`{type, ...config}`), secrets redacted."
           },
           "name": {
             "type": "string"
           },
           "output": {
-            "description": "ArkFlow output component (`{type, ...config}`), secrets redacted."
+            "description": "Engine output component (`{type, ...config}`), secrets redacted."
           },
           "pipeline": {
-            "description": "ArkFlow processor list (a JSON array of `{type, ...config}`)."
+            "description": "Engine processor list (a JSON array of `{type, ...config}`)."
           },
           "redacted": {
             "type": "boolean",
@@ -4658,11 +6037,34 @@
       },
       "FlowMetrics": {
         "type": "object",
-        "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, and the error that ended the last run (if\nany). All fields reflect this node's in-process\n[`FlowManager`](nexus_engine::FlowManager) state; they reset on restart and\nare absent once the process restarts (single-node v1). Throughput counters\nwould require instrumenting every output sink, so they are intentionally\nomitted rather than reported as zero.",
+        "description": "Live run state surfaced on the flows list and detail so an admin sees a\nflow's health without opening it: whether it is running, when its current\n(or most recent) run started, the error that ended the last run (if any),\nand the ingest throughput counters for the current run. All fields reflect\nthis node's in-process [`FlowManager`](nexus_engine::FlowManager) state; they\nreset on restart and are absent once the process restarts (single-node v1).",
         "required": [
-          "running"
+          "running",
+          "batches_in",
+          "rows_written",
+          "channel_depth",
+          "flush_count",
+          "write_errors"
         ],
         "properties": {
+          "batches_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Batches read from the source since this run started.",
+            "minimum": 0
+          },
+          "channel_depth": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Approximate depth of the bounded source→sink channel (batches read but\nnot yet drained to the sink) — the live backpressure gauge.",
+            "minimum": 0
+          },
+          "flush_count": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of batches handed to the underlying sink writer.",
+            "minimum": 0
+          },
           "last_error": {
             "type": [
               "string",
@@ -4677,9 +6079,30 @@
             ],
             "description": "RFC-3339 timestamp of when the current or most recent run started, or\n`None` if the flow has never run this process."
           },
+          "last_write_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Wall-clock millis (since the epoch) of the last successful sink write, or\n`None` if no write has succeeded yet this run.",
+            "minimum": 0
+          },
+          "rows_written": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows the sink has successfully written since this run started.",
+            "minimum": 0
+          },
           "running": {
             "type": "boolean",
             "description": "Whether the manager currently has the flow running on this node."
+          },
+          "write_errors": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Failed sink write attempts (each errored attempt, including retries).",
+            "minimum": 0
           }
         }
       },
@@ -4710,6 +6133,28 @@
           },
           "running": {
             "type": "boolean"
+          }
+        }
+      },
+      "FlowTableQueryRequest": {
+        "type": "object",
+        "description": "Query the table a flow's `postgres`/`datasource` sink writes to. `sql` is\noptional: when omitted the server runs a default \"most recent rows\" preview\nagainst the sink table. The `{table}` token in `sql` expands to the flow's\nconfigured table name, so a saved query need not hardcode it.",
+        "properties": {
+          "limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Cap on returned rows for the preview; clamped to the server maximum.",
+            "minimum": 0
+          },
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "SQL to run (read-only). `{table}` expands to the flow's sink table. When\nomitted, the server runs its default recent-rows preview."
           }
         }
       },
@@ -4769,6 +6214,135 @@
       "GroupId": {
         "type": "string",
         "description": "Identifier shared by every [`super::Change`] recorded inside a\nsingle [`super::ChangeRecorder::transaction`] call. Undo operates\non whole groups."
+      },
+      "IngestAccepted": {
+        "type": "object",
+        "description": "Acknowledges that a push was enqueued onto a flow's bounded channel. The rows\nare accepted, not yet written — the flow's sink writes them asynchronously, so\nthis is a `202`-style accept, not a write confirmation.",
+        "required": [
+          "accepted"
+        ],
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "format": "int64",
+            "description": "How many JSON documents the push contributed (one for a single object, the\nelement count for an array).",
+            "minimum": 0
+          }
+        }
+      },
+      "InsightFunctionCatalog": {
+        "type": "object",
+        "description": "The whole curated catalog — every function a script may call.",
+        "required": [
+          "functions"
+        ],
+        "properties": {
+          "functions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InsightFunctionDoc"
+            },
+            "description": "Every curated insight function the sandbox exposes."
+          }
+        }
+      },
+      "InsightFunctionDoc": {
+        "type": "object",
+        "description": "One curated insight function, as the UI's cheatsheet / autocomplete renders\nit. Every field is display copy — the engine remains the enforcing authority.",
+        "required": [
+          "name",
+          "signature",
+          "summary",
+          "category",
+          "example"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "The bucket the UI groups it under: `select | filter | window | shape |\nresample | anomaly`."
+          },
+          "example": {
+            "type": "string",
+            "description": "A runnable example call, e.g. `zscore(\"value\")`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The bare function name as called on a frame, e.g. `zscore`."
+          },
+          "signature": {
+            "type": "string",
+            "description": "The full signature with argument names and types, e.g.\n`zscore(col: string)`."
+          },
+          "summary": {
+            "type": "string",
+            "description": "A one-line description of what the function does."
+          }
+        }
+      },
+      "InsightRef": {
+        "type": "object",
+        "description": "How a query attaches a post-query insight transform. A request may either\ninline a `script` (the ad-hoc / preview case) or name a stored insight by\n`insight_id` (the panel case); `params` feeds either as the script's `params`\nobject. Both fields are optional and the whole `InsightRef` is optional on the\nrequest, so a query without one behaves exactly as before — this is a purely\nadditive contract, like the RW-05 `sources` field.\n\nA request may also name an extension-contributed insight by `insight_name`\n(the global registry an installed extension contributes via\n`contributes.insights[]`). Precedence when more than one is set: a stored\n`insight_id` (tenant-authored) wins, then `insight_name` (global, admin-\ncurated), then an inline `script`. Caps still apply *after* the insight runs:\nit can aggregate the result down but the surface guarantees it never grows it.",
+        "properties": {
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "A stored insight id to run. Resolved and tenant-authorised server-side."
+          },
+          "insight_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An extension-contributed insight name to run (e.g. `com.nexus.hello.zscore`).\nResolved against the global extension-insight registry server-side; the\nscript runs against the caller's own result rows, so a global definition\nonly ever touches the caller's data. Additive and optional."
+          },
+          "params": {
+            "description": "Parameters bound as the script's `params` object. Arbitrary JSON; the\nscript reads `params.<field>`."
+          },
+          "script": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An inline Rhai script to run instead, when no `insight_id` is given. The\nscript orchestrates the curated vectorized surface over the result frame."
+          }
+        }
+      },
+      "InsightSummary": {
+        "type": "object",
+        "description": "One stored insight: immutable id, name, the script, and its optional params\nschema. The flat list carries every field the client needs to run or edit it.",
+        "required": [
+          "id",
+          "name",
+          "script"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "params_schema": {
+            "description": "Optional JSON-Schema for the script's params."
+          },
+          "script": {
+            "type": "string",
+            "description": "The Rhai transform script."
+          }
+        }
+      },
+      "LogLevel": {
+        "type": "string",
+        "description": "Severity of a [`FlowDebugEvent::Log`] line.",
+        "enum": [
+          "info",
+          "warn",
+          "error"
+        ]
       },
       "MeResponse": {
         "type": "object",
@@ -4965,9 +6539,59 @@
           "output"
         ]
       },
+      "NodeCounters": {
+        "type": "object",
+        "description": "A periodic snapshot of one node's throughput since the run started. Rows in\nand out differ for a processor that filters or fans out; for the source `in`\nequals `out`, and for the sink `out` is what actually reached the writer.",
+        "required": [
+          "node_index",
+          "role",
+          "rows_in",
+          "rows_out",
+          "batches"
+        ],
+        "properties": {
+          "batches": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Batches the node has handled since the run started.",
+            "minimum": 0
+          },
+          "node_index": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Positional node index: 0 = source, 1..=N = processors, N+1 = sink.",
+            "minimum": 0
+          },
+          "role": {
+            "$ref": "#/components/schemas/NodeRole",
+            "description": "The node's role."
+          },
+          "rows_in": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows that entered the node since the run started.",
+            "minimum": 0
+          },
+          "rows_out": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rows the node produced since the run started.",
+            "minimum": 0
+          }
+        }
+      },
+      "NodeRole": {
+        "type": "string",
+        "description": "Which kind of node a debug event came from. Pairs with `node_index` so the UI\ncan label and colour the node without re-deriving its role from the position.",
+        "enum": [
+          "source",
+          "processor",
+          "sink"
+        ]
+      },
       "NodeType": {
         "type": "object",
-        "description": "A node type the engine can build, described for the editor: its ArkFlow\n`type` discriminant, palette grouping, labels, and a JSON Schema for its\nconfig so the editor can render a schema-driven form instead of raw JSON.",
+        "description": "A node type the engine can build, described for the editor: its engine\n`type` discriminant, palette grouping, labels, and a JSON Schema for its\nconfig so the editor can render a schema-driven form instead of raw JSON.",
         "required": [
           "kind",
           "category",
@@ -4989,7 +6613,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "The ArkFlow `type` value the serialised graph node carries."
+            "description": "The engine `type` value the serialised graph node carries."
           },
           "label": {
             "type": "string",
@@ -5084,6 +6708,17 @@
             "type": "string",
             "format": "uuid"
           },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional post-query insight (RW-06) applied to the panel's result. `None`\n= none attached, or the referenced insight was deleted (FK SET NULL)."
+          },
+          "insight_params": {
+            "description": "Params bound as the insight script's `params`. `None` = no params."
+          },
           "layout": {
             "description": "Opaque grid layout the canvas owns."
           },
@@ -5117,6 +6752,17 @@
             ],
             "format": "uuid",
             "description": "Datasource this panel queries; `null` when the source dashboard had none\nor the importing tenant should re-bind it."
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Optional post-query insight id (RW-06). Carried so a dashboard's insight\nwiring survives export within a tenant. NOTE: insight ids are tenant-\nscoped, so importing into a *different* tenant won't resolve this id —\nimport drops an unresolved id rather than failing (the same caveat as\n`datasource_id`). The insight's script is not inlined (it lives in the\ntenant's insight library)."
+          },
+          "insight_params": {
+            "description": "Params bound as the insight script's `params`."
           },
           "layout": {},
           "sql": {
@@ -5284,6 +6930,93 @@
             ]
           }
         }
+      },
+      "PreviewInsightError": {
+        "type": "object",
+        "description": "A tenant-safe script error. `kind` classifies the phase that failed so the UI\ncan colour/label it: `\"compile\"` (syntax), `\"runtime\"` (logic against the\ndata), or `\"limit\"` (a sandbox bound tripped). `message` is the full\nposition-annotated detail.",
+        "required": [
+          "message",
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "One of `\"compile\" | \"runtime\" | \"limit\"`."
+          },
+          "message": {
+            "type": "string",
+            "description": "The full, tenant-safe error message."
+          }
+        }
+      },
+      "PreviewInsightRequest": {
+        "type": "object",
+        "description": "Run an inline Rhai script against `rows` without saving anything. The frontend\nalready holds query results, so preview is rows-in / rows-out and decoupled\nfrom re-querying — there is deliberately no datasource/sql path in v1.",
+        "required": [
+          "script"
+        ],
+        "properties": {
+          "params": {
+            "description": "Optional parameters bound as the script's `params` object."
+          },
+          "rows": {
+            "type": "array",
+            "items": {},
+            "description": "The sample input rows (JSON objects) to transform."
+          },
+          "script": {
+            "type": "string",
+            "description": "The inline Rhai script to run over the sample rows."
+          }
+        }
+      },
+      "PreviewInsightResponse": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "The script ran. `result` is the QueryResponse-shaped transformed output;\n`row_count_in` is the number of input rows the script saw.",
+            "required": [
+              "ok",
+              "result",
+              "row_count_in"
+            ],
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "Always `true` for this variant — lets the client discriminate."
+              },
+              "result": {
+                "$ref": "#/components/schemas/QueryResponse",
+                "description": "The transformed rows, columns, and stats — ready for the ResultGrid."
+              },
+              "row_count_in": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The number of input rows submitted (for the \"in → out\" row delta).",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The script failed to compile or run. Returned with HTTP 200 so the UI\nrenders it inline rather than as a failed request.",
+            "required": [
+              "ok",
+              "error"
+            ],
+            "properties": {
+              "error": {
+                "$ref": "#/components/schemas/PreviewInsightError",
+                "description": "The structured error detail."
+              },
+              "ok": {
+                "type": "boolean",
+                "description": "Always `false` for this variant."
+              }
+            }
+          }
+        ],
+        "description": "The preview outcome. A successful run carries the transformed result and the\ninput row count (so the UI can show \"120 → 87 rows\"); a script error carries a\nstructured, tenant-safe message. Untagged so the wire shape is simply one of\nthe two object forms keyed by `ok`."
       },
       "Problem": {
         "type": "object",
@@ -5489,6 +7222,17 @@
           "sql"
         ],
         "properties": {
+          "insight": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InsightRef",
+                "description": "RW-06 post-query insight: an optional Rhai transform (inline or a stored\nid) applied to the result frame *after* the query runs and *before* the\nresponse is serialized. Caps still apply after the transform — it can\naggregate the result down, never grow it past a cap. Absent (the default)\nkeeps the result exactly as the query produced it, so this field is purely\nadditive."
+              }
+            ]
+          },
           "interval_secs": {
             "type": [
               "integer",
@@ -5507,6 +7251,13 @@
           },
           "params": {
             "description": "WS-10 kind-mode named params, validated host-side against the kind's JSON\nSchema before binding. Each value binds as a `$N` arg, never inlined.\nIgnored in raw-SQL mode."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FederatedSourceRef"
+            },
+            "description": "RW-05 federation: an alias → datasource-id map naming the inputs a\ncross-datasource (or file) `sql` joins over. Each alias is the SQL-visible\ntable `ds_<alias>`; the server authorises every referenced id against the\ncaller's tenant before planning. Absent (the default) keeps the request on\nthe single-datasource push-down path — exactly today's behaviour — so this\nfield is purely additive. Ignored in kind-mode."
           },
           "sql": {
             "type": "string",
@@ -5936,7 +7687,9 @@
           "explore",
           "datasources",
           "flows",
+          "insights",
           "alerts",
+          "findings",
           "agents",
           "access",
           "audit"
@@ -6014,37 +7767,50 @@
       },
       "TestConnectionRequest": {
         "type": "object",
-        "description": "Body for a *pre-save* connection probe. Carries the same connection fields as\na create request, including the write-only secret, so the \"Test connection\"\naffordance works before the datasource is persisted (and before a secret is\nsealed). The secret is used transiently to connect and never stored or echoed.",
+        "description": "Body for a *pre-save* connection probe. The flat connection fields carry a\ncredentialed SQL connector's parameters (postgres), including the write-only\nsecret used transiently to connect and never stored or echoed. Stream\nconnectors (`mqtt`/`zenoh`) supply their non-SQL parameters in [`config`] —\nthe same `{endpoints, key_expr, …}` shape their datasource-kind config schema\ndeclares — so one probe endpoint serves every connector. The SQL fields are\noptional so a stream probe need not send placeholder host/port values.",
         "required": [
-          "kind",
-          "host",
-          "port",
-          "database",
-          "user",
-          "password"
+          "kind"
         ],
         "properties": {
+          "config": {
+            "description": "Per-kind config for non-SQL connectors (`{endpoints, mode, …}` for zenoh,\n`{host, port, client_id, …}` for mqtt). Ignored for postgres."
+          },
           "database": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "host": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "kind": {
             "$ref": "#/components/schemas/DatasourceKind",
             "description": "Which connector to probe."
           },
           "password": {
-            "type": "string",
-            "description": "Write-only secret used only to open the probe connection."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Write-only secret used only to open the probe connection (SQL connectors)."
           },
           "port": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int32",
             "minimum": 0
           },
           "user": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -6384,6 +8150,86 @@
           }
         }
       },
+      "UpdateDetectionRequest": {
+        "type": "object",
+        "description": "Partially update a detection; omitted fields are unchanged.",
+        "properties": {
+          "clear_datasource": {
+            "type": "boolean",
+            "description": "Clear the datasource (run against the dev pool). Takes precedence over\n`datasource_id`."
+          },
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Point the query at this datasource. `None` (with `clear_datasource` false)\nleaves it unchanged. A `clear_datasource` bool carries the \"detach → dev\npool\" intent rather than an `Option<Option<_>>` — serde can't distinguish\nan explicit JSON `null` from \"absent\" on the wire (the same bug the panel\n`clear_insight` flag avoids; confirmed live for detections too)."
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "flag_column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "params": {},
+          "sources": {},
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_columns": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "value_column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "UpdateFlowRequest": {
         "type": "object",
         "description": "Partially update a flow; omitted fields are left unchanged. Toggling\n`enabled` here does not by itself start/stop the flow — the dedicated\n`start`/`stop` routes do that and also flip this flag — so a plain update is\nfor editing the config or name.",
@@ -6426,6 +8272,28 @@
             ],
             "format": "uuid",
             "description": "Move under this folder. Ignored when `clear_parent` is true."
+          }
+        }
+      },
+      "UpdateInsightRequest": {
+        "type": "object",
+        "description": "Partial update. Any field left unset is unchanged. `params_schema` is updated\nonly when present — there is no separate \"clear\" since an absent schema and an\nempty one are equivalent for the advisory UI use.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "params_schema": {
+            "description": "Replace the params schema."
+          },
+          "script": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Replace the script."
           }
         }
       },
@@ -6505,12 +8373,27 @@
         "type": "object",
         "description": "Partial update of a panel. `None` fields are left unchanged.",
         "properties": {
+          "clear_insight": {
+            "type": "boolean",
+            "description": "Detach the panel's insight (and clear its params). Takes precedence over\n`insight_id`."
+          },
           "datasource_id": {
             "type": [
               "string",
               "null"
             ],
             "format": "uuid"
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Attach/replace this panel's post-query insight (RW-06). Ignored when\n`clear_insight` is true; `None` (with `clear_insight` false) leaves the\ninsight unchanged. This mirrors the `folder_id` + `clear_folder` pair on\ndashboards — a bool flag carries the \"detach\" intent rather than an\n`Option<Option<_>>`, which serde can't distinguish from \"absent\" on the\nwire (a bug found in live testing: an explicit JSON `null` deserialized to\n\"leave unchanged\", so detach never fired)."
+          },
+          "insight_params": {
+            "description": "Set the insight's params. Ignored when `clear_insight` is true; cleared\nalongside the insight on detach. `None` leaves params unchanged."
           },
           "layout": {},
           "sql": {
@@ -6634,6 +8517,16 @@
             ],
             "format": "int32"
           }
+        }
+      },
+      "UserSettings": {
+        "type": "object",
+        "description": "The caller's freeform settings bag — `GET`/`PUT /api/v1/me/settings`.\n\nAn opaque envelope around the per-user `jsonb` the frontend owns (starred\ndashboards, collapsed sidebar groups, …). The server neither defines nor\nvalidates the keys; `PUT` is a full replace, so the client reads, modifies,\nand writes the whole bag. `settings` is always an object (defaults to `{}`).",
+        "required": [
+          "settings"
+        ],
+        "properties": {
+          "settings": {}
         }
       },
       "VariableDetail": {

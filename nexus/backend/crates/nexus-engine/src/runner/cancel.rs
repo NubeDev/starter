@@ -1,10 +1,9 @@
 //! Cancellation plumbing shared by the runners.
 //!
-//! ArkFlow's `Stream::run` takes a `CancellationToken` and aborts an in-flight
-//! `input.read()` via `tokio::select!` when it fires (this is the git-HEAD
-//! signature the engine is pinned to). The runners fire that token on three
-//! events: a wall-clock deadline, a breached collector cap, and — for the live
-//! path — client disconnect.
+//! The native [`crate::core::Pipeline::run`] takes a `CancellationToken` and
+//! aborts an in-flight `source.read()` via `tokio::select!` when it fires. The
+//! runners fire that token on three events: a wall-clock deadline, a breached
+//! collector cap, and — for the live path — client disconnect.
 
 use std::time::Duration;
 

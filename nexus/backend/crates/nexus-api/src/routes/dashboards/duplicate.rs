@@ -93,6 +93,9 @@ pub async fn duplicate_dashboard(
             sql: p.sql.clone(),
             viz: p.viz.clone(),
             layout: p.layout.clone(),
+            // Same tenant, so the insight id stays valid on the copy.
+            insight_id: p.insight_id,
+            insight_params: p.insight_params.clone(),
         };
         if let Err(e) = dashboard::panel::insert(&state.metadata, &tenant, &panel).await {
             return IntoResponse(e).into_response();

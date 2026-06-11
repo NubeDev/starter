@@ -1,7 +1,7 @@
 //! Dry-run a flow's input + pipeline against the bounded collector, without
 //! persisting it or writing to its real output.
 //!
-//! This is the flow editor's "Test" button: validate the ArkFlow config for
+//! This is the flow editor's "Test" button: validate the engine config for
 //! real (a build error is surfaced here, not on save) and return a bounded
 //! sample of what the pipeline produces. It reuses the one-shot
 //! [`QueryRunner`](nexus_engine::QueryRunner), which swaps the caller's output

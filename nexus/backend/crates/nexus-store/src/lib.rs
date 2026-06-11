@@ -13,9 +13,13 @@ pub mod alert;
 pub mod changelog;
 pub mod dashboard;
 pub mod datasource;
+pub mod detection;
+pub mod extension_insight;
 pub mod extension_query_kind;
+pub mod finding;
 pub mod flow;
 pub mod folder;
+pub mod insight;
 pub mod migrate;
 pub mod nav_node;
 pub mod query;
@@ -23,6 +27,7 @@ pub mod query_history;
 pub mod query_kind;
 pub mod tag;
 pub mod tenant_tx;
+pub mod user_settings;
 pub mod variable;
 
 #[cfg(feature = "testing")]

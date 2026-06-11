@@ -31,3 +31,35 @@ datasource_kinds:
     test:
       mode: connect
     description: MQTT broker subscription for live device telemetry (stream source).
+
+  # An Eclipse Zenoh subscription source (RW-09). Like MQTT it is a stream
+  # connector — it feeds live panels and flows by subscribing to a key
+  # expression, not an ad-hoc `POST /query` target. Holds no secret today
+  # (endpoint + key only). Its connect probe (open a session + scout, bounded
+  # timeout) needs the engine's `zenoh` cargo feature, OFF by default per
+  # roadmap §8, mirroring the MQTT feature gate.
+  - name: zenoh
+    surface: stream
+    config_schema: zenoh_config.json
+    test:
+      mode: connect
+    description: Eclipse Zenoh key-expression subscription for live telemetry (stream source).
+
+  # File-backed query connectors for federation (RW-05). A Parquet/CSV file is a
+  # read-only `POST /query` target the engine reads natively (DataFusion file
+  # input) and can join against a SQL datasource in one federated statement. It
+  # holds no secret — the config is a server-local path — so its probe is a
+  # `connect` (open/stat the file), not a credentialed round-trip.
+  - name: parquet
+    surface: query
+    config_schema: parquet_config.json
+    test:
+      mode: connect
+    description: Parquet file read natively by the engine (federated query input).
+
+  - name: csv
+    surface: query
+    config_schema: csv_config.json
+    test:
+      mode: connect
+    description: CSV file read natively by the engine (federated query input).

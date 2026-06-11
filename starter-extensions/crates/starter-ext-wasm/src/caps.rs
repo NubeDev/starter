@@ -168,6 +168,7 @@ impl WasiCategory {
             | Capability::DashboardRead { .. }
             | Capability::DashboardWrite { .. }
             | Capability::AuthzCheck { .. }
+            | Capability::Ingest { .. }
             | Capability::Secrets { .. }
             | Capability::Custom { .. } => None,
         }

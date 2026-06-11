@@ -18,6 +18,7 @@ import "@xyflow/react/dist/style.css";
 
 import type { NodeCategory } from "@/api/types";
 import type { BuilderApi } from "@/features/flows/builder/store";
+import type { NodeDebug } from "@/features/flows/useFlowDebug";
 
 // The graph canvas. React Flow renders nodes/edges derived from the builder
 // graph; user edits (drag/connect/select/delete) are applied back through the
@@ -29,6 +30,9 @@ type NodeData = {
   label: string;
   kind: string;
   category: NodeCategory;
+  // Present only while a running flow is being debugged: live counters from the
+  // SSE stream, overlaid on the same node card the user edits.
+  debug?: NodeDebug;
 };
 
 // Whether an edge from `source` to `target` keeps the input→processor*→output
@@ -64,6 +68,29 @@ function GraphNodeCard({ data, selected }: NodeProps) {
       </p>
       <p className="truncate text-sm font-medium text-foreground">{d.label}</p>
       <p className="truncate text-[11px] text-muted-foreground">{d.kind}</p>
+      {/* Live debug overlay: same card, just shows rows flowing through when a
+          running flow is being debugged. Absent in plain edit mode. */}
+      {d.debug ? (
+        <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+          <span
+            className="rounded px-1.5 py-0.5 font-mono"
+            style={{ backgroundColor: `${tint}26`, color: tint }}
+            title="rows out"
+          >
+            {d.debug.counters ? formatCount(d.debug.counters.rows_out) : "—"} rows
+          </span>
+          {d.debug.counters &&
+          d.debug.counters.rows_in !== d.debug.counters.rows_out ? (
+            <span
+              className="font-mono text-muted-foreground"
+              title="rows in → rows out"
+            >
+              {formatCount(d.debug.counters.rows_in)}→
+              {formatCount(d.debug.counters.rows_out)}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {d.category !== "output" ? (
         <Handle type="source" position={Position.Right} />
       ) : null}
@@ -73,8 +100,18 @@ function GraphNodeCard({ data, selected }: NodeProps) {
 
 const NODE_TYPES: NodeTypes = { graphNode: GraphNodeCard };
 
-export function Canvas({ builder }: { builder: BuilderApi }) {
+export function Canvas({
+  builder,
+  byNode,
+}: {
+  builder: BuilderApi;
+  // Live debug data keyed by node index (chain order = position in graph.nodes).
+  // When given, the canvas overlays counters and animates edges; editing still
+  // works exactly the same.
+  byNode?: Map<number, NodeDebug>;
+}) {
   const { graph } = builder;
+  const debugging = byNode !== undefined;
 
   const categoryById = useMemo(() => {
     const m = new Map<string, NodeCategory>();
@@ -84,14 +121,19 @@ export function Canvas({ builder }: { builder: BuilderApi }) {
 
   const rfNodes = useMemo<Node[]>(
     () =>
-      graph.nodes.map((n) => ({
+      graph.nodes.map((n, i) => ({
         id: n.id,
         type: "graphNode",
         position: n.position ?? { x: 0, y: 0 },
         selected: n.id === builder.selectedId,
-        data: { label: labelFor(n.kind), kind: n.kind, category: n.category },
+        data: {
+          label: labelFor(n.kind),
+          kind: n.kind,
+          category: n.category,
+          debug: byNode?.get(i),
+        },
       })),
-    [graph.nodes, builder.selectedId],
+    [graph.nodes, builder.selectedId, byNode],
   );
 
   const rfEdges = useMemo<Edge[]>(
@@ -100,8 +142,9 @@ export function Canvas({ builder }: { builder: BuilderApi }) {
         id: `${e.source}->${e.target}`,
         source: e.source,
         target: e.target,
+        animated: debugging,
       })),
-    [graph.edges],
+    [graph.edges, debugging],
   );
 
   const onNodesChange = useCallback<OnNodesChange>(
@@ -160,6 +203,13 @@ export function Canvas({ builder }: { builder: BuilderApi }) {
       </ReactFlow>
     </div>
   );
+}
+
+// Compact large counts (1234 → 1.2k) so a node badge stays readable.
+function formatCount(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) return `${(n / 1000).toFixed(1)}k`;
+  return `${(n / 1_000_000).toFixed(1)}M`;
 }
 
 // A node's display label is its kind title-cased; the palette's richer label

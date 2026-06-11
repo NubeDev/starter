@@ -1,6 +1,6 @@
 //! Registry of running live streams, keyed by the full subscription spec.
 //!
-//! Two subscribers share one underlying ArkFlow stream **only** when their whole
+//! Two subscribers share one underlying live pipeline **only** when their whole
 //! spec matches — the stream definition, the datasource, the tenant, and the
 //! required permission. Keying on the source alone would let one tenant's
 //! subscribers receive another tenant's data, so the tenant and permission are

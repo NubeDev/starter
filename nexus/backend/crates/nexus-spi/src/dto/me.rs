@@ -6,6 +6,7 @@
 //! it can gate navigation without a round-trip per resource.
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use utoipa::ToSchema;
 
 /// The authenticated caller's full context.
@@ -24,4 +25,15 @@ pub struct MeResponse {
     pub teams: Vec<String>,
     /// Fine-grained scope strings attached to the credential.
     pub scopes: Vec<String>,
+}
+
+/// The caller's freeform settings bag — `GET`/`PUT /api/v1/me/settings`.
+///
+/// An opaque envelope around the per-user `jsonb` the frontend owns (starred
+/// dashboards, collapsed sidebar groups, …). The server neither defines nor
+/// validates the keys; `PUT` is a full replace, so the client reads, modifies,
+/// and writes the whole bag. `settings` is always an object (defaults to `{}`).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct UserSettings {
+    pub settings: Value,
 }

@@ -101,7 +101,9 @@ members = [
 # their own pinned ArkFlow git rev and a heavy dep tree (DataFusion, protoc). They
 # path-depend up into `crates/starter-*` but keep their own `Cargo.lock`, so the
 # root workspace must not absorb them.
-exclude = ["starter-extensions", "rubix/extensions", "rubix/apps", "nexus/poc/backend", "nexus/backend"]
+# `nexus/extensions/` mirrors `rubix/extensions/`: a sibling workspace holding
+# nexus-owned process-flavour extension binaries (path-dep on `starter-ext-sdk`).
+exclude = ["starter-extensions", "rubix/extensions", "rubix/apps", "nexus/poc/backend", "nexus/backend", "nexus/extensions"]
 
 # Pre-existing clippy lints surfaced by clippy 1.94+ that are unrelated to the
 # warehouse-engine-swap rename. CI pins to `stable` (older clippy) so these

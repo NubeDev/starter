@@ -101,4 +101,9 @@ pub struct AppState {
     /// rate-limit middleware applies. Held on state so `serve::assemble` mounts
     /// the same instance tests can drive.
     pub rate_limiter: TenantRateLimiter,
+    /// Runtime liveness canary (WS-16): an atomic the canary tick task bumps once
+    /// per second. The `/livez` and `/readyz` routes read it to distinguish a
+    /// wedged tokio runtime from a healthy-but-slow one. Cheap clone of an
+    /// `Arc<AtomicU64>`.
+    pub canary: crate::boot::runtime_canary::Canary,
 }

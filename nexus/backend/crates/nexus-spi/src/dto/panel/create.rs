@@ -19,4 +19,10 @@ pub struct CreatePanelRequest {
     /// Grid layout; defaults to empty when omitted.
     #[serde(default)]
     pub layout: Option<Value>,
+    /// Optional post-query insight (RW-06) to attach at creation. Omitted = none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_id: Option<Uuid>,
+    /// Params bound as the insight script's `params`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insight_params: Option<Value>,
 }

@@ -22,6 +22,13 @@ fn new_rule(name: &str) -> NewRule {
         interval_secs: 60,
         enabled: true,
         channel_ids: vec![],
+        // Multi-condition fields (1001_alert_channels_v2): a legacy single-
+        // condition rule leaves `conditions` unset and takes the policy defaults.
+        conditions: None,
+        combinator: "and".into(),
+        no_data_policy: "ok".into(),
+        exec_error_policy: "ok".into(),
+        message_template: None,
     }
 }
 

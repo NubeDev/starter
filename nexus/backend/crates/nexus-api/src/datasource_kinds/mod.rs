@@ -17,6 +17,7 @@ mod kind;
 mod lint;
 mod load;
 mod manifest;
+mod resolve_output;
 mod validate;
 
 use std::collections::BTreeMap;
@@ -25,6 +26,7 @@ use std::path::Path;
 pub use error::DatasourceKindError;
 pub use kind::DatasourceKind;
 pub use manifest::{Surface, TestSpec};
+pub use resolve_output::resolve_flow_output;
 
 /// An immutable, source-agnostic set of registered datasource-kinds keyed by
 /// name.
@@ -145,12 +147,27 @@ mod tests {
     #[test]
     fn builtin_pack_loads_and_lints_clean() {
         let reg = Registry::load_dir(&builtin_pack_dir()).expect("the shipped pack must load");
-        assert_eq!(reg.len(), 2, "the core pack declares postgres + mqtt");
+        assert_eq!(
+            reg.len(),
+            5,
+            "the core pack declares postgres + mqtt + zenoh + parquet + csv"
+        );
         let pg = reg.get("postgres").expect("postgres is declared");
         assert_eq!(pg.surface, Surface::Query);
         assert!(pg.secret_fields.contains(&"password".to_string()));
         let mqtt = reg.get("mqtt").expect("mqtt is declared");
         assert_eq!(mqtt.surface, Surface::Stream);
+        // RW-09 zenoh source: a streaming kind, no secrets (endpoints + key only).
+        let zenoh = reg.get("zenoh").expect("zenoh is declared");
+        assert_eq!(zenoh.surface, Surface::Stream);
+        assert!(zenoh.secret_fields.is_empty());
+        // RW-05 file kinds: queryable, path-only (no secrets), engine-read.
+        let parquet = reg.get("parquet").expect("parquet is declared");
+        assert_eq!(parquet.surface, Surface::Query);
+        assert!(parquet.secret_fields.is_empty());
+        let csv = reg.get("csv").expect("csv is declared");
+        assert_eq!(csv.surface, Surface::Query);
+        assert!(csv.secret_fields.is_empty());
     }
 
     #[test]

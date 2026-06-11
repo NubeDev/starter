@@ -21,7 +21,9 @@ use axum::response::IntoResponse as _;
 use axum::{Extension, Json};
 use nexus_spi::dto::datasource::{DatasourceKind, TestConnectionRequest, TestDatasourceResponse};
 use nexus_store::datasource::postgres::{self, ProbeParams};
+use nexus_store::datasource::{mqtt, zenoh};
 use starter_spi::auth::Principal;
+use starter_spi::Error;
 
 use crate::middleware::tenant::tenant_of;
 use crate::routes::datasources::probe_outcome::{elapsed_ms, failed};
@@ -48,6 +50,8 @@ pub async fn test_connection(
     }
     let outcome = match req.kind {
         DatasourceKind::Postgres => probe_postgres(&req).await,
+        DatasourceKind::Mqtt => probe_mqtt(&req).await,
+        DatasourceKind::Zenoh => probe_zenoh(&req).await,
     };
     Json(outcome).into_response()
 }
@@ -57,18 +61,81 @@ pub async fn test_connection(
 async fn probe_postgres(req: &TestConnectionRequest) -> TestDatasourceResponse {
     let started = Instant::now();
     let params = ProbeParams {
-        host: &req.host,
-        port: req.port,
-        database: &req.database,
-        user: &req.user,
-        secret: &req.password,
+        host: req.host.as_deref().unwrap_or_default(),
+        port: req.port.unwrap_or_default(),
+        database: req.database.as_deref().unwrap_or_default(),
+        user: req.user.as_deref().unwrap_or_default(),
+        secret: req.password.as_deref().unwrap_or_default(),
     };
-    match postgres::probe(params).await {
+    shape(started, postgres::probe(params).await)
+}
+
+/// Probe an MQTT broker described by the stream connector's `config` block.
+async fn probe_mqtt(req: &TestConnectionRequest) -> TestDatasourceResponse {
+    let started = Instant::now();
+    let cfg = match req.config.as_ref() {
+        Some(c) => c,
+        None => return failed(&missing("mqtt", "config")),
+    };
+    let host = match cfg.get("host").and_then(|v| v.as_str()) {
+        Some(h) => h,
+        None => return failed(&missing("mqtt", "config.host")),
+    };
+    let port = cfg.get("port").and_then(|v| v.as_u64()).unwrap_or(1883) as u16;
+    let params = mqtt::ProbeParams {
+        host,
+        port,
+        client_id: cfg
+            .get("client_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("nexus-probe"),
+        user: cfg.get("username").and_then(|v| v.as_str()),
+        password: cfg.get("password").and_then(|v| v.as_str()),
+    };
+    shape(started, mqtt::probe(params).await)
+}
+
+/// Probe a Zenoh fabric described by the stream connector's `config` block.
+async fn probe_zenoh(req: &TestConnectionRequest) -> TestDatasourceResponse {
+    let started = Instant::now();
+    let cfg = match req.config.as_ref() {
+        Some(c) => c,
+        None => return failed(&missing("zenoh", "config")),
+    };
+    let endpoints: Vec<String> = cfg
+        .get("endpoints")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|v| v.as_str().map(str::to_string))
+                .collect()
+        })
+        .unwrap_or_default();
+    let mode = cfg.get("mode").and_then(|v| v.as_str()).unwrap_or("client");
+    let params = zenoh::ProbeParams {
+        endpoints: &endpoints,
+        mode,
+    };
+    shape(started, zenoh::probe(params).await)
+}
+
+/// Shape a store probe result into the wire outcome: `ok` on success (with
+/// latency), or a redacted `{ ok: false, message }` on failure.
+fn shape(started: Instant, result: Result<(), Error>) -> TestDatasourceResponse {
+    match result {
         Ok(()) => TestDatasourceResponse {
             ok: true,
             message: None,
             latency_ms: Some(elapsed_ms(started)),
         },
         Err(e) => failed(&e),
+    }
+}
+
+/// A required probe field was absent — a malformed form submission, surfaced as a
+/// failed probe rather than an HTTP error so the form shows it inline.
+fn missing(kind: &str, field: &str) -> Error {
+    Error::Invalid {
+        message: format!("{kind} probe requires {field}"),
     }
 }

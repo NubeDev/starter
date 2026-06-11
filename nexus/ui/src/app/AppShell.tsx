@@ -21,7 +21,10 @@ const TITLES: Record<string, string> = {
   "/explore": "Explore",
   "/datasources": "Datasources",
   "/flows": "Flows",
+  "/insights": "Insights",
+  "/insights/workbench": "Insights",
   "/alerts": "Alerts",
+  "/findings": "Findings",
   "/agents": "Agents",
   "/access": "Access",
   "/audit": "Audit",
@@ -30,7 +33,10 @@ const TITLES: Record<string, string> = {
 
 export function AppShell() {
   const { pathname } = useLocation();
-  const title = TITLES[pathname] ?? "Dashboards";
+  // Exact-match the static pages; the full-page flow editor (`/flows/<name>`)
+  // keeps the "Flows" header so the chrome reads consistently.
+  const title =
+    TITLES[pathname] ?? (pathname.startsWith("/flows/") ? "Flows" : "Dashboards");
   const defaultOpen = getCookie("sidebar_state") !== "false";
   // Cmd/Ctrl+Z / +Shift+Z drive undo/redo across the app (WS-12).
   useUndoRedoShortcuts();

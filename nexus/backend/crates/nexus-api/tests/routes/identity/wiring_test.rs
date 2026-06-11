@@ -57,6 +57,7 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
             nexus_api::ratelimit::RateLimitConfig::default(),
         ),
+        canary: Default::default(),
     };
     let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
     TestApp::spawn(router).await

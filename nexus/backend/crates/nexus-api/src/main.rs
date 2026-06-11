@@ -91,6 +91,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "loaded extension-contributed query-kinds"
     );
 
+    // The runtime liveness canary (WS-16) ticks an atomic once per second. Spawn
+    // it before AppState is built so the `/livez` route reads a fresh timestamp
+    // from the very first request; the tick task is wrapped in the task watchdog
+    // below alongside the schedulers.
+    let (canary, canary_task) = nexus_api::boot::runtime_canary::spawn();
+
     let state = AppState {
         metadata: metadata.clone(),
         datasource,
@@ -116,6 +122,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
             nexus_api::ratelimit::RateLimitConfig::from_env(),
         ),
+        canary,
     };
 
     // Now AppState exists: build nexus's host-method handler over it and boot the
@@ -131,15 +138,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
     let ext_admin = ext_runtime.admin;
 
+    // Every supposed-to-be-eternal background task is wrapped in the task
+    // watchdog (WS-16): if one panics, returns early, or is aborted, a single
+    // ERROR line is emitted (`target=nexus.task_watchdog watcher=<label>`)
+    // instead of the death being inferred later from the absence of a log line.
+    // The `let _x = ...` leak pattern is preserved — same lifetime, just
+    // observable death.
+    use nexus_api::boot::task_watchdog::watch;
+
+    // The runtime canary tick task spawned above its AppState build.
+    let _canary_watch = watch("runtime_canary", canary_task);
+
     // The alert scheduler runs for the process's lifetime, evaluating due rules
     // on its own cadence. Single-node for v1.
-    nexus_api::alerting::schedule::spawn(state.clone());
+    let _alert_watch = watch("alert_scheduler", nexus_api::alerting::schedule::spawn(state.clone()));
+
+    // The detection scheduler (WS-15) is the alert scheduler's analytic sibling:
+    // it runs due detections, each producing findings rather than notifications.
+    // Same single-node, claim-and-advance cadence.
+    let _detection_watch =
+        watch("detection_scheduler", nexus_api::detecting::schedule::spawn(state.clone()));
 
     // The audit-retention sweep prunes ledger rows past the retention horizon so
     // the append-only log stays bounded. Runs for the process's lifetime.
-    nexus_api::changelog::prune::spawn(
-        state.clone(),
-        nexus_api::changelog::RetentionPolicy::from_env(),
+    let _prune_watch = watch(
+        "changelog_prune",
+        nexus_api::changelog::prune::spawn(
+            state.clone(),
+            nexus_api::changelog::RetentionPolicy::from_env(),
+        ),
     );
 
     // The extension admin router is a sibling of the authz/tenants routers: the

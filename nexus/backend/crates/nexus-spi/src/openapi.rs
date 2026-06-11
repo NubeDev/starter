@@ -18,6 +18,10 @@ use crate::dto::dashboard::{
     UpdateDashboardRequest, VariableExport,
 };
 use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
+use crate::dto::insight::{
+    CreateInsightRequest, InsightFunctionCatalog, InsightFunctionDoc, InsightRef, InsightSummary,
+    PreviewInsightError, PreviewInsightRequest, PreviewInsightResponse, UpdateInsightRequest,
+};
 use crate::dto::nav::{
     CreateNavNodeRequest, NavContext, NavNodeDetail, NavTarget, StaticRoute, UpdateNavNodeRequest,
 };
@@ -30,17 +34,23 @@ use crate::dto::alert::{
     AlertCondition, AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest,
     CreateChannelRequest, CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
 };
-use crate::dto::flow::{
-    CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDetail, FlowExport, FlowMetrics,
-    FlowSummary, NodeCategory, NodeType, NodeTypeList, UpdateFlowRequest,
+use crate::dto::detection::{
+    CreateDetectionRequest, DetectionDetail, DetectionStats, Finding, FindingActionRequest,
+    UpdateDetectionRequest,
 };
-use crate::dto::me::MeResponse;
+use crate::dto::flow::{
+    CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDebugEnableResponse, FlowDebugEvent,
+    FlowDebugStatus, FlowDetail, FlowExport, FlowMetrics, FlowSummary, LogLevel, NodeCategory,
+    NodeCounters, NodeRole, NodeType, NodeTypeList, UpdateFlowRequest,
+};
+use crate::dto::ingest::IngestAccepted;
+use crate::dto::me::{MeResponse, UserSettings};
 use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
 use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{
-    ColumnSchema, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse, QueryStats,
-    QueryTimeRange, QueryVariable, ResultColumnType,
+    ColumnSchema, FederatedSourceRef, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse,
+    QueryStats, QueryTimeRange, QueryVariable, ResultColumnType,
 };
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
@@ -54,9 +64,11 @@ use crate::Problem;
 #[openapi(components(schemas(
     Problem,
     MeResponse,
+    UserSettings,
     QueryRequest,
     QueryTimeRange,
     QueryVariable,
+    FederatedSourceRef,
     QueryResponse,
     QueryStats,
     QueryKindList,
@@ -95,6 +107,15 @@ use crate::Problem;
     FolderSummary,
     CreateFolderRequest,
     UpdateFolderRequest,
+    InsightSummary,
+    CreateInsightRequest,
+    UpdateInsightRequest,
+    InsightRef,
+    PreviewInsightRequest,
+    PreviewInsightResponse,
+    PreviewInsightError,
+    InsightFunctionCatalog,
+    InsightFunctionDoc,
     NavNodeDetail,
     NavTarget,
     StaticRoute,
@@ -107,16 +128,29 @@ use crate::Problem;
     FlowSummary,
     FlowDetail,
     FlowMetrics,
+    FlowDebugEvent,
+    FlowDebugStatus,
+    FlowDebugEnableResponse,
+    NodeCounters,
+    NodeRole,
+    LogLevel,
     CreateFlowRequest,
     UpdateFlowRequest,
     FlowExport,
     NodeType,
     NodeTypeList,
     NodeCategory,
+    IngestAccepted,
     DryRunRequest,
     DryRunResponse,
     AlertCondition,
     AlertRuleDetail,
+    CreateDetectionRequest,
+    UpdateDetectionRequest,
+    DetectionDetail,
+    DetectionStats,
+    Finding,
+    FindingActionRequest,
     CreateAlertRuleRequest,
     UpdateAlertRuleRequest,
     AlertEvent,

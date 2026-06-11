@@ -14,7 +14,7 @@ use axum::{Extension, Json};
 use nexus_spi::dto::dashboard::{DashboardExport, DashboardSummary, DASHBOARD_SCHEMA_VERSION};
 use nexus_store::dashboard::{self, NewDashboard, NewPanel};
 use nexus_store::variable::{self, NewVariable};
-use nexus_store::datasource;
+use nexus_store::{datasource, insight};
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 use starter_spi::authz::ResourceRef;
@@ -87,6 +87,18 @@ pub async fn import_dashboard(
             },
             None => None,
         };
+        // An insight id only resolves within the importing tenant; one that
+        // isn't visible here (a cross-tenant import, or a since-deleted insight)
+        // is dropped to NULL rather than tripping the panel insert's FK — the
+        // same posture as the datasource above.
+        let insight_id = match p.insight_id {
+            Some(id) => match insight::by_id(&state.metadata, &tenant, id).await {
+                Ok(Some(_)) => Some(id),
+                Ok(None) => None,
+                Err(e) => return IntoResponse(e).into_response(),
+            },
+            None => None,
+        };
         let panel = NewPanel {
             dashboard_id: dash.id,
             datasource_id,
@@ -94,6 +106,14 @@ pub async fn import_dashboard(
             sql: p.sql.clone(),
             viz: p.viz.clone(),
             layout: p.layout.clone(),
+            // If the id didn't resolve, drop the params too — they only mean
+            // something paired with an insight.
+            insight_params: if insight_id.is_some() {
+                p.insight_params.clone()
+            } else {
+                None
+            },
+            insight_id,
         };
         if let Err(e) = dashboard::panel::insert(&state.metadata, &tenant, &panel).await {
             return IntoResponse(e).into_response();

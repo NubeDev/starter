@@ -1,4 +1,4 @@
-//! Datasource DTOs — a datasource is an ArkFlow input type plus a saved,
+//! Datasource DTOs — a datasource is an engine input type plus a saved,
 //! envelope-encrypted connection config owned by a tenant.
 
 mod create;

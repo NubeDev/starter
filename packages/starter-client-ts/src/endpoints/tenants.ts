@@ -87,6 +87,13 @@ export interface AddTeamMemberBody {
   user_id: string;
 }
 
+/** Team-member row from `GET /v1/tenants/{id}/teams/{team_id}/members`. */
+export interface TeamMemberView {
+  user_id: string;
+  /** Human-readable email label (joins the users table). */
+  email?: string;
+}
+
 declare module "../client/client.js" {
   interface StarterClient {
     // ----- tenants
@@ -109,6 +116,7 @@ declare module "../client/client.js" {
     createTeam(id: string, body: CreateTeamBody): Promise<TeamView>;
     deleteTeam(id: string, teamId: string): Promise<void>;
     // ----- team members
+    listTeamMembers(id: string, teamId: string): Promise<TeamMemberView[]>;
     addTeamMember(
       id: string,
       teamId: string,
@@ -255,6 +263,17 @@ StarterClient.prototype.deleteTeam = async function deleteTeam(
     this,
     `/v1/tenants/${encodeURIComponent(id)}/teams/${encodeURIComponent(teamId)}`,
     { method: "DELETE", headers: readCsrfHeader() },
+  );
+};
+
+StarterClient.prototype.listTeamMembers = function listTeamMembers(
+  this: StarterClient,
+  id: string,
+  teamId: string,
+): Promise<TeamMemberView[]> {
+  return fetchJson<TeamMemberView[]>(
+    this,
+    `/v1/tenants/${encodeURIComponent(id)}/teams/${encodeURIComponent(teamId)}/members`,
   );
 };
 

@@ -1,32 +1,35 @@
-//! `LiveRunner` — drive an unbounded ArkFlow `Stream` into the SSE broadcast.
+//! `LiveRunner` — drive an unbounded native pipeline into the SSE broadcast.
 //!
 //! The live counterpart to `QueryRunner`. Where the query runner runs a finite
-//! stream to completion and drains it, the live runner spawns a never-ending
-//! stream as a background task whose output is the `sse` sink; cancelling the
+//! pipeline to completion and drains it, the live runner spawns a never-ending
+//! pipeline as a background task whose output is the `sse` sink; cancelling the
 //! token (when the last subscriber leaves, via the stream registry) stops it.
 
-use arkflow_core::stream::StreamConfig;
+use std::sync::Arc;
+
 use serde_json::{json, Value};
 use tokio_util::sync::CancellationToken;
 
-use crate::registry::register_all;
+use crate::core::{Pipeline, PipelineConfig, Registry};
+use crate::native_registry;
 
-/// Spawns unbounded streams that publish to the SSE broadcast channels. Cheap to
-/// clone; holds no per-stream state.
+/// Spawns unbounded pipelines that publish to the SSE broadcast channels. Cheap
+/// to clone — the node registry sits behind an `Arc`.
 #[derive(Clone)]
 pub struct LiveRunner {
-    _private: (),
+    registry: Arc<Registry>,
 }
 
 impl LiveRunner {
-    /// Construct a runner, ensuring the engine builders are registered.
+    /// Construct a runner holding the native node registry.
     pub fn new() -> Result<Self, String> {
-        register_all()?;
-        Ok(Self { _private: () })
+        Ok(Self {
+            registry: Arc::new(native_registry()),
+        })
     }
 
     /// Build `{input, pipeline, output: sse(run_id)}` and spawn it as a
-    /// background task bound to `token`. Returns once the stream is spawned;
+    /// background task bound to `token`. Returns once the pipeline is spawned;
     /// rows then flow to the `run_id` channel until the token is cancelled. A
     /// build error is returned synchronously; a mid-run error is logged and
     /// ends the task (subscribers see the channel close).
@@ -39,15 +42,14 @@ impl LiveRunner {
     ) -> Result<(), String> {
         let config = json!({
             "input": input,
-            "pipeline": { "thread_num": 1, "processors": processors },
+            "pipeline": { "processors": processors },
             "output": { "type": "sse", "run_id": run_id },
         });
-        let cfg: StreamConfig =
-            serde_json::from_value(config).map_err(|e| format!("invalid stream config: {e}"))?;
-        let mut stream = cfg.build().map_err(|e| e.to_string())?;
+        let cfg = PipelineConfig::from_value(config).map_err(|e| e.to_string())?;
+        let pipeline = Pipeline::build(&self.registry, &cfg).map_err(|e| e.to_string())?;
 
         tokio::spawn(async move {
-            if let Err(e) = stream.run(token).await {
+            if let Err(e) = pipeline.run(token).await {
                 tracing::warn!(error = %e, "live stream ended with error");
             }
         });

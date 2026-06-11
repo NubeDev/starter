@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import {
   Dialog,
@@ -10,20 +10,40 @@ import {
 } from "@nube/starter-ui-kit/components/dialog";
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nube/starter-ui-kit/components/select";
 
 import type {
   CreateDatasourceRequest,
+  DatasourceKind,
+  DatasourceKindSummary,
   TestConnectionRequest,
   TestDatasourceResponse,
 } from "@/api/types";
+import { NodeConfigForm } from "@/features/flows/builder/NodeConfigForm";
 import {
   useCreateDatasource,
   useTestConnection,
 } from "@/features/datasources/useDatasourceMutations";
+import { useDatasourceKinds } from "@/features/datasources/useDatasources";
 
-// Connection form for a new datasource. v1 ships Postgres only (the kind
-// enum has one value), so kind is fixed rather than a picker. The password
-// is write-only — submitted here, never read back.
+// Connection form for a new datasource. The form is schema-driven: it lists the
+// connector kinds from `GET /datasources/kinds` and renders each kind's config
+// fields from its JSON Schema (the same renderer the flow builder uses for node
+// configs). Secret fields (`secret_fields`) render as write-only password
+// inputs. The "Test connection" probe is shown only for kinds that declare a
+// probe (every kind today does, via `query` or `connect`).
+//
+// Both create and probe carry the same shape: `postgres` fills the flat
+// `host`/`port`/`database`/`user`/`password` fields, while non-SQL kinds
+// (`mqtt`/`zenoh`) and file kinds (`parquet`/`csv`) carry their parameters in
+// the generic `config` blob — the create and test DTOs both accept it, so every
+// kind the catalogue declares can be created here.
 export function DatasourceFormDialog({
   open,
   onOpenChange,
@@ -31,100 +51,181 @@ export function DatasourceFormDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const kinds = useDatasourceKinds();
   const create = useCreateDatasource();
   const test = useTestConnection();
-  const [form, setForm] = useState({
-    name: "",
-    host: "",
-    port: "5432",
-    database: "",
-    user: "",
-    password: "",
-  });
 
-  const set = (k: keyof typeof form) => (v: string) => {
-    // A field edit invalidates the last probe result so a stale green tick can't
-    // imply the freshly-changed credentials were tested.
+  const [name, setName] = useState("");
+  const [kindName, setKindName] = useState<string>("");
+  // Config values keyed by the kind's schema property names.
+  const [config, setConfig] = useState<Record<string, unknown>>({});
+
+  const kindList = kinds.data ?? [];
+  const selected: DatasourceKindSummary | undefined = useMemo(
+    () => kindList.find((k) => k.name === kindName),
+    [kindList, kindName],
+  );
+
+  // Auto-select the sole/first kind once the catalogue loads so the form is
+  // never blank when there's an obvious choice.
+  useEffect(() => {
+    if (!kindName && kindList.length > 0) setKindName(kindList[0].name);
+  }, [kindName, kindList]);
+
+  function reset() {
+    setName("");
+    setConfig({});
     test.reset();
-    setForm((f) => ({ ...f, [k]: v }));
-  };
+  }
 
-  // The raw config the probe and the create call both submit.
-  function connectionBody(): TestConnectionRequest {
-    return {
-      kind: "postgres",
-      host: form.host.trim(),
-      port: Number(form.port) || 5432,
-      database: form.database.trim(),
-      user: form.user.trim(),
-      password: form.password,
-    };
+  function onSelectKind(next: string) {
+    setKindName(next);
+    setConfig({});
+    test.reset();
+  }
+
+  function onConfigChange(next: Record<string, unknown>) {
+    // A field edit invalidates the last probe so a stale green tick can't imply
+    // freshly-changed credentials were tested.
+    test.reset();
+    setConfig(next);
+  }
+
+  // Whether this kind can be probed before save. Every declared kind has a
+  // `test_mode` today, but guard so a future probe-less kind hides the button.
+  const canProbe = Boolean(selected?.test_mode);
+  // Every declared kind can be created: postgres via the flat fields, others via
+  // the generic `config` blob (the create DTO accepts both).
+  const canCreate = Boolean(selected);
+
+  // Build the connection payload for the selected kind: postgres lifts its
+  // schema fields to the top level; every other kind carries them under `config`.
+  // Shared by both the probe and the create call so the two never diverge.
+  function connectionFields():
+    | { host: string; port: number; database: string; user: string; password: string }
+    | { config: Record<string, unknown> } {
+    const kind = selected?.name ?? "postgres";
+    if (kind === "postgres") {
+      return {
+        host: str(config.host),
+        port: num(config.port) ?? 5432,
+        database: str(config.database),
+        user: str(config.user),
+        password: str(config.password),
+      };
+    }
+    return { config };
+  }
+
+  function probeBody(): TestConnectionRequest {
+    const kind = (selected?.name ?? "postgres") as DatasourceKind;
+    return { kind, ...connectionFields() };
   }
 
   function onTest() {
-    test.mutate(connectionBody());
+    test.mutate(probeBody());
   }
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!canCreate || !selected) return;
     const body: CreateDatasourceRequest = {
-      name: form.name.trim(),
-      ...connectionBody(),
+      name: name.trim(),
+      kind: selected.name as DatasourceKind,
+      ...connectionFields(),
     };
     create.mutate(body, {
       onSuccess: () => {
         onOpenChange(false);
-        test.reset();
-        setForm({ name: "", host: "", port: "5432", database: "", user: "", password: "" });
+        reset();
       },
     });
   }
+
+  const description = selected?.description
+    ? selected.description
+    : selected
+      ? `Connect a ${selected.name} datasource.`
+      : "Connect a datasource.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="glass max-w-md">
         <DialogHeader>
           <DialogTitle>New datasource</DialogTitle>
-          <DialogDescription>Connect a Postgres database.</DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form className="space-y-3" onSubmit={onSubmit}>
-          <Field id="ds-name" label="Name" value={form.name} onChange={set("name")} required />
-          <div className="grid grid-cols-[1fr_6rem] gap-3">
-            <Field id="ds-host" label="Host" value={form.host} onChange={set("host")} required />
-            <Field id="ds-port" label="Port" value={form.port} onChange={set("port")} />
-          </div>
-          <Field id="ds-db" label="Database" value={form.database} onChange={set("database")} required />
-          <div className="grid grid-cols-2 gap-3">
-            <Field id="ds-user" label="User" value={form.user} onChange={set("user")} required />
-            <Field
-              id="ds-pass"
-              label="Password"
-              type="password"
-              value={form.password}
-              onChange={set("password")}
+          <div className="space-y-1.5">
+            <Label htmlFor="ds-name">Name</Label>
+            <Input
+              id="ds-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
               required
             />
           </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ds-kind">Kind</Label>
+            {kinds.isLoading ? (
+              <p className="text-sm text-muted-foreground">Loading kinds…</p>
+            ) : kinds.isError ? (
+              <p role="alert" className="text-sm text-destructive">
+                Couldn't load datasource kinds.
+              </p>
+            ) : (
+              <Select value={kindName} onValueChange={onSelectKind}>
+                <SelectTrigger id="ds-kind">
+                  <SelectValue placeholder="Select a kind…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {kindList.map((k) => (
+                    <SelectItem key={k.name} value={k.name}>
+                      {k.name}
+                      {k.surface ? ` · ${k.surface}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {selected ? (
+            <NodeConfigForm
+              schema={selected.config_schema}
+              config={config}
+              onChange={onConfigChange}
+              secretFields={selected.secret_fields}
+              emptyHint="This kind has no configuration."
+            />
+          ) : null}
+
           {create.isError ? (
             <p role="alert" className="text-sm text-destructive">
               Couldn't create the datasource.
             </p>
           ) : null}
+
           <ProbeResult
             pending={test.isPending}
             failed={test.isError}
             result={test.data}
           />
+
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onTest}
-              disabled={test.isPending || !form.host || !form.user}
-            >
-              {test.isPending ? "Testing…" : "Test connection"}
-            </Button>
-            <Button type="submit" disabled={create.isPending}>
+            {canProbe ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onTest}
+                disabled={test.isPending || !selected}
+              >
+                {test.isPending ? "Testing…" : "Test connection"}
+              </Button>
+            ) : null}
+            <Button type="submit" disabled={create.isPending || !canCreate || !name.trim()}>
               {create.isPending ? "Connecting…" : "Create"}
             </Button>
           </DialogFooter>
@@ -132,6 +233,20 @@ export function DatasourceFormDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+// Read a config value as a trimmed string for the postgres DTO's required
+// string fields.
+function str(v: unknown): string {
+  return v == null ? "" : String(v).trim();
+}
+
+// Read a config value as a number, or undefined if it isn't one (so a default
+// can apply).
+function num(v: unknown): number | undefined {
+  if (v == null || v === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 // Shows the pre-save probe outcome below the form. A transport failure and a
@@ -166,35 +281,5 @@ export function ProbeResult({
     <p role="status" className="text-sm text-destructive">
       {result.message ?? "Connection failed."}
     </p>
-  );
-}
-
-function Field({
-  id,
-  label,
-  value,
-  onChange,
-  type = "text",
-  required,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  required?: boolean;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete={type === "password" ? "new-password" : "off"}
-        required={required}
-      />
-    </div>
   );
 }

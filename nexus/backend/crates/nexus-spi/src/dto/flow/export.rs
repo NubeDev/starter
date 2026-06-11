@@ -2,7 +2,7 @@
 //!
 //! `GET /api/v1/flows/:id/export` emits a [`FlowExport`]; `POST
 //! /api/v1/flows/import` validates `schema_version` and re-creates from one. The
-//! shape is self-contained — the ArkFlow `{input, pipeline, output}` config plus
+//! shape is self-contained — the `{input, pipeline, output}` engine config plus
 //! a name — so an exported flow is portable across tenants. The server-minted
 //! `id` and the live `enabled`/run state are intentionally absent: an import
 //! always mints a fresh id and lands the flow stopped (`enabled = false`) so a
@@ -22,18 +22,18 @@ use utoipa::ToSchema;
 /// import rejects a version it does not understand.
 pub const FLOW_SCHEMA_VERSION: u32 = 1;
 
-/// A self-contained, importable flow: its name plus the ArkFlow config blobs.
+/// A self-contained, importable flow: its name plus the engine config blobs.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct FlowExport {
     /// Model version; must match [`FLOW_SCHEMA_VERSION`] to import.
     pub schema_version: u32,
     pub name: String,
-    /// ArkFlow input component (`{type, ...config}`), secrets redacted.
+    /// Engine input component (`{type, ...config}`), secrets redacted.
     pub input: Value,
-    /// ArkFlow processor list (a JSON array of `{type, ...config}`).
+    /// Engine processor list (a JSON array of `{type, ...config}`).
     #[serde(default)]
     pub pipeline: Value,
-    /// ArkFlow output component (`{type, ...config}`), secrets redacted.
+    /// Engine output component (`{type, ...config}`), secrets redacted.
     pub output: Value,
     /// Whether [`redact_secrets`] blanked any field on export, so the UI can
     /// tell the user credentials were removed (and must be re-entered on

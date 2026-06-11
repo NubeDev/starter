@@ -236,3 +236,60 @@ fn a_literal_dollar_placeholder_passes_through() {
     assert_eq!(bound.sql, "SELECT '$' || x FROM t");
     assert!(bound.args.is_empty());
 }
+
+// ---------------------------------------------------------------------------
+// Comment / string-literal / dollar-quote awareness (WS-14 follow-on fix).
+//
+// A `$token` inside a comment, a `'...'` literal, or a `$tag$...$tag$` body is
+// plain text. Without the skip, a kind whose documentation header merely
+// MENTIONS `$caller_tenant_id` demands the host token at bind time (the
+// shipped `com.nexus.hello.ping` kind is exactly that shape), and a literal
+// like `'price in $USD'` 4xxes as an undefined variable.
+
+#[test]
+fn token_in_line_comment_is_plain_text() {
+    let sql = "-- guarded by $caller_tenant_id elsewhere\nSELECT 1";
+    let bound = bind(sql, &BindCtx::default()).expect("a commented token binds nothing");
+    assert_eq!(bound.sql, sql);
+    assert!(bound.args.is_empty());
+}
+
+#[test]
+fn token_in_block_comment_is_plain_text_including_nested() {
+    let sql = "/* outer /* $caller_tenant_id */ still comment $region */ SELECT 1";
+    let bound = bind(sql, &BindCtx::default()).expect("block-comment tokens bind nothing");
+    assert_eq!(bound.sql, sql);
+    assert!(bound.args.is_empty());
+}
+
+#[test]
+fn token_in_string_literal_is_plain_text() {
+    let sql = "SELECT 'price in $USD', 'it''s $5' AS label";
+    let bound = bind(sql, &BindCtx::default()).expect("string-literal tokens bind nothing");
+    assert_eq!(bound.sql, sql);
+    assert!(bound.args.is_empty());
+}
+
+#[test]
+fn dollar_quoted_body_is_plain_text() {
+    let sql = "SELECT $tag$ has $vars and $__timeFrom inside $tag$, $$ also $x $$";
+    let bound = bind(sql, &BindCtx::default()).expect("dollar-quoted tokens bind nothing");
+    assert_eq!(bound.sql, sql);
+    assert!(bound.args.is_empty());
+}
+
+#[test]
+fn tokens_after_a_comment_still_expand() {
+    let ctx = BindCtx {
+        host_tokens: HostTokens {
+            caller_tenant_id: Some("t1".into()),
+            caller_user_id: None,
+        },
+        ..Default::default()
+    };
+    let sql = "-- $caller_tenant_id is host-bound\nSELECT * FROM t WHERE tenant_id = $caller_tenant_id";
+    let bound = bind(sql, &ctx).expect("bind");
+    assert!(bound.sql.ends_with("WHERE tenant_id = $1"));
+    assert!(bound.sql.starts_with("-- $caller_tenant_id is host-bound"));
+    assert_eq!(bound.args.len(), 1);
+}

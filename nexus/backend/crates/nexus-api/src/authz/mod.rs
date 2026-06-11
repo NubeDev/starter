@@ -50,6 +50,13 @@ pub const KIND_QUERY_KIND: &str = "nexus.query_kind";
 /// the node is "can this principal navigate here". The underlying dashboard's
 /// own `edit`/`delete` grants still gate *authoring* the template.
 pub const KIND_NAV_NODE: &str = "nexus.nav_node";
+/// Registry kind for a stored insight (RW-06): a named, tenant-scoped post-query
+/// transform script a panel references. `view` is "may run/read this insight".
+pub const KIND_INSIGHT: &str = "nexus.insight";
+/// Registry kind for a detection (WS-15): a scheduled insight that emits
+/// findings. `view` reads the detection and its findings; `edit`/`delete` author
+/// it. A finding inherits its detection's grant — ack/resolve is an `edit`.
+pub const KIND_DETECTION: &str = "nexus.detection";
 
 /// Read a resource.
 pub const ACTION_VIEW: &str = "view";
@@ -74,6 +81,8 @@ pub fn register_nexus_resources(registry: &dyn ResourceRegistry) {
         KIND_AGENT,
         KIND_QUERY_KIND,
         KIND_NAV_NODE,
+        KIND_INSIGHT,
+        KIND_DETECTION,
     ] {
         registry.register(ResourceSpec {
             kind: kind.to_string(),

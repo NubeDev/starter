@@ -13,6 +13,7 @@ import {
 
 import type { DashboardSummary } from "@/api/types";
 import { DashboardFormDialog } from "@/features/dashboards/DashboardFormDialog";
+import { DashboardStarButton } from "@/features/dashboards/DashboardStarButton";
 import { EditDashboardDialog } from "@/features/dashboards/EditDashboardDialog";
 import { dashboardIcon } from "@/features/dashboards/appearance";
 import { useDashboards } from "@/features/dashboards/useDashboards";
@@ -141,6 +142,9 @@ function DashboardRow({
       </td>
       <td className="px-4 py-2.5">
         <div className="flex items-center justify-end gap-1">
+          {/* Per-user star — the caller's own favourites; also surfaces the
+              dashboard in the sidebar's Starred section. */}
+          <DashboardStarButton dashboardId={dashboard.id} />
           <IconButton label="Open" onClick={() => navigate(`/d/${dashboard.slug}`)}>
             Open
           </IconButton>

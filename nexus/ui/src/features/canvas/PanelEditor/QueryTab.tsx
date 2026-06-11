@@ -4,13 +4,27 @@ import { PlayCircle } from "lucide-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Input } from "@nube/starter-ui-kit/components/input";
 import { Label } from "@nube/starter-ui-kit/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@nube/starter-ui-kit/components/select";
 
-import type { QueryResponse } from "@/api/types";
+import type { QueryRequest, QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import type { EditorDraft } from "@/features/canvas/PanelEditor/useEditorDraft";
+import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
+import { useInsights } from "@/features/insights/useInsights";
+import { useTimeStore, resolveTimeRange, intervalSecs } from "@/store/time";
+import { useVariableStore, toQueryVariables } from "@/store/variables";
+
+// Select sentinel for "no insight" — Radix Select can't hold an empty value.
+const NO_INSIGHT = "__none__";
 
 // Query tab: datasource + SQL (the WS-03 CodeMirror editor) + a Test run
 // that reports row count / columns / timing without mutating the panel.
@@ -20,11 +34,35 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
   const { widget, patch, patchConfig } = draft;
   const datasourceId = widget.config.query.datasourceId || undefined;
   const sql = widget.config.query.sql;
+  const insightId = widget.config.query.insightId || undefined;
+  const insights = useInsights();
+
+  // The dashboard's live time range and resolved variables (WS-01/WS-02),
+  // read from the same stores the real panel render uses. Test query must
+  // build the *same* request body as `useWidgetQuery` — otherwise the
+  // server-side binder has no range/interval to expand `$__timeGroup` /
+  // `$__timeFilter` / `$__interval` against, and no values for `$site` &c.,
+  // and the test fails on SQL that renders fine on the canvas.
+  const range = useTimeStore((s) => s.range);
+  const now = useTimeStore((s) => s.now);
+  const resolvedVars = useVariableStore((s) => s.resolved);
+  const variables = toQueryVariables(resolvedVars);
 
   const client = useStarterClient();
   const test = useMutation<QueryResponse, Error>({
     mutationFn: () => {
-      const req = { sql: sql.trim() };
+      const resolved = resolveTimeRange(range, now);
+      const req: QueryRequest = {
+        sql: sql.trim(),
+        time_range: {
+          from: resolved.from.toISOString(),
+          to: resolved.to.toISOString(),
+        },
+        interval_secs: intervalSecs(resolved),
+        ...(variables.length > 0 ? { variables } : {}),
+        // Apply the attached insight so the test matches the rendered panel.
+        ...(insightId ? { insight: { insight_id: insightId } } : {}),
+      };
       return datasourceId
         ? queryDatasource(client, datasourceId, req)
         : runQuery(client, req);
@@ -54,7 +92,16 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="ed-sql">SQL</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="ed-sql">SQL</Label>
+          <AiSqlAssist
+            datasourceId={datasourceId}
+            currentSql={sql}
+            onApply={(v) =>
+              patchConfig({ query: { ...widget.config.query, sql: v } })
+            }
+          />
+        </div>
         <SqlEditor
           id="ed-sql"
           value={sql}
@@ -93,6 +140,39 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
             ) : null}
           </div>
         ) : null}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="ed-insight">Insight (post-query transform)</Label>
+        <Select
+          value={insightId ?? NO_INSIGHT}
+          onValueChange={(v) =>
+            patchConfig({
+              query: {
+                ...widget.config.query,
+                insightId: v === NO_INSIGHT ? undefined : v,
+              },
+            })
+          }
+        >
+          <SelectTrigger id="ed-insight">
+            <SelectValue
+              placeholder={insights.isPending ? "Loading insights…" : "None"}
+            />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_INSIGHT}>None</SelectItem>
+            {(insights.data ?? []).map((ins) => (
+              <SelectItem key={ins.id} value={ins.id}>
+                {ins.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Applies a saved insight's transform to this panel's query result
+          before it's drawn.
+        </p>
       </div>
     </div>
   );

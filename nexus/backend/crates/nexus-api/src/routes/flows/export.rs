@@ -1,7 +1,7 @@
 //! `GET /api/v1/flows/:id/export` — the portable flow JSON model.
 //!
 //! LAYER: transport (REST). Resolve → authorize (`view`) → redact secrets →
-//! shape DTO. Emits a self-contained [`FlowExport`] (`name` + ArkFlow config)
+//! shape DTO. Emits a self-contained [`FlowExport`] (`name` + engine config)
 //! that `POST /flows/import` can re-create from. Credentials embedded in the
 //! input/output config are blanked before the model leaves the server so a
 //! shared file never carries a password.

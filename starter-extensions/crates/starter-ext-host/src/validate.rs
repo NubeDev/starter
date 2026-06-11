@@ -222,6 +222,7 @@ fn capability_matches(c: &Capability, category: &str) -> bool {
         (Capability::WallClock { .. }, "wall_clock") => true,
         (Capability::WarehouseRead { .. }, "warehouse_read") => true,
         (Capability::EventBus { .. }, "event_bus") => true,
+        (Capability::Ingest { .. }, "ingest") => true,
         (Capability::DashboardRead { .. }, "dashboard_read") => true,
         (Capability::DashboardWrite { .. }, "dashboard_write") => true,
         (Capability::AuthzCheck { .. }, "authz_check") => true,

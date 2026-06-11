@@ -23,6 +23,9 @@
 //! - `dashboard.read` → the dashboard store, tenant-clamped + authz-gated.
 //! - `warehouse.query` → resolve a contributed/global query-kind and run it
 //!   under the caller's tenant via the shared binder + guards.
+//! - `ingest.write` → push JSON rows into a named flow's bounded source channel,
+//!   tenant stamped from the caller; full channel returns `retry_after_secs`
+//!   (see [`super::ingest`]).
 
 use std::sync::Arc;
 
@@ -129,6 +132,11 @@ impl HostMethodHandler for NexusHostMethods {
             // The kernel's gate maps the `warehouse` category to `warehouse_read`;
             // the conventional method name is `warehouse.query`.
             "warehouse.query" | "warehouse.read" => self.warehouse_query(extension, params, caller).await,
+            // Data-plane: push rows into a named flow source. The host stamps the
+            // caller's tenant; a full channel returns a `retry_after_secs`
+            // back-pressure response. Gated by the supervisor's `ingest`
+            // capability category exactly as `warehouse` is.
+            "ingest.write" => super::ingest::write(self.state.flows.ingest(), params, caller),
             other => Err(ExtError::extension_internal(format!(
                 "host method {other:?} is not implemented by nexus"
             ))),
@@ -280,6 +288,8 @@ impl NexusHostMethods {
             variables: Vec::new(),
             kind: Some(req.template.clone()),
             params: Some(req.params.clone()),
+            sources: Vec::new(),
+            insight: None,
         };
         let response = nexus_store::run_kind_request(
             &self.state.metadata,

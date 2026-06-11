@@ -1,0 +1,22 @@
+[package]
+name        = "nexus-watchdog"
+description = "External liveness watchdog for nexus-api. Probes /livez; on sustained failure, force-kills and restarts the server. Deliberately minimal-dep so a build break in nexus-api cannot also break the supervisor."
+version     = "0.1.0"
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+
+[[bin]]
+name = "nexus-watchdog"
+path = "src/main.rs"
+
+[dependencies]
+# Single-threaded runtime — no shared fate with nexus-api's multi-threaded
+# runtime, and a tiny dep footprint. `process` drives pgrep/restart, `signal`
+# installs the watchdog's own SIGTERM/SIGINT handler.
+tokio   = { version = "1", features = ["rt", "macros", "time", "signal", "process", "io-util"] }
+reqwest = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow  = { workspace = true }
+libc    = { workspace = true }

@@ -16,12 +16,17 @@ export type CreateDatasourceRequest = S["CreateDatasourceRequest"];
 export type UpdateDatasourceRequest = S["UpdateDatasourceRequest"];
 export type TestDatasourceResponse = S["TestDatasourceResponse"];
 export type TestConnectionRequest = S["TestConnectionRequest"];
+export type DatasourceKindList = S["DatasourceKindList"];
+export type DatasourceKindSummary = S["DatasourceKindSummary"];
 export type DatasourceSchema = S["DatasourceSchema"];
 export type SchemaTable = S["SchemaTable"];
 export type SchemaColumn = S["SchemaColumn"];
 
 export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];
+// Federation + insight refs that ride on a QueryRequest (additive contract).
+export type FederatedSourceRef = S["FederatedSourceRef"];
+export type InsightRef = S["InsightRef"];
 export type QueryKindList = S["QueryKindList"];
 export type QueryKindSummary = S["QueryKindSummary"];
 export type QueryKindDetail = S["QueryKindDetail"];
@@ -56,6 +61,18 @@ export type FolderSummary = S["FolderSummary"];
 export type CreateFolderRequest = S["CreateFolderRequest"];
 export type UpdateFolderRequest = S["UpdateFolderRequest"];
 
+// Insights (Rhai transforms applied to query results).
+export type InsightSummary = S["InsightSummary"];
+export type CreateInsightRequest = S["CreateInsightRequest"];
+export type UpdateInsightRequest = S["UpdateInsightRequest"];
+// Insights Workbench: live preview (rows-in / rows-out) + the curated
+// function surface that feeds the cheatsheet and editor autocomplete.
+export type PreviewInsightRequest = S["PreviewInsightRequest"];
+export type PreviewInsightResponse = S["PreviewInsightResponse"];
+export type PreviewInsightError = S["PreviewInsightError"];
+export type InsightFunctionCatalog = S["InsightFunctionCatalog"];
+export type InsightFunctionDoc = S["InsightFunctionDoc"];
+
 export type FlowSummary = S["FlowSummary"];
 export type FlowDetail = S["FlowDetail"];
 export type FlowMetrics = S["FlowMetrics"];
@@ -69,6 +86,14 @@ export type DryRunResponse = S["DryRunResponse"];
 export type UpdateFlowRequest = S["UpdateFlowRequest"];
 // Flow portability (share/import): the self-contained, secret-redacted model.
 export type FlowExport = S["FlowExport"];
+// Flow debug & values (live per-node tap): the SSE event union and toggle DTOs.
+export type FlowDebugEvent = S["FlowDebugEvent"];
+export type FlowDebugStatus = S["FlowDebugStatus"];
+export type FlowDebugEnableResponse = S["FlowDebugEnableResponse"];
+export type FlowTableQueryRequest = S["FlowTableQueryRequest"];
+export type NodeCounters = S["NodeCounters"];
+export type NodeRole = S["NodeRole"];
+export type LogLevel = S["LogLevel"];
 
 export type AlertRuleDetail = S["AlertRuleDetail"];
 export type CreateAlertRuleRequest = S["CreateAlertRuleRequest"];
@@ -79,10 +104,23 @@ export type SilenceDetail = S["SilenceDetail"];
 export type CreateSilenceRequest = S["CreateSilenceRequest"];
 export type AlertEvent = S["AlertEvent"];
 
+// Detections & findings (WS-15) — a scheduled insight that emits findings.
+export type DetectionDetail = S["DetectionDetail"];
+export type CreateDetectionRequest = S["CreateDetectionRequest"];
+export type UpdateDetectionRequest = S["UpdateDetectionRequest"];
+export type DetectionStats = S["DetectionStats"];
+export type Finding = S["Finding"];
+export type FindingActionRequest = S["FindingActionRequest"];
+
 export type Tag = S["Tag"];
 export type TaggableKind = S["TaggableKind"];
 export type SetTagsRequest = S["SetTagsRequest"];
 export type TaggedEntity = S["TaggedEntity"];
+
+// The caller's freeform per-user settings bag (`GET`/`PUT /api/v1/me/settings`).
+// An opaque envelope the frontend owns: starred dashboards live under
+// `starredDashboards`. `PUT` is a full replace, so callers read-modify-write.
+export type UserSettings = S["UserSettings"];
 
 // Nav tree (WS-13): a node mounts a dashboard page (with context) or a static
 // route into the access-gated navigation tree.

@@ -36,6 +36,30 @@ export interface ExtensionSummary {
   contributes?: ContributesSummary;
 }
 
+// `GET /api/v1/extensions/{id}/process` — live stats for a process-flavour
+// extension's current child. The server returns 404 `ext.process.not_running`
+// for builtin/wasm/stopped (mapped to `null` by the client). Field shapes match
+// Rust's serde defaults: `SystemTime` → { secs_since_epoch, nanos_since_epoch },
+// `Duration` → { secs, nanos }.
+export interface SystemTimeJson {
+  secs_since_epoch: number;
+  nanos_since_epoch: number;
+}
+
+export interface DurationJson {
+  secs: number;
+  nanos: number;
+}
+
+export interface ProcessStats {
+  pid: number;
+  started_at: SystemTimeJson;
+  uptime: DurationJson;
+  rss_bytes?: number | null;
+  cpu_pct?: number | null;
+  restarts: number;
+}
+
 export interface EnablementResponse {
   id: string;
   enabled: "enabled" | "disabled";

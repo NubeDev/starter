@@ -2,6 +2,7 @@
 
 pub mod convert;
 pub mod create;
+pub mod debug;
 pub mod delete;
 pub mod dryrun;
 pub mod export;
@@ -11,6 +12,7 @@ pub mod list;
 pub mod nodes;
 pub mod start;
 pub mod stop;
+pub mod table_query;
 pub mod update;
 
 use axum::routing::{get as http_get, post};
@@ -39,4 +41,20 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/flows/{id}/start", post(start::start_flow))
         .route("/api/v1/flows/{id}/stop", post(stop::stop_flow))
         .route("/api/v1/flows/{id}/export", http_get(export::export_flow))
+        .route(
+            "/api/v1/flows/{id}/debug/enable",
+            post(debug::enable_flow_debug),
+        )
+        .route(
+            "/api/v1/flows/{id}/debug/disable",
+            post(debug::disable_flow_debug),
+        )
+        .route(
+            "/api/v1/flows/{id}/debug/stream",
+            http_get(debug::stream_flow_debug),
+        )
+        .route(
+            "/api/v1/flows/{id}/table/query",
+            post(table_query::query_flow_table),
+        )
 }

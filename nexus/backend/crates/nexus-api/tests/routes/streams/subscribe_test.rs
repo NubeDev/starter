@@ -62,6 +62,7 @@ fn state_with_dev(metadata: &sqlx::PgPool, dev: sqlx::PgPool) -> AppState {
         rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
             nexus_api::ratelimit::RateLimitConfig::default(),
         ),
+        canary: Default::default(),
     }
 }
 
@@ -115,7 +116,8 @@ async fn live_panel_streams_real_sql_rows_without_a_bearer_header() {
             port: port as i32,
             database: "postgres".into(),
             db_user: "postgres".into(),
-            secret: "postgres".into(),
+            secret: Some("postgres".into()),
+            config: None,
         },
     )
     .await

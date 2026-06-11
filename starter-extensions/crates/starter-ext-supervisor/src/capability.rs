@@ -45,6 +45,7 @@ pub const CAPABILITY_HOST_METHODS: &[(&str, &str)] = &[
     ("tracing", "tracing"),
     ("warehouse", "warehouse_read"),
     ("event_bus", "event_bus"),
+    ("ingest", "ingest"),
 ];
 
 /// Per-extension capability gate. Cheap to clone — the granted set is
@@ -146,6 +147,7 @@ fn category_of(c: &Capability) -> &'static str {
         Capability::WarehouseRead { .. } => "warehouse_read",
         Capability::WarehouseWrite { .. } => "warehouse_write",
         Capability::EventBus { .. } => "event_bus",
+        Capability::Ingest { .. } => "ingest",
         Capability::DashboardRead { .. } => "dashboard_read",
         Capability::DashboardWrite { .. } => "dashboard_write",
         Capability::AuthzCheck { .. } => "authz_check",
@@ -176,6 +178,7 @@ mod tests {
                     publish: vec![],
                     subscribe: vec![],
                 },
+                "ingest" => Capability::Ingest { names: vec![] },
                 other => Capability::Custom {
                     name: other.to_string(),
                     params: serde_json::Value::Null,
@@ -221,6 +224,20 @@ mod tests {
         let g = gate(&["http_out", "secrets", "fs"]);
         let err = g.check("rampage.do_a_thing").unwrap_err();
         assert!(matches!(err, Error::Capability(_)));
+    }
+
+    #[test]
+    fn ingest_namespace_gated() {
+        // Granted: ingest.* passes and maps to the ingest category.
+        let g = gate(&["ingest"]);
+        assert_eq!(g.check("ingest.write").unwrap().unwrap(), "ingest");
+        assert_eq!(g.check("ingest.read_batch").unwrap().unwrap(), "ingest");
+        // Ungranted: refused.
+        let g = gate(&["secrets"]);
+        assert!(matches!(
+            g.check("ingest.write").unwrap_err(),
+            Error::Capability(_)
+        ));
     }
 
     #[test]

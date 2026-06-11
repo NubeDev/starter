@@ -47,6 +47,15 @@ export interface PanelQuery {
    *  names. Scalars only (the binder binds each as a single arg). Ignored
    *  when `kind` is unset. */
   kindParams?: Readonly<Record<string, string | number | boolean>>;
+  /** Optional post-query insight (RW-06): a saved insight id whose Rhai
+   *  transform is applied to this query's result before it reaches the widget.
+   *  The panel still owns the SQL + datasource; the insight is the reusable
+   *  lens on top. Unset = the raw query result is rendered. Sent to the query
+   *  endpoint as `{ insight: { insight_id } }`. */
+  insightId?: string;
+  /** Params bound as the insight script's `params` object. Ignored when
+   *  `insightId` is unset. */
+  insightParams?: unknown;
 }
 
 /** One drawn series, mapped from a column in the query result. */
@@ -121,7 +130,7 @@ export interface ValueMapping {
  *  to selectively replace it per series. All fields optional so an
  *  untouched panel serialises to `{}` and reads back identically. */
 export interface FieldDisplay {
-  /** Unit id from the unit registry (`features/widgets/units.ts`), e.g.
+  /** Unit id from the unit registry (`features/widgets/_shared/units.ts`), e.g.
    *  `"celsius"`, `"percent"`, `"watt"`. Undefined → unitless. */
   unit?: string;
   /** Fixed decimal places for the formatted value. Undefined → auto. */
@@ -217,7 +226,7 @@ export interface WidgetConfig {
   /** Legacy single warn/crit gauge bounds. Kept for back-compat: panels
    *  authored before the field-config editor still read this. New edits
    *  write {@link FieldConfig.defaults.thresholds} instead, and the
-   *  resolver (`features/widgets/fieldConfig.ts`) reads `fieldConfig`
+   *  resolver (`features/widgets/_shared/fieldConfig.ts`) reads `fieldConfig`
    *  first, falling back to these flat fields. */
   thresholds?: Thresholds;
   min?: number;

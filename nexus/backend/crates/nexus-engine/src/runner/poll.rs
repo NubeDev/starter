@@ -1,8 +1,8 @@
 //! `PollRunner` — drive a live stream by re-running a query on an interval.
 //!
-//! The trimmed engine has no streaming `sql` input (the SQL query path is
-//! sqlx-direct, not ArkFlow), so a "live SQL panel" is a poll loop, not a push
-//! source: each tick re-runs the bounded query and publishes the result to the
+//! The engine has no streaming `sql` input (the SQL query path is sqlx-direct),
+//! so a "live SQL panel" is a poll loop, not a push source: each tick re-runs the
+//! bounded query and publishes the result to the
 //! run id's broadcast channel, the same channel the SSE subscribers read. The
 //! producer is supplied by the caller (nexus-api wires it to the guarded sqlx
 //! query) so this crate stays free of any store/DB dependency — it owns the

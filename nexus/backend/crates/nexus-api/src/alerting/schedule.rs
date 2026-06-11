@@ -21,8 +21,9 @@ const TICK: Duration = Duration::from_secs(10);
 /// evaluation work; the rest are picked up on the next tick.
 const BATCH: i32 = 100;
 
-/// Spawn the scheduler. Returns immediately; the loop runs in the background.
-pub fn spawn(state: AppState) {
+/// Spawn the scheduler. Returns the task's `JoinHandle` so the caller can wrap
+/// it in the task watchdog (WS-16); the loop runs in the background.
+pub fn spawn(state: AppState) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         let mut ticker = tokio::time::interval(TICK);
         loop {
@@ -31,7 +32,7 @@ pub fn spawn(state: AppState) {
                 tracing::warn!(error = %e, "alert scheduler tick failed");
             }
         }
-    });
+    })
 }
 
 /// One scheduler pass: claim due rules and evaluate each. Exposed for tests that

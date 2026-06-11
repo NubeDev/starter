@@ -1,4 +1,4 @@
-//! The M0 engine-seam test: prove that a finite ArkFlow `Stream` driven through
+//! The engine-seam test: prove that a finite native pipeline driven through
 //! the bounded collector returns real rows, terminates cleanly, and honours the
 //! row cap by reporting truncation rather than buffering without limit.
 //!

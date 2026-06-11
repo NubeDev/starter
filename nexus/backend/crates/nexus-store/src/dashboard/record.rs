@@ -30,6 +30,11 @@ pub struct PanelRecord {
     pub sql: String,
     pub viz: String,
     pub layout: Value,
+    /// Optional post-query insight (RW-06) applied to this panel's result before
+    /// it reaches the widget. `None` = the raw query result is rendered.
+    pub insight_id: Option<Uuid>,
+    /// JSON bound as the insight script's `params`. `None` = no params.
+    pub insight_params: Option<Value>,
 }
 
 /// Input to create a dashboard.
@@ -68,6 +73,10 @@ pub struct NewPanel {
     pub sql: String,
     pub viz: String,
     pub layout: Value,
+    /// Optional post-query insight (RW-06); `None` = none attached at create.
+    pub insight_id: Option<Uuid>,
+    /// Params bound as the insight script's `params`; `None` = no params.
+    pub insight_params: Option<Value>,
 }
 
 /// Partial update of a panel. Every field is optional — `None` leaves the
@@ -80,4 +89,13 @@ pub struct PanelPatch {
     pub sql: Option<String>,
     pub viz: Option<String>,
     pub layout: Option<Value>,
+    /// Attach (`Some(Some(id))`), detach (`Some(None)`), or leave unchanged
+    /// (`None`) the panel's insight. Three-valued because COALESCE can't express
+    /// "set to NULL" — detaching an insight from a panel is a real edit (the user
+    /// removes it), unlike datasource which the UI only ever sets. See the
+    /// `folder_id` field on `DashboardPatch` for the same pattern.
+    pub insight_id: Option<Option<Uuid>>,
+    /// Set (`Some(Some(json))`), clear (`Some(None)`), or leave unchanged
+    /// (`None`) the insight params. Tracks `insight_id` so detaching clears both.
+    pub insight_params: Option<Option<Value>>,
 }

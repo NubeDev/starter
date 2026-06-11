@@ -1,5 +1,5 @@
-//! The runners that drive ArkFlow `Stream`s for the product's two shapes:
-//! one-shot queries and live subscriptions.
+//! The runners that drive native [`crate::core::Pipeline`]s for the product's
+//! two shapes: one-shot queries and live subscriptions.
 
 pub mod cancel;
 pub mod live;

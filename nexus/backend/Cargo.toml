@@ -1,17 +1,17 @@
 # Nexus backend — its own cargo workspace (a sibling of the root starter
-# workspace, excluded from it). It pins ArkFlow to an exact git rev because the
-# cancellation-token `Stream::run` signature the live/query runners depend on
-# exists only on git HEAD, not the crates.io release. Keeping a separate lockfile
-# means an ArkFlow bump here never perturbs the root workspace's resolution.
+# workspace, excluded from it). The separate lockfile keeps the backend's
+# DataFusion/Arrow resolution from perturbing the root workspace.
 [workspace]
 resolver = "2"
 members = [
     "crates/nexus-spi",
     "crates/nexus-engine",
+    "crates/nexus-insights",
     "crates/nexus-store",
     "crates/nexus-api",
     "crates/nexus-ai",
     "crates/nexus-skills",
+    "crates/nexus-watchdog",
 ]
 
 [workspace.package]
@@ -21,8 +21,9 @@ license = "Apache-2.0"
 
 [workspace.dependencies]
 # In-repo nexus crates (path deps within this workspace).
-nexus-spi    = { path = "crates/nexus-spi" }
-nexus-engine = { path = "crates/nexus-engine" }
+nexus-spi      = { path = "crates/nexus-spi" }
+nexus-engine   = { path = "crates/nexus-engine" }
+nexus-insights = { path = "crates/nexus-insights" }
 nexus-store  = { path = "crates/nexus-store" }
 nexus-ai     = { path = "crates/nexus-ai" }
 nexus-skills = { path = "crates/nexus-skills" }
@@ -37,6 +38,11 @@ starter-authz          = { path = "../../crates/starter-authz" }
 starter-store-postgres = { path = "../../crates/starter-store-postgres" }
 starter-config         = { path = "../../crates/starter-config" }
 starter-observability  = { path = "../../crates/starter-observability" }
+# Shared data-root resolver (override > $NEXUS_DATA_ROOT > OS XDG). Used to land
+# uploaded extension bundles + supervisor pidfiles under an external data root
+# (the same convention rubix uses via `Paths::resolve("rubix", …)`), instead of
+# inside the in-repo crate tree.
+starter-paths          = { path = "../../crates/starter-paths" }
 # WS-12 audit/undo: reuse the platform changelog read-side query API and the
 # per-actor undo service + Reversible registry. nexus ships its own tenant-aware
 # recorder/changelog over a tenant-scoped `nexus_changes` table (RLS), but the
@@ -58,13 +64,9 @@ starter-ext-server     = { path = "../../starter-extensions/crates/starter-ext-s
 starter-ext-supervisor = { path = "../../starter-extensions/crates/starter-ext-supervisor" }
 starter-ext-store-pg   = { path = "../../starter-extensions/crates/starter-ext-store-pg" }
 
-# ArkFlow — the only external dependency, pinned to an exact rev (R3). The same
-# rev the POC proved the Collector seam against.
-arkflow-core   = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
-arkflow-plugin = { git = "https://github.com/arkflow-rs/arkflow", rev = "b8f82b3dff6f5f07a26f02e52dcc559db7ac0837" }
-
-# DataFusion / Arrow pinned to the versions ArkFlow resolves at that rev, so the
-# `RecordBatch` the collector sink receives is byte-identical to the engine's.
+# DataFusion / Arrow — the engine's vectorised core. Pinned to 47 (the version
+# the native pipeline was cut over against). Free to bump post-cutover, before
+# federation (RW-05) leans on newer sqlparser fixes.
 datafusion = "47"
 
 # Web + async stack — versions matched to the starter crates so the shared axum
@@ -93,12 +95,34 @@ chrono     = { version = "0.4", default-features = false, features = ["serde", "
 async-trait = "0.1"
 thiserror   = "1"
 tracing     = "0.1"
+# WS-16 watchdog supervisor: a tiny error-context crate and raw `kill(2)` for the
+# signal-escalation path. Only the `nexus-watchdog` binary uses these; keeping
+# the dep set minimal is the point — a build break elsewhere must not break the
+# supervisor.
+anyhow      = "1"
+libc        = "0.2"
+
+# Sandboxed insight scripting (RW-06). `sync` makes the engine + scope `Send` so a
+# script can run inside an async handler; `no_closure` removes the one Rhai feature
+# (shared captured state) that complicates the per-execution sandbox model — every
+# insight is one fresh engine with no cross-call state by design.
+rhai = { version = "1.20", default-features = false, features = ["sync", "std"] }
 
 # MQTT client for the optional `mqtt` datasource connector (WS-08b). Pulled in
 # only when the `mqtt` feature is enabled — OFF by default per HOW-TO-CODE §9, so
 # a build without device connectors carries none of its transitive deps. `url`
 # off keeps the surface to the broker host/port/credentials nexus already models.
 rumqttc = { version = "0.24", default-features = false, features = ["use-rustls"] }
+
+# Eclipse Zenoh subscriber for the optional `zenoh` ingest source (RW-09). Pulled
+# in only when nexus-engine's `zenoh` feature is enabled — OFF by default per
+# roadmap §8 (same gating precedent as `mqtt`/rumqttc), so a build without the
+# zenoh transport carries none of its transitive deps. In-process peer mode lets
+# tests run a publisher→subscriber round-trip with no external router.
+# `transport_tcp` is the one transport we ship — the common deployment shape and
+# what the in-process loopback test connects over; the rest stay off to keep the
+# gated build's surface small.
+zenoh = { version = "1.0", default-features = false, features = ["transport_tcp"] }
 
 # Crypto for the R6 envelope encryption and R8 stream-token signing.
 aes-gcm = "0.10"
@@ -112,10 +136,3 @@ testcontainers         = "0.23"
 testcontainers-modules = { version = "0.11", features = ["postgres"] }
 reqwest                = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 tracing-subscriber     = { version = "0.3", features = ["env-filter"] }
-
-# Redirect upstream `arkflow-plugin` to the connector-trimmed copy in vendor/.
-# Upstream registers every connector unconditionally (DuckDB, Kafka, PyO3, …);
-# the vendored copy keeps only the pure-DataFusion modules the query/live seam
-# uses. The engine crate (`arkflow-core`) is consumed unpatched.
-[patch."https://github.com/arkflow-rs/arkflow"]
-arkflow-plugin = { path = "vendor/arkflow-plugin" }

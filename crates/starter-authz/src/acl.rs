@@ -29,10 +29,20 @@ pub const RUBIX_DASHBOARD_PAGE: &str = "rubix.dashboard.page";
 /// request for it is rejected at the HTTP layer.
 const STANDARD_TIER_KINDS: &[&str] = &[
     RUBIX_DASHBOARD_PAGE,
+    // Nexus tenant-owned kinds — all registered with the standard
+    // view/edit/delete action ladder in `nexus-api`'s `register_nexus_resources`,
+    // so they share this tier mapping. Keep this list in sync with that registry
+    // call: a kind registered there but missing here is grantable per the engine
+    // yet 422s at the grant route (`unsupported_kind`).
     "nexus.dashboard",
+    "nexus.folder",
     "nexus.datasource",
     "nexus.flow",
     "nexus.alert_rule",
+    "nexus.agent",
+    "nexus.query_kind",
+    "nexus.nav_node",
+    "nexus.insight",
 ];
 
 /// Tier → actions table for a kind. Returns `None` when the kind has no tier

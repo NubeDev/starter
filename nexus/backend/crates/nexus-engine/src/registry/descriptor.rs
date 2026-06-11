@@ -1,14 +1,14 @@
-//! The registry describing itself: a metadata layer alongside the builder
-//! registrations so the node palette can be generated from the same source of
-//! truth that builds the streams.
+//! The registry describing itself: a metadata layer alongside the native node
+//! builders so the node palette can be generated from the same source of truth
+//! that builds the pipelines.
 //!
-//! ArkFlow's builder registries only know how to *construct* a component from a
-//! config `Value`; they carry no description of the config they accept. The
-//! visual flow builder needs the opposite — to *describe* each node so it can
-//! offer a palette and a schema-driven config form. Rather than introduce a
-//! second registry that could drift from the builders, this module hand-keeps a
-//! descriptor next to each registered node; adding a node means registering its
-//! builder ([`super::inputs`]/[`super::outputs`]) and adding its descriptor here.
+//! The native registry ([`crate::native_registry`]) only knows how to *construct*
+//! a node from a config `Value`; it carries no description of the config it
+//! accepts. The visual flow builder needs the opposite — to *describe* each node
+//! so it can offer a palette and a schema-driven config form. Rather than
+//! introduce a second registry that could drift from the builders, this module
+//! hand-keeps a descriptor next to each registered node; adding a node means
+//! registering its builder in `native_registry` and adding its descriptor here.
 
 use serde_json::{json, Value};
 
@@ -16,11 +16,11 @@ use serde_json::{json, Value};
 /// groups the editor presents.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeCategory {
-    /// A flow source (ArkFlow input).
+    /// A flow source.
     Input,
-    /// A pipeline transform (ArkFlow processor).
+    /// A pipeline transform.
     Processor,
-    /// A flow sink (ArkFlow output).
+    /// A flow sink.
     Output,
 }
 
@@ -36,12 +36,12 @@ impl NodeCategory {
 }
 
 /// A described node type: enough for the editor to render a palette entry and a
-/// config form, and to serialise the graph back to the ArkFlow `{type, ...}`
-/// config the engine builds. `config_schema` is a JSON Schema (draft 2020-12)
-/// for the node's config object.
+/// config form, and to serialise the graph back to the `{type, ...}` config the
+/// engine builds. `config_schema` is a JSON Schema (draft 2020-12) for the
+/// node's config object.
 #[derive(Debug, Clone)]
 pub struct NodeDescriptor {
-    /// The ArkFlow `type` discriminant, e.g. `http_poll`, `sql`, `postgres`.
+    /// The node `type` discriminant, e.g. `http_poll`, `sql`, `postgres`.
     pub kind: &'static str,
     /// Which palette group the node belongs to.
     pub category: NodeCategory,
@@ -54,20 +54,77 @@ pub struct NodeDescriptor {
 }
 
 /// Every registered node, described. The order is palette order: inputs, then
-/// processors, then outputs. Kept in lockstep with the builder registrations in
-/// [`super::inputs`] and [`super::outputs`] (and the vendored ArkFlow
-/// processors `sql`/`json_to_arrow`/`arrow_to_json`).
+/// processors, then outputs. Kept in lockstep with the native builder
+/// registrations in [`crate::native_registry`] — one descriptor per buildable
+/// node `type`, no more.
 pub fn describe() -> Vec<NodeDescriptor> {
-    vec![
+    #[allow(unused_mut)]
+    let mut nodes = vec![
         http_poll(),
+        http_ingest(),
         simulator(),
         sql_processor(),
         json_to_arrow(),
-        arrow_to_json(),
         collector(),
         sse(),
         postgres(),
-    ]
+        datasource(),
+    ];
+    // The zenoh subscriber is feature-gated OFF by default; only describe it when
+    // the engine was compiled with its builder registered, so the palette never
+    // offers a node the registry cannot construct.
+    #[cfg(feature = "zenoh")]
+    nodes.push(zenoh_source());
+    nodes
+}
+
+fn http_ingest() -> NodeDescriptor {
+    NodeDescriptor {
+        kind: "http_ingest",
+        category: NodeCategory::Input,
+        label: "HTTP ingest (push)",
+        description: "Accept pushed JSON over POST /api/v1/ingest/{flow_id}; each push is one batch.",
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "capacity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Bounded-channel depth; a full channel answers callers with 429.",
+                },
+            },
+            "additionalProperties": false,
+        }),
+    }
+}
+
+#[cfg(feature = "zenoh")]
+fn zenoh_source() -> NodeDescriptor {
+    NodeDescriptor {
+        kind: "zenoh",
+        category: NodeCategory::Input,
+        label: "Zenoh subscribe",
+        description: "Subscribe to an Eclipse Zenoh key expression; each sample is one batch.",
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "endpoints": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Endpoints to connect/listen on, e.g. tcp/127.0.0.1:7447.",
+                },
+                "key_expr": str_prop("Key expression to subscribe to, e.g. site/**."),
+                "mode": {
+                    "type": "string",
+                    "enum": ["client", "peer"],
+                    "default": "client",
+                    "description": "Session mode: client connects to a router; peer meshes directly.",
+                },
+            },
+            "required": ["key_expr"],
+            "additionalProperties": false,
+        }),
+    }
 }
 
 /// A required string property.
@@ -145,18 +202,49 @@ fn json_to_arrow() -> NodeDescriptor {
         kind: "json_to_arrow",
         category: NodeCategory::Processor,
         label: "JSON → Arrow",
-        description: "Parse a JSON-document batch into an Arrow record batch for SQL processing.",
-        config_schema: json!({ "type": "object", "additionalProperties": true }),
-    }
-}
-
-fn arrow_to_json() -> NodeDescriptor {
-    NodeDescriptor {
-        kind: "arrow_to_json",
-        category: NodeCategory::Processor,
-        label: "Arrow → JSON",
-        description: "Render an Arrow record batch back to JSON-document rows.",
-        config_schema: json!({ "type": "object", "additionalProperties": true }),
+        description: "Parse a JSON-document batch into an Arrow record batch for SQL processing. \
+            Declare a column schema to pin the output types (preferred for a warehouse sink), or \
+            leave it empty to infer the schema from the first batch.",
+        // The only config is the OPTIONAL declared schema: a list of typed
+        // columns. Empty/absent → infer from the first batch. The closed type set
+        // mirrors `processor::declared_schema::DeclaredType`.
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "schema": {
+                    "type": "object",
+                    "title": "Declared columns",
+                    "description": "Optional. Pin the output columns and their types. Leave empty to infer from the first batch.",
+                    "properties": {
+                        "fields": {
+                            "type": "array",
+                            "title": "Columns",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": { "type": "string", "description": "Column name." },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": ["bool", "int", "float", "string", "timestamp"],
+                                        "description": "Column type. `timestamp` parses an RFC3339 string.",
+                                    },
+                                    "nullable": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "description": "Whether the column may be null (default true).",
+                                    },
+                                },
+                                "required": ["name", "type"],
+                                "additionalProperties": false,
+                            },
+                        },
+                    },
+                    "required": ["fields"],
+                    "additionalProperties": false,
+                },
+            },
+            "additionalProperties": false,
+        }),
     }
 }
 
@@ -199,14 +287,64 @@ fn postgres() -> NodeDescriptor {
         kind: "postgres",
         category: NodeCategory::Output,
         label: "Postgres sink",
-        description: "Insert each batch's rows into a table in a datasource Postgres.",
+        description: "Insert each batch's rows into a table in a datasource Postgres. The table can be auto-created from the stream's schema with the column types it declares.",
         config_schema: json!({
             "type": "object",
             "properties": {
                 "uri": str_prop("Connection string for the target Postgres."),
                 "table": str_prop("Table the shaped rows are inserted into."),
+                "create": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Create the table from the stream schema on first write if missing. Set false to require a pre-existing table.",
+                },
+                "primary_key": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Columns that form the primary key when the table is created; also the conflict target for on_conflict.",
+                },
+                "on_conflict": {
+                    "type": "string",
+                    "enum": ["error", "nothing", "upsert"],
+                    "default": "error",
+                    "description": "On a primary-key collision: error (fail), nothing (skip the row), or upsert (update non-key columns).",
+                },
             },
             "required": ["uri", "table"],
+            "additionalProperties": false,
+        }),
+    }
+}
+
+fn datasource() -> NodeDescriptor {
+    NodeDescriptor {
+        kind: "datasource",
+        category: NodeCategory::Output,
+        // The config the editor serialises is the flow-config form the API's
+        // `resolve_output` reads — a datasource *reference* by id plus a table
+        // and optional batching. The referenced datasource's connection material
+        // (and secrets) are resolved server-side at flow start through the
+        // audited datasource store, never carried in the flow config. This is the
+        // RW-04 "any-DB store" sink: target any registered datasource by id.
+        label: "Datasource sink",
+        description: "Write each batch to a table in a registered datasource (resolved by id; creds stay server-side).",
+        config_schema: json!({
+            "type": "object",
+            "properties": {
+                "datasource": str_prop("Id of the registered datasource to write into."),
+                "table": str_prop("Table the shaped rows are written to."),
+                "batch_rows": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Flush after this many buffered rows (batches the write).",
+                },
+                "batch_ms": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Flush after this many milliseconds even if the row count is short.",
+                },
+            },
+            "required": ["datasource", "table"],
             "additionalProperties": false,
         }),
     }
@@ -222,13 +360,14 @@ mod tests {
         let kinds: Vec<&str> = nodes.iter().map(|n| n.kind).collect();
         for expected in [
             "http_poll",
+            "http_ingest",
             "simulator",
             "sql",
             "json_to_arrow",
-            "arrow_to_json",
             "collector",
             "sse",
             "postgres",
+            "datasource",
         ] {
             assert!(kinds.contains(&expected), "missing descriptor for {expected}");
         }

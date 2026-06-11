@@ -8,10 +8,17 @@ use nexus_store::flow::FlowRecord;
 /// last-run stats it retains.
 fn metrics_of(id: &str, flows: &FlowManager) -> FlowMetrics {
     let stats = flows.stats(id);
+    let m = stats.metrics;
     FlowMetrics {
         running: flows.is_running(id),
         last_started_at: stats.last_started_at,
         last_error: stats.last_error,
+        batches_in: m.batches_in,
+        rows_written: m.rows_written,
+        channel_depth: m.channel_depth,
+        flush_count: m.flush_count,
+        write_errors: m.write_errors,
+        last_write_ms: m.last_write_ms,
     }
 }
 

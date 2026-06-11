@@ -11,8 +11,10 @@ mod insert;
 pub mod mqtt;
 pub mod postgres;
 mod record;
+mod resolve;
 pub mod secret;
 mod update;
+pub mod zenoh;
 
 use uuid::Uuid;
 
@@ -21,6 +23,7 @@ pub use delete::delete;
 pub use fetch::{get, list};
 pub use insert::insert;
 pub use record::{DatasourcePatch, DatasourceRecord, NewDatasource};
+pub use resolve::resolve_sink_config;
 pub use secret::{Envelope, SealedSecret, SecretError};
 pub use update::update;
 

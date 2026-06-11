@@ -94,9 +94,12 @@ describe("formatDateTime", () => {
       TS,
       basePrefs({ date_format: "YYYY-MM-DD", time_format: "24h" }),
     );
-    expect(out).toMatch(/^[\d/]+ 14:30$/);
+    // An explicit date format now forces its field *order* regardless of
+    // locale (en-US base) — ISO renders as YYYY-MM-DD, joined to the time
+    // with a plain space.
+    expect(out).toMatch(/^[\d-]+ 14:30$/);
     expect(out).toContain("14:30");
-    expect(out).toContain("2024");
+    expect(out).toContain("2024-06-15");
   });
 
   it("honours timezone for both halves", () => {
@@ -225,7 +228,7 @@ describe("(locale, prefs) matrix", () => {
         currency: "EUR",
       }),
       expected:
-        "date=15.06.2024 time=16:30 num=1.234,56 cur=19,99 € temp=100 °C speed=26,82 m/s mass=4,54 kg",
+        "date=2024-06-15 time=16:30 num=1.234,56 cur=19,99 € temp=100 °C speed=26,82 m/s mass=4,54 kg",
     },
   ];
 

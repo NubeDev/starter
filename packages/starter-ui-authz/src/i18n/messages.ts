@@ -115,6 +115,12 @@ export interface AuthzMessages {
       title: string;
       userIdLabel: string;
       add: string;
+      /** Button/label that opens the manage-members dialog. */
+      manage: string;
+      /** Remove a member from the team. */
+      remove: string;
+      /** Empty state when a team has no members. */
+      empty: string;
     };
   };
   /** Rules panel. */
@@ -281,6 +287,9 @@ export const DEFAULT_AUTHZ_MESSAGES: AuthzMessages = {
       title: "Team members",
       userIdLabel: "User id",
       add: "Add",
+      manage: "Manage members",
+      remove: "Remove",
+      empty: "No members yet.",
     },
   },
   rules: {

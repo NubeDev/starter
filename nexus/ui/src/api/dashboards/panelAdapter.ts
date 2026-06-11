@@ -3,15 +3,30 @@ import type {
   PanelDetail,
   UpdatePanelRequest,
 } from "@/api/types";
-import type { FieldMapping, Widget, WidgetLayout } from "@/data/types";
+import type {
+  FieldConfig,
+  FieldMapping,
+  PanelOptions,
+  Thresholds,
+  Transform,
+  Widget,
+  WidgetLayout,
+} from "@/data/types";
 import { toWidgetType } from "@/features/widgets/catalog";
 
 // The backend persists a panel as title + sql + datasource_id + viz + an
 // *opaque* `layout` JSON it doesn't interpret. The UI's `Widget` needs
-// more — grid position *and* a field mapping (which column is the x axis,
-// which are series). Since `layout` is opaque, both ride inside it. This
-// module is the single boundary where the wire panel and the UI widget
-// meet; nothing else reaches into `layout`'s shape.
+// more — grid position, the field mapping (x + series), and the display
+// config the editor authors: `fieldConfig` (unit/decimals/thresholds/
+// overrides), `options` (legend/axes), and `transforms`. The backend has
+// no column for any of these, so the WHOLE display config rides inside the
+// opaque `layout` blob. This module is the single boundary where the wire
+// panel and the UI widget meet; nothing else reaches into `layout`'s shape.
+//
+// Earlier this stashed only `fields`, so every Field/Overrides/Legend/
+// Transforms edit was silently dropped on save (it survived in the live
+// preview but vanished on reload). Round-tripping the full display config
+// fixes that.
 
 // `viz` coercion (free wire string → known widget type, with aliases and
 // a safe `table` fallback) lives in the widget catalog, so the type list
@@ -19,14 +34,26 @@ import { toWidgetType } from "@/features/widgets/catalog";
 
 const DEFAULT_LAYOUT: WidgetLayout = { x: 0, y: 0, w: 4, h: 4 };
 
-// Shape we write into the opaque `layout` slot.
-interface StashedLayout extends WidgetLayout {
+// The display config the editor owns, persisted alongside the grid in the
+// opaque `layout` blob. `query` is NOT here — sql/datasource_id are their
+// own backend columns.
+interface StashedDisplay {
   fields?: FieldMapping;
+  thresholds?: Thresholds;
+  min?: number;
+  max?: number;
+  decimals?: number;
+  fieldConfig?: FieldConfig;
+  options?: PanelOptions;
+  transforms?: ReadonlyArray<Transform>;
 }
+
+// Shape we write into the opaque `layout` slot: grid position + display.
+type StashedLayout = WidgetLayout & StashedDisplay;
 
 function readLayout(layout: unknown): {
   position: WidgetLayout;
-  fields: FieldMapping;
+  display: StashedDisplay;
 } {
   const l = (layout ?? {}) as Partial<StashedLayout>;
   const position: WidgetLayout = {
@@ -36,13 +63,39 @@ function readLayout(layout: unknown): {
     h: typeof l.h === "number" ? l.h : DEFAULT_LAYOUT.h,
   };
   // No stored mapping → an empty series list. A panel with no fields
-  // renders its empty state; we never invent columns (F0).
-  const fields: FieldMapping = l.fields ?? { series: [] };
-  return { position, fields };
+  // renders its empty state; we never invent columns (F0). The rest of the
+  // display config is optional — absence means "render as before".
+  const display: StashedDisplay = {
+    fields: l.fields ?? { series: [] },
+    thresholds: l.thresholds,
+    min: l.min,
+    max: l.max,
+    decimals: l.decimals,
+    fieldConfig: l.fieldConfig,
+    options: l.options,
+    transforms: l.transforms,
+  };
+  return { position, display };
+}
+
+// Pack a widget's full display config (everything except `query`) into the
+// opaque `layout` slot, dropping undefined keys so the blob stays clean.
+function stashLayout(widget: Widget): StashedLayout {
+  const c = widget.config;
+  const stashed: StashedLayout = { ...widget.layout, fields: c.fields };
+  if (c.thresholds !== undefined) stashed.thresholds = c.thresholds;
+  if (c.min !== undefined) stashed.min = c.min;
+  if (c.max !== undefined) stashed.max = c.max;
+  if (c.decimals !== undefined) stashed.decimals = c.decimals;
+  if (c.fieldConfig !== undefined) stashed.fieldConfig = c.fieldConfig;
+  if (c.options !== undefined) stashed.options = c.options;
+  if (c.transforms !== undefined) stashed.transforms = c.transforms;
+  return stashed;
 }
 
 export function panelToWidget(panel: PanelDetail): Widget {
-  const { position, fields } = readLayout(panel.layout);
+  const { position, display } = readLayout(panel.layout);
+  const { fields = { series: [] }, ...rest } = display;
   return {
     id: panel.id,
     type: toWidgetType(panel.viz),
@@ -52,8 +105,20 @@ export function panelToWidget(panel: PanelDetail): Widget {
       query: {
         datasourceId: panel.datasource_id ?? "",
         sql: panel.sql,
+        // RW-06: an attached insight rides on the query as its own columns, not
+        // inside the opaque layout blob. `?? undefined` so a missing/`null` id
+        // becomes "no insight" rather than an empty string.
+        ...(panel.insight_id ? { insightId: panel.insight_id } : {}),
+        ...(panel.insight_params !== undefined &&
+        panel.insight_params !== null
+          ? { insightParams: panel.insight_params }
+          : {}),
       },
       fields,
+      // Spread the rest of the round-tripped display config (fieldConfig,
+      // options, transforms, legacy thresholds/min/max/decimals); each is
+      // omitted from the blob when unset, so undefined keys don't appear.
+      ...rest,
     },
   };
 }
@@ -62,12 +127,19 @@ export function panelToWidget(panel: PanelDetail): Widget {
 // mapping in the opaque `layout`. The backend echoes `layout` back
 // untouched, so `panelToWidget` reconstructs the full widget.
 export function widgetToCreatePanel(widget: Widget): CreatePanelRequest {
+  const q = widget.config.query;
   return {
     title: widget.title,
-    sql: widget.config.query.sql,
-    datasource_id: widget.config.query.datasourceId,
+    sql: q.sql,
+    datasource_id: q.datasourceId,
     viz: widget.type,
     layout: stashLayout(widget),
+    // Attach an insight only when one is set; omit otherwise (create has no
+    // "detach" — absence is "none").
+    ...(q.insightId ? { insight_id: q.insightId } : {}),
+    ...(q.insightId && q.insightParams !== undefined
+      ? { insight_params: q.insightParams }
+      : {}),
   };
 }
 
@@ -85,18 +157,24 @@ export function widgetToLayoutPatch(widget: Widget): UpdatePanelRequest {
 // the position inside `layout` is the widget's current one, unchanged by a
 // properties edit.
 export function widgetToUpdatePanel(widget: Widget): UpdatePanelRequest {
+  const q = widget.config.query;
   return {
     title: widget.title,
-    sql: widget.config.query.sql,
-    datasource_id: widget.config.query.datasourceId,
+    sql: q.sql,
+    datasource_id: q.datasourceId,
     viz: widget.type,
     layout: stashLayout(widget),
+    // A full panel save expresses the editor's current state, so the insight is
+    // either set or explicitly detached — never "leave unchanged". The backend
+    // detach intent rides a `clear_insight` flag (not a wire `null`, which serde
+    // can't tell from "absent"), mirroring dashboards' `clear_folder`.
+    ...(q.insightId
+      ? {
+          insight_id: q.insightId,
+          ...(q.insightParams !== undefined
+            ? { insight_params: q.insightParams }
+            : {}),
+        }
+      : { clear_insight: true }),
   };
-}
-
-// The opaque `layout` payload: grid position + the field mapping the
-// backend doesn't model. Used by both create and the layout PATCH so the
-// stashed shape stays in one place.
-function stashLayout(widget: Widget): StashedLayout {
-  return { ...widget.layout, fields: widget.config.fields };
 }

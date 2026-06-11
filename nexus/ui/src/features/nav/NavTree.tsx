@@ -3,6 +3,8 @@ import { ChevronRight } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 import {
+  SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -11,14 +13,28 @@ import {
 import { dashboardIcon } from "@/features/dashboards/appearance";
 import { useDashboards } from "@/features/dashboards/useDashboards";
 import { navNodeHref, type NavTreeNode } from "@/features/nav/navTree";
-import { GROUP_ICON, ROUTE_META } from "@/features/nav/routeMeta";
+import {
+  GROUP_ICON,
+  NAV_CATEGORIES,
+  type NavCategory,
+  nodeCategory,
+  ROUTE_META,
+} from "@/features/nav/routeMeta";
 import { useNavTree } from "@/features/nav/useNavTree";
 
 // The primary sidebar navigation (WS-13 §4) — the access-filtered nav tree.
 // Group nodes expand/collapse; dashboard/route nodes are links. A dashboard
 // node opens `d/:slug?nav=:id` so the page binds the node's context; a route
 // node opens its static page. Replaces the hardcoded SidebarDashboards.
-export function NavTree() {
+//
+// `extras` lets the shell drop static menu items into a category's group (keyed
+// by category) so they sit flush with the tree's items — used for admin links
+// like Extensions that aren't tree nodes but belong under Admin.
+export function NavTree({
+  extras,
+}: {
+  extras?: Partial<Record<NavCategory, React.ReactNode>>;
+} = {}) {
   const { tree, isPending, isError } = useNavTree();
   // Resolve a dashboard target's id → slug for its link. The dashboards list is
   // already cached by the shell, so this adds no round-trip.
@@ -26,37 +42,52 @@ export function NavTree() {
   const slugOf = (id: string) =>
     dashboards?.find((d) => d.id === id)?.slug;
 
-  if (isPending) {
+  if (isPending || isError || tree.length === 0) {
     return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton disabled className="text-muted-foreground">
-            <GROUP_ICON />
-            <span>Loading…</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
-  if (isError || tree.length === 0) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton disabled className="text-muted-foreground">
-            <GROUP_ICON />
-            <span>{isError ? "Unavailable" : "No navigation yet"}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <SidebarGroup>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton disabled className="text-muted-foreground">
+              <GROUP_ICON />
+              <span>
+                {isPending
+                  ? "Loading…"
+                  : isError
+                    ? "Unavailable"
+                    : "No navigation yet"}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
     );
   }
 
+  // Bucket the top-level nodes into sidebar categories (presentation only —
+  // each node is already access-filtered). A node's children stay nested under
+  // it; only the roots are categorised. A category renders when it has nodes or
+  // `extras` (static links a caller drops into a category's menu, e.g.
+  // Extensions under Admin) so the extras share the group — and its spacing —
+  // with the tree nodes instead of floating in a detached group below.
   return (
-    <SidebarMenu>
-      {tree.map((n) => (
-        <NavTreeItem key={n.id} node={n} slugOf={slugOf} />
-      ))}
-    </SidebarMenu>
+    <>
+      {NAV_CATEGORIES.map(({ key, label }) => {
+        const nodes = tree.filter((n) => nodeCategory(n.target) === key);
+        const extra = extras?.[key];
+        if (nodes.length === 0 && !extra) return null;
+        return (
+          <SidebarGroup key={key}>
+            {label ? <SidebarGroupLabel>{label}</SidebarGroupLabel> : null}
+            <SidebarMenu>
+              {nodes.map((n) => (
+                <NavTreeItem key={n.id} node={n} slugOf={slugOf} />
+              ))}
+              {extra}
+            </SidebarMenu>
+          </SidebarGroup>
+        );
+      })}
+    </>
   );
 }
 
