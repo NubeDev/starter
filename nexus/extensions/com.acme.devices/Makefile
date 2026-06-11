@@ -108,18 +108,28 @@ pack:
 	    -czf $(TARBALL) $(EXT_ID)
 	@ls -lh $(TARBALL)
 
+# Cookie sessions are guarded by the double-submit CSRF layer: every mutating
+# (POST/PUT/PATCH/DELETE) request must echo the `starter_csrf` cookie back as the
+# `X-CSRF-Token` header. `login` stashes the token; `$(CSRF_HDR)` expands to the
+# header for use on mutations. (Safe GETs need no token; bearer clients are
+# exempt, but this harness uses the cookie session.)
+CSRF_FILE  ?= /tmp/$(EXT_ID).csrf
+CSRF_HDR    = -H "X-CSRF-Token: $$(cat $(CSRF_FILE))"
+
 login:
 	@command -v jq   >/dev/null || { echo "needs jq";   exit 1; }
 	@command -v curl >/dev/null || { echo "needs curl"; exit 1; }
 	@curl -fsS -c $(COOKIE_JAR) -H 'content-type: application/json' \
 	    -d '{"email":"$(ADMIN_EMAIL)","password":"$(ADMIN_PASSWORD)"}' \
-	    $(API_BASE)/auth/login > /dev/null \
+	    $(API_BASE)/auth/login \
+	    | jq -r '.csrf_token' > $(CSRF_FILE) \
 	    || { echo "login failed — is nexus-api up (make dev-be) and seeded (make seed)?"; exit 1; }
+	@test -s $(CSRF_FILE) || { echo "login: no csrf_token in response"; exit 1; }
 
 install: login
 	@test -f $(TARBALL) || { echo "no $(TARBALL) — run 'make pack' first"; exit 1; }
 	@echo "==> POST $(API_BASE)/api/v1/extensions/install (multipart)"
-	@curl -fsS -b $(COOKIE_JAR) -X POST \
+	@curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -X POST \
 	    -F "file=@$(TARBALL);type=application/gzip" \
 	    $(API_BASE)/api/v1/extensions/install \
 	    | jq -c '{id, code, pending_restart}'
@@ -127,16 +137,16 @@ install: login
 # ----- enable / disable (load / unload) ---------------------------------
 
 load: login
-	@curl -fsS -b $(COOKIE_JAR) -X POST \
+	@curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -X POST \
 	    $(API_BASE)/api/v1/extensions/$(EXT_ID)/enable | jq -c .
 
 unload: login
-	@curl -fsS -b $(COOKIE_JAR) -X POST \
+	@curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -X POST \
 	    $(API_BASE)/api/v1/extensions/$(EXT_ID)/disable | jq -c .
 
 uninstall: login
 	@echo "==> DELETE $(API_BASE)/api/v1/extensions/$(EXT_ID)?purge=true"
-	@curl -fsS -b $(COOKIE_JAR) -X DELETE \
+	@curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -X DELETE \
 	    "$(API_BASE)/api/v1/extensions/$(EXT_ID)?purge=true" \
 	    | jq -c '{id, code, removed: (.removed | length), bundle}'
 
@@ -164,22 +174,56 @@ test: login
 	      $(API_BASE)/api/v1/extensions/$(EXT_ID)/ui/remoteEntry.js); \
 	  test "$$code" = "304" || { echo "FAIL: revalidation gave $$code, want 304"; exit 1; }; \
 	  echo "    revalidation: 304"
-	@echo "==> site-checkout query-kind (scoped by \$$caller_team_ids)"
-	@curl -fsS -b $(COOKIE_JAR) -H 'content-type: application/json' \
-	    -d '{"sql":"","kind":"$(EXT_ID).site_checkout"}' \
-	    $(API_BASE)/api/v1/query | jq -c '.rows[0]'
+	@echo "==> site-checkout query-kind registered (scoped by \$$caller_team_ids)"
+	@# The kind selects the host-bound `$$caller_tenant_id` / `$$caller_team_ids`
+	@# tokens, which only bind on a principal-bearing query path. The ad-hoc
+	@# `POST /api/v1/query` route runs with `QueryIdentity::default()` (no
+	@# principal) BY DESIGN, so it returns 400 "needs host token" there — proof
+	@# the host-token guard is enforced, not a failure. We assert the kind is
+	@# *known* (a bogus kind says "not a known kind"; this one gets past name
+	@# resolution to host-token binding). Running it with real team scope is the
+	@# `/setup` verify-page's job, exercised against a datasource in product use.
+	@body=$$(curl -s -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
+	    -d '{"sql":"","kind":"$(EXT_ID).site_checkout"}' $(API_BASE)/api/v1/query); \
+	  echo "$$body" | grep -q 'not a known kind' \
+	    && { echo "FAIL: site_checkout kind not registered"; exit 1; }; \
+	  echo "$$body" | grep -qi 'host token' \
+	    || { echo "FAIL: unexpected query response: $$body"; exit 1; }; \
+	  echo "    registered (host-token guard enforced on the principal-less path)"
+	@echo "==> ensure caller is in an allowed team (template allows: hvac-ops)"
+	@uid=$$(curl -fsS -b $(COOKIE_JAR) $(API_BASE)/api/v1/me | jq -r '.subject'); \
+	  team_id=$$(curl -fsS -b $(COOKIE_JAR) $(API_BASE)/v1/tenants/nexus/teams \
+	    | jq -r '.[] | select(.slug=="hvac-ops") | .id'); \
+	  if [ -z "$$team_id" ]; then \
+	    team_id=$$(curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
+	      -d '{"slug":"hvac-ops","display_name":"HVAC Ops"}' \
+	      $(API_BASE)/v1/tenants/nexus/teams | jq -r '.id'); \
+	    echo "    created team hvac-ops ($$team_id)"; \
+	  fi; \
+	  curl -s -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
+	    -d "{\"user_id\":\"$$uid\"}" \
+	    $(API_BASE)/v1/tenants/nexus/teams/$$team_id/members >/dev/null; \
+	  echo "    $$uid in hvac-ops"
+	@echo "==> re-login so the session principal carries the team (refreshes CSRF too)"
+	@curl -fsS -c $(COOKIE_JAR) -H 'content-type: application/json' \
+	    -d '{"email":"$(ADMIN_EMAIL)","password":"$(ADMIN_PASSWORD)"}' \
+	    $(API_BASE)/auth/login | jq -r '.csrf_token' > $(CSRF_FILE)
 	@echo "==> bundled setup template imported (source = extension)"
 	@curl -fsS -b $(COOKIE_JAR) $(API_BASE)/api/v1/setup/templates \
 	    | jq -e '.[] | select(.id == "com.acme.add-device")' \
 	    || { echo "FAIL: add-device template not in catalog"; exit 1; }
 	@echo "==> run the add-device automation (202 + run_id)"
-	@run_id=$$(curl -fsS -b $(COOKIE_JAR) -H 'content-type: application/json' \
+	@run_id=$$(curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
 	    -d '{"barcode":"0X1A2B","location":"Roof AHU-3"}' \
 	    $(API_BASE)/api/v1/setup/templates/com.acme.add-device/run | jq -r '.run_id'); \
 	  test -n "$$run_id" || { echo "FAIL: no run_id"; exit 1; }; \
 	  echo "    run_id: $$run_id"; \
-	  echo "==> snapshot"; \
-	  curl -fsS -b $(COOKIE_JAR) $(API_BASE)/api/v1/setup/runs/$$run_id | jq -c '{status, progress}'
+	  sleep 2; \
+	  echo "==> snapshot (expect status=completed, progress 2/2 — nodes ran in the child)"; \
+	  snap=$$(curl -fsS -b $(COOKIE_JAR) $(API_BASE)/api/v1/setup/runs/$$run_id); \
+	  echo "$$snap" | jq -c '{status, progress}'; \
+	  echo "$$snap" | jq -e '.status == "completed" and .progress.done == .progress.total' >/dev/null \
+	    || { echo "FAIL: run did not complete"; exit 1; }
 	@echo "PASS: $(EXT_ID) end to end"
 
 status: login

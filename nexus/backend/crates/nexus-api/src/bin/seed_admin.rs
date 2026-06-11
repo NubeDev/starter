@@ -22,7 +22,7 @@ use starter_auth_users::store::{
     MembershipRecord, PgTenantStore, PgUserStore, TenantRecord, TenantStore,
 };
 use starter_auth_users::Role;
-use starter_authz::store::{PolicyStore, PostgresPolicyStore, StoredAssignment, StoredRule};
+use starter_authz::store::{PolicyStore, PostgresPolicyStore, StoredAssignment};
 use starter_store_postgres::pool::connect;
 use uuid::Uuid;
 
@@ -98,44 +98,34 @@ async fn main() -> Result<(), String> {
     }
 
     // Default navigation tree (WS-13 §6): ensure one `route` node per built-in
-    // static page so the tenant has a navigable sidebar, then grant each node
-    // `tenant`-scope `view` so *non-admin* members see them too (admins already
-    // see every node via the built-in admin rule). Reconciling (not just
-    // seed-if-empty) backfills routes added after the tenant was first seeded —
-    // e.g. `insights` on an established tenant — so re-running seed-admin surfaces
-    // new built-in pages. Idempotent: only missing routes are created, and the
-    // grant insert tolerates conflicts, so re-runs add no duplicates.
+    // static page so the tenant *has* a navigable sidebar. The nodes are seeded
+    // structurally only — they are NOT granted to anyone by default.
+    //
+    // Access model (deliberate): an admin sees every node via the built-in
+    // admin-all rule, so the full sidebar is visible to admins with no per-node
+    // grant. A non-admin (team / user) sees *only* the nodes explicitly granted
+    // to them — `GET /api/v1/nav` is access-filtered per node, so an ungranted
+    // member starts with an empty sidebar. This is the share model the product
+    // wants: visibility is opt-in, granted per team/user, never world-default.
+    //
+    // (Previously the seed wrote a `role:"*"` view grant on every node, making
+    // the whole default sidebar world-visible to any member — including
+    // admin-only pages like Access/Audit. That over-shared and is removed.)
+    //
+    // Reconciling (not just seed-if-empty) backfills routes added after the
+    // tenant was first seeded — e.g. `insights` on an established tenant — so
+    // re-running seed-admin surfaces new built-in pages to admins. Idempotent:
+    // only missing routes are created.
     let seeded = nexus_store::nav_node::reconcile_default_routes(tenants.pool().sqlx(), &tenant_slug)
         .await
         .map_err(|e| format!("seed nav tree: {e}"))?;
     if seeded.is_empty() {
         println!("nav tree already complete");
     } else {
-        for node in &seeded {
-            // A tenant-wide allow on this specific node id: role `*` matches any
-            // member, tenant_id scopes it to this tenant, resource_id pins the
-            // node. `source: "grant"` so the Access drawer classifies it as a
-            // share (an admin can revoke it to hide the page).
-            let rule = StoredRule {
-                id: Uuid::new_v4().to_string(),
-                role: "*".to_string(),
-                resource: nexus_api::authz::KIND_NAV_NODE.to_string(),
-                actions: vec![nexus_api::authz::ACTION_VIEW.to_string()],
-                condition: None,
-                effect: "allow".to_string(),
-                priority: 0,
-                created_by: "seed".to_string(),
-                tenant_id: Some(tenant_slug.clone()),
-                source: "grant".to_string(),
-                resource_id: Some(node.id.to_string()),
-            };
-            match policies.insert_rule(&rule).await {
-                Ok(()) => {}
-                Err(e) if is_conflict(&e.to_string()) => {}
-                Err(e) => return Err(format!("grant nav node view: {e}")),
-            }
-        }
-        println!("reconciled default nav tree (+{} node(s), tenant-view granted)", seeded.len());
+        println!(
+            "reconciled default nav tree (+{} node(s); admins see all, non-admins by grant only)",
+            seeded.len()
+        );
     }
 
     println!("seed complete — login {email}");

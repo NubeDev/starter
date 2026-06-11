@@ -29,6 +29,7 @@ pub mod ratelimit;
 pub mod reversible;
 pub mod routes;
 pub mod serve;
+pub mod setup;
 pub mod state;
 
 pub use state::AppState;

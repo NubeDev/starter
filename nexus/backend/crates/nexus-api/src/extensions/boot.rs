@@ -48,6 +48,8 @@ use super::cleanup_insights::InsightCleanupProvider;
 use super::config::ExtensionsConfig;
 use super::contribute::{contributed_query_kinds, record_to_query_kind};
 use super::contribute_insights::contributed_insights;
+use super::contribute_nodes::register_contributed_nodes;
+use starter_flow::registry::NodeKindRegistry;
 use super::post_install::ContributionPostInstall;
 use crate::kinds::Registry as KindRegistry;
 use nexus_store::{extension_insight, extension_query_kind};
@@ -60,6 +62,11 @@ pub struct ExtensionRuntime {
     /// The extension-contributed query-kinds registry — the dispatcher's third
     /// source. Placed on `AppState.extension_kinds`.
     pub extension_kinds: Arc<KindRegistry>,
+    /// The flow node-kind registry, populated with every enabled extension's
+    /// `contributes.nodes[]` bridged to its supervised child via a
+    /// `ProcessNodeProxy`. The Setup/Automation Builder's run engine shares this
+    /// registry so a setup template's steps resolve to the child that owns them.
+    pub flow_node_kinds: Arc<NodeKindRegistry>,
 }
 
 /// Assemble the extension runtime. `host_methods` is nexus's
@@ -103,6 +110,9 @@ pub async fn boot(
     let factory = Arc::new(
         WithHostMethodsFactory::new(host_methods).with_pidfile_dir(cfg.pidfile_dir.clone()),
     );
+    // The flow node-kind registry the setup engine shares. Each enabled
+    // process extension's contributed nodes are bridged into it below.
+    let flow_node_kinds = Arc::new(NodeKindRegistry::new());
     let mut supervisors = HashMap::new();
     for record in registry.iter_validated() {
         let Some(ext_id) = record.id.as_ref() else {
@@ -135,6 +145,22 @@ pub async fn boot(
         }
         match starter_ext_server::SupervisorFactory::spawn(&*factory, record).await {
             Ok(Some(handle)) => {
+                // Bridge this extension's contributed flow node-kinds to its
+                // freshly-spawned child (FLOW-NODES slice B). `SupervisorHandle`
+                // is `Arc`-backed, so the proxies share the same child as the
+                // admin's copy moved into `supervisors` below.
+                if let Some(manifest) = record.manifest.as_ref() {
+                    if !manifest.contributes.nodes.is_empty() {
+                        let n = register_contributed_nodes(manifest, &handle, &flow_node_kinds)
+                            .await;
+                        tracing::info!(
+                            target: "nexus_api::extensions::boot",
+                            extension = %ext_id.as_str(),
+                            nodes = n,
+                            "bridged contributed flow node-kinds to extension child"
+                        );
+                    }
+                }
                 supervisors.insert(ext_id.as_str().to_string(), handle);
             }
             Ok(None) => {} // builtin/wasm — nothing to spawn
@@ -168,6 +194,7 @@ pub async fn boot(
     Ok(ExtensionRuntime {
         admin,
         extension_kinds,
+        flow_node_kinds,
     })
 }
 

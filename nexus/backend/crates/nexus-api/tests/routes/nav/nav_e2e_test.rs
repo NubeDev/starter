@@ -147,6 +147,35 @@ async fn opening_a_node_checks_view_on_the_node() {
 
 #[tokio::test]
 #[ignore = "requires docker"]
+async fn creating_a_nav_node_requires_a_kind_wide_grant() {
+    // Regression: `create_nav` once persisted unconditionally, so a non-admin
+    // (no kind-wide grant) could mint nav nodes. It now runs a collection-level
+    // `edit` check — DenyAll ⇒ 403 and nothing is written. The AllowAll/200 side
+    // is covered by `a_same_tenant_dashboard_target_is_accepted`.
+    let (admin, _guard) = with_database().await;
+    let pg = runtime_pool(admin.sqlx()).await;
+
+    let denied = app_with(&pg, Arc::new(DenyAll)).await;
+    let resp = reqwest::Client::new()
+        .post(format!("{}/api/v1/nav", denied.base_url))
+        .json(&json!({ "title": "ShouldFail", "target": { "kind": "group" } }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 403, "no kind-wide grant ⇒ create forbidden");
+    drop(denied);
+
+    // And the row was never persisted (RLS-visible to the tenant, so an empty
+    // tenant read proves the insert didn't happen, not that a row is hidden).
+    let after = nav_node::list(&pg, "acme").await.unwrap();
+    assert!(
+        after.iter().all(|n| n.title != "ShouldFail"),
+        "denied create must not persist a node"
+    );
+}
+
+#[tokio::test]
+#[ignore = "requires docker"]
 async fn a_cross_tenant_dashboard_target_is_rejected() {
     let (admin, _guard) = with_database().await;
     let pg = runtime_pool(admin.sqlx()).await;

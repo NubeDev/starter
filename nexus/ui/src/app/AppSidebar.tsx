@@ -15,6 +15,7 @@ import {
 
 import { useLayout } from "@/app/LayoutProvider";
 import { SidebarUser } from "@/app/SidebarUser";
+import { useCan } from "@/auth/useCan";
 import { ExtensionSlot } from "@/extensions/ExtensionSlot";
 import { SidebarStarred } from "@/features/dashboards/SidebarStarred";
 import { NavTree } from "@/features/nav/NavTree";
@@ -27,6 +28,12 @@ import { NavTree } from "@/features/nav/NavTree";
 export function AppSidebar() {
   const { variant, collapsible } = useLayout();
   const navigate = useNavigate();
+  // Extensions is an admin-only management page. Unlike the nav-tree routes
+  // (access-filtered server-side by `GET /api/v1/nav`), this is a static link,
+  // so gate it client-side: a non-admin must not even see it in the sidebar —
+  // the page itself also returns "Admin only", but a visible-yet-blocked link
+  // is the wrong signal. Fails closed while `/me` loads.
+  const isAdmin = useCan("admin");
   // Sidebar-nav extension contributions render plain `<a href>` links (the
   // federation host does not share `react-router-dom`, so a remote's own
   // `NavLink` can't see this Router). We intercept clicks bubbling out of the
@@ -92,7 +99,7 @@ export function AppSidebar() {
             group would add its own spacing and float detached). */}
         <NavTree
           extras={{
-            admin: (
+            admin: isAdmin ? (
               <SidebarMenuItem>
                 <NavLink to="/extensions" end>
                   {({ isActive }) => (
@@ -107,7 +114,7 @@ export function AppSidebar() {
                   )}
                 </NavLink>
               </SidebarMenuItem>
-            ),
+            ) : undefined,
           }}
         />
         <SidebarGroup onClick={interceptExtensionNav}>

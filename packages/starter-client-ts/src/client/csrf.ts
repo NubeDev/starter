@@ -26,3 +26,19 @@ export function readCsrfHeader(cookieName: string = "starter_csrf"): Record<stri
   const csrf = readCookie(cookieName);
   return csrf ? { "X-CSRF-Token": csrf } : {};
 }
+
+/** HTTP methods that mutate state and therefore require the CSRF token
+ * on a cookie session. Safe methods (GET/HEAD/OPTIONS) never do. */
+const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/** CSRF header map for a request of the given method: the token on a
+ * mutating method, empty otherwise (and empty when the cookie is absent
+ * or `document` is unavailable). Method defaults to GET when unset, per
+ * the `fetch` spec, so an init without `method` is treated as safe. */
+export function csrfHeaderForMethod(
+  method: string | undefined,
+  cookieName: string = "starter_csrf",
+): Record<string, string> {
+  const m = (method ?? "GET").toUpperCase();
+  return MUTATING.has(m) ? readCsrfHeader(cookieName) : {};
+}

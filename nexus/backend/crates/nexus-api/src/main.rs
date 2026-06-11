@@ -138,6 +138,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
     let ext_admin = ext_runtime.admin;
 
+    // Setup/Automation Builder: build the run service over the metadata pool and
+    // the flow node-kind registry the extension boot just populated (each enabled
+    // extension's `contributes.nodes[]` bridged to its child via a
+    // `ProcessNodeProxy`), import every enabled extension's bundled setup
+    // templates into the global catalog, and keep the service to mount `/setup/*`
+    // under the principal layer. Validating templates against the same registry
+    // means a template referencing an unprovided node-kind is rejected at boot.
+    let setup_pool = Pool::from_sqlx(metadata.clone());
+    let setup_service = nexus_api::setup::build_service(setup_pool, ext_runtime.flow_node_kinds);
+    let imported = nexus_api::setup::import_extension_templates(
+        ext_admin.registry(),
+        &setup_service,
+        setup_service.engine().kinds(),
+    )
+    .await;
+    tracing::info!(
+        target: "nexus_api::setup",
+        templates = imported,
+        "setup builder ready; /setup/* routes mounted"
+    );
+
     // Every supposed-to-be-eternal background task is wrapped in the task
     // watchdog (WS-16): if one panics, returns early, or is aborted, a single
     // ERROR line is emitted (`target=nexus.task_watchdog watcher=<label>`)
@@ -170,8 +191,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // kernel applies its own `with_principal` → `with_role(Admin)` layer, so it
     // must NOT be wrapped in nexus's product principal layer (that would run the
     // layer twice). `serve::assemble` merges it after the identity routers.
-    let ext_router =
-        nexus_api::extensions::router(ext_admin.clone(), identity.authenticator.clone());
+    // The extension admin surface is cookie-authenticated admin mutation
+    // (enable/disable/install/uninstall) — exactly what CSRF protects. The
+    // kernel router bakes in its own `with_principal`; wrap the CSRF guard
+    // outermost (it reads only raw cookie/header bytes and short-circuits a
+    // forged cookie mutation with 403 before principal resolution).
+    let ext_router = starter_server::auth::csrf_guard(
+        nexus_api::extensions::router(ext_admin.clone(), identity.authenticator.clone()),
+    );
+
+    // The `/setup/*` surface reads the verified `Principal` (trusted identity
+    // seeding + the per-template team check), so it is wrapped in its own
+    // principal layer and merged as a sibling of the identity routers — never
+    // inside the product router's layer. Its router state is the `RunService`
+    // (set via `with_state`), so the resulting `Router<AppState>` is stateless
+    // w.r.t. `AppState`. Nest under `/api/v1` to match the documented surface
+    // (`/api/v1/setup/...`).
+    let setup_router: axum::Router<nexus_api::state::AppState> = axum::Router::new().nest(
+        "/api/v1",
+        starter_server::auth::with_principal(
+            // Same CSRF double-submit guard the product surface uses — cookie
+            // sessions must echo `X-CSRF-Token`; bearer clients / safe methods
+            // are exempt.
+            starter_server::auth::csrf_guard(starter_setup::rest::router(setup_service)),
+            identity.authenticator.clone(),
+        ),
+    );
 
     let router = serve::assemble(
         state,
@@ -179,6 +224,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         identity.authz,
         identity.tenants,
         ext_router,
+        setup_router,
         identity.authenticator,
     );
     tracing::info!(bind = %cfg.bind, "nexus-api listening");

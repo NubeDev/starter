@@ -30,6 +30,11 @@ pub async fn migrate_all(pool: &Pool) -> Result<(), String> {
             name: "ext_store",
             migrator: &starter_ext_store_pg::MIGRATOR,
         })
+        // Setup/Automation Builder: the `setup_templates` + `setup_runs` tables
+        // (DOCS §5), owned by `starter-store-postgres` behind its `setup`
+        // feature and shipped as a namespaced source so its version numbers
+        // never collide with the nexus source.
+        .with_source(starter_store_postgres::setup::SETUP_MIGRATION_SOURCE)
         .run()
         .await
         .map_err(|e| format!("migrations: {e}"))

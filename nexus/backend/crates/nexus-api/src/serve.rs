@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use starter_server::auth::with_principal;
+use starter_server::auth::{csrf_guard, with_principal};
 use starter_server::middleware::{accept_units_layer, PrefsResolverFor};
 use starter_server::ServerBuilder;
 use starter_spi::auth::Authenticator;
@@ -40,6 +40,7 @@ pub fn assemble<A>(
     authz: Router<AppState>,
     tenants: Router<AppState>,
     extensions: Router<AppState>,
+    setup: Router<AppState>,
     authenticator: Arc<A>,
 ) -> Router
 where
@@ -61,9 +62,17 @@ where
     // the units layer so a throttled request does no preference resolution.
     let product = rate_limit_layer(product_router(), state.rate_limiter.clone())
         .layer(accept_units_layer(registry, resolver));
-    let protected = with_principal(product, authenticator.clone());
-    let authz = with_principal(authz, authenticator.clone());
-    let tenants = with_principal(tenants, authenticator);
+    // CSRF double-submit guard on cookie-authenticated mutations. Applied to
+    // every principal-protected router (product, authz, tenants) so the whole
+    // product surface enforces it uniformly — a browser session cannot be ridden
+    // cross-site without echoing the `starter_csrf` cookie as `X-CSRF-Token`.
+    // Bearer-token API clients and safe methods are exempt (see `csrf_guard`).
+    // It wraps *inside* `with_principal` (it reads only raw cookie/header bytes,
+    // so it has no principal dependency) and stays off `/auth/*`, which must mint
+    // the token without already holding it.
+    let protected = with_principal(csrf_guard(product), authenticator.clone());
+    let authz = with_principal(csrf_guard(authz), authenticator.clone());
+    let tenants = with_principal(csrf_guard(tenants), authenticator);
     ServerBuilder::<AppState>::new(state)
         .merge_router(auth)
         .merge_router(authz)
@@ -73,6 +82,10 @@ where
         // sibling here — like `authz`/`tenants` — never inside `protected`'s
         // principal layer.
         .merge_router(extensions)
+        // The `/setup/*` surface carries its own `with_principal` layer (built in
+        // `main` over the `RunService` state), so it merges as a sibling here —
+        // like `extensions` — never inside `protected`'s principal layer.
+        .merge_router(setup)
         .merge_router(protected)
         .with_openapi(document())
         .build()

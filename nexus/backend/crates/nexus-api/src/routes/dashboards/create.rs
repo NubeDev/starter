@@ -12,7 +12,7 @@ use starter_spi::changelog::Op;
 use starter_undo::ChangeDraft;
 
 use super::convert::to_summary;
-use crate::authz::KIND_DASHBOARD;
+use crate::authz::{self, KIND_DASHBOARD};
 use crate::changelog::{actor_from, record};
 use crate::middleware::tenant::caller;
 use crate::reversible::dashboard_snapshot_json;
@@ -38,6 +38,13 @@ pub async fn create_dashboard(
         Ok(c) => c,
         Err(resp) => return resp,
     };
+    // Kind-wide create gate: admins may, non-admins may not (an instance grant on
+    // one dashboard never confers the ability to mint new ones).
+    if let Err(resp) =
+        authz::require_create(state.engine.as_ref(), principal, KIND_DASHBOARD, &tenant).await
+    {
+        return resp;
+    }
     // Appearance is optional on the wire; fall back to the same defaults the
     // DB column carries so a name/slug-only client still gets a valid record.
     let new = NewDashboard {

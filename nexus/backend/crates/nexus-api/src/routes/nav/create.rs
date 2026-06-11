@@ -17,7 +17,7 @@ use starter_spi::changelog::Op;
 use starter_undo::ChangeDraft;
 
 use super::convert::{context_to_json, target_to_json, to_detail, validate_target};
-use crate::authz::KIND_NAV_NODE;
+use crate::authz::{self, KIND_NAV_NODE};
 use crate::changelog::{actor_from, record};
 use crate::middleware::tenant::caller;
 use crate::reversible::nav_node_snapshot_json;
@@ -43,6 +43,13 @@ pub async fn create_nav(
         Ok(c) => c,
         Err(resp) => return resp,
     };
+    // Creating a nav node is a kind-wide capability (no instance id yet): admins
+    // may, non-admins may not — an instance grant on one node never confers it.
+    if let Err(resp) =
+        authz::require_create(state.engine.as_ref(), principal, KIND_NAV_NODE, &tenant).await
+    {
+        return resp;
+    }
     if let Err(e) = validate_target(&state.metadata, &tenant, &req.target).await {
         return IntoResponse(e).into_response();
     }

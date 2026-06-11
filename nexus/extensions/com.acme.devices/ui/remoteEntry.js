@@ -1,7 +1,7 @@
 (function () {
 	'use strict';
 
-	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.acme.devices\"] :before, [data-ext-id=\"com.acme.devices\"]:before, [data-ext-id=\"com.acme.devices\"] :after, [data-ext-id=\"com.acme.devices\"]:after, [data-ext-id=\"com.acme.devices\"] ::backdrop, [data-ext-id=\"com.acme.devices\"]::backdrop {\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-outline-style: solid;\n    }\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .mx-auto, [data-ext-id=\"com.acme.devices\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex, [data-ext-id=\"com.acme.devices\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid, [data-ext-id=\"com.acme.devices\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.acme.devices\"] .inline-flex, [data-ext-id=\"com.acme.devices\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-4, [data-ext-id=\"com.acme.devices\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-5, [data-ext-id=\"com.acme.devices\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-6, [data-ext-id=\"com.acme.devices\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-9, [data-ext-id=\"com.acme.devices\"].size-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-8, [data-ext-id=\"com.acme.devices\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-9, [data-ext-id=\"com.acme.devices\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-10, [data-ext-id=\"com.acme.devices\"].h-10 {\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-full, [data-ext-id=\"com.acme.devices\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-px, [data-ext-id=\"com.acme.devices\"].h-px {\n  height: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-fit, [data-ext-id=\"com.acme.devices\"].w-fit {\n  width: fit-content;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-full, [data-ext-id=\"com.acme.devices\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-px, [data-ext-id=\"com.acme.devices\"].w-px {\n  width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .max-w-3xl, [data-ext-id=\"com.acme.devices\"].max-w-3xl {\n  max-width: var(--container-3xl, 48rem);\n}\n\n[data-ext-id=\"com.acme.devices\"] .shrink-0, [data-ext-id=\"com.acme.devices\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.acme.devices\"] .animate-spin, [data-ext-id=\"com.acme.devices\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-1, [data-ext-id=\"com.acme.devices\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-\\[8rem_1fr\\], [data-ext-id=\"com.acme.devices\"].grid-cols-\\[8rem_1fr\\] {\n  grid-template-columns: 8rem 1fr;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-col, [data-ext-id=\"com.acme.devices\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.acme.devices\"] .place-items-center, [data-ext-id=\"com.acme.devices\"].place-items-center {\n  place-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-center, [data-ext-id=\"com.acme.devices\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-start, [data-ext-id=\"com.acme.devices\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-between, [data-ext-id=\"com.acme.devices\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-center, [data-ext-id=\"com.acme.devices\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1, [data-ext-id=\"com.acme.devices\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1\\.5, [data-ext-id=\"com.acme.devices\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-2, [data-ext-id=\"com.acme.devices\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-4, [data-ext-id=\"com.acme.devices\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-6, [data-ext-id=\"com.acme.devices\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-x-6, [data-ext-id=\"com.acme.devices\"].gap-x-6 {\n  column-gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .truncate, [data-ext-id=\"com.acme.devices\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded, [data-ext-id=\"com.acme.devices\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border, [data-ext-id=\"com.acme.devices\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-transparent, [data-ext-id=\"com.acme.devices\"].border-transparent {\n  border-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-transparent, [data-ext-id=\"com.acme.devices\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-1, [data-ext-id=\"com.acme.devices\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-2, [data-ext-id=\"com.acme.devices\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-4, [data-ext-id=\"com.acme.devices\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-2, [data-ext-id=\"com.acme.devices\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-3, [data-ext-id=\"com.acme.devices\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-4, [data-ext-id=\"com.acme.devices\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-6, [data-ext-id=\"com.acme.devices\"].px-6 {\n  padding-inline: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-0\\.5, [data-ext-id=\"com.acme.devices\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-1, [data-ext-id=\"com.acme.devices\"].py-1 {\n  padding-block: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-2, [data-ext-id=\"com.acme.devices\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-6, [data-ext-id=\"com.acme.devices\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-2xl, [data-ext-id=\"com.acme.devices\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-base, [data-ext-id=\"com.acme.devices\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-sm, [data-ext-id=\"com.acme.devices\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-xs, [data-ext-id=\"com.acme.devices\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .leading-none, [data-ext-id=\"com.acme.devices\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-medium, [data-ext-id=\"com.acme.devices\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-semibold, [data-ext-id=\"com.acme.devices\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.acme.devices\"] .tracking-tight, [data-ext-id=\"com.acme.devices\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.acme.devices\"] .whitespace-nowrap, [data-ext-id=\"com.acme.devices\"].whitespace-nowrap {\n  white-space: nowrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-600, [data-ext-id=\"com.acme.devices\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.acme.devices\"] .tabular-nums, [data-ext-id=\"com.acme.devices\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.acme.devices\"] .shadow-sm, [data-ext-id=\"com.acme.devices\"].shadow-sm {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline, [data-ext-id=\"com.acme.devices\"].outline {\n  outline-style: var(--tw-outline-style);\n  outline-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-colors, [data-ext-id=\"com.acme.devices\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline-none, [data-ext-id=\"com.acme.devices\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.acme.devices\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:pointer-events-none svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:pointer-events-none svg {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-3 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-3 svg {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-4 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-4 svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:shrink-0 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:shrink-0 svg {\n  flex-shrink: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-outline-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
+	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.acme.devices\"] :before, [data-ext-id=\"com.acme.devices\"]:before, [data-ext-id=\"com.acme.devices\"] :after, [data-ext-id=\"com.acme.devices\"]:after, [data-ext-id=\"com.acme.devices\"] ::backdrop, [data-ext-id=\"com.acme.devices\"]::backdrop {\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-outline-style: solid;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .relative, [data-ext-id=\"com.acme.devices\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.acme.devices\"] .mx-auto, [data-ext-id=\"com.acme.devices\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .mt-0\\.5, [data-ext-id=\"com.acme.devices\"].mt-0\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex, [data-ext-id=\"com.acme.devices\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid, [data-ext-id=\"com.acme.devices\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.acme.devices\"] .inline-flex, [data-ext-id=\"com.acme.devices\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-3\\.5, [data-ext-id=\"com.acme.devices\"].size-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-4, [data-ext-id=\"com.acme.devices\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-5, [data-ext-id=\"com.acme.devices\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-6, [data-ext-id=\"com.acme.devices\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-9, [data-ext-id=\"com.acme.devices\"].size-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-2, [data-ext-id=\"com.acme.devices\"].h-2 {\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-8, [data-ext-id=\"com.acme.devices\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-9, [data-ext-id=\"com.acme.devices\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-10, [data-ext-id=\"com.acme.devices\"].h-10 {\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-full, [data-ext-id=\"com.acme.devices\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-px, [data-ext-id=\"com.acme.devices\"].h-px {\n  height: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-fit, [data-ext-id=\"com.acme.devices\"].w-fit {\n  width: fit-content;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-full, [data-ext-id=\"com.acme.devices\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-px, [data-ext-id=\"com.acme.devices\"].w-px {\n  width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .max-w-3xl, [data-ext-id=\"com.acme.devices\"].max-w-3xl {\n  max-width: var(--container-3xl, 48rem);\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-1, [data-ext-id=\"com.acme.devices\"].flex-1 {\n  flex: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .shrink-0, [data-ext-id=\"com.acme.devices\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.acme.devices\"] .animate-spin, [data-ext-id=\"com.acme.devices\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-1, [data-ext-id=\"com.acme.devices\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-\\[7rem_1fr\\], [data-ext-id=\"com.acme.devices\"].grid-cols-\\[7rem_1fr\\] {\n  grid-template-columns: 7rem 1fr;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-col, [data-ext-id=\"com.acme.devices\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-wrap, [data-ext-id=\"com.acme.devices\"].flex-wrap {\n  flex-wrap: wrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .place-items-center, [data-ext-id=\"com.acme.devices\"].place-items-center {\n  place-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-center, [data-ext-id=\"com.acme.devices\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-start, [data-ext-id=\"com.acme.devices\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-between, [data-ext-id=\"com.acme.devices\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-center, [data-ext-id=\"com.acme.devices\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1, [data-ext-id=\"com.acme.devices\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1\\.5, [data-ext-id=\"com.acme.devices\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-2, [data-ext-id=\"com.acme.devices\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-3, [data-ext-id=\"com.acme.devices\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-4, [data-ext-id=\"com.acme.devices\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-5, [data-ext-id=\"com.acme.devices\"].gap-5 {\n  gap: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-6, [data-ext-id=\"com.acme.devices\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-x-4, [data-ext-id=\"com.acme.devices\"].gap-x-4 {\n  column-gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-y-1, [data-ext-id=\"com.acme.devices\"].gap-y-1 {\n  row-gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .truncate, [data-ext-id=\"com.acme.devices\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .overflow-hidden, [data-ext-id=\"com.acme.devices\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded, [data-ext-id=\"com.acme.devices\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded-full, [data-ext-id=\"com.acme.devices\"].rounded-full {\n  border-radius: 3.40282e38px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border, [data-ext-id=\"com.acme.devices\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-t, [data-ext-id=\"com.acme.devices\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-dashed, [data-ext-id=\"com.acme.devices\"].border-dashed {\n  --tw-border-style: dashed;\n  border-style: dashed;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-emerald-600\\/30, [data-ext-id=\"com.acme.devices\"].border-emerald-600\\/30 {\n  border-color: #0097674d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.acme.devices\"] .border-emerald-600\\/30, [data-ext-id=\"com.acme.devices\"].border-emerald-600\\/30 {\n    border-color: color-mix(in oklab, var(--color-emerald-600, oklch(59.6% .145 163.225)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-transparent, [data-ext-id=\"com.acme.devices\"].border-transparent {\n  border-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-emerald-600\\/10, [data-ext-id=\"com.acme.devices\"].bg-emerald-600\\/10 {\n  background-color: #0097671a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.acme.devices\"] .bg-emerald-600\\/10, [data-ext-id=\"com.acme.devices\"].bg-emerald-600\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-600, oklch(59.6% .145 163.225)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-transparent, [data-ext-id=\"com.acme.devices\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-1, [data-ext-id=\"com.acme.devices\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-2, [data-ext-id=\"com.acme.devices\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-3, [data-ext-id=\"com.acme.devices\"].p-3 {\n  padding: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-4, [data-ext-id=\"com.acme.devices\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-2, [data-ext-id=\"com.acme.devices\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-3, [data-ext-id=\"com.acme.devices\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-4, [data-ext-id=\"com.acme.devices\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-6, [data-ext-id=\"com.acme.devices\"].px-6 {\n  padding-inline: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-0\\.5, [data-ext-id=\"com.acme.devices\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-2, [data-ext-id=\"com.acme.devices\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-6, [data-ext-id=\"com.acme.devices\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pt-4, [data-ext-id=\"com.acme.devices\"].pt-4 {\n  padding-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pt-6, [data-ext-id=\"com.acme.devices\"].pt-6 {\n  padding-top: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-2xl, [data-ext-id=\"com.acme.devices\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-base, [data-ext-id=\"com.acme.devices\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-sm, [data-ext-id=\"com.acme.devices\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-xs, [data-ext-id=\"com.acme.devices\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .leading-none, [data-ext-id=\"com.acme.devices\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-medium, [data-ext-id=\"com.acme.devices\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-normal, [data-ext-id=\"com.acme.devices\"].font-normal {\n  --tw-font-weight: var(--font-weight-normal, 400);\n  font-weight: var(--font-weight-normal, 400);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-semibold, [data-ext-id=\"com.acme.devices\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.acme.devices\"] .tracking-tight, [data-ext-id=\"com.acme.devices\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.acme.devices\"] .whitespace-nowrap, [data-ext-id=\"com.acme.devices\"].whitespace-nowrap {\n  white-space: nowrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-600, [data-ext-id=\"com.acme.devices\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-700, [data-ext-id=\"com.acme.devices\"].text-emerald-700 {\n  color: var(--color-emerald-700, oklch(50.8% .118 165.612));\n}\n\n[data-ext-id=\"com.acme.devices\"] .tabular-nums, [data-ext-id=\"com.acme.devices\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.acme.devices\"] .shadow-sm, [data-ext-id=\"com.acme.devices\"].shadow-sm {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline, [data-ext-id=\"com.acme.devices\"].outline {\n  outline-style: var(--tw-outline-style);\n  outline-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-\\[width\\], [data-ext-id=\"com.acme.devices\"].transition-\\[width\\] {\n  transition-property: width;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-colors, [data-ext-id=\"com.acme.devices\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .duration-500, [data-ext-id=\"com.acme.devices\"].duration-500 {\n  --tw-duration: .5s;\n  transition-duration: .5s;\n}\n\n[data-ext-id=\"com.acme.devices\"] .ease-out, [data-ext-id=\"com.acme.devices\"].ease-out {\n  --tw-ease: var(--ease-out, cubic-bezier(0, 0, .2, 1));\n  transition-timing-function: var(--ease-out, cubic-bezier(0, 0, .2, 1));\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline-none, [data-ext-id=\"com.acme.devices\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.acme.devices\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-60:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-60:disabled {\n  opacity: .6;\n}\n\n@media (prefers-color-scheme: dark) {\n  [data-ext-id=\"com.acme.devices\"] .dark\\:text-emerald-400, [data-ext-id=\"com.acme.devices\"].dark\\:text-emerald-400 {\n    color: var(--color-emerald-400, oklch(76.5% .177 163.223));\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:pointer-events-none svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:pointer-events-none svg {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-3 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-3 svg {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-4 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-4 svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:shrink-0 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:shrink-0 svg {\n  flex-shrink: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-outline-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
 
 })();
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
@@ -237,6 +237,31 @@ const createLucideIcon = (iconName, iconNode) => {
  */
 
 
+const Ban = createLucideIcon("Ban", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m4.9 4.9 14.2 14.2", key: "1m5liu" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ChevronRight = createLucideIcon("ChevronRight", [
+  ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const CircleCheck = createLucideIcon("CircleCheck", [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
@@ -254,6 +279,18 @@ const CircleX = createLucideIcon("CircleX", [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "m15 9-6 6", key: "1uzhvr" }],
   ["path", { d: "m9 9 6 6", key: "z0biqf" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Circle = createLucideIcon("Circle", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }]
 ]);
 
 /**
@@ -285,8 +322,55 @@ const Cpu = createLucideIcon("Cpu", [
  */
 
 
+const Dice5 = createLucideIcon("Dice5", [
+  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
+  ["path", { d: "M16 8h.01", key: "cr5u4v" }],
+  ["path", { d: "M8 8h.01", key: "1e4136" }],
+  ["path", { d: "M8 16h.01", key: "18s6g9" }],
+  ["path", { d: "M16 16h.01", key: "1f9h7w" }],
+  ["path", { d: "M12 12h.01", key: "1mp3jc" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Info = createLucideIcon("Info", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 16v-4", key: "1dtifu" }],
+  ["path", { d: "M12 8h.01", key: "e9boi3" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const LoaderCircle = createLucideIcon("LoaderCircle", [
   ["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Radio = createLucideIcon("Radio", [
+  ["path", { d: "M4.9 19.1C1 15.2 1 8.8 4.9 4.9", key: "1vaf9d" }],
+  ["path", { d: "M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5", key: "u1ii0m" }],
+  ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }],
+  ["path", { d: "M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5", key: "1j5fej" }],
+  ["path", { d: "M19.1 4.9C23 8.8 23 15.1 19.1 19", key: "10b0cb" }]
 ]);
 
 /**
@@ -316,6 +400,25 @@ const ScanLine = createLucideIcon("ScanLine", [
   ["path", { d: "M21 17v2a2 2 0 0 1-2 2h-2", key: "6vwrx8" }],
   ["path", { d: "M7 21H5a2 2 0 0 1-2-2v-2", key: "ioqczr" }],
   ["path", { d: "M7 12h10", key: "b7w52i" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ShieldCheck = createLucideIcon("ShieldCheck", [
+  [
+    "path",
+    {
+      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+      key: "oel41y"
+    }
+  ],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ]);
 
 class StarterError extends Error {
@@ -379,6 +482,24 @@ class StarterError extends Error {
   }
 }
 
+function readCookie(name) {
+  if (typeof document === "undefined") return void 0;
+  for (const part of document.cookie.split(";")) {
+    const [k, v] = part.trim().split("=");
+    if (k === name) return v;
+  }
+  return void 0;
+}
+function readCsrfHeader(cookieName = "starter_csrf") {
+  const csrf = readCookie(cookieName);
+  return csrf ? { "X-CSRF-Token": csrf } : {};
+}
+const MUTATING = /* @__PURE__ */ new Set(["POST", "PUT", "PATCH", "DELETE"]);
+function csrfHeaderForMethod(method, cookieName = "starter_csrf") {
+  const m = (method ?? "GET").toUpperCase();
+  return MUTATING.has(m) ? readCsrfHeader(cookieName) : {};
+}
+
 function isJsonContentType(value) {
   if (!value) return false;
   const semi = value.indexOf(";");
@@ -386,7 +507,11 @@ function isJsonContentType(value) {
   return main === "application/json" || main === "application/problem+json" || main.endsWith("+json");
 }
 async function fetchJson(client, path, init = {}) {
-  const headers = { ...client.headers, ...init.headers };
+  const headers = {
+    ...client.headers,
+    ...csrfHeaderForMethod(init.method),
+    ...init.headers
+  };
   const url = `${client.baseUrl}${path}`;
   const res = await client.fetch(url, {
     ...init,
@@ -3086,39 +3211,126 @@ function Separator({
   );
 }
 
+function Progress({
+  value = 0,
+  className
+}) {
+  const pct = Math.max(0, Math.min(100, value));
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      role: "progressbar",
+      "aria-valuemin": 0,
+      "aria-valuemax": 100,
+      "aria-valuenow": pct,
+      className: cn(
+        "relative h-2 w-full overflow-hidden rounded-full bg-secondary",
+        className
+      ),
+      children: /* @__PURE__ */ jsx(
+        "div",
+        {
+          className: "h-full rounded-full bg-primary transition-[width] duration-500 ease-out",
+          style: { width: `${pct}%` }
+        }
+      )
+    }
+  );
+}
+
 const EXTENSION_ID$1 = "com.acme.devices";
 const TEMPLATE_ID = "com.acme.add-device";
+const STEPS = [
+  {
+    node: "com.acme.create-device",
+    title: "Create device",
+    detail: "Provision a device record from the barcode (idempotent on barcode)."
+  },
+  {
+    node: "com.acme.register-sensor",
+    title: "Register sensor",
+    detail: "Attach the device's sensor (idempotent on device id)."
+  }
+];
+function stableId(prefix, key) {
+  let hash = 0xcbf29ce484222325n;
+  for (const b of new TextEncoder().encode(key)) {
+    hash ^= BigInt(b);
+    hash = hash * 0x100000001b3n & 0xffffffffffffffffn;
+  }
+  return `${prefix}-${hash.toString(16).padStart(16, "0")}`;
+}
+function randomBarcode() {
+  const part = () => Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, "0");
+  return `ACME-${part()}-${part()}`;
+}
 function DevicesPanel() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(
     "div",
     {
       "data-ext-id": EXTENSION_ID$1,
-      className: "mx-auto flex max-w-3xl flex-col gap-6 p-1",
+      className: "mx-auto flex max-w-3xl flex-col gap-5 p-1",
       children: /* @__PURE__ */ jsx(PageInner, {})
     }
   ) });
 }
 function PageInner() {
   const client = useHostClient();
-  const [barcode, setBarcode] = React.useState("");
+  const [barcode, setBarcode] = React.useState(() => randomBarcode());
   const [location, setLocation] = React.useState("Roof AHU-3");
   const [runId, setRunId] = React.useState(null);
   const [status, setStatus] = React.useState("idle");
   const [step, setStep] = React.useState(null);
+  const [done, setDone] = React.useState(0);
   const [error, setError] = React.useState(null);
   const [resumable, setResumable] = React.useState(false);
+  const [snap, setSnap] = React.useState(null);
   const esRef = React.useRef(null);
+  const pollRef = React.useRef(null);
+  const stopPoll = React.useCallback(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = null;
+  }, []);
   const closeStream = React.useCallback(() => {
     esRef.current?.close();
     esRef.current = null;
   }, []);
+  const refreshSnapshot = React.useCallback(
+    async (id) => {
+      try {
+        const s = await fetchJson(
+          client,
+          `${client.apiPrefix}/setup/runs/${id}`
+        );
+        setSnap(s);
+        if (typeof s.progress?.done === "number") setDone(s.progress.done);
+        if (s.progress?.current_step) setStep(s.progress.current_step);
+        if (s.status === "completed") {
+          setStatus("completed");
+          closeStream();
+          stopPoll();
+        } else if (s.status === "failed") {
+          setStatus("failed");
+          setResumable(s.resumable ?? true);
+          closeStream();
+          stopPoll();
+        } else if (s.status === "cancelled") {
+          setStatus("cancelled");
+          closeStream();
+          stopPoll();
+        }
+      } catch {
+      }
+    },
+    [client, closeStream, stopPoll]
+  );
   const openStream = React.useCallback(
     (id) => {
       closeStream();
       const url = `${client.apiPrefix}/setup/runs/${id}/events`;
       const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
-      const onMsg = (raw) => {
+      es.onmessage = (raw) => {
         let ev;
         try {
           ev = JSON.parse(raw.data);
@@ -3126,31 +3338,54 @@ function PageInner() {
           return;
         }
         if (ev.current_step) setStep(ev.current_step);
+        if (typeof ev.total === "number") {
+          void refreshSnapshot(id);
+        }
         if (ev.event === "failed") {
           setStatus("failed");
           setError(ev.error ?? "step failed");
           setResumable(ev.resumable ?? true);
           closeStream();
+          stopPoll();
         } else if (ev.event === "completed" || ev.status === "completed") {
           setStatus("completed");
+          setDone(STEPS.length);
+          void refreshSnapshot(id);
           closeStream();
+          stopPoll();
         } else if (ev.event === "cancelled") {
           setStatus("cancelled");
           closeStream();
+          stopPoll();
         }
       };
-      es.onmessage = onMsg;
       es.onerror = () => {
         closeStream();
       };
     },
-    [client, closeStream]
+    [client, closeStream, refreshSnapshot, stopPoll]
   );
-  React.useEffect(() => () => closeStream(), [closeStream]);
+  const startPoll = React.useCallback(
+    (id) => {
+      stopPoll();
+      void refreshSnapshot(id);
+      pollRef.current = setInterval(() => void refreshSnapshot(id), 600);
+    },
+    [refreshSnapshot, stopPoll]
+  );
+  React.useEffect(
+    () => () => {
+      closeStream();
+      stopPoll();
+    },
+    [closeStream, stopPoll]
+  );
   const launch = React.useCallback(() => {
     setError(null);
     setStatus("running");
     setStep(null);
+    setDone(0);
+    setSnap(null);
     setResumable(false);
     fetchJson(
       client,
@@ -3163,11 +3398,12 @@ function PageInner() {
     ).then((r) => {
       setRunId(r.run_id);
       openStream(r.run_id);
+      startPoll(r.run_id);
     }).catch((e) => {
       setStatus("failed");
-      setError(e instanceof Error ? e.message : String(e));
+      setError(friendlyError(e));
     });
-  }, [client, barcode, location, openStream]);
+  }, [client, barcode, location, openStream, startPoll]);
   const resume = React.useCallback(() => {
     if (!runId) return;
     setError(null);
@@ -3177,15 +3413,46 @@ function PageInner() {
       client,
       `${client.apiPrefix}/setup/runs/${runId}/resume`,
       { method: "POST" }
-    ).then(() => openStream(runId)).catch((e) => {
+    ).then(() => {
+      openStream(runId);
+      startPoll(runId);
+    }).catch((e) => {
       setStatus("failed");
-      setError(e instanceof Error ? e.message : String(e));
+      setError(friendlyError(e));
     });
-  }, [client, runId, openStream]);
+  }, [client, runId, openStream, startPoll]);
+  const cancel = React.useCallback(() => {
+    if (!runId) return;
+    fetchJson(
+      client,
+      `${client.apiPrefix}/setup/runs/${runId}/cancel`,
+      { method: "POST" }
+    ).then(() => {
+      setStatus("cancelled");
+      closeStream();
+      stopPoll();
+      if (runId) void refreshSnapshot(runId);
+    }).catch((e) => setError(friendlyError(e)));
+  }, [client, runId, closeStream, stopPoll, refreshSnapshot]);
+  const reset = React.useCallback(() => {
+    closeStream();
+    stopPoll();
+    setRunId(null);
+    setStatus("idle");
+    setStep(null);
+    setDone(0);
+    setError(null);
+    setResumable(false);
+    setSnap(null);
+    setBarcode(randomBarcode());
+  }, [closeStream, stopPoll]);
+  const busy = status === "running";
+  const deviceId = barcode ? stableId("dev", barcode) : "";
+  const sensorId = deviceId ? stableId("sen", deviceId) : "";
   return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between gap-4", children: [
       /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1.5", children: [
-        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Acme Devices" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Acme Devices · Setup automation demo" }),
         /* @__PURE__ */ jsxs("h1", { className: "flex items-center gap-2 text-2xl font-semibold tracking-tight", children: [
           /* @__PURE__ */ jsx(Cpu, { className: "size-6" }),
           " Provision a device"
@@ -3193,28 +3460,81 @@ function PageInner() {
       ] }),
       /* @__PURE__ */ jsx(StatusBadge, { status })
     ] }),
+    /* @__PURE__ */ jsx(Card, { className: "border-dashed bg-muted/30", children: /* @__PURE__ */ jsxs(CardContent, { className: "flex gap-3 pt-6 text-sm", children: [
+      /* @__PURE__ */ jsx(Info, { className: "mt-0.5 size-4 shrink-0 text-muted-foreground" }),
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1.5 text-muted-foreground", children: [
+        /* @__PURE__ */ jsxs("p", { children: [
+          /* @__PURE__ */ jsx("span", { className: "font-medium text-foreground", children: "What's happening here?" }),
+          " ",
+          "This simulates a field technician scanning a new device's",
+          " ",
+          /* @__PURE__ */ jsx("span", { className: "font-medium text-foreground", children: "box barcode" }),
+          " to set it up. The barcode is just an identifier — provisioning runs a small multi-step ",
+          /* @__PURE__ */ jsx("span", { className: "font-medium text-foreground", children: "automation" }),
+          " ",
+          "on the server."
+        ] }),
+        /* @__PURE__ */ jsxs("p", { children: [
+          "You don't have a real scanner, so use the sample barcode below (or",
+          " ",
+          /* @__PURE__ */ jsx("span", { className: "font-medium text-foreground", children: "Randomize" }),
+          " a new one), then press ",
+          /* @__PURE__ */ jsx("span", { className: "font-medium text-foreground", children: "Provision" }),
+          ". The same barcode always provisions the same device — that's the idempotency the automation guarantees."
+        ] })
+      ] })
+    ] }) }),
     /* @__PURE__ */ jsxs(Card, { children: [
       /* @__PURE__ */ jsxs(CardHeader, { children: [
-        /* @__PURE__ */ jsx(CardTitle, { children: "Scan to provision" }),
+        /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ jsx(ScanLine, { className: "size-5" }),
+          " Scan to provision"
+        ] }),
         /* @__PURE__ */ jsxs(CardDescription, { children: [
           "Runs the ",
           /* @__PURE__ */ jsx("code", { className: "font-mono", children: TEMPLATE_ID }),
-          " automation: instant launch, streamed per-step progress, resume from the failed step."
+          " automation — instant launch, streamed per-step progress, resume from a failed step."
         ] })
       ] }),
       /* @__PURE__ */ jsxs(CardContent, { className: "flex flex-col gap-4", children: [
         /* @__PURE__ */ jsx(Separator, {}),
         /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5 text-sm", children: [
-          /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Barcode" }),
-          /* @__PURE__ */ jsx(
-            "input",
-            {
-              value: barcode,
-              onChange: (e) => setBarcode(e.target.value),
-              placeholder: "scan or type a box barcode",
-              className: "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none ring-ring focus-visible:ring-2"
-            }
-          )
+          /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground", children: [
+            "Device barcode ",
+            /* @__PURE__ */ jsx("span", { className: "text-muted-foreground/70", children: "(scanned box label)" })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                value: barcode,
+                onChange: (e) => setBarcode(e.target.value),
+                placeholder: "e.g. ACME-7F3A-9C21",
+                disabled: busy,
+                className: "h-9 flex-1 rounded-md border border-input bg-transparent px-3 font-mono text-sm outline-none ring-ring focus-visible:ring-2 disabled:opacity-60"
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              Button,
+              {
+                type: "button",
+                size: "sm",
+                variant: "outline",
+                onClick: () => setBarcode(randomBarcode()),
+                disabled: busy,
+                title: "Generate a sample barcode",
+                children: [
+                  /* @__PURE__ */ jsx(Dice5, {}),
+                  " Randomize"
+                ]
+              }
+            )
+          ] }),
+          deviceId ? /* @__PURE__ */ jsxs("span", { className: "text-xs text-muted-foreground", children: [
+            "→ will provision device",
+            " ",
+            /* @__PURE__ */ jsx("code", { className: "font-mono text-foreground", children: deviceId })
+          ] }) : null
         ] }),
         /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5 text-sm", children: [
           /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Install location" }),
@@ -3223,77 +3543,178 @@ function PageInner() {
             {
               value: location,
               onChange: (e) => setLocation(e.target.value),
-              className: "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none ring-ring focus-visible:ring-2"
+              disabled: busy,
+              className: "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none ring-ring focus-visible:ring-2 disabled:opacity-60"
             }
           )
         ] })
       ] }),
-      /* @__PURE__ */ jsxs(CardFooter, { className: "gap-2", children: [
-        /* @__PURE__ */ jsxs(
-          Button,
-          {
-            size: "sm",
-            onClick: launch,
-            disabled: !barcode || status === "running",
-            children: [
-              status === "running" ? /* @__PURE__ */ jsx(LoaderCircle, { className: "animate-spin" }) : /* @__PURE__ */ jsx(ScanLine, {}),
-              status === "running" ? "Provisioning…" : "Provision"
-            ]
-          }
-        ),
-        status === "failed" && resumable ? /* @__PURE__ */ jsxs(Button, { size: "sm", variant: "outline", onClick: resume, children: [
+      /* @__PURE__ */ jsxs(CardFooter, { className: "flex-wrap gap-2", children: [
+        /* @__PURE__ */ jsxs(Button, { onClick: launch, disabled: !barcode || busy, children: [
+          busy ? /* @__PURE__ */ jsx(LoaderCircle, { className: "animate-spin" }) : /* @__PURE__ */ jsx(ScanLine, {}),
+          busy ? "Provisioning…" : "Provision"
+        ] }),
+        status === "failed" && resumable ? /* @__PURE__ */ jsxs(Button, { variant: "default", onClick: resume, children: [
           /* @__PURE__ */ jsx(RotateCcw, {}),
           " Retry from failed step"
-        ] }) : null
+        ] }) : null,
+        busy ? /* @__PURE__ */ jsxs(Button, { variant: "outline", onClick: cancel, children: [
+          /* @__PURE__ */ jsx(Ban, {}),
+          " Cancel"
+        ] }) : null,
+        runId && !busy ? /* @__PURE__ */ jsx(Button, { variant: "ghost", onClick: reset, children: "Provision another" }) : null
       ] })
     ] }),
     runId ? /* @__PURE__ */ jsxs(Card, { children: [
       /* @__PURE__ */ jsxs(CardHeader, { children: [
-        /* @__PURE__ */ jsx(CardTitle, { className: "text-base", children: "Run progress" }),
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-3", children: [
+          /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2 text-base", children: [
+            /* @__PURE__ */ jsx(Radio, { className: "size-4" }),
+            " Run progress"
+          ] }),
+          /* @__PURE__ */ jsxs("span", { className: "text-xs tabular-nums text-muted-foreground", children: [
+            done,
+            "/",
+            STEPS.length,
+            " steps"
+          ] })
+        ] }),
         /* @__PURE__ */ jsxs(CardDescription, { children: [
           "run ",
           /* @__PURE__ */ jsx("code", { className: "font-mono", children: runId })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs(CardContent, { className: "flex flex-col gap-2 text-sm", children: [
-        /* @__PURE__ */ jsx(Separator, {}),
-        /* @__PURE__ */ jsx(Row, { label: "Status", value: status }),
-        /* @__PURE__ */ jsx(Row, { label: "Current step", value: step ?? "—" }),
-        error ? /* @__PURE__ */ jsxs("p", { className: "text-sm text-destructive", children: [
-          "error: ",
-          error
-        ] }) : null,
-        status === "completed" ? /* @__PURE__ */ jsxs("p", { className: "flex items-center gap-2 text-sm text-emerald-600", children: [
-          /* @__PURE__ */ jsx(CircleCheck, { className: "size-4" }),
-          " Device provisioned."
+      /* @__PURE__ */ jsxs(CardContent, { className: "flex flex-col gap-4", children: [
+        /* @__PURE__ */ jsx(Progress, { value: done / STEPS.length * 100 }),
+        /* @__PURE__ */ jsx("ol", { className: "flex flex-col gap-1", children: STEPS.map((s, i) => /* @__PURE__ */ jsx(
+          StepRow,
+          {
+            index: i,
+            title: s.title,
+            detail: s.detail,
+            state: stepState(i, done, step, s.node, status)
+          },
+          s.node
+        )) }),
+        error ? /* @__PURE__ */ jsx("div", { className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+        status === "completed" ? /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2 rounded-md border border-emerald-600/30 bg-emerald-600/10 p-3 text-sm", children: [
+          /* @__PURE__ */ jsxs("p", { className: "flex items-center gap-2 font-medium text-emerald-700 dark:text-emerald-400", children: [
+            /* @__PURE__ */ jsx(CircleCheck, { className: "size-4" }),
+            " Device provisioned"
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-[7rem_1fr] gap-x-4 gap-y-1 font-mono text-xs text-foreground", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "device_id" }),
+            /* @__PURE__ */ jsx("span", { children: deviceId }),
+            /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "sensor_id" }),
+            /* @__PURE__ */ jsx("span", { children: sensorId }),
+            /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "location" }),
+            /* @__PURE__ */ jsx("span", { className: "font-sans", children: location })
+          ] })
         ] }) : null
-      ] })
+      ] }),
+      snap ? /* @__PURE__ */ jsxs(CardFooter, { className: "flex-col items-start gap-2 border-t pt-4", children: [
+        /* @__PURE__ */ jsxs("p", { className: "flex items-center gap-1.5 text-xs font-medium text-muted-foreground", children: [
+          /* @__PURE__ */ jsx(ShieldCheck, { className: "size-3.5" }),
+          " Trusted identity — seeded by the server from your session, not this form"
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-1.5", children: [
+          snap.team ? /* @__PURE__ */ jsxs(Badge, { variant: "secondary", children: [
+            "team: ",
+            snap.team
+          ] }) : null,
+          snap.tenant_id ? /* @__PURE__ */ jsxs(Badge, { variant: "secondary", children: [
+            "tenant: ",
+            snap.tenant_id
+          ] }) : null,
+          snap.owner ? /* @__PURE__ */ jsxs(Badge, { variant: "outline", className: "font-mono", children: [
+            "owner: ",
+            snap.owner.slice(0, 8),
+            "…"
+          ] }) : null
+        ] })
+      ] }) : null
     ] }) : null
   ] });
 }
-function Row({ label, value }) {
-  return /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-[8rem_1fr] items-center gap-x-6 py-1", children: [
-    /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: label }),
-    /* @__PURE__ */ jsx("span", { className: "font-mono tabular-nums", children: value })
+function stepState(index, done, currentStep, node, status) {
+  if (index < done) return "done";
+  if (status === "failed" && (currentStep === node || index === done)) return "failed";
+  if (status === "running" && (currentStep === node || index === done)) return "running";
+  if (status === "completed") return "done";
+  return "pending";
+}
+function StepRow({
+  index,
+  title,
+  detail,
+  state
+}) {
+  return /* @__PURE__ */ jsxs("li", { className: "flex items-start gap-3 rounded-md px-2 py-2", children: [
+    /* @__PURE__ */ jsx("span", { className: "mt-0.5", children: /* @__PURE__ */ jsx(StepIcon, { state }) }),
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-col", children: [
+      /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1.5 text-sm font-medium", children: [
+        /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground", children: [
+          index + 1,
+          "."
+        ] }),
+        " ",
+        title,
+        state === "running" ? /* @__PURE__ */ jsx("span", { className: "text-xs font-normal text-muted-foreground", children: "running…" }) : null
+      ] }),
+      /* @__PURE__ */ jsx("span", { className: "text-xs text-muted-foreground", children: detail })
+    ] })
   ] });
 }
+function StepIcon({ state }) {
+  switch (state) {
+    case "done":
+      return /* @__PURE__ */ jsx(CircleCheck, { className: "size-4 text-emerald-600 dark:text-emerald-400" });
+    case "running":
+      return /* @__PURE__ */ jsx(LoaderCircle, { className: "size-4 animate-spin text-primary" });
+    case "failed":
+      return /* @__PURE__ */ jsx(CircleX, { className: "size-4 text-destructive" });
+    default:
+      return /* @__PURE__ */ jsx(Circle, { className: "size-4 text-muted-foreground/40" });
+  }
+}
 function StatusBadge({ status }) {
-  if (status === "completed")
-    return /* @__PURE__ */ jsxs(Badge, { variant: "success", children: [
-      /* @__PURE__ */ jsx(CircleCheck, {}),
-      " Done"
-    ] });
-  if (status === "failed")
-    return /* @__PURE__ */ jsxs(Badge, { variant: "destructive", children: [
-      /* @__PURE__ */ jsx(CircleX, {}),
-      " Failed"
-    ] });
-  if (status === "running")
-    return /* @__PURE__ */ jsxs(Badge, { variant: "secondary", children: [
-      /* @__PURE__ */ jsx(LoaderCircle, { className: "animate-spin" }),
-      " Running"
-    ] });
-  return /* @__PURE__ */ jsx(Badge, { variant: "secondary", children: "Idle" });
+  switch (status) {
+    case "completed":
+      return /* @__PURE__ */ jsxs(Badge, { variant: "success", children: [
+        /* @__PURE__ */ jsx(CircleCheck, {}),
+        " Done"
+      ] });
+    case "failed":
+      return /* @__PURE__ */ jsxs(Badge, { variant: "destructive", children: [
+        /* @__PURE__ */ jsx(CircleX, {}),
+        " Failed"
+      ] });
+    case "running":
+      return /* @__PURE__ */ jsxs(Badge, { variant: "secondary", children: [
+        /* @__PURE__ */ jsx(LoaderCircle, { className: "animate-spin" }),
+        " Running"
+      ] });
+    case "cancelled":
+      return /* @__PURE__ */ jsxs(Badge, { variant: "outline", children: [
+        /* @__PURE__ */ jsx(Ban, {}),
+        " Cancelled"
+      ] });
+    default:
+      return /* @__PURE__ */ jsxs(Badge, { variant: "outline", children: [
+        /* @__PURE__ */ jsx(ChevronRight, {}),
+        " Ready"
+      ] });
+  }
+}
+function friendlyError(e) {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/team/i.test(msg) && /(allowed|forbidden|403)/i.test(msg)) {
+    return "Forbidden: your user isn't in a team this template allows (allowed_teams: hvac-ops). Add yourself to that team and retry.";
+  }
+  if (/403|forbidden|csrf/i.test(msg)) {
+    return `${msg} — if this is a CSRF error, reload to refresh your session token.`;
+  }
+  return msg;
 }
 
 const EXTENSION_ID = "com.acme.devices";

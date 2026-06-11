@@ -39,6 +39,7 @@ pub mod cleanup_insights;
 pub mod config;
 pub mod contribute;
 pub mod contribute_insights;
+pub mod contribute_nodes;
 pub mod host_methods;
 pub mod ingest;
 pub mod post_install;

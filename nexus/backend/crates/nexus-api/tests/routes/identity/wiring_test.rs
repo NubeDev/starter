@@ -59,7 +59,15 @@ async fn assembled_app(admin: &sqlx::PgPool) -> TestApp {
         ),
         canary: Default::default(),
     };
-    let router = serve::assemble(state, id.auth, id.authz, id.tenants, id.authenticator);
+    let router = serve::assemble(
+        state,
+        id.auth,
+        id.authz,
+        id.tenants,
+        axum::Router::new(),
+        axum::Router::new(),
+        id.authenticator,
+    );
     TestApp::spawn(router).await
 }
 

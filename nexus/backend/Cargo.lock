@@ -2935,6 +2935,7 @@ checksum = "92219b62b3e2b4d88ac5119f8904c10f8f61bf7e95b640d25ba3075e6cac2c29"
 dependencies = [
  "displaydoc",
  "litemap",
+ "serde",
  "tinystr",
  "writeable",
  "zerovec",
@@ -3733,15 +3734,19 @@ dependencies = [
  "starter-authz",
  "starter-changelog",
  "starter-config",
+ "starter-ext-flow",
  "starter-ext-host",
  "starter-ext-server",
  "starter-ext-spi",
  "starter-ext-store-pg",
  "starter-ext-supervisor",
+ "starter-flow",
+ "starter-flow-spi",
  "starter-observability",
  "starter-paths",
  "starter-prefs",
  "starter-server",
+ "starter-setup",
  "starter-spi",
  "starter-store-postgres",
  "starter-undo",
@@ -6217,6 +6222,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ext-flow"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "starter-ext-spi",
+ "starter-ext-supervisor",
+ "starter-flow-spi",
+ "starter-skills",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "ulid",
+]
+
+[[package]]
 name = "starter-ext-host"
 version = "0.1.0"
 dependencies = [
@@ -6339,6 +6361,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-flow"
+version = "0.1.0"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "blake3",
+ "chrono",
+ "futures",
+ "serde",
+ "serde_json",
+ "starter-flow-spi",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+]
+
+[[package]]
 name = "starter-flow-spi"
 version = "0.1.0"
 dependencies = [
@@ -6355,10 +6396,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-i18n"
+version = "0.1.0"
+dependencies = [
+ "icu_locale_core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tracing",
+ "utoipa",
+]
+
+[[package]]
 name = "starter-jsonrpc-stdio"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "starter-mcp"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "starter-i18n",
+ "starter-jsonrpc-stdio",
+ "starter-spi",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
@@ -6420,6 +6490,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-setup"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "chrono",
+ "futures",
+ "jsonschema 0.18.3",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-authz",
+ "starter-flow",
+ "starter-flow-spi",
+ "starter-mcp",
+ "starter-server",
+ "starter-setup-spi",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "starter-setup-spi"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-flow",
+ "starter-flow-spi",
+ "starter-spi",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "starter-skills"
 version = "0.1.0"
 dependencies = [
@@ -6442,6 +6553,7 @@ dependencies = [
  "bytes",
  "chrono",
  "futures",
+ "icu_locale_core",
  "prometheus",
  "secrecy 0.10.3",
  "serde",
@@ -6465,6 +6577,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-flow-spi",
+ "starter-setup-spi",
  "starter-skills",
  "starter-spi",
  "starter-windowed",
@@ -6473,6 +6586,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -6843,6 +6957,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8323304221c2a851516f22236c5722a72eaa19749016521d6dff0824447d96d"
 dependencies = [
  "displaydoc",
+ "serde_core",
  "zerovec",
 ]
 
@@ -7245,6 +7360,16 @@ dependencies = [
  "rand 0.8.6",
  "serde",
  "spin 0.10.0",
+]
+
+[[package]]
+name = "ulid"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "470dbf6591da1b39d43c14523b2b469c86879a53e8b758c8e090a470fe7b1fbe"
+dependencies = [
+ "rand 0.9.4",
+ "web-time",
 ]
 
 [[package]]
@@ -8719,6 +8844,7 @@ version = "0.11.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90f911cbc359ab6af17377d242225f4d75119aec87ea711a880987b18cd7b239"
 dependencies = [
+ "serde",
  "yoke",
  "zerofrom",
  "zerovec-derive",

@@ -122,6 +122,33 @@ pub async fn require(
     tenant: &str,
 ) -> Result<(), Response> {
     let object = ResourceRef::row(kind, id).with_tenant(tenant);
+    decide(engine, principal, action, object).await
+}
+
+/// Authorize creating a new instance of `kind` in `tenant`. A create has no
+/// instance id yet, so this is a **kind-wide** `edit` check against the
+/// collection: an admin matches the built-in admin-all rule and is allowed; a
+/// non-admin matches no built-in rule and is denied (`no_matching_rule`). An
+/// instance grant (`view`/`edit` on one node) does *not* satisfy a collection
+/// check — a viewer granted one page still cannot mint new nodes. Returns a
+/// ready `403` on deny.
+pub async fn require_create(
+    engine: &dyn PolicyEngine,
+    principal: &Principal,
+    kind: &str,
+    tenant: &str,
+) -> Result<(), Response> {
+    let object = ResourceRef::collection(kind).with_tenant(tenant);
+    decide(engine, principal, ACTION_EDIT, object).await
+}
+
+/// Shared allow/deny → `Result` mapping for [`require`] / [`require_create`].
+async fn decide(
+    engine: &dyn PolicyEngine,
+    principal: &Principal,
+    action: &str,
+    object: ResourceRef,
+) -> Result<(), Response> {
     let decision = engine.check(principal, action, &object).await;
     if decision.is_allow() {
         return Ok(());

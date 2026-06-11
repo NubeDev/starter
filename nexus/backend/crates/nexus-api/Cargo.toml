@@ -36,7 +36,22 @@ starter-undo = { workspace = true, features = ["postgres"] }
 starter-prefs = { workspace = true, features = ["postgres"] }
 starter-auth-users = { workspace = true, features = ["postgres"] }
 starter-authz = { workspace = true, features = ["postgres"] }
-starter-store-postgres.workspace = true
+# The setup/automation builder surface (WS Setup-Builder). `rest` mounts the
+# `/setup/*` router + SSE + the authz resource-kind specs; `mcp` adds the
+# `setup.*` AI tools sharing the same `RunService`. The Postgres setup + flow
+# stores are pulled via the `setup`/`flow` features on `starter-store-postgres`
+# below; the flow engine (`starter-flow`) drives runs and the
+# `ProcessNodeProxy` bridge routes contributed node-kinds to the extension child.
+starter-setup = { workspace = true, features = ["rest", "mcp"] }
+starter-flow.workspace = true
+starter-flow-spi.workspace = true
+# The extension→flow adapter: `contributed_node_kinds` walks a manifest's
+# `contributes.nodes[]` and `ProcessNodeProxy` bridges each kind's
+# `flow.node.invoke` to the supervised child (FLOW-NODES slice B).
+starter-ext-flow.workspace = true
+# `setup` = Postgres template + setup-run stores; `flow` = the Postgres SPI
+# RunStore (durable checkpoints the runner replays on resume / boot recovery).
+starter-store-postgres = { workspace = true, features = ["setup", "flow"] }
 starter-config.workspace = true
 starter-observability.workspace = true
 starter-paths.workspace = true

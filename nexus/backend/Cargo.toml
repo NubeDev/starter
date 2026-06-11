@@ -51,6 +51,16 @@ starter-paths          = { path = "../../crates/starter-paths" }
 starter-changelog      = { path = "../../crates/starter-changelog" }
 starter-undo           = { path = "../../crates/starter-undo" }
 
+# Setup/Automation Builder: the template/run domain + REST/SSE/MCP surfaces, the
+# flow engine that executes runs, and the extension→flow node adapter. Consumed
+# by path like the other `starter-*` crates so the `Router<S>`/`Principal`/
+# `NodeBehavior` types unify across the seam (incl. the `starter-ext-flow`
+# `ProcessNodeProxy`, which shares `starter-ext-supervisor`'s `SupervisorHandle`).
+starter-setup          = { path = "../../crates/starter-setup" }
+starter-flow           = { path = "../../crates/starter-flow" }
+starter-flow-spi       = { path = "../../crates/starter-flow-spi" }
+starter-ext-flow       = { path = "../../starter-extensions/crates/starter-ext-flow" }
+
 # WS-14 extensions runtime. The `starter-extensions` kernel is a separate
 # sibling cargo workspace (excluded from the root `starter` workspace), but its
 # crates are consumed here by path the same way the `starter-*` crates are.

@@ -12,6 +12,7 @@
 
 import type { StarterClient } from "./client.js";
 import { StarterError } from "../error/starter-error.js";
+import { csrfHeaderForMethod } from "./csrf.js";
 
 function isJsonContentType(value: string | null): boolean {
   if (!value) return false;
@@ -25,7 +26,15 @@ export async function fetchJson<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const headers: Record<string, string> = { ...client.headers, ...(init.headers as Record<string, string> | undefined) };
+  // The double-submit CSRF token is auto-attached on mutating methods so
+  // every endpoint inherits it without per-call plumbing; an explicit
+  // `init.headers["X-CSRF-Token"]` still wins. No-op on safe methods and in
+  // non-browser contexts (no `document`).
+  const headers: Record<string, string> = {
+    ...client.headers,
+    ...csrfHeaderForMethod(init.method),
+    ...(init.headers as Record<string, string> | undefined),
+  };
   const url = `${client.baseUrl}${path}`;
   const res = await client.fetch(url, {
     ...init,
