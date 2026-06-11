@@ -489,6 +489,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/detections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_detections"];
+        put?: never;
+        post: operations["create_detection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_detection"];
+        put: operations["update_detection"];
+        post?: never;
+        delete: operations["delete_detection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/{id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Manually run a detection now, outside its schedule — the deterministic seam
+         *     the WS acceptance leans on ("runs on its interval … verified the same way the
+         *     alert scheduler was"). Returns the upsert/resolve counts. Requires `edit`.
+         */
+        post: operations["run_detection_now"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/{id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run stats for a detection: next run time + its findings by status. A
+         *     glanceable summary for the list and editor. Requires `view`.
+         */
+        get: operations["detection_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_findings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_finding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings/{id}/ack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["ack_finding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/findings/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resolve_finding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flows": {
         parameters: {
             query?: never;
@@ -1506,6 +1643,44 @@ export interface components {
             user?: string | null;
         };
         /**
+         * @description Create a detection. `insight_id` is the stored Rhai rule (required — a
+         *     detection with no rule is meaningless); `flag_column` names the insight
+         *     output column whose truthy value marks a flagged row; `target_columns`
+         *     identify the finding's target and form its dedup key; `value_column` is the
+         *     numeric column carried onto the finding.
+         */
+        CreateDetectionRequest: {
+            /** Format: uuid */
+            datasource_id?: string | null;
+            enabled?: boolean | null;
+            flag_column: string;
+            /**
+             * Format: int32
+             * @description Optional dwell in seconds before a flagged row becomes a finding
+             *     (default 0 — most analytic findings are point-in-time).
+             */
+            for_secs?: number | null;
+            /** Format: uuid */
+            insight_id: string;
+            /**
+             * Format: int32
+             * @description Run cadence in seconds (default 300).
+             */
+            interval_secs?: number | null;
+            name: string;
+            /** @description Params passed to the insight (thresholds, window, z, …). */
+            params?: unknown;
+            /**
+             * @description RW-05 federated sources the `sql` joins over (alias → datasource ref).
+             *     Empty (the default) runs the single-datasource push-down path; non-empty
+             *     dispatches through the federation engine, exactly like a panel query.
+             */
+            sources?: unknown;
+            sql: string;
+            target_columns?: string[];
+            value_column?: string | null;
+        };
+        /**
          * @description Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the
          *     FlowManager validates them when it builds the stream, so a malformed config
          *     surfaces on start, not here. `enabled` defaults to false so a flow can be
@@ -1837,6 +2012,48 @@ export interface components {
          * @enum {string}
          */
         DateFormat: "auto" | "YYYY-MM-DD" | "DD/MM/YYYY" | "MM/DD/YYYY";
+        /** @description A detection as returned by the API. */
+        DetectionDetail: {
+            /** Format: uuid */
+            datasource_id?: string | null;
+            enabled: boolean;
+            flag_column: string;
+            /** Format: int32 */
+            for_secs: number;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            insight_id: string;
+            /** Format: int32 */
+            interval_secs: number;
+            name: string;
+            params: unknown;
+            sources: unknown;
+            sql: string;
+            target_columns: string[];
+            value_column?: string | null;
+        };
+        /** @description Run stats for a detection — a glanceable summary for the list/editor. */
+        DetectionStats: {
+            /** Format: int64 */
+            acknowledged: number;
+            /**
+             * Format: date-time
+             * @description The most recent finding time across all this detection's findings.
+             */
+            last_finding_at?: string | null;
+            /**
+             * Format: date-time
+             * @description When the scheduler will next run this detection.
+             */
+            next_eval_at: string;
+            /** Format: int64 */
+            open: number;
+            /** Format: int64 */
+            resolved: number;
+            /** Format: int64 */
+            total: number;
+        };
         /**
          * @description Test a flow's `input` + `pipeline` without persisting it or running its real
          *     output. The engine swaps in the bounded collector sink, runs the stream to
@@ -1893,6 +2110,33 @@ export interface components {
              *     file datasource ignores this (its path is the table).
              */
             table?: string | null;
+        };
+        /** @description One persistent finding emitted by a detection run. */
+        Finding: {
+            /** Format: date-time */
+            acked_at?: string | null;
+            acked_by?: string | null;
+            /** Format: date-time */
+            at: string;
+            /** @description The flagged row's other derived columns — the "why". */
+            context: unknown;
+            /** Format: uuid */
+            detection_id: string;
+            /** Format: uuid */
+            id: string;
+            note?: string | null;
+            /** Format: date-time */
+            resolved_at?: string | null;
+            /** @description open | acknowledged | resolved. */
+            status: string;
+            /** @description The identifying column values, e.g. `{"site":"s1","meter":"m7"}`. */
+            target: unknown;
+            /** Format: double */
+            value?: number | null;
+        };
+        /** @description Acknowledge or manually resolve a finding; both accept an optional note. */
+        FindingActionRequest: {
+            note?: string | null;
         };
         /**
          * @description The response to enabling debug on a running flow: the resulting status plus a
@@ -2936,7 +3180,7 @@ export interface components {
          *     a nav node exactly like a dashboard mount (WS-13 §4).
          * @enum {string}
          */
-        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "insights" | "alerts" | "agents" | "access" | "audit";
+        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "insights" | "alerts" | "findings" | "agents" | "access" | "audit";
         /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
          *     id echoed in the SSE `id:` field so a reconnecting client can send
@@ -3119,6 +3363,31 @@ export interface components {
             /** Format: int32 */
             port?: number | null;
             user?: string | null;
+        };
+        /** @description Partially update a detection; omitted fields are unchanged. */
+        UpdateDetectionRequest: {
+            /**
+             * Format: uuid
+             * @description The datasource the query runs against. Double-option so a patch can
+             *     distinguish three cases: field absent ⇒ unchanged; `null` ⇒ clear it (run
+             *     against the dev pool); a uuid ⇒ point at that datasource. `skip_serializing_if`
+             *     keeps an unset field out of the wire body.
+             */
+            datasource_id?: string | null;
+            enabled?: boolean | null;
+            flag_column?: string | null;
+            /** Format: int32 */
+            for_secs?: number | null;
+            /** Format: uuid */
+            insight_id?: string | null;
+            /** Format: int32 */
+            interval_secs?: number | null;
+            name?: string | null;
+            params?: unknown;
+            sources?: unknown;
+            sql?: string | null;
+            target_columns?: string[] | null;
+            value_column?: string | null;
         };
         /**
          * @description Partially update a flow; omitted fields are left unchanged. Toggling
@@ -4800,6 +5069,321 @@ export interface operations {
                 content?: never;
             };
             /** @description Not found in this tenant */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_detections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detections */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionDetail"][];
+                };
+            };
+        };
+    };
+    create_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateDetectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionDetail"];
+                };
+            };
+            /** @description References a missing insight */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detection */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionDetail"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDetectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Updated */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_detection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted (findings cascade) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    run_detection_now: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ran */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    detection_stats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Detection id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stats */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionStats"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_findings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Findings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Finding"][];
+                };
+            };
+        };
+    };
+    get_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Finding id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Finding */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Finding"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ack_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Finding id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FindingActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Acknowledged */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found / already resolved */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resolve_finding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Finding id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FindingActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Resolved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found / already resolved */
             404: {
                 headers: {
                     [name: string]: unknown;

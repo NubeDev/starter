@@ -25,6 +25,7 @@ const DEFAULT_ROUTES: &[(&str, &str)] = &[
     ("Flows", "flows"),
     ("Insights", "insights"),
     ("Alerts", "alerts"),
+    ("Findings", "findings"),
     ("Agents", "agents"),
     ("Access", "access"),
     ("Audit", "audit"),

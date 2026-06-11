@@ -40,6 +40,7 @@ pub enum StaticRoute {
     Flows,
     Insights,
     Alerts,
+    Findings,
     Agents,
     Access,
     Audit,

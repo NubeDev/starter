@@ -34,6 +34,10 @@ use crate::dto::alert::{
     AlertCondition, AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest,
     CreateChannelRequest, CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
 };
+use crate::dto::detection::{
+    CreateDetectionRequest, DetectionDetail, DetectionStats, Finding, FindingActionRequest,
+    UpdateDetectionRequest,
+};
 use crate::dto::flow::{
     CreateFlowRequest, DryRunRequest, DryRunResponse, FlowDebugEnableResponse, FlowDebugEvent,
     FlowDebugStatus, FlowDetail, FlowExport, FlowMetrics, FlowSummary, LogLevel, NodeCategory,
@@ -141,6 +145,12 @@ use crate::Problem;
     DryRunResponse,
     AlertCondition,
     AlertRuleDetail,
+    CreateDetectionRequest,
+    UpdateDetectionRequest,
+    DetectionDetail,
+    DetectionStats,
+    Finding,
+    FindingActionRequest,
     CreateAlertRuleRequest,
     UpdateAlertRuleRequest,
     AlertEvent,

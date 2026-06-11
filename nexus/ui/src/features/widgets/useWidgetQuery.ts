@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
 
 import { queryDatasource } from "@/api/datasources/query";
@@ -90,6 +90,14 @@ export function useWidgetQuery(widget: Widget): WidgetState {
       ).then(toWidgetData),
     // A panel without SQL hasn't been authored yet — don't fire a query.
     enabled: sql.trim().length > 0,
+    // The refresh tick changes the query key every interval (see above), so
+    // without this React Query would treat each tick as a fresh query with no
+    // cached data and drop the panel to its loading state — the whole grid
+    // "flashes" spinners every few seconds. `keepPreviousData` keeps the prior
+    // tick's data on screen while the next one fetches, so the panel only ever
+    // swaps in fresh rows. `isPlaceholderData` lets callers tint stale data if
+    // they want; here we just render it as-is.
+    placeholderData: keepPreviousData,
   });
 
   if (result.isPending) return { status: "loading" };
@@ -99,5 +107,9 @@ export function useWidgetQuery(widget: Widget): WidgetState {
       message: result.error instanceof Error ? result.error.message : undefined,
     };
   }
+  // A disabled/idle query (e.g. a panel whose SQL isn't authored yet) is
+  // neither pending nor error but has no `data`. Treat that as loading
+  // rather than handing renderers an undefined `points` to read (F0).
+  if (!result.data) return { status: "loading" };
   return { status: "ready", data: result.data };
 }

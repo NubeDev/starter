@@ -104,6 +104,14 @@ export type SilenceDetail = S["SilenceDetail"];
 export type CreateSilenceRequest = S["CreateSilenceRequest"];
 export type AlertEvent = S["AlertEvent"];
 
+// Detections & findings (WS-15) — a scheduled insight that emits findings.
+export type DetectionDetail = S["DetectionDetail"];
+export type CreateDetectionRequest = S["CreateDetectionRequest"];
+export type UpdateDetectionRequest = S["UpdateDetectionRequest"];
+export type DetectionStats = S["DetectionStats"];
+export type Finding = S["Finding"];
+export type FindingActionRequest = S["FindingActionRequest"];
+
 export type Tag = S["Tag"];
 export type TaggableKind = S["TaggableKind"];
 export type SetTagsRequest = S["SetTagsRequest"];

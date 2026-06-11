@@ -39,6 +39,7 @@ starter-authz = { workspace = true, features = ["postgres"] }
 starter-store-postgres.workspace = true
 starter-config.workspace = true
 starter-observability.workspace = true
+starter-paths.workspace = true
 
 # WS-14 extensions runtime. `starter-ext-server` mounts the admin router
 # (`/extensions/*`) over nexus's `starter-server` auth stack; `-host` scans +
@@ -163,6 +164,10 @@ name = "routes_me_preferences_e2e"
 path = "tests/routes/me/preferences_e2e_test.rs"
 
 [[test]]
+name = "routes_health_liveness_e2e"
+path = "tests/routes/health/liveness_e2e_test.rs"
+
+[[test]]
 name = "routes_authz_grant_gate"
 path = "tests/routes/authz/grant_gate_test.rs"
 
@@ -185,6 +190,10 @@ path = "tests/routes/ingest/push_e2e_test.rs"
 [[test]]
 name = "routes_alerts_e2e"
 path = "tests/routes/alerts/alert_e2e_test.rs"
+
+[[test]]
+name = "routes_detections_e2e"
+path = "tests/routes/detections/detection_e2e_test.rs"
 
 [[test]]
 name = "routes_agents_e2e"

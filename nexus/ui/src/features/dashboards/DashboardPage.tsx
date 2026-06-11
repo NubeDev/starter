@@ -6,7 +6,6 @@ import { useUiStore } from "@/store/ui";
 import { AddWidgetDialog } from "@/features/canvas/AddWidgetDialog";
 import { DashboardGrid } from "@/features/canvas/DashboardGrid";
 import { PanelEditor } from "@/features/canvas/PanelEditor/PanelEditor";
-import { PanelProperties } from "@/features/canvas/PanelProperties";
 import { VizPalette } from "@/features/canvas/VizPalette";
 import { DashboardToolbar } from "@/features/dashboards/DashboardToolbar";
 import { useDashboard } from "@/features/dashboards/useDashboard";
@@ -49,12 +48,6 @@ export function DashboardPage() {
     position: WidgetLayout;
   } | null>(null);
 
-  // Whether the full-screen Panel Editor is open for the selected panel.
-  // The lightweight side panel (`PanelProperties`) opens it; the editor
-  // edits a draft and PATCHes on Save, so the canvas stays on the saved
-  // panel until then.
-  const [editorOpen, setEditorOpen] = useState(false);
-
   if (isPending) return <Loading label="Loading dashboard…" />;
   if (isError) {
     return (
@@ -70,9 +63,11 @@ export function DashboardPage() {
   // empty state instead of a blank grid (F0).
   const showGrid = editing || dashboard.widgets.length > 0;
 
-  // Resolve the selected panel from the (possibly refreshed) dashboard so
-  // the properties panel always edits live config; a stale id (panel
-  // removed) resolves to undefined and falls back to the palette.
+  // Resolve the selected panel from the (possibly refreshed) dashboard.
+  // Selecting a panel (its gear button) opens the full-page Panel Editor
+  // for it; the editor always edits live config off this resolved widget.
+  // A stale id (panel removed/refreshed away) resolves to undefined, which
+  // simply closes the editor and returns to the board.
   const selected = editing
     ? dashboard.widgets.find((w) => w.id === selectedId)
     : undefined;
@@ -120,22 +115,11 @@ export function DashboardPage() {
             />
           )}
         </div>
-        {/* The edit-mode side slot: a selected panel's properties, else the
-            add-panel palette. `key` remounts properties on selection change
-            so its form re-seeds from the newly selected widget. */}
-        {editing ? (
-          selected ? (
-            <PanelProperties
-              key={selected.id}
-              widget={selected}
-              slug={slug ?? ""}
-              onClose={() => selectWidget(null)}
-              onOpenEditor={() => setEditorOpen(true)}
-            />
-          ) : (
-            <VizPalette onPick={setDragType} />
-          )
-        ) : null}
+        {/* The edit-mode side slot is the add-panel palette. Editing a
+            panel is a full-page takeover (the Panel Editor), not an inline
+            form, so there's a single editor and the palette always stays
+            available here for adding more panels. */}
+        {editing ? <VizPalette onPick={setDragType} /> : null}
       </div>
 
       {/* Drop-driven config dialog: opens pre-seeded with the dropped type
@@ -153,15 +137,16 @@ export function DashboardPage() {
         }
       />
 
-      {/* The full-screen Panel Editor, opened from the side panel for the
-          selected panel. Keyed on the panel id so reopening on a different
-          panel re-seeds the editor draft. */}
-      {editorOpen && selected ? (
+      {/* The full-page Panel Editor, open for the selected panel. Selecting
+          a panel (its gear button) sets the selection and opens the editor;
+          Back/Discard/Save clears the selection and returns to the board.
+          Keyed on the panel id so switching panels re-seeds the draft. */}
+      {selected ? (
         <PanelEditor
           key={selected.id}
           widget={selected}
           slug={slug ?? ""}
-          onClose={() => setEditorOpen(false)}
+          onClose={() => selectWidget(null)}
         />
       ) : null}
     </div>

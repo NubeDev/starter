@@ -7,8 +7,10 @@ pub mod alerts;
 pub mod audit;
 pub mod dashboards;
 pub mod datasources;
+pub mod detections;
 pub mod flows;
 pub mod folders;
+pub mod health;
 pub mod ingest;
 pub mod insights;
 pub mod me;
@@ -25,10 +27,13 @@ use axum::Router;
 use crate::state::AppState;
 
 /// Compose every product router. `/health`, `/metrics`, and `/openapi.json` are
-/// added by `starter_server::ServerBuilder`, not here. The binary wraps the
-/// returned router in the principal layer so handlers see the `Principal`.
+/// added by `starter_server::ServerBuilder`, not here; the WS-16 `/livez` and
+/// `/readyz` liveness probes are added by `health::router()` below (they read no
+/// `Principal`). The binary wraps the returned router in the principal layer so
+/// authenticated handlers see the `Principal`.
 pub fn product_router() -> Router<AppState> {
     Router::new()
+        .merge(health::router())
         .merge(me::router())
         .merge(query::router())
         .merge(query_kinds::router())
@@ -41,6 +46,7 @@ pub fn product_router() -> Router<AppState> {
         .merge(insights::router())
         .merge(nav::router())
         .merge(alerts::router())
+        .merge(detections::router())
         .merge(tags::router())
         .merge(agents::router())
         .merge(ai::router())

@@ -68,6 +68,7 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         rate_limiter: nexus_api::ratelimit::TenantRateLimiter::new(
             nexus_api::ratelimit::RateLimitConfig::default(),
         ),
+        canary: Default::default(),
     }
 }
 

@@ -1,7 +1,7 @@
 import type { EChartsOption } from "echarts";
 
 import type { QueryResponse } from "@/api/types";
-import { chromeColor, seriesColor } from "@/features/widgets/palette";
+import { chromeColor, seriesColor } from "@/features/widgets/_shared/palette";
 
 // Build an ECharts line option straight from a QueryResponse so the Workbench
 // can chart a transform's output without the dashboard Widget model. The x axis

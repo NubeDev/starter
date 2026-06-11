@@ -6,7 +6,7 @@ import { createStream } from "@/api/streams/create";
 import type { StreamEvent } from "@/api/types";
 import type { SeriesPoint, Widget, WidgetData } from "@/data/types";
 import type { WidgetState } from "@/features/widgets/WidgetCard";
-import { appendWindow } from "@/features/widgets/window";
+import { appendWindow } from "@/features/widgets/_shared/window";
 
 // How many points a live panel keeps in view. Live streams are unbounded;
 // a panel renders a sliding window, not the whole history (which the

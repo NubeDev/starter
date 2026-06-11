@@ -1,13 +1,19 @@
-# Feature: Insights & Alerts
+# Feature: Insights, Alerts & Detections/Findings
 
 > Verified: nexus-rewrite tip on 2026-06-10 against the live stack (219 telemetry
 > rows, elec 25.7–49.9 / water 1.2–3.6). **Status: end-to-end verified** — insights
 > preview (all 3 error classes) and the full alert fire→resolve→silence lifecycle
 > all pass. The scheduler is real and wired (see below).
-> Reference: [WS-07_ALERTING](../../../docs/scope/nextgen/WS-07_ALERTING.md).
+> **Detections & Findings (WS-15) verified 2026-06-11** against the live stack via
+> the `telemetry-pg` datasource (12 elec meters, peaks ~50): per-meter findings,
+> dedup, auto-resolve, ack/resolve lifecycle, cascade-on-delete, AND the federated
+> path all pass — see the new section below.
+> Reference: [WS-07_ALERTING](../../../docs/scope/nextgen/WS-07_ALERTING.md),
+> [WS-15_DETECTIONS_AND_FINDINGS](../../../docs/scope/nextgen/WS-15_DETECTIONS_AND_FINDINGS.md).
 
 **What we're testing:** define an insight (post-query transform) over the ingested
-meter data, and an alert rule that fires when a condition crosses a threshold —
+meter data, an alert rule that fires when a condition crosses a threshold, and a
+**detection** (an insight run on a schedule that emits per-target **findings**) —
 all against the live MQTT→Postgres telemetry.
 
 Architecture recap ([../reference/ARCHITECTURE.md §3](../reference/ARCHITECTURE.md)):

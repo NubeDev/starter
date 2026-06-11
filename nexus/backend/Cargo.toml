@@ -37,6 +37,11 @@ starter-authz          = { path = "../../crates/starter-authz" }
 starter-store-postgres = { path = "../../crates/starter-store-postgres" }
 starter-config         = { path = "../../crates/starter-config" }
 starter-observability  = { path = "../../crates/starter-observability" }
+# Shared data-root resolver (override > $NEXUS_DATA_ROOT > OS XDG). Used to land
+# uploaded extension bundles + supervisor pidfiles under an external data root
+# (the same convention rubix uses via `Paths::resolve("rubix", …)`), instead of
+# inside the in-repo crate tree.
+starter-paths          = { path = "../../crates/starter-paths" }
 # WS-12 audit/undo: reuse the platform changelog read-side query API and the
 # per-actor undo service + Reversible registry. nexus ships its own tenant-aware
 # recorder/changelog over a tenant-scoped `nexus_changes` table (RLS), but the

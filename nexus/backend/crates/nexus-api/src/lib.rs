@@ -8,11 +8,13 @@
 pub mod agents;
 pub mod alerting;
 pub mod authz;
+pub mod boot;
 pub mod bootstrap;
 pub mod cache;
 pub mod changelog;
 pub mod datasource_kinds;
 pub mod datasource_pools;
+pub mod detecting;
 pub mod extensions;
 pub mod federation;
 pub mod flows;

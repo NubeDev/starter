@@ -12,13 +12,16 @@ import {
   SelectValue,
 } from "@nube/starter-ui-kit/components/select";
 
-import type { QueryResponse } from "@/api/types";
+import type { QueryRequest, QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
 import { runQuery } from "@/api/query/run";
 import type { EditorDraft } from "@/features/canvas/PanelEditor/useEditorDraft";
+import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { DatasourcePicker } from "@/features/query-editor/DatasourcePicker";
 import { SqlEditor } from "@/features/sql-editor";
 import { useInsights } from "@/features/insights/useInsights";
+import { useTimeStore, resolveTimeRange, intervalSecs } from "@/store/time";
+import { useVariableStore, toQueryVariables } from "@/store/variables";
 
 // Select sentinel for "no insight" — Radix Select can't hold an empty value.
 const NO_INSIGHT = "__none__";
@@ -34,12 +37,30 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
   const insightId = widget.config.query.insightId || undefined;
   const insights = useInsights();
 
+  // The dashboard's live time range and resolved variables (WS-01/WS-02),
+  // read from the same stores the real panel render uses. Test query must
+  // build the *same* request body as `useWidgetQuery` — otherwise the
+  // server-side binder has no range/interval to expand `$__timeGroup` /
+  // `$__timeFilter` / `$__interval` against, and no values for `$site` &c.,
+  // and the test fails on SQL that renders fine on the canvas.
+  const range = useTimeStore((s) => s.range);
+  const now = useTimeStore((s) => s.now);
+  const resolvedVars = useVariableStore((s) => s.resolved);
+  const variables = toQueryVariables(resolvedVars);
+
   const client = useStarterClient();
   const test = useMutation<QueryResponse, Error>({
     mutationFn: () => {
-      // Apply the attached insight so the test matches the rendered panel.
-      const req = {
+      const resolved = resolveTimeRange(range, now);
+      const req: QueryRequest = {
         sql: sql.trim(),
+        time_range: {
+          from: resolved.from.toISOString(),
+          to: resolved.to.toISOString(),
+        },
+        interval_secs: intervalSecs(resolved),
+        ...(variables.length > 0 ? { variables } : {}),
+        // Apply the attached insight so the test matches the rendered panel.
         ...(insightId ? { insight: { insight_id: insightId } } : {}),
       };
       return datasourceId
@@ -71,7 +92,16 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="ed-sql">SQL</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="ed-sql">SQL</Label>
+          <AiSqlAssist
+            datasourceId={datasourceId}
+            currentSql={sql}
+            onApply={(v) =>
+              patchConfig({ query: { ...widget.config.query, sql: v } })
+            }
+          />
+        </div>
         <SqlEditor
           id="ed-sql"
           value={sql}

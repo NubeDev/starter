@@ -4,6 +4,7 @@ import { AppShell } from "@/app/AppShell";
 import { DashboardsPage } from "@/features/dashboards/DashboardsPage";
 import { DashboardPage } from "@/features/dashboards/DashboardPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
+import { FindingsPage } from "@/features/detections/FindingsPage";
 import { DatasourcesPage } from "@/features/datasources/DatasourcesPage";
 import { FlowsPage } from "@/features/flows/FlowsPage";
 import { FlowEditorPage } from "@/features/flows/FlowEditorPage";
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
       { path: "insights", element: <InsightsListPage /> },
       { path: "insights/workbench", element: <InsightsPage /> },
       { path: "alerts", element: <AlertsPage /> },
+      { path: "findings", element: <FindingsPage /> },
       { path: "agents", element: <AgentsPage /> },
       {
         path: "access",

@@ -13,6 +13,7 @@ pub mod alert;
 pub mod audit;
 pub mod dashboard;
 pub mod datasource;
+pub mod detection;
 pub mod flow;
 pub mod folder;
 pub mod ingest;

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@nube/starter-ui-kit/components/badge";
 import { Button } from "@nube/starter-ui-kit/components/button";
 import { Switch } from "@nube/starter-ui-kit/components/switch";
@@ -47,7 +48,10 @@ import {
   usePurgeExtension,
   useRestartExtension,
 } from "@/features/extensions/useExtensionMutations";
-import { useExtensions } from "@/features/extensions/useExtensions";
+import {
+  useExtensions,
+  useProcessStats,
+} from "@/features/extensions/useExtensions";
 
 // The admin extensions screen (WS-14): every installed extension with its
 // lifecycle state, enable/disable, restart, install-from-bundle and the
@@ -192,6 +196,9 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
   // The cleanup manifest fetched on Uninstall; non-null opens the confirm.
   const [cleanup, setCleanup] = useState<CleanupPreview | null>(null);
 
+  // Row expansion reveals live process stats (lazily fetched while open).
+  const [expanded, setExpanded] = useState(false);
+
   const enabled = ext.enabled === "enabled";
   const toggling = enable.isPending || disable.isPending;
   const pills = contributePills(ext.contributes);
@@ -206,13 +213,29 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
   }
 
   return (
+    <>
     <TableRow>
       <TableCell>
-        <div className="flex flex-col">
-          <span className="font-medium">{ext.display_name ?? ext.id}</span>
-          <span className="font-mono text-xs text-muted-foreground">
-            {ext.id}
-          </span>
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            aria-label={`${expanded ? "Collapse" : "Expand"} ${ext.id}`}
+            className="mt-0.5 rounded text-muted-foreground hover:text-foreground"
+          >
+            {expanded ? (
+              <ChevronDown className="size-4" />
+            ) : (
+              <ChevronRight className="size-4" />
+            )}
+          </button>
+          <div className="flex flex-col">
+            <span className="font-medium">{ext.display_name ?? ext.id}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {ext.id}
+            </span>
+          </div>
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground">
@@ -286,6 +309,16 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
             Couldn't load the cleanup preview.
           </p>
         ) : null}
+        {restart.isError ? (
+          <p role="alert" className="mt-1 text-xs text-destructive">
+            Restart failed — it may be disabled. Enable it first.
+          </p>
+        ) : null}
+        {enable.isError || disable.isError ? (
+          <p role="alert" className="mt-1 text-xs text-destructive">
+            Couldn't change the enabled state.
+          </p>
+        ) : null}
         <UninstallConfirm
           cleanup={cleanup}
           pending={purge.isPending}
@@ -296,7 +329,76 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
         />
       </TableCell>
     </TableRow>
+    {expanded ? <ExtensionDetailRow ext={ext} /> : null}
+    </>
   );
+}
+
+// The expandable detail row: live process stats for a process-flavour child,
+// lazily fetched while open. Builtin/wasm or a stopped child report no process
+// (server 404 → null), shown as a muted placeholder.
+function ExtensionDetailRow({ ext }: { ext: ExtensionSummary }) {
+  const { data, isPending, isError } = useProcessStats(ext.id, true);
+
+  return (
+    <TableRow className="bg-muted/30 hover:bg-muted/30">
+      <TableCell colSpan={8}>
+        {isPending ? (
+          <span className="text-xs text-muted-foreground">Loading stats…</span>
+        ) : isError ? (
+          <span className="text-xs text-destructive">
+            Couldn't load process stats.
+          </span>
+        ) : data == null ? (
+          <span className="text-xs text-muted-foreground">
+            No live process — this extension contributes config only.
+          </span>
+        ) : (
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-xs sm:grid-cols-3 lg:grid-cols-6">
+            <Stat label="PID" value={String(data.pid)} />
+            <Stat label="Uptime" value={formatDuration(data.uptime.secs)} />
+            <Stat
+              label="RSS"
+              value={data.rss_bytes != null ? formatBytes(data.rss_bytes) : "—"}
+            />
+            <Stat
+              label="CPU"
+              value={
+                data.cpu_pct != null ? `${data.cpu_pct.toFixed(1)}%` : "—"
+              }
+            />
+            <Stat label="Restarts" value={String(data.restarts)} />
+            <Stat
+              label="Violations"
+              value={String(ext.capability_violations)}
+            />
+          </dl>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-mono">{value}</dd>
+    </div>
+  );
+}
+
+// Compact uptime from whole seconds (e.g. "3d 4h", "12m 5s").
+function formatDuration(totalSecs: number): string {
+  const s = Math.floor(totalSecs);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
 }
 
 // The dry-run-then-purge confirm: lists exactly what `DELETE …?purge=true`

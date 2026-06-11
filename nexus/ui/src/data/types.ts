@@ -130,7 +130,7 @@ export interface ValueMapping {
  *  to selectively replace it per series. All fields optional so an
  *  untouched panel serialises to `{}` and reads back identically. */
 export interface FieldDisplay {
-  /** Unit id from the unit registry (`features/widgets/units.ts`), e.g.
+  /** Unit id from the unit registry (`features/widgets/_shared/units.ts`), e.g.
    *  `"celsius"`, `"percent"`, `"watt"`. Undefined → unitless. */
   unit?: string;
   /** Fixed decimal places for the formatted value. Undefined → auto. */
@@ -226,7 +226,7 @@ export interface WidgetConfig {
   /** Legacy single warn/crit gauge bounds. Kept for back-compat: panels
    *  authored before the field-config editor still read this. New edits
    *  write {@link FieldConfig.defaults.thresholds} instead, and the
-   *  resolver (`features/widgets/fieldConfig.ts`) reads `fieldConfig`
+   *  resolver (`features/widgets/_shared/fieldConfig.ts`) reads `fieldConfig`
    *  first, falling back to these flat fields. */
   thresholds?: Thresholds;
   min?: number;

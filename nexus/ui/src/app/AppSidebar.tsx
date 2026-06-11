@@ -1,5 +1,6 @@
+import type { MouseEvent } from "react";
 import { Blocks, LayoutDashboard } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +26,31 @@ import { NavTree } from "@/features/nav/NavTree";
 // add nav under `sidebar-nav` (generic slots, D7).
 export function AppSidebar() {
   const { variant, collapsible } = useLayout();
+  const navigate = useNavigate();
+  // Sidebar-nav extension contributions render plain `<a href>` links (the
+  // federation host does not share `react-router-dom`, so a remote's own
+  // `NavLink` can't see this Router). We intercept clicks bubbling out of the
+  // `sidebar-nav` slot and route internal hrefs through the host router for SPA
+  // navigation — same pattern rubix uses. External / modified-click / non-left
+  // clicks fall through to the browser's default handling.
+  function interceptExtensionNav(e: MouseEvent<HTMLDivElement>) {
+    if (e.defaultPrevented) return;
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+      return;
+    const anchor = (e.target as HTMLElement).closest("a");
+    if (!anchor) return;
+    const href = anchor.getAttribute("href");
+    if (
+      !href ||
+      href.startsWith("http") ||
+      href.startsWith("//") ||
+      href.startsWith("#")
+    )
+      return;
+    if (anchor.target && anchor.target !== "_self") return;
+    e.preventDefault();
+    navigate(href);
+  }
   return (
     <Sidebar variant={variant} collapsible={collapsible}>
       <SidebarHeader>
@@ -84,14 +110,13 @@ export function AppSidebar() {
             ),
           }}
         />
-        <SidebarGroup>
+        <SidebarGroup onClick={interceptExtensionNav}>
           <ExtensionSlot id="sidebar-nav" />
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>
-      <ExtensionSlot id="sidebar" />
       <SidebarRail />
     </Sidebar>
   );

@@ -1680,6 +1680,361 @@
         }
       }
     },
+    "/api/v1/detections": {
+      "get": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "list_detections",
+        "responses": {
+          "200": {
+            "description": "Detections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DetectionDetail"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "create_detection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDetectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "References a missing insight"
+          }
+        }
+      }
+    },
+    "/api/v1/detections/{id}": {
+      "get": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "get_detection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "update_detection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDetectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "detections"
+        ],
+        "operationId": "delete_detection",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted (findings cascade)"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/detections/{id}/run": {
+      "post": {
+        "tags": [
+          "detections"
+        ],
+        "summary": "Manually run a detection now, outside its schedule — the deterministic seam\nthe WS acceptance leans on (\"runs on its interval … verified the same way the\nalert scheduler was\"). Returns the upsert/resolve counts. Requires `edit`.",
+        "operationId": "run_detection_now",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ran",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/detections/{id}/stats": {
+      "get": {
+        "tags": [
+          "detections"
+        ],
+        "summary": "Run stats for a detection: next run time + its findings by status. A\nglanceable summary for the list and editor. Requires `view`.",
+        "operationId": "detection_stats",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Detection id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionStats"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/findings": {
+      "get": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "list_findings",
+        "responses": {
+          "200": {
+            "description": "Findings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Finding"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}": {
+      "get": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "get_finding",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Finding id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Finding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Finding"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}/ack": {
+      "post": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "ack_finding",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Finding id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Acknowledged"
+          },
+          "404": {
+            "description": "Not found / already resolved"
+          }
+        }
+      }
+    },
+    "/api/v1/findings/{id}/resolve": {
+      "post": {
+        "tags": [
+          "findings"
+        ],
+        "operationId": "resolve_finding",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Finding id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FindingActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Resolved"
+          },
+          "404": {
+            "description": "Not found / already resolved"
+          }
+        }
+      }
+    },
     "/api/v1/flows": {
       "get": {
         "tags": [
@@ -4436,6 +4791,78 @@
           }
         }
       },
+      "CreateDetectionRequest": {
+        "type": "object",
+        "description": "Create a detection. `insight_id` is the stored Rhai rule (required — a\ndetection with no rule is meaningless); `flag_column` names the insight\noutput column whose truthy value marks a flagged row; `target_columns`\nidentify the finding's target and form its dedup key; `value_column` is the\nnumeric column carried onto the finding.",
+        "required": [
+          "name",
+          "insight_id",
+          "sql",
+          "flag_column"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "flag_column": {
+            "type": "string"
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional dwell in seconds before a flagged row becomes a finding\n(default 0 — most analytic findings are point-in-time)."
+          },
+          "insight_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Run cadence in seconds (default 300)."
+          },
+          "name": {
+            "type": "string"
+          },
+          "params": {
+            "description": "Params passed to the insight (thresholds, window, z, …)."
+          },
+          "sources": {
+            "description": "RW-05 federated sources the `sql` joins over (alias → datasource ref).\nEmpty (the default) runs the single-datasource push-down path; non-empty\ndispatches through the federation engine, exactly like a panel query."
+          },
+          "sql": {
+            "type": "string"
+          },
+          "target_columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value_column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CreateFlowRequest": {
         "type": "object",
         "description": "Create a flow. `input`/`pipeline`/`output` are the engine config blobs; the\nFlowManager validates them when it builds the stream, so a malformed config\nsurfaces on start, not here. `enabled` defaults to false so a flow can be\ncreated and reviewed before it runs.",
@@ -5079,6 +5506,116 @@
           "MM/DD/YYYY"
         ]
       },
+      "DetectionDetail": {
+        "type": "object",
+        "description": "A detection as returned by the API.",
+        "required": [
+          "id",
+          "name",
+          "insight_id",
+          "sql",
+          "params",
+          "sources",
+          "flag_column",
+          "target_columns",
+          "for_secs",
+          "interval_secs",
+          "enabled"
+        ],
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "flag_column": {
+            "type": "string"
+          },
+          "for_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "insight_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "params": {},
+          "sources": {},
+          "sql": {
+            "type": "string"
+          },
+          "target_columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "value_column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DetectionStats": {
+        "type": "object",
+        "description": "Run stats for a detection — a glanceable summary for the list/editor.",
+        "required": [
+          "next_eval_at",
+          "open",
+          "acknowledged",
+          "resolved",
+          "total"
+        ],
+        "properties": {
+          "acknowledged": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last_finding_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "The most recent finding time across all this detection's findings."
+          },
+          "next_eval_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the scheduler will next run this detection."
+          },
+          "open": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "resolved": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "DryRunRequest": {
         "type": "object",
         "description": "Test a flow's `input` + `pipeline` without persisting it or running its real\noutput. The engine swaps in the bounded collector sink, runs the stream to\nthe first breached cap (or a short wall-clock deadline), and returns the\nsample rows. `output` is intentionally absent — a dry run never writes to a\nreal sink. Optional `max_rows` lets the editor narrow the sample further\nthan the server default.",
@@ -5159,6 +5696,87 @@
               "null"
             ],
             "description": "For a `postgres` datasource, the remote table to read into the join. A\nfile datasource ignores this (its path is the table)."
+          }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "description": "One persistent finding emitted by a detection run.",
+        "required": [
+          "id",
+          "detection_id",
+          "at",
+          "target",
+          "context",
+          "status"
+        ],
+        "properties": {
+          "acked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "acked_by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "context": {
+            "description": "The flagged row's other derived columns — the \"why\"."
+          },
+          "detection_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolved_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "description": "open | acknowledged | resolved."
+          },
+          "target": {
+            "description": "The identifying column values, e.g. `{\"site\":\"s1\",\"meter\":\"m7\"}`."
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "FindingActionRequest": {
+        "type": "object",
+        "description": "Acknowledge or manually resolve a finding; both accept an optional note.",
+        "properties": {
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -7071,6 +7689,7 @@
           "flows",
           "insights",
           "alerts",
+          "findings",
           "agents",
           "access",
           "audit"
@@ -7524,6 +8143,82 @@
             "minimum": 0
           },
           "user": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UpdateDetectionRequest": {
+        "type": "object",
+        "description": "Partially update a detection; omitted fields are unchanged.",
+        "properties": {
+          "datasource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The datasource the query runs against. Double-option so a patch can\ndistinguish three cases: field absent ⇒ unchanged; `null` ⇒ clear it (run\nagainst the dev pool); a uuid ⇒ point at that datasource. `skip_serializing_if`\nkeeps an unset field out of the wire body."
+          },
+          "enabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "flag_column": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "for_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "insight_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "interval_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "params": {},
+          "sources": {},
+          "sql": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "target_columns": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "value_column": {
             "type": [
               "string",
               "null"
