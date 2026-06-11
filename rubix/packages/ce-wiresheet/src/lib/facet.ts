@@ -104,6 +104,28 @@ export function serializeFacet(facet: ComponentFacet): string {
   return recs.join(RS);
 }
 
+// Rewrite the uid references in a facet after a deep copy (which mints new uids
+// but copies the facet value verbatim). Remaps the record KEY (a prop uid — own
+// or, for an exposed port, the child's) plus the exposed-port `childComponent`
+// (`c`) and `facetProp` (`f`). Uses old→new maps from the copy's uidMap. Refs not
+// present in a map are left as-is. Returns the rewritten facet string.
+export type UidMap = Map<number, number> | Record<number | string, number>;
+const mapUid = (m: UidMap, k: number): number =>
+  (m instanceof Map ? m.get(k) : m[k]) ?? k;
+
+export function remapFacetUids(raw: string, compMap: UidMap, propMap: UidMap): string {
+  const facet = parseFacet(raw);
+  if (facet.size === 0) return raw;
+  const out: ComponentFacet = new Map();
+  for (const [propUid, f] of facet) {
+    const nf: PropFacet = { ...f };
+    if (nf.childComponent != null) nf.childComponent = mapUid(compMap, nf.childComponent);
+    if (nf.facetProp != null) nf.facetProp = mapUid(propMap, nf.facetProp);
+    out.set(mapUid(propMap, propUid), nf);
+  }
+  return serializeFacet(out);
+}
+
 // Per-component parse cache — re-parse only when a component's raw facet string
 // actually changes. Bounded by the number of components.
 const cache = new Map<number, { raw: string; parsed: ComponentFacet }>();

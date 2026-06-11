@@ -14309,6 +14309,19 @@ function serializeFacet(facet) {
   }
   return recs.join(RS);
 }
+const mapUid = (m, k) => (m instanceof Map ? m.get(k) : m[k]) ?? k;
+function remapFacetUids(raw, compMap, propMap) {
+  const facet = parseFacet(raw);
+  if (facet.size === 0) return raw;
+  const out = /* @__PURE__ */ new Map();
+  for (const [propUid, f] of facet) {
+    const nf = { ...f };
+    if (nf.childComponent != null) nf.childComponent = mapUid(compMap, nf.childComponent);
+    if (nf.facetProp != null) nf.facetProp = mapUid(propMap, nf.facetProp);
+    out.set(mapUid(propMap, propUid), nf);
+  }
+  return serializeFacet(out);
+}
 const cache = /* @__PURE__ */ new Map();
 function facetFor(componentUid, raw) {
   const key = raw ?? "";
@@ -16873,6 +16886,7 @@ function Inner({ base }) {
   const [edges, setEdges] = useState([]);
   const [pendingEdges, setPendingEdges] = useState(null);
   const exposedRemapRef = useRef(/* @__PURE__ */ new Map());
+  const reloadGen = useRef(0);
   const sessionIdRef = useRef(null);
   const POS_SETTLE_PX = 0.5;
   const posAnims = useRef(
@@ -17249,6 +17263,7 @@ function Inner({ base }) {
     );
   }, []);
   const reload = useCallback(async () => {
+    const gen = ++reloadGen.current;
     try {
       let resp;
       if (currentParentUid === ROOT_UID) {
@@ -17260,6 +17275,7 @@ function Inner({ base }) {
           withEdges: true
         });
       }
+      if (gen !== reloadGen.current) return;
       const parent = resp.nodes[0];
       const children = parent?.children ?? [];
       const scopedEdges = resp.edges ?? [];
@@ -17447,6 +17463,24 @@ function Inner({ base }) {
         }
       }));
       await bulkUpdate(updates);
+      const map = res.uidMap;
+      if (map) {
+        const compMap = map.components ?? {};
+        const propMap = map.properties ?? {};
+        const facetUpdates = [];
+        const walk = (c) => {
+          const raw = rawFacet(c.properties);
+          if (raw) {
+            const remapped = remapFacetUids(raw, compMap, propMap);
+            if (remapped !== raw) {
+              facetUpdates.push({ uid: c.uid, properties: { [FACET_PROP]: { value: remapped } } });
+            }
+          }
+          c.children?.forEach(walk);
+        };
+        clones.forEach(walk);
+        if (facetUpdates.length > 0) await bulkUpdate(facetUpdates);
+      }
       const newUids = clones.map((c) => c.uid);
       setPendingPasteSelection(newUids);
       pushUndo({ kind: "delete", componentUids: newUids });
@@ -18305,6 +18339,84 @@ function Inner({ base }) {
     },
     [reload, reportError]
   );
+  const groupSelected = useCallback(
+    async (uids) => {
+      if (uids.length < 2) return;
+      const group = new Set(uids);
+      const comps = useStructural.getState().components;
+      const edges2 = useStructural.getState().edges;
+      const boundary = /* @__PURE__ */ new Map();
+      for (const e of edges2.values()) {
+        const srcIn = group.has(e.sourceUid);
+        const dstIn = group.has(e.targetUid);
+        if (srcIn === dstIn) continue;
+        if (srcIn && e.sourcePropertyUid != null) {
+          boundary.set(e.sourcePropertyUid, {
+            childComponent: e.sourceUid,
+            side: "output",
+            label: e.sourceProperty,
+            facetProp: comps.get(e.sourceUid)?.properties[FACET_PROP]?.uid
+          });
+        } else if (dstIn && e.targetPropertyUid != null) {
+          boundary.set(e.targetPropertyUid, {
+            childComponent: e.targetUid,
+            side: "input",
+            label: e.targetProperty,
+            facetProp: comps.get(e.targetUid)?.properties[FACET_PROP]?.uid
+          });
+        }
+      }
+      let cx = 0;
+      let cy = 0;
+      let n = 0;
+      for (const uid of uids) {
+        const p = comps.get(uid)?.metadata?.position;
+        if (p) {
+          cx += p.x;
+          cy += p.y;
+          n += 1;
+        }
+      }
+      const position = n ? { x: Math.round(cx / n), y: Math.round(cy / n) } : { x: 0, y: 0 };
+      const siblings = new Set(
+        Array.from(comps.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
+      );
+      let name = "group";
+      let k = 1;
+      while (siblings.has(name)) {
+        k += 1;
+        name = `group${k}`;
+      }
+      try {
+        const folder = await addNode({
+          type: "core-extRoot::Folder",
+          name,
+          parentUid: currentParentUid,
+          defaultValues: { position }
+        });
+        if (folder?.uid == null) return;
+        await bulkUpdate(uids.map((uid) => ({ uid, parentUid: folder.uid })));
+        if (boundary.size > 0) {
+          const facet = /* @__PURE__ */ new Map();
+          for (const [propUid, b] of boundary) {
+            facet.set(propUid, {
+              expose: b.side,
+              childComponent: b.childComponent,
+              facetProp: b.facetProp,
+              label: b.label
+            });
+          }
+          await updateNode(folder.uid, {
+            properties: { [FACET_PROP]: { value: serializeFacet(facet) } }
+          });
+        }
+        await reload();
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [currentParentUid, reload, reportError]
+  );
   const openDetails = useCallback(async (componentUid) => {
     if (!useStructural.getState().components.has(componentUid)) {
       try {
@@ -18491,6 +18603,10 @@ function Inner({ base }) {
         onDetails: () => {
           const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
           if (sel.length === 1) setDetailsUid(sel[0]);
+        },
+        onGroup: () => {
+          void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
+          setNodeMenu(null);
         },
         onMoveInto: () => setMovePickerOpen(true),
         onAction: () => setActionPickerOpen(true),
@@ -19152,6 +19268,7 @@ function NodeContextMenu({
   count,
   onRename,
   onDetails,
+  onGroup,
   onMoveInto,
   onAction,
   onClose
@@ -19213,6 +19330,7 @@ function NodeContextMenu({
         ),
         canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Rename…", onClick: onRename }),
         canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Details…", onClick: onDetails }),
+        count >= 2 && /* @__PURE__ */ jsx(EdgeMenuItem, { label: `Group ${count} into folder`, onClick: onGroup }),
         /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Move into…", onClick: onMoveInto }),
         hasActions && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Action…", onClick: onAction })
       ]
@@ -20181,7 +20299,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-11T10:11:00.719Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-11T23:00:23.051Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

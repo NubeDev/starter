@@ -85,6 +85,13 @@ export interface Edge {
 export interface ReadNodesResponse {
   nodes: Component[];
   edges?: Edge[];
+  // Only on /copy/nodes: old→new uid remap for the copied subtree, so the client
+  // can rewrite uid references in copied values (e.g. __facets). See API_REQUESTS.
+  uidMap?: {
+    components?: Record<string, number>;
+    properties?: Record<string, number>;
+    edges?: Record<string, number>;
+  };
 }
 
 export interface AddComponentRequest {

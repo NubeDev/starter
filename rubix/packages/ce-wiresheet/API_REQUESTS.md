@@ -6,6 +6,38 @@ engine-side pieces.
 
 ---
 
+## 0a. `/copy/nodes` returns a uid remap table  — small, generic
+
+**Why.** `__facets` is an opaque string property to the engine, so a deep copy
+duplicates its value verbatim — leaving the copied component's exposed-port records
+(`c`=child component, `f`=child __facets prop, and the record **key**=child prop
+uid) pointing at the **original** uids, not the copies. (Same class as edges, but
+the engine can't remap facets because it has no concept of their format.)
+
+The engine already computes the old→new uid mapping during copy (it uses it to
+remap internal edges). Just **expose it** so the client — which owns the facet
+format — can rewrite the uid references. One generic addition; reusable for ANY
+uid-referencing value, so the engine never needs to learn the facet format.
+
+Add `uidMap` to the `/copy/nodes` response (uids are three independent pools):
+
+```jsonc
+{ "data": {
+    "nodes": [ /* new components */ ],
+    "edges": [ /* new edges */ ],
+    "uidMap": {
+      "components": { "<oldUid>": <newUid>, … },
+      "properties": { "<oldUid>": <newUid>, … },
+      "edges":      { "<oldUid>": <newUid>, … }
+    } } }
+```
+
+Client side: `remapFacetUids(facet, compMap, propMap)` rewrites the copied
+components' `__facets` after the copy. Wired (no-op until `uidMap` is present).
+Only **copy** needs this — reparent/move (Group, Move-into) preserve uids.
+
+---
+
 ## 0. Override by prop uid within a component (exposed ports)  — small ask
 
 (The engine has **no fast prop-uid → component** lookup, so "component uid optional,

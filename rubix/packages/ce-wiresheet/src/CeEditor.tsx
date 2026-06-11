@@ -96,6 +96,7 @@ import {
   rawFacet,
   serializeFacet,
   exposedPorts,
+  remapFacetUids,
   FACET_PROP,
   type Alias,
   type ComponentFacet,
@@ -209,6 +210,11 @@ function Inner({ base }: { base: string }) {
   // Lets onConnect target the real child (not the folder the port is drawn on)
   // when wiring to an exposed port. Populated in reload.
   const exposedRemapRef = useRef<Map<number, number>>(new Map());
+  // Monotonic reload generation. A reload that started earlier but whose fetch
+  // resolves later must NOT clobber a newer one (e.g. during Group, a topology-
+  // triggered reload that fetched before the facet write was applied). Each
+  // reload checks it's still the latest before applying.
+  const reloadGen = useRef(0);
 
   // Our WS session id; used to distinguish own echo (instant snap) from remote
   // topology changes (animate). Set from the schema callback below.
@@ -758,6 +764,7 @@ function Inner({ base }: { base: string }) {
   // its immediate children with `childrenCount` populated. We render only the children
   // (not the parent itself), so the user is "inside" the parent's container.
   const reload = useCallback(async () => {
+    const gen = ++reloadGen.current;
     try {
       let resp;
       if (currentParentUid === ROOT_UID) {
@@ -774,6 +781,9 @@ function Inner({ base }: { base: string }) {
           withEdges: true,
         });
       }
+      // A newer reload started while we were fetching — its result is fresher,
+      // so drop ours rather than clobber it with stale data.
+      if (gen !== reloadGen.current) return;
       const parent = resp.nodes[0];
       const children = parent?.children ?? [];
       const scopedEdges: Edge[] = resp.edges ?? [];
@@ -1039,6 +1049,28 @@ function Inner({ base }: { base: string }) {
         },
       }));
       await bulkUpdate(updates);
+      // Remap uid references inside the copied __facets (exposed-port c/f + record
+      // keys) — the engine copies the facet value verbatim, so it still points at
+      // the ORIGINAL uids. Needs the copy's uidMap (no-op until the engine returns
+      // it; see API_REQUESTS §0a). Walk nested children too.
+      const map = res.uidMap;
+      if (map) {
+        const compMap = map.components ?? {};
+        const propMap = map.properties ?? {};
+        const facetUpdates: { uid: number; properties: Record<string, { value: string }> }[] = [];
+        const walk = (c: Component) => {
+          const raw = rawFacet(c.properties);
+          if (raw) {
+            const remapped = remapFacetUids(raw, compMap, propMap);
+            if (remapped !== raw) {
+              facetUpdates.push({ uid: c.uid, properties: { [FACET_PROP]: { value: remapped } } });
+            }
+          }
+          c.children?.forEach(walk);
+        };
+        clones.forEach(walk);
+        if (facetUpdates.length > 0) await bulkUpdate(facetUpdates);
+      }
       const newUids = clones.map((c) => c.uid);
       setPendingPasteSelection(newUids);
       // Undo: soft-delete the clones (their edges cascade). pushUndo is a
@@ -2327,6 +2359,98 @@ function Inner({ base }: { base: string }) {
 
   // Open Details for any component. If it's off-canvas (e.g. the child behind an
   // exposed port), fetch it into the store first so the panel has its props/facet.
+  // Group selected components into a new folder, auto-exposing the props that
+  // cross the new boundary. The crossing EDGES are left untouched — once the
+  // members are reparented, those edges become cross-folder and re-route through
+  // the exposed ports automatically (FACET_DESIGN.md §9).
+  const groupSelected = useCallback(
+    async (uids: number[]) => {
+      if (uids.length < 2) return;
+      const group = new Set(uids);
+      const comps = useStructural.getState().components;
+      const edges = useStructural.getState().edges;
+      // Boundary props: an edge with exactly one endpoint in the group → expose
+      // the in-group prop (output if the source is inside, input if the target).
+      const boundary = new Map<
+        number,
+        { childComponent: number; side: "input" | "output"; label: string; facetProp?: number }
+      >();
+      for (const e of edges.values()) {
+        const srcIn = group.has(e.sourceUid);
+        const dstIn = group.has(e.targetUid);
+        if (srcIn === dstIn) continue; // internal or fully-external
+        if (srcIn && e.sourcePropertyUid != null) {
+          boundary.set(e.sourcePropertyUid, {
+            childComponent: e.sourceUid,
+            side: "output",
+            label: e.sourceProperty,
+            facetProp: comps.get(e.sourceUid)?.properties[FACET_PROP]?.uid,
+          });
+        } else if (dstIn && e.targetPropertyUid != null) {
+          boundary.set(e.targetPropertyUid, {
+            childComponent: e.targetUid,
+            side: "input",
+            label: e.targetProperty,
+            facetProp: comps.get(e.targetUid)?.properties[FACET_PROP]?.uid,
+          });
+        }
+      }
+      // Folder position = centroid of the members.
+      let cx = 0;
+      let cy = 0;
+      let n = 0;
+      for (const uid of uids) {
+        const p = comps.get(uid)?.metadata?.position;
+        if (p) {
+          cx += p.x;
+          cy += p.y;
+          n += 1;
+        }
+      }
+      const position = n ? { x: Math.round(cx / n), y: Math.round(cy / n) } : { x: 0, y: 0 };
+      // Unique folder name under the current parent.
+      const siblings = new Set(
+        Array.from(comps.values())
+          .filter((c) => c.parent === currentParentUid)
+          .map((c) => c.name),
+      );
+      let name = "group";
+      let k = 1;
+      while (siblings.has(name)) {
+        k += 1;
+        name = `group${k}`;
+      }
+      try {
+        const folder = await restAddNode({
+          type: "core-extRoot::Folder",
+          name,
+          parentUid: currentParentUid,
+          defaultValues: { position },
+        });
+        if (folder?.uid == null) return;
+        await bulkUpdate(uids.map((uid) => ({ uid, parentUid: folder.uid })));
+        if (boundary.size > 0) {
+          const facet: ComponentFacet = new Map();
+          for (const [propUid, b] of boundary) {
+            facet.set(propUid, {
+              expose: b.side,
+              childComponent: b.childComponent,
+              facetProp: b.facetProp,
+              label: b.label,
+            });
+          }
+          await updateNode(folder.uid, {
+            properties: { [FACET_PROP]: { value: serializeFacet(facet) } },
+          });
+        }
+        await reload();
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [currentParentUid, reload, reportError],
+  );
+
   const openDetails = useCallback(async (componentUid: number) => {
     if (!useStructural.getState().components.has(componentUid)) {
       try {
@@ -2538,6 +2662,10 @@ function Inner({ base }: { base: string }) {
           onDetails={() => {
             const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
             if (sel.length === 1) setDetailsUid(sel[0]);
+          }}
+          onGroup={() => {
+            void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
+            setNodeMenu(null);
           }}
           onMoveInto={() => setMovePickerOpen(true)}
           onAction={() => setActionPickerOpen(true)}
@@ -3243,6 +3371,7 @@ function NodeContextMenu({
   count,
   onRename,
   onDetails,
+  onGroup,
   onMoveInto,
   onAction,
   onClose,
@@ -3256,6 +3385,7 @@ function NodeContextMenu({
   count: number;
   onRename: () => void;
   onDetails: () => void;
+  onGroup: () => void;
   onMoveInto: () => void;
   onAction: () => void;
   onClose: () => void;
@@ -3313,6 +3443,7 @@ function NodeContextMenu({
       </div>
       {canRename && <EdgeMenuItem label="Rename…" onClick={onRename} />}
       {canRename && <EdgeMenuItem label="Details…" onClick={onDetails} />}
+      {count >= 2 && <EdgeMenuItem label={`Group ${count} into folder`} onClick={onGroup} />}
       <EdgeMenuItem label="Move into…" onClick={onMoveInto} />
       {hasActions && <EdgeMenuItem label="Action…" onClick={onAction} />}
     </div>
