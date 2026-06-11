@@ -46,3 +46,6 @@ starter-store-sqlite = { workspace = true, features = ["flow", "setup", "testing
 starter-spi          = { workspace = true }
 async-trait          = { workspace = true }
 tokio                = { workspace = true, features = ["rt-multi-thread", "macros", "time", "sync"] }
+axum                 = { workspace = true }
+tower                = { workspace = true }
+http-body-util       = "0.1"

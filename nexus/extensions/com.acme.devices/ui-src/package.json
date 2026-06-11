@@ -1,5 +1,5 @@
 {
-  "name": "@nexus-ext/com.nexus.demo-ui",
+  "name": "@nexus-ext/com.acme.devices-ui",
   "private": true,
   "version": "0.0.0",
   "type": "module",

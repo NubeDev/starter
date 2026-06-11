@@ -1,0 +1,41 @@
+# The "Add a device" setup automation (DOCS §6/§12). One file = one template,
+# an envelope whose `flow:` key holds a FlowBody. The host imports this on
+# enable via `contributes.setup_templates[]` (DOCS §9).
+#
+# Node ids are reverse-DNS (the engine's NodeId contract); the friendly short
+# names in the doc's prose map to these.
+id: com.acme.add-device
+version: 1.0.0
+display_name: Add a device
+description: Scan a box barcode to provision an IoT device end to end.
+category: Provisioning
+icon: scan
+
+input_schema:
+  type: object
+  required: [barcode, location]
+  properties:
+    barcode:  { type: string, title: "Scan barcode" }
+    location: { type: string, title: "Install location" }
+
+# The barcode is INPUT DATA, not a step. Bind it into the action(s) that need
+# it; it is also the device.create idempotency key (DOCS §8c). Identity is NOT
+# bound here — it is server-seeded onto reserved slots (DOCS §9).
+input_bindings:
+  - { field: barcode,  slot: com.acme.create-device.barcode }
+  - { field: location, slot: com.acme.create-device.location }
+output_bindings:
+  - { slot: com.acme.register-sensor.sensor_id, field: device_id }
+
+access:
+  allowed_teams: [hvac-ops]      # empty = any team in tenant
+  run_role: writer
+
+# Nodes are ACTIONS (verbs). The two custom kinds are domain side-effects this
+# extension contributes; they are idempotent on their natural keys (DOCS §8c).
+flow:
+  nodes:
+    - { id: com.acme.create-device,   kind: com.acme.devices.device_create }
+    - { id: com.acme.register-sensor, kind: com.acme.devices.sensor_register }
+  links:
+    - { from: com.acme.create-device.device_id, to: com.acme.register-sensor.device_id }

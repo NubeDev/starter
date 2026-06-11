@@ -8712,6 +8712,7 @@ dependencies = [
  "axum 0.8.9",
  "chrono",
  "futures",
+ "http-body-util",
  "jsonschema",
  "serde",
  "serde_json",
@@ -8727,6 +8728,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tokio-stream",
+ "tower 0.5.3",
  "tracing",
  "uuid",
 ]

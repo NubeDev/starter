@@ -14,7 +14,10 @@ use super::error::KindError;
 use super::kind::QueryKind;
 
 /// The host-bound tokens the binder injects; never declared as params.
-const HOST_TOKENS: [&str; 2] = ["caller_tenant_id", "caller_user_id"];
+/// Mirrors the binder's `expand_host_token` set in
+/// `nexus-store::query::bind` — `caller_team_ids` (P3a) binds a `text[]` for
+/// `= ANY(...)` scoping and is equally un-spoofable.
+const HOST_TOKENS: [&str; 3] = ["caller_tenant_id", "caller_user_id", "caller_team_ids"];
 
 /// Run every load-time lint over `kind`. Returns the first failure.
 pub fn check(kind: &QueryKind) -> Result<(), KindError> {

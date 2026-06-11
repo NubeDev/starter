@@ -9,6 +9,7 @@
 //!   slots, launch, project progress, resume (P1/P1a, DOCS §7–§9).
 
 pub mod authz;
+pub mod extension;
 pub mod import;
 pub mod service;
 

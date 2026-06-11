@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 import type { AcceptedPlugin } from "postcss";
 
-// Build configuration for the `com.nexus.demo` UI bundle.
+// Build configuration for the `com.acme.devices` UI bundle.
 //
 // This is the *robust* extension-styling recipe, ported from
 // `rubix/extensions/com.nubeio.rubixos`. The earlier version of this file
@@ -23,14 +23,14 @@ import type { AcceptedPlugin } from "postcss";
 //      `[data-ext-id="…"]` so the extension's utility rules apply ONLY inside
 //      its own DOM subtree and never collide with the host's identically-named
 //      Tailwind classes (see the long note on the plugin below). Every page
-//      wraps its content in `<div data-ext-id="com.nexus.demo">`.
+//      wraps its content in `<div data-ext-id="com.acme.devices">`.
 //
 // The host integration constraints are unchanged: the host expects the
 // SDK-shape factory (`{ singletons, init(handle) }`); React + the JSX runtime
 // are EXTERNAL (the host publishes its own React via the importmap), and the
 // output is a single ESM bundle at `../ui/remoteEntry.js`.
 
-const EXTENSION_ID = "com.nexus.demo";
+const EXTENSION_ID = "com.acme.devices";
 const SCOPE_SELECTOR = `[data-ext-id="${EXTENSION_ID}"]`;
 
 /**
@@ -48,8 +48,8 @@ const SCOPE_SELECTOR = `[data-ext-id="${EXTENSION_ID}"]`;
  *
  * becomes
  *
- *   [data-ext-id="com.nexus.demo"] .bg-card,
- *   [data-ext-id="com.nexus.demo"].bg-card { … }
+ *   [data-ext-id="com.acme.devices"] .bg-card,
+ *   [data-ext-id="com.acme.devices"].bg-card { … }
  *
  * — the rule only matches a `.bg-card` element that is, or lives inside, an
  * element carrying the extension's data attribute. The host's `.bg-card` rule

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SensorRegisterInput",
+  "type": "object",
+  "description": "Registers a sensor against the device created upstream. Idempotent on device_id (DOCS §8c).",
+  "properties": {
+    "device_id":        { "type": "string", "description": "The device created by device.create." },
+    "caller_tenant_id": { "type": "string", "description": "Server-seeded tenant (trusted identity slot)." }
+  },
+  "required": ["device_id"]
+}

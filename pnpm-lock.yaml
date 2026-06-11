@@ -190,6 +190,49 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)(terser@5.48.0)
 
+  nexus/extensions/com.acme.devices/ui-src:
+    dependencies:
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../../../packages/starter-client-ts
+      '@nube/starter-ext-sdk-ts':
+        specifier: workspace:*
+        version: link:../../../../starter-extensions/packages/starter-ext-sdk-ts
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      lucide-react:
+        specifier: ^0.469.0
+        version: 0.469.0(react@19.1.0)
+      tailwind-merge:
+        specifier: ^2.6.0
+        version: 2.6.1
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4
+        version: 4.3.0(vite@5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0))
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      react:
+        specifier: 19.1.0
+        version: 19.1.0
+      tailwindcss:
+        specifier: ^4
+        version: 4.3.0
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0)
+      vite-plugin-css-injected-by-js:
+        specifier: ^3.5.0
+        version: 3.5.2(vite@5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0))
+
   nexus/extensions/com.nexus.demo/ui-src:
     dependencies:
       '@nube/starter-client-ts':
@@ -198,19 +241,40 @@ importers:
       '@nube/starter-ext-sdk-ts':
         specifier: workspace:*
         version: link:../../../../starter-extensions/packages/starter-ext-sdk-ts
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      lucide-react:
+        specifier: ^0.469.0
+        version: 0.469.0(react@19.1.0)
+      tailwind-merge:
+        specifier: ^2.6.0
+        version: 2.6.1
     devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4
+        version: 4.3.0(vite@5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0))
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
       react:
         specifier: 19.1.0
         version: 19.1.0
+      tailwindcss:
+        specifier: ^4
+        version: 4.3.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
       vite:
         specifier: ^5.4.0
         version: 5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0)
+      vite-plugin-css-injected-by-js:
+        specifier: ^3.5.0
+        version: 3.5.2(vite@5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0))
 
   nexus/extensions/com.nexus.hello/ui-src:
     dependencies:

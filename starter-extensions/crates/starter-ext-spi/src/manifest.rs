@@ -429,6 +429,16 @@ pub struct Contributes {
     /// [`ContributeSink`].
     #[serde(default)]
     pub sinks: Vec<ContributeSink>,
+    /// Setup / Automation Builder template contributions
+    /// (`DOCS/setup-automation-builder.md` §9 "Bundled templates"). Each
+    /// entry names a YAML *envelope* file in the bundle that the host
+    /// imports into the `TemplateStore` on enable with
+    /// `source = Extension { ext_id }`, via the same import path REST
+    /// `/setup/templates/import` uses. Disabling the extension removes its
+    /// templates. Additive and empty by default — a host without the setup
+    /// builder simply ignores it, like every other contribution field.
+    #[serde(default)]
+    pub setup_templates: Vec<ContributeSetupTemplate>,
 }
 
 /// Direction of a data-plane contribution — whether the extension produces data
@@ -592,6 +602,24 @@ pub struct ContributeWarehouseTemplate {
     /// audit; R7 — the SQL is never templated at runtime.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sql_file: Option<String>,
+}
+
+/// One `contributes.setup_templates[]` entry — a Setup / Automation
+/// Builder template the extension bundles
+/// (`DOCS/setup-automation-builder.md` §9). The host imports the named
+/// YAML envelope into the `TemplateStore` on enable with
+/// `source = Extension { ext_id }`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSetupTemplate {
+    /// Template id. Must be the extension id or a dotted descendant
+    /// (R4 namespace ownership); host-reserved prefixes are rejected at
+    /// load time. Should match the `id:` inside the envelope file.
+    pub id: String,
+
+    /// Path (relative to bundle root) to the YAML envelope file (the
+    /// `TemplateEnvelope` shape: scalar metadata + nested `flow:` body).
+    pub file: String,
 }
 
 /// One `contributes.warehouse_tables[]` entry — a warehouse table

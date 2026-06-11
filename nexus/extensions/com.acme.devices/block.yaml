@@ -1,0 +1,95 @@
+v: 1
+id: com.acme.devices
+version: 0.1.0
+display_name: "Acme Devices"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# A **process**-flavour extension for the Setup / Automation Builder
+# (DOCS/setup-automation-builder.md §9 "Custom logic via extensions"). A real
+# supervised child the host spawns, health-checks, restarts per `supervision:`,
+# and reports live pid/uptime/RSS/CPU for — the genuine "load/unload an
+# extension" experience.
+#
+# It spans all three planes, like com.nexus.hello, but its theme is device
+# provisioning:
+#   - `runtime.bin` → the supervised child, built from `process/` and installed
+#     next to this manifest as `acme-devices-extension`.
+#   - `contributes.tools[]` → the domain side-effect node kinds the setup
+#     automation calls: `device.create` and `sensor.register`. They are
+#     idempotent on the scanned barcode (DOCS §8c) so resume re-entry is safe.
+#   - `contributes.setup_templates[]` → the `add-device` automation the host
+#     imports into the `TemplateStore` on enable with `source = Extension`
+#     (DOCS §9 "Bundled templates").
+#   - `contributes.warehouse_templates[]` → a `site-checkout` query-kind for the
+#     verify page (scoped by `$caller_team_ids`, the P3a host token).
+#   - `contributes.ui` → a sidebar nav item + a `main`-slot "Provision device"
+#     page that drives the barcode → run → SSE-progress → resume loop.
+runtime:
+  kind: process
+  bin: acme-devices-extension
+
+supervision:
+  restart: on_crash
+  max_restarts: 5
+  within_seconds: 60
+  backoff: { initial_ms: 200, max_ms: 30000, jitter: true }
+  health:  { interval_ms: 5000, timeout_ms: 2000 }
+  shutdown_grace_ms: 5000
+
+contributes:
+  # The domain side-effect operations the setup automation invokes (DOCS §9).
+  # They are declared two ways:
+  #
+  #   - `nodes[]` registers them as custom flow node-kinds (the real setup
+  #     mechanism): the host inserts a `ProcessNodeProxy` into its
+  #     `DynamicNodeKindRegistry` that routes `flow.node.invoke` to this child.
+  #   - `tools[]` exposes the same operations as directly-callable tools, which
+  #     the SDK's `ToolHandlers` fully supports today — this is what the process
+  #     binary actually serves and what `make test` exercises over JSON-RPC.
+  #
+  # Either way the operation is idempotent on its natural key (barcode /
+  # device_id) so resume re-entry never double-provisions hardware (DOCS §8c).
+  nodes:
+    - kind: com.acme.devices.device_create
+      settings_schema: schemas/device_create_in.json
+      description_file: docs/device_create.md
+      facets: [side-effect]
+    - kind: com.acme.devices.sensor_register
+      settings_schema: schemas/sensor_register_in.json
+      description_file: docs/sensor_register.md
+      facets: [side-effect]
+
+  tools:
+    - id: com.acme.devices.device_create
+      input_schema:  schemas/device_create_in.json
+      output_schema: schemas/device_create_out.json
+      description_file: docs/device_create.md
+    - id: com.acme.devices.sensor_register
+      input_schema:  schemas/sensor_register_in.json
+      output_schema: schemas/sensor_register_out.json
+      description_file: docs/sensor_register.md
+
+  # The Setup / Automation Builder seam (DOCS §9 "Bundled templates"). On enable
+  # the host runs each envelope through the same import path REST
+  # `/setup/templates/import` uses (serde_yaml -> TemplateEnvelope -> nested flow
+  # -> FlowBody -> node-kind validation) then `TemplateStore::put` with
+  # `source = Extension { ext_id }`. Disabling the extension removes them.
+  setup_templates:
+    - id: com.acme.add-device
+      file: templates/add-device.yaml
+
+  # The verify/site-checkout query-kind for the post-provision check page. Scoped
+  # by `$caller_team_ids` (the P3a host token) so an installer sees only their
+  # site's meters. `tables: []` keeps the example robust on a fresh DB.
+  warehouse_templates:
+    - name: com.acme.devices.site_checkout
+      params_schema: kinds/site_checkout_params.json
+      sql_file: kinds/site_checkout.sql
+      tables: []
+
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - { name: DevicesPanel, module: "./Panel", slot: main }
+      - { name: DevicesNav, module: "./Nav", slot: sidebar-nav }

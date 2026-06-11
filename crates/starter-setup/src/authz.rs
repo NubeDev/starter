@@ -56,6 +56,16 @@ pub trait RegisterSpec {
     fn register_spec(&self, spec: ResourceSpec);
 }
 
+/// Bridge to the concrete `starter_authz::StaticRegistry` (available with
+/// the `rest` feature, which pulls `starter-authz`). Lets a host call
+/// `register_specs(&static_registry)` directly at boot.
+#[cfg(feature = "rest")]
+impl RegisterSpec for starter_authz::registry::StaticRegistry {
+    fn register_spec(&self, spec: ResourceSpec) {
+        starter_authz::registry::StaticRegistry::register_spec(self, spec);
+    }
+}
+
 /// The default authz rules for the setup surface, as a TOML fragment
 /// (DOCS §10). Compose into the deployment's `AuthzConfig`.
 ///

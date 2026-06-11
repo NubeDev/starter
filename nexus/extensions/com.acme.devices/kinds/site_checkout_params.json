@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SiteCheckoutParams",
+  "type": "object",
+  "description": "No params — the scope comes from the caller's identity (the $caller_team_ids / $caller_tenant_id host tokens), not from input.",
+  "properties": {},
+  "additionalProperties": false
+}

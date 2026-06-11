@@ -11,6 +11,7 @@
 resolver = "2"
 members = [
     "com.nexus.hello/process",
+    "com.acme.devices/process",
 ]
 
 [workspace.package]
