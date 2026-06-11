@@ -29,7 +29,7 @@ import {
   type PropertySystemRole,
 } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
-import { facetFor, rawFacet, aliasLabel, type PropFacet } from "../lib/facet";
+import { facetFor, rawFacet, aliasLabel, exposedPorts, type PropFacet } from "../lib/facet";
 
 // Editor-level capabilities the ConnectPicker needs for its "New" flow — the
 // creatable component types and a "create one in the current folder" action.
@@ -48,6 +48,21 @@ export interface CeWiresheetCtx {
     targetUid: number;
     targetPropUid: number;
   }) => Promise<void>;
+  // Expose a child's prop as a port on the current container (folder). Present
+  // only when inside a container (not at root); parentName is that container's
+  // display name for the menu label.
+  parentName?: string;
+  exposeProp?: (
+    childPropUid: number,
+    childComponentUid: number,
+    side: "input" | "output",
+    defaultLabel: string,
+  ) => void | Promise<void>;
+  // Remove an exposed port from `folderUid`'s __facets (the folder the port is on).
+  unexposeProp?: (folderUid: number, childPropUid: number) => void | Promise<void>;
+  // Open the Details panel for any component (e.g. the off-canvas child behind an
+  // exposed port, so its facet — the source of truth — can be edited there).
+  openDetails?: (componentUid: number) => void;
 }
 export const CeWiresheetContext = createContext<CeWiresheetCtx | null>(null);
 
@@ -59,7 +74,10 @@ interface PropRow {
   category: PropertyCategory;
   dataType: PropertyDataType;
   systemRole?: PropertySystemRole;
-  facet?: PropFacet; // per-prop presentation metadata from __facet
+  facet?: PropFacet; // per-prop presentation metadata from __facets
+  exposed?: boolean; // a child prop projected onto this (parent) as a port
+  exposedComponent?: number; // for an exposed port, the child component that owns it
+  facetPropUid?: number; // for an exposed port, the child's __facets prop uid (live)
 }
 
 export type FunctionBlockData = {
@@ -193,6 +211,34 @@ function rowYCenter(rowIndex: number): number {
   return TITLE_H + rowIndex * ROW_H + ROW_H / 2;
 }
 
+// A uid rendered as a click-to-copy chip (menus aren't selection-friendly — the
+// app uses user-select:none and the menu dismisses on pointerdown).
+export function CopyUid({ label, value }: { label: string; value: number }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <span
+      onClick={(e) => {
+        e.stopPropagation();
+        void navigator.clipboard?.writeText(String(value)).then(
+          () => {
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 900);
+          },
+          () => {},
+        );
+      }}
+      title="click to copy"
+      style={{
+        cursor: "pointer",
+        textDecoration: "underline dotted",
+        color: copied ? "#7ee787" : "inherit",
+      }}
+    >
+      {label} {copied ? "copied" : value}
+    </span>
+  );
+}
+
 // Right-click menu for a property row. Set / clear an override, or initiate an
 // edge from this property via "Connect to…".
 function PropertyContextMenu({
@@ -204,6 +250,8 @@ function PropertyContextMenu({
   dataType,
   currentValue,
   overridden,
+  exposed,
+  portOwner,
   componentUid,
   onClose,
 }: {
@@ -215,6 +263,8 @@ function PropertyContextMenu({
   dataType: PropertyDataType;
   currentValue: DecodedValue | undefined;
   overridden: boolean;
+  exposed?: boolean;
+  portOwner?: number;
   componentUid: number;
   onClose: () => void;
 }) {
@@ -226,20 +276,24 @@ function PropertyContextMenu({
   // Override duration in seconds. 0 = permanent (until cleared). Default to 1 minute
   // — a reasonable "I want to nudge this for a moment" length.
   const [durationSec, setDurationSec] = useState<number>(60);
+  const ctx = useContext(CeWiresheetContext);
 
   useEffect(() => {
-    const dismiss = (e: MouseEvent) => {
+    const dismiss = (e: Event) => {
       const el = e.target as Element | null;
       // The picker carries its own data-ce-menu so its clicks are also
       // tolerated here — clicking inside it should NOT dismiss the menu.
       if (el && el.closest("[data-ce-menu]")) return;
       onClose();
     };
-    document.addEventListener("mousedown", dismiss);
-    document.addEventListener("contextmenu", dismiss);
+    // Capture-phase pointerdown: React Flow's pane stopImmediatePropagation's on
+    // press, so a bubble-phase document mousedown never sees clicks on the canvas
+    // (that's why click-away wasn't closing the menu). Capture fires first.
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
     return () => {
-      document.removeEventListener("mousedown", dismiss);
-      document.removeEventListener("contextmenu", dismiss);
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
     };
   }, [onClose]);
   // Only edges between inputs and outputs make sense; config props don't
@@ -249,8 +303,12 @@ function PropertyContextMenu({
   // override freezes the engine-computed value via PATCH /overrides. (The
   // inline click-to-edit on the row is still input/config only, since that
   // path PATCHes /nodes which wouldn't take on outputs.)
+  // Exposed ports can't be overridden from here — override is name-based and the
+  // row shows the port's label, not the child's real prop name (and the engine has
+  // no prop-uid override yet). Override the real value inside the child component.
   const overridable =
-    category === CATEGORY_INPUT || category === CATEGORY_CONFIG || category === CATEGORY_OUTPUT;
+    !exposed &&
+    (category === CATEGORY_INPUT || category === CATEGORY_CONFIG || category === CATEGORY_OUTPUT);
 
   const parse = (raw: string): string | number | boolean | null => {
     const t = raw.trim();
@@ -345,6 +403,16 @@ function PropertyContextMenu({
         style={{ padding: "4px 8px", color: "#8892a0", borderBottom: "1px solid #2c313c", marginBottom: 4 }}
       >
         {propName} <span style={{ color: "#5a6172" }}>· {dataType}</span>
+        <div
+          style={{
+            fontSize: 9,
+            color: "#5a6172",
+            fontFamily: "ui-monospace, SFMono-Regular, monospace",
+            marginTop: 2,
+          }}
+        >
+          <CopyUid label="prop" value={propUid} /> · <CopyUid label="comp" value={componentUid} />
+        </div>
       </div>
       {promptOpen ? (
         <div style={{ padding: "4px 6px", display: "flex", flexDirection: "column", gap: 4 }}>
@@ -439,6 +507,39 @@ function PropertyContextMenu({
           )}
           {canConnect && (
             <MenuItem onClick={() => setPickerOpen(true)} label="Connect to…" />
+          )}
+          {canConnect && ctx?.exposeProp && ctx.parentName && (
+            <MenuItem
+              onClick={() => {
+                ctx.exposeProp?.(
+                  propUid,
+                  componentUid,
+                  category === CATEGORY_OUTPUT ? "output" : "input",
+                  propName,
+                );
+                onClose();
+              }}
+              label={`Expose on ${ctx.parentName}`}
+            />
+          )}
+          {exposed && ctx?.openDetails && (
+            <MenuItem
+              onClick={() => {
+                ctx.openDetails?.(componentUid);
+                onClose();
+              }}
+              label="Details…"
+            />
+          )}
+          {exposed && ctx?.unexposeProp && portOwner != null && (
+            <MenuItem
+              onClick={() => {
+                ctx.unexposeProp?.(portOwner, propUid);
+                onClose();
+              }}
+              label="Un-expose"
+              danger
+            />
           )}
         </>
       )}
@@ -1529,7 +1630,14 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   // notification.
   const ourUids = useMemo(() => {
     if (!restComp) return [] as number[];
-    return Object.values(restComp.properties).map((p) => p.uid);
+    const own = Object.values(restComp.properties).map((p) => p.uid);
+    // Also subscribe to the values of any child props this component exposes as
+    // ports — they're off-canvas, so they wouldn't otherwise stream to us.
+    for (const ep of exposedPorts(facetFor(restComp.uid, rawFacet(restComp.properties)))) {
+      own.push(ep.childUid); // the port's live value
+      if (ep.facet.facetProp != null) own.push(ep.facet.facetProp); // child's live __facets
+    }
+    return own;
   }, [restComp]);
   // Level-of-detail: true when zoomed out far enough that values aren't legible.
   // Boolean selector → this node only re-renders when CROSSING the threshold,
@@ -1567,6 +1675,9 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
     dataType: PropertyDataType;
     currentValue: DecodedValue | undefined;
     overridden: boolean;
+    exposed?: boolean;
+    exposedComponent?: number;
+    portOwner?: number;
   } | null>(null);
   void schemaV;
 
@@ -1611,7 +1722,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
     // prop's metadata to its row. Hidden rows are dropped; `order` sorts within
     // each category group (stable for rows without it).
     const facet = facetFor(restComp.uid, rawFacet(restComp.properties));
-    const userRows: PropRow[] = entries
+    const mappedRows: PropRow[] = entries
       .filter(([, p]) => isUserFacing(p))
       .map(([name, p]) => ({
         uid: p.uid,
@@ -1620,14 +1731,30 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         dataType: propertyDataType.get(p.uid) ?? inferDataType(p.value),
         systemRole: p.systemRole,
         facet: facet.get(p.uid),
-      }))
-      .filter((r) => !r.facet?.hidden);
+      }));
+    const hiddenCount = mappedRows.filter((r) => r.facet?.hidden).length;
+    const userRows = mappedRows.filter((r) => !r.facet?.hidden);
+    // Exposed ports: child props this component projects as its own input/output
+    // ports (see FACET_DESIGN.md §9). uid = the child prop uid (its handle id),
+    // dataType from the global schema index, value via the subscription above.
+    // Read-only here — you edit the real value inside the child.
+    const portRows: PropRow[] = exposedPorts(facet).map((ep) => ({
+      uid: ep.childUid,
+      name: ep.facet.label ?? `#${ep.childUid}`,
+      category: ep.side === "input" ? CATEGORY_INPUT : CATEGORY_OUTPUT,
+      dataType: propertyDataType.get(ep.childUid) ?? inferDataType(undefined),
+      facet: ep.facet,
+      exposed: true,
+      exposedComponent: ep.facet.childComponent,
+      facetPropUid: ep.facet.facetProp,
+    }));
+    const allRows = [...userRows, ...portRows];
     const byOrder = (a: PropRow, b: PropRow) =>
       (a.facet?.order ?? Number.MAX_SAFE_INTEGER) - (b.facet?.order ?? Number.MAX_SAFE_INTEGER);
     const rows: PropRow[] = [
-      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT).sort(byOrder),
-      ...userRows.filter((r) => r.category === CATEGORY_INPUT).sort(byOrder),
-      ...userRows.filter((r) => r.category === CATEGORY_CONFIG).sort(byOrder),
+      ...allRows.filter((r) => r.category === CATEGORY_OUTPUT).sort(byOrder),
+      ...allRows.filter((r) => r.category === CATEGORY_INPUT).sort(byOrder),
+      ...allRows.filter((r) => r.category === CATEGORY_CONFIG).sort(byOrder),
     ];
     const statusEntry = entries.find(([, p]) => p.systemRole === ROLE_STATUS);
     const statusText = parseStatus(statusEntry?.[1].value);
@@ -1639,6 +1766,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
       statusText,
       statusColor: statusColorFor(statusText),
       statusPropExists: statusEntry != null,
+      hiddenCount,
     };
     // schemaV in deps: when the WS schema fills propertyDataType, recompute
     // dataTypes. restComp identity swaps on any structural change.
@@ -1678,7 +1806,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   // comes from the memo above and is NOT rebuilt on a value-only re-render.
   const values = valuesByUid;
   const statusFlagsMap = flagsByUid;
-  const { rows, nodeH, kind, statusText, statusColor, statusPropExists } = structural;
+  const { rows, nodeH, kind, statusText, statusColor, statusPropExists, hiddenCount } = structural;
 
   return (
     <div
@@ -1714,6 +1842,9 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
           dataType: p.dataType,
           currentValue: values[p.uid],
           overridden: (flags & STATUS_OVERRIDDEN) !== 0,
+          exposed: !!p.exposed,
+          exposedComponent: p.exposedComponent,
+          portOwner: p.exposed ? data.componentUid : undefined,
         });
       }}
       style={{
@@ -1864,12 +1995,22 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
             cursor: "pointer",
           }}
         >
-          {/* left: actions marker */}
-          <span
-            title={data.hasActions ? "This component has actions" : undefined}
-            style={{ fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` }}
-          >
-            {data.hasActions ? "⚡" : ""}
+          {/* left: actions marker + hidden-props indicator */}
+          <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span
+              title={data.hasActions ? "This component has actions" : undefined}
+              style={{ fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` }}
+            >
+              {data.hasActions ? "⚡" : ""}
+            </span>
+            {hiddenCount > 0 && (
+              <span
+                title={`${hiddenCount} hidden propert${hiddenCount === 1 ? "y" : "ies"}`}
+                style={{ fontSize: 11, color: "#5a6172", lineHeight: `${ROW_H}px` }}
+              >
+                ⊘
+              </span>
+            )}
           </span>
           {/* right: has-children marker (double-click the block to enter) */}
           {data.hasChildren && (
@@ -1897,6 +2038,17 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         const isInput = p.category === CATEGORY_INPUT;
         const isOutput = p.category === CATEGORY_OUTPUT;
         const v = values[p.uid];
+        // An exposed port reads its presentation LIVE from the child's streamed
+        // __facets (no stale copy). Live label/unit/aliases win; the baked label
+        // is just a fallback name.
+        let rowFacet = p.facet;
+        if (p.exposed && p.facetPropUid != null && p.exposedComponent != null) {
+          const fv = values[p.facetPropUid];
+          if (typeof fv === "string") {
+            const live = facetFor(p.exposedComponent, fv).get(p.uid);
+            if (live) rowFacet = { ...p.facet, ...live, label: live.label ?? p.facet?.label };
+          }
+        }
         // Status: prefer the live WS-driven map (updated by STATUS sections in
         // every binary frame), fall back to the REST snapshot.
         const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
@@ -1906,11 +2058,19 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         // engine-computed — PATCH /nodes wouldn't take, but PATCH /overrides
         // still freezes them. So outputs aren't inline-editable here but ARE
         // overridable via the right-click menu (which uses /overrides).
-        const editable = isInput || p.category === CATEGORY_CONFIG;
+        // Exposed ports are read-only here (edit the real value inside the
+        // child); their value still displays + the handle is wired.
+        const editable = !p.exposed && (isInput || p.category === CATEGORY_CONFIG);
+        // Hover tooltip exposes the real uids for debugging — for an exposed port
+        // that's the CHILD's prop + component, not the folder's.
+        const rowTitle = `${p.name} — prop uid ${p.uid} · component uid ${
+          p.exposed ? (p.exposedComponent ?? "?") : data.componentUid
+        }`;
         return (
           <div
             key={p.uid}
             data-row-uid={p.uid}
+            title={rowTitle}
             // NOTE: no `nodrag` here. The row must be draggable so the user can
             // grab the node anywhere on its body, not just the 40px title bar.
             // Only the genuinely interactive controls carry `nodrag` — the
@@ -1940,7 +2100,12 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 gap: 4,
               }}
             >
-              <span title={p.facet?.label ? p.name : undefined}>{p.facet?.label ?? p.name}</span>
+              {p.exposed && (
+                <span style={{ color: "#7a8a9f" }} title="exposed from a child">
+                  ↪
+                </span>
+              )}
+              <span title={rowFacet?.label ? p.name : undefined}>{rowFacet?.label ?? p.name}</span>
               {p.category === CATEGORY_CONFIG ? " (cfg)" : ""}
               {overridden && (
                 <span
@@ -1964,7 +2129,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 propName={p.name}
                 value={v}
                 dataType={p.dataType}
-                facet={p.facet}
+                facet={rowFacet}
               />
             ) : (
               <span
@@ -1978,7 +2143,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 }}
                 title={DATATYPE_LABEL[p.dataType]}
               >
-                {fmtValueFacet(v, p.dataType, p.facet)}
+                {fmtValueFacet(v, p.dataType, rowFacet)}
               </span>
             )}
           </div>
@@ -2053,7 +2218,9 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
           dataType={menu.dataType}
           currentValue={menu.currentValue}
           overridden={menu.overridden}
-          componentUid={data.componentUid}
+          exposed={menu.exposed}
+          portOwner={menu.portOwner}
+          componentUid={menu.exposedComponent ?? data.componentUid}
           onClose={() => setMenu(null)}
         />
       )}

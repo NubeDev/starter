@@ -145,6 +145,11 @@ export class CeRestWs {
   private explicitlyClosed = false;
   private subscribedComponents = new Set<number>();
   private desiredSubscribed = new Set<number>();
+  // Property-level subscription (alongside component-level) — used for exposed
+  // ports, where we want a single off-canvas prop's value, not its whole
+  // component. Diffed/sent the same way as components.
+  private subscribedProps = new Set<number>();
+  private desiredSubscribedProps = new Set<number>();
   private sessionId: string | null = null;
   // Highest topology `seq` we've received. Sent on reconnect via `lastSeq` so the server
   // can replay missed topology events from its ring buffer instead of forcing a full
@@ -239,6 +244,7 @@ export class CeRestWs {
       // already has them; the diff will produce no message and a snapshot will land
       // automatically.
       this.subscribedComponents.clear();
+      this.subscribedProps.clear();
     };
     ws.onclose = () => {
       metrics.wsConnected = false;
@@ -345,6 +351,12 @@ export class CeRestWs {
     this.flushSubscriptions();
   }
 
+  /** Property-level subscription (exposed ports). Diff-and-send like components. */
+  setDesiredPropSubscription(desired: Set<number>) {
+    this.desiredSubscribedProps = desired;
+    this.flushSubscriptions();
+  }
+
   private flushSubscriptions() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const added: number[] = [];
@@ -364,6 +376,25 @@ export class CeRestWs {
       this.ws.send(JSON.stringify({ type: "unsubscribe", components: removed }));
       for (const u of removed) this.subscribedComponents.delete(u);
       recordEvent("unsubscribe", `-[${removed.join(",")}]`);
+    }
+    // Property-level deltas (for exposed ports).
+    const addedP: number[] = [];
+    const removedP: number[] = [];
+    for (const uid of this.desiredSubscribedProps) {
+      if (!this.subscribedProps.has(uid)) addedP.push(uid);
+    }
+    for (const uid of this.subscribedProps) {
+      if (!this.desiredSubscribedProps.has(uid)) removedP.push(uid);
+    }
+    if (addedP.length > 0) {
+      this.ws.send(JSON.stringify({ type: "subscribe", properties: addedP }));
+      for (const u of addedP) this.subscribedProps.add(u);
+      recordEvent("subscribe", `props +[${addedP.join(",")}]`);
+    }
+    if (removedP.length > 0) {
+      this.ws.send(JSON.stringify({ type: "unsubscribe", properties: removedP }));
+      for (const u of removedP) this.subscribedProps.delete(u);
+      recordEvent("unsubscribe", `props -[${removedP.join(",")}]`);
     }
   }
 

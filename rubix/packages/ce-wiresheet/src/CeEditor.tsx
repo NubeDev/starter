@@ -38,6 +38,7 @@ import { ZoomRateController } from "./components/ZoomRateController";
 import { VisibilitySub } from "./components/VisibilitySub";
 import {
   CeWiresheetContext,
+  CopyUid,
   FunctionBlock,
   GHOST_H,
   GhostNode,
@@ -64,6 +65,7 @@ import {
   setRestSessionId,
   updateEdge as restUpdateEdge,
   updateNode,
+  RestError,
 } from "./lib/rest";
 import type { Component, Edge, FlexValue } from "./lib/engine-types";
 import {
@@ -90,8 +92,10 @@ import { usePresence, type PresenceState } from "./lib/presence";
 import { CeRestWs, wsUrlFromBase } from "./lib/ws";
 import {
   facetFor,
+  parseFacet,
   rawFacet,
   serializeFacet,
+  exposedPorts,
   FACET_PROP,
   type Alias,
   type ComponentFacet,
@@ -201,6 +205,10 @@ function Inner({ base }: { base: string }) {
   // Without this gate React Flow tries to place edges before handles exist in its
   // internal lookup → "Couldn't create edge for source handle id …" warning.
   const [pendingEdges, setPendingEdges] = useState<RfEdge[] | null>(null);
+  // exposed child-prop uid → its owning child COMPONENT uid, for the current view.
+  // Lets onConnect target the real child (not the folder the port is drawn on)
+  // when wiring to an exposed port. Populated in reload.
+  const exposedRemapRef = useRef<Map<number, number>>(new Map());
 
   // Our WS session id; used to distinguish own echo (instant snap) from remote
   // topology changes (animate). Set from the schema callback below.
@@ -315,7 +323,13 @@ function Inner({ base }: { base: string }) {
     };
   }, []);
 
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; debug?: string } | null>(null);
+  // Normalise any caught value into the banner shape; RestErrors carry a
+  // copy-pasteable request/response dump for debugging.
+  const reportError = useCallback((e: unknown) => {
+    if (e instanceof RestError) setError({ message: e.message, debug: e.debug });
+    else setError({ message: e instanceof Error ? e.message : String(e) });
+  }, []);
   const [palette, setPalette] = useState<PaletteExtension[]>([]);
   // Action signatures indexed by component type, built from the same `/schema`
   // pass as the palette. Read on right-click — no per-open fetch.
@@ -620,7 +634,7 @@ function Inner({ base }: { base: string }) {
       setFocusAfterLoad(uid);
       setCrumbs([{ uid: ROOT_UID, name: "root" }, ...chain]);
     } catch (e) {
-      setError((e as Error).message);
+      reportError(e);
     }
   }, []);
 
@@ -632,7 +646,7 @@ function Inner({ base }: { base: string }) {
   );
   const [movePickerOpen, setMovePickerOpen] = useState(false);
   const [actionPickerOpen, setActionPickerOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsUid, setDetailsUid] = useState<number | null>(null);
   // Right-click on empty pane → menu (up a folder / add component / paste).
   const [paneMenu, setPaneMenu] = useState<{ x: number; y: number } | null>(null);
   const openNodeContextMenu = useCallback(
@@ -722,7 +736,7 @@ function Inner({ base }: { base: string }) {
     try {
       await restRemoveEdge(edgeUid);
     } catch (e) {
-      setError((e as Error).message);
+      reportError(e);
       return;
     }
     useStructural.getState().removeEdge(edgeUid);
@@ -796,9 +810,68 @@ function Inner({ base }: { base: string }) {
         visibleX: number;
         visibleY: number;
       }
+      // Reverse index of exposed ports in THIS view: a child-prop uid → the
+      // visible component (e.g. a folder) that projects it as a port. A
+      // cross-folder edge whose off-canvas end is one of these attaches to that
+      // component's port handle (handle id = the child prop uid) and renders as a
+      // normal edge, instead of a ghost. (FACET_DESIGN.md §9.)
+      const exposedIndex = new Map<number, { parentUid: number }>();
+      const exposedRemap = new Map<number, number>();
+      const subProps = new Set<number>();
+      for (const child of children) {
+        for (const ep of exposedPorts(facetFor(child.uid, rawFacet(child.properties)))) {
+          exposedIndex.set(ep.childUid, { parentUid: child.uid });
+          if (ep.facet.childComponent != null) exposedRemap.set(ep.childUid, ep.facet.childComponent);
+          subProps.add(ep.childUid); // the port's live value
+          if (ep.facet.facetProp != null) subProps.add(ep.facet.facetProp); // child's live __facets
+        }
+      }
+      exposedRemapRef.current = exposedRemap;
+      // Subscribe the exposed (off-canvas) child props AND their child's __facets
+      // prop at PROPERTY level so both the value and the presentation metadata
+      // stream live. (Component-level subs only cover visible nodes.)
+      wsClient?.setDesiredPropSubscription(subProps);
+      const portEdges: RfEdge[] = [];
+
       const ghostGroups = new Map<string, GhostGroup>();
       for (const e of crossEdges) {
         const externalIsTarget = childUids.has(e.sourceUid);
+        // If the off-canvas end is an exposed port, draw a normal edge to the
+        // exposing component's port handle and skip the ghost.
+        const externalPropUid = externalIsTarget ? e.targetPropertyUid : e.sourcePropertyUid;
+        const exposed = externalPropUid != null ? exposedIndex.get(externalPropUid) : undefined;
+        if (exposed) {
+          const vUid = externalIsTarget ? e.sourceUid : e.targetUid;
+          const vPropUid = externalIsTarget ? e.sourcePropertyUid : e.targetPropertyUid;
+          if (vPropUid != null) {
+            const style =
+              e.loopBack === true
+                ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" }
+                : { stroke: "#4a9eff", strokeWidth: 1.5 };
+            portEdges.push(
+              externalIsTarget
+                ? {
+                    id: String(e.uid),
+                    source: String(vUid),
+                    sourceHandle: String(vPropUid),
+                    target: String(exposed.parentUid),
+                    targetHandle: String(externalPropUid),
+                    style,
+                    animated: false,
+                  }
+                : {
+                    id: String(e.uid),
+                    source: String(exposed.parentUid),
+                    sourceHandle: String(externalPropUid),
+                    target: String(vUid),
+                    targetHandle: String(vPropUid),
+                    style,
+                    animated: false,
+                  },
+            );
+            continue;
+          }
+        }
         const visibleUid = externalIsTarget ? e.sourceUid : e.targetUid;
         const externalUid = externalIsTarget ? e.targetUid : e.sourceUid;
         const visibleComp = childByUid.get(visibleUid);
@@ -913,13 +986,13 @@ function Inner({ base }: { base: string }) {
       // Stash edges; the useNodesInitialized effect below will move them into the live
       // `edges` state once React Flow has registered handle positions for every node.
       setEdges([]);
-      setPendingEdges([...buildRfEdges(inEdges, children), ...ghostEdges]);
+      setPendingEdges([...buildRfEdges(inEdges, children), ...ghostEdges, ...portEdges]);
       // NOTE: subscription is no longer set here. VisibilitySub owns it — it
       // subscribes only the components in/near the viewport (debounced), which
       // fires shortly after these nodes mount. Subscribing all folder children
       // here would stream the off-screen majority for nothing.
     } catch (e) {
-      setError((e as Error).message);
+      reportError(e);
     }
   }, [currentParentUid, enter, openNodeContextMenu, goToComponent, deleteGhostEdge]);
 
@@ -946,7 +1019,7 @@ function Inner({ base }: { base: string }) {
       });
       const clones = res.nodes ?? [];
       if (clones.length === 0) {
-        setError("paste: nothing cloned (sources may have been deleted)");
+        setError({ message: "paste: nothing cloned (sources may have been deleted)" });
         return;
       }
       // Translate the clones so their centroid lands at the cursor. The clones
@@ -975,7 +1048,7 @@ function Inner({ base }: { base: string }) {
       pushUndo({ kind: "delete", componentUids: newUids });
       await reload();
     } catch (e) {
-      setError((e as Error).message);
+      reportError(e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentParentUid, reload, rf]);
@@ -1010,7 +1083,7 @@ function Inner({ base }: { base: string }) {
       }
       await reload();
     } catch (e) {
-      setError((e as Error).message);
+      reportError(e);
     }
   }, [reload]);
 
@@ -1751,7 +1824,7 @@ function Inner({ base }: { base: string }) {
       ids.map((uid) => restUpdateEdge(uid, { reEvaluate: true })),
     );
     const failed = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
-    if (failed) setError((failed.reason as Error).message);
+    if (failed) reportError(failed.reason);
   }, []);
 
   // Promote edges to loopback. Per the OpenAPI: `loopBack` may only be set to
@@ -1765,7 +1838,7 @@ function Inner({ base }: { base: string }) {
       ids.map((uid) => restUpdateEdge(uid, { loopBack: true })),
     );
     const failed = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
-    if (failed) setError((failed.reason as Error).message);
+    if (failed) reportError(failed.reason);
     const ok = ids.filter((_, i) => results[i].status === "fulfilled");
     if (ok.length === 0) return;
     const okSet = new Set(ok.map(String));
@@ -1908,10 +1981,10 @@ function Inner({ base }: { base: string }) {
       if (updates.length === 1) {
         const u = updates[0];
         updateNode(u.uid, { position: u.position }).catch((e) =>
-          setError((e as Error).message),
+          reportError(e),
         );
       } else {
-        bulkUpdate(updates).catch((e) => setError((e as Error).message));
+        bulkUpdate(updates).catch((e) => reportError(e));
       }
     },
     [cancelDragPatch, pushUndo],
@@ -1927,10 +2000,16 @@ function Inner({ base }: { base: string }) {
   const onConnect = useCallback(async (c: Connection) => {
     if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) return;
     try {
+      // If a handle is an exposed port, the prop belongs to the off-canvas CHILD
+      // component, not the folder node the handle is drawn on — store the edge
+      // against the child (the visual still attaches to the folder's port).
+      const remap = exposedRemapRef.current;
+      const srcUid = remap.get(Number(c.sourceHandle)) ?? Number(c.source);
+      const tgtUid = remap.get(Number(c.targetHandle)) ?? Number(c.target);
       const created = await restAddEdge({
-        sourceUid: Number(c.source),
+        sourceUid: srcUid,
         sourcePropUid: Number(c.sourceHandle),
-        targetUid: Number(c.target),
+        targetUid: tgtUid,
         targetPropUid: Number(c.targetHandle),
       });
       if (created?.uid != null) {
@@ -1956,7 +2035,7 @@ function Inner({ base }: { base: string }) {
         await reload(); // unexpected: no edge returned — fall back
       }
     } catch (e) {
-      setError((e as Error).message);
+      reportError(e);
     }
   }, [reload]);
 
@@ -1983,7 +2062,7 @@ function Inner({ base }: { base: string }) {
         for (const uid of uids) useStructural.getState().removeComponent(uid);
         pushUndo({ kind: "restore", componentUids: uids });
       } catch (e) {
-        setError((e as Error).message);
+        reportError(e);
       }
       await reload();
     },
@@ -2003,7 +2082,7 @@ function Inner({ base }: { base: string }) {
         for (const uid of uids) useStructural.getState().removeEdge(uid);
         pushUndo({ kind: "restore", edgeUids: uids });
       } catch (err) {
-        setError((err as Error).message);
+        reportError(err);
       }
       setEdges((cur) => cur.filter((e) => !es.find((d) => d.id === e.id)));
     },
@@ -2064,7 +2143,7 @@ function Inner({ base }: { base: string }) {
           await reload(); // unexpected: no component returned — fall back
         }
       } catch (e) {
-        setError((e as Error).message);
+        reportError(e);
       }
     },
     [rf, reload, currentParentUid, pushUndo, enter, openNodeContextMenu],
@@ -2141,7 +2220,7 @@ function Inner({ base }: { base: string }) {
         }
         return created ?? null;
       } catch (e) {
-        setError((e as Error).message);
+        reportError(e);
         return null;
       }
     },
@@ -2185,9 +2264,93 @@ function Inner({ base }: { base: string }) {
     [reload],
   );
 
+  // Expose a child's prop as a port on the current container (folder). Writes the
+  // container's __facets (read-modify-write of the freshly-fetched value, since
+  // the container itself is off-canvas one level up), then reloads.
+  const exposeProp = useCallback(
+    async (
+      childPropUid: number,
+      childComponentUid: number,
+      side: "input" | "output",
+      defaultLabel: string,
+    ) => {
+      const parentUid = currentParentUid;
+      try {
+        const resp = await getNodeByUid(parentUid, { depth: 0 });
+        const parent = resp.nodes[0];
+        const facet = parseFacet(rawFacet(parent?.properties) ?? "");
+        // Record the child's __facets prop uid so we can subscribe to it and read
+        // the child prop's label/unit/aliases LIVE (no stale copy). The child is
+        // visible here, so grab the uid from the store.
+        const child = useStructural.getState().components.get(childComponentUid);
+        const facetPropUid = child?.properties?.[FACET_PROP]?.uid;
+        const existing = facet.get(childPropUid) ?? {};
+        facet.set(childPropUid, {
+          ...existing,
+          expose: side,
+          childComponent: childComponentUid,
+          facetProp: facetPropUid,
+          // Fallback display name only — live label/unit/aliases come from the
+          // child's streamed __facets.
+          label: existing.label ?? defaultLabel,
+        });
+        await updateNode(parentUid, {
+          properties: { [FACET_PROP]: { value: serializeFacet(facet) } },
+        });
+        await reload();
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [currentParentUid, reload],
+  );
+
+  // Remove an exposed port: drop its record from the folder's __facets. The
+  // folder is a visible node here, but fetch it fresh to read-modify-write safely.
+  const unexposeProp = useCallback(
+    async (folderUid: number, childPropUid: number) => {
+      try {
+        const resp = await getNodeByUid(folderUid, { depth: 0 });
+        const folder = resp.nodes[0];
+        const facet = parseFacet(rawFacet(folder?.properties) ?? "");
+        facet.delete(childPropUid);
+        await updateNode(folderUid, {
+          properties: { [FACET_PROP]: { value: serializeFacet(facet) } },
+        });
+        await reload();
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [reload, reportError],
+  );
+
+  // Open Details for any component. If it's off-canvas (e.g. the child behind an
+  // exposed port), fetch it into the store first so the panel has its props/facet.
+  const openDetails = useCallback(async (componentUid: number) => {
+    if (!useStructural.getState().components.has(componentUid)) {
+      try {
+        const resp = await getNodeByUid(componentUid, { depth: 0 });
+        const c = resp.nodes[0];
+        if (c) useStructural.getState().upsertComponent(c);
+      } catch {
+        /* fall through — panel shows "no editable properties" */
+      }
+    }
+    setDetailsUid(componentUid);
+  }, []);
+
   const ceCtx = useMemo(
-    () => ({ componentTypes, createComponent, connectEdge }),
-    [componentTypes, createComponent, connectEdge],
+    () => ({
+      componentTypes,
+      createComponent,
+      connectEdge,
+      exposeProp,
+      unexposeProp,
+      openDetails,
+      parentName: crumbs.length > 1 ? crumbs[crumbs.length - 1]?.name : undefined,
+    }),
+    [componentTypes, createComponent, connectEdge, exposeProp, unexposeProp, openDetails, crumbs],
   );
 
   // DnD: dragging a palette item into the canvas drops a new component at the cursor.
@@ -2335,7 +2498,7 @@ function Inner({ base }: { base: string }) {
           }}
         />
       )}
-      {nodeMenu && !movePickerOpen && !actionPickerOpen && !detailsOpen && (
+      {nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && (
         <NodeContextMenu
           x={nodeMenu.x}
           y={nodeMenu.y}
@@ -2343,6 +2506,18 @@ function Inner({ base }: { base: string }) {
             getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0
           }
           canRename={nodes.filter((n) => n.selected).length === 1}
+          count={nodes.filter((n) => n.selected).length}
+          uid={
+            nodes.filter((n) => n.selected).length === 1
+              ? Number(nodes.filter((n) => n.selected)[0].id)
+              : undefined
+          }
+          name={
+            nodes.filter((n) => n.selected).length === 1
+              ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))
+                  ?.name
+              : undefined
+          }
           onRename={async () => {
             const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
             setNodeMenu(null);
@@ -2357,10 +2532,13 @@ function Inner({ base }: { base: string }) {
               await updateNode(uid, { name: trimmed });
               await reload();
             } catch (e) {
-              setError((e as Error).message);
+              reportError(e);
             }
           }}
-          onDetails={() => setDetailsOpen(true)}
+          onDetails={() => {
+            const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+            if (sel.length === 1) setDetailsUid(sel[0]);
+          }}
           onMoveInto={() => setMovePickerOpen(true)}
           onAction={() => setActionPickerOpen(true)}
           onClose={() => setNodeMenu(null)}
@@ -2395,7 +2573,7 @@ function Inner({ base }: { base: string }) {
               try {
                 await updateNode(uid, { parentUid: newParent });
               } catch (e) {
-                setError((e as Error).message);
+                reportError(e);
               }
             }
             setMovePickerOpen(false);
@@ -2411,21 +2589,21 @@ function Inner({ base }: { base: string }) {
           }}
         />
       )}
-      {nodeMenu && detailsOpen && (
+      {detailsUid != null && (
         <DetailsPanel
-          componentUid={nodes.filter((n) => n.selected).map((n) => Number(n.id))[0]}
+          componentUid={detailsUid}
           onSave={async (facetString) => {
-            const uid = nodes.filter((n) => n.selected).map((n) => Number(n.id))[0];
-            if (uid == null) return;
             try {
-              await updateNode(uid, { properties: { [FACET_PROP]: { value: facetString } } });
+              await updateNode(detailsUid, {
+                properties: { [FACET_PROP]: { value: facetString } },
+              });
               await reload();
             } catch (e) {
-              setError((e as Error).message);
+              reportError(e);
             }
           }}
           onClose={() => {
-            setDetailsOpen(false);
+            setDetailsUid(null);
             setNodeMenu(null);
           }}
         />
@@ -2483,7 +2661,7 @@ function Inner({ base }: { base: string }) {
           />
         );
       })()}
-      {error && <ErrorBanner message={error} onClose={() => setError(null)} />}
+      {error && <ErrorBanner error={error} onClose={() => setError(null)} />}
     </CeWiresheetContext.Provider>
   );
 }
@@ -3060,6 +3238,9 @@ function NodeContextMenu({
   y,
   hasActions,
   canRename,
+  name,
+  uid,
+  count,
   onRename,
   onDetails,
   onMoveInto,
@@ -3070,6 +3251,9 @@ function NodeContextMenu({
   y: number;
   hasActions: boolean;
   canRename: boolean;
+  name?: string;
+  uid?: number;
+  count: number;
   onRename: () => void;
   onDetails: () => void;
   onMoveInto: () => void;
@@ -3112,6 +3296,21 @@ function NodeContextMenu({
         fontFamily: "-apple-system, system-ui, sans-serif",
       }}
     >
+      <div
+        style={{ padding: "4px 8px", color: "#8892a0", borderBottom: "1px solid #2c313c", marginBottom: 4 }}
+      >
+        {uid != null ? name || "component" : `${count} components`}
+        <div
+          style={{
+            fontSize: 9,
+            color: "#5a6172",
+            fontFamily: "ui-monospace, SFMono-Regular, monospace",
+            marginTop: 2,
+          }}
+        >
+          {uid != null ? <CopyUid label="comp" value={uid} /> : `${count} selected`}
+        </div>
+      </div>
       {canRename && <EdgeMenuItem label="Rename…" onClick={onRename} />}
       {canRename && <EdgeMenuItem label="Details…" onClick={onDetails} />}
       <EdgeMenuItem label="Move into…" onClick={onMoveInto} />
@@ -4093,27 +4292,82 @@ function PaletteItem({
   );
 }
 
-function ErrorBanner({ message, onClose }: { message: string; onClose: () => void }) {
+function ErrorBanner({
+  error,
+  onClose,
+}: {
+  error: { message: string; debug?: string };
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const copy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = error.debug ?? error.message;
+    void navigator.clipboard?.writeText(text).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1200);
+      },
+      () => {},
+    );
+  };
   return (
     <div
-      onClick={onClose}
       style={{
         position: "fixed",
         bottom: 12,
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 30,
+        maxWidth: "min(720px, 90vw)",
         background: "#3a1a1a",
         border: "1px solid #6b2a2a",
         color: "#ffb8b8",
-        padding: "6px 12px",
+        padding: "6px 10px",
         borderRadius: 4,
         fontSize: 12,
-        cursor: "pointer",
         fontFamily: "ui-monospace, monospace",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
       }}
     >
-      {message}  (click to dismiss)
+      <span style={{ whiteSpace: "pre-wrap", overflow: "hidden", flex: 1, maxHeight: 120 }}>
+        {error.message}
+      </span>
+      <button
+        onClick={copy}
+        title={error.debug ? "Copy request + response" : "Copy error"}
+        style={{
+          flexShrink: 0,
+          background: "#5a2a2a",
+          color: "#ffd8d8",
+          border: "1px solid #6b2a2a",
+          borderRadius: 3,
+          padding: "1px 8px",
+          fontSize: 11,
+          cursor: "pointer",
+          fontFamily: "inherit",
+        }}
+      >
+        {copied ? "copied" : "copy"}
+      </button>
+      <button
+        onClick={onClose}
+        title="Dismiss"
+        style={{
+          flexShrink: 0,
+          background: "transparent",
+          color: "#ffb8b8",
+          border: "none",
+          fontSize: 13,
+          cursor: "pointer",
+          lineHeight: 1,
+          padding: "0 2px",
+        }}
+      >
+        ✕
+      </button>
     </div>
   );
 }

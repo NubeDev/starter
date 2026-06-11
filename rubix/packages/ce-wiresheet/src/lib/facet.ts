@@ -30,6 +30,13 @@ export interface PropFacet {
   order?: number;
   aliases?: Alias[]; // `o` — value→label map (also the pick list)
   action?: string; // `a` — dynamic-options action (Phase 3; not used yet)
+  // `e` — exposed port: this record's uid is a CHILD prop projected onto THIS
+  // component as an input/output port (see FACET_DESIGN.md §9). Value streams via
+  // a prop-level subscription (key uid alone); but edges/overrides need the child
+  // COMPONENT uid too (no fast prop→component lookup engine-side) — that's `c`.
+  expose?: "input" | "output";
+  childComponent?: number; // `c` — owning component of an exposed prop
+  facetProp?: number; // `f` — the child's __facets prop uid (sub it for LIVE facet)
 }
 
 export type ComponentFacet = Map<number /* propUid */, PropFacet>;
@@ -56,6 +63,9 @@ export function parseFacet(raw: string): ComponentFacet {
         case "h": f.hidden = v !== "0"; break;
         case "r": f.order = Number(v); break;
         case "a": f.action = v; break;
+        case "e": f.expose = v === "o" ? "output" : "input"; break;
+        case "c": f.childComponent = Number(v); break;
+        case "f": f.facetProp = Number(v); break;
         case "o":
           f.aliases = v.split(GS).map((o) => {
             const j = o.indexOf(FS);
@@ -83,6 +93,9 @@ export function serializeFacet(facet: ComponentFacet): string {
     if (f.hidden) fields.push("h1");
     if (f.order != null) fields.push("r" + f.order);
     if (f.action) fields.push("a" + f.action);
+    if (f.expose) fields.push("e" + (f.expose === "output" ? "o" : "i"));
+    if (f.childComponent != null) fields.push("c" + f.childComponent);
+    if (f.facetProp != null) fields.push("f" + f.facetProp);
     if (f.aliases && f.aliases.length) {
       fields.push("o" + f.aliases.map((a) => a.code + FS + a.label).join(GS));
     }
@@ -110,6 +123,21 @@ export function rawFacet(
 ): string | undefined {
   const v = properties?.[FACET_PROP]?.value;
   return typeof v === "string" ? v : undefined;
+}
+
+export interface ExposedPort {
+  childUid: number; // a CHILD component's prop uid, projected onto the parent
+  side: "input" | "output";
+  facet: PropFacet; // the record's own metadata (label/unit/aliases/order)
+}
+
+// The child-prop ports this component exposes (facet records with an `e` field).
+export function exposedPorts(facet: ComponentFacet): ExposedPort[] {
+  const out: ExposedPort[] = [];
+  for (const [uid, f] of facet) {
+    if (f.expose) out.push({ childUid: uid, side: f.expose, facet: f });
+  }
+  return out;
 }
 
 // Resolve a property's native value to its alias label, if the facet aliases it.

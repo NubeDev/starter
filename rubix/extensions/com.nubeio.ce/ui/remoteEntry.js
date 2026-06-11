@@ -13562,10 +13562,21 @@ function setEngineBase(origin) {
   BASE = `${origin.replace(/\/+$/, "")}/api/v0`;
 }
 class RestError extends Error {
-  constructor(status, message, url) {
+  constructor(status, message, url, method = "", requestBody, responseBody) {
     super(message);
     this.status = status;
     this.url = url;
+    this.method = method;
+    this.requestBody = requestBody;
+    this.responseBody = responseBody;
+  }
+  // A copy-pasteable dump of the failed round-trip for debugging.
+  get debug() {
+    const fmt = (v) => v === void 0 ? "" : typeof v === "string" ? v : JSON.stringify(v, null, 2);
+    const lines = [`${this.method} ${this.url}`, `→ ${this.status} ${this.message}`];
+    if (this.requestBody !== void 0) lines.push("", "Request:", fmt(this.requestBody));
+    if (this.responseBody !== void 0) lines.push("", "Response:", fmt(this.responseBody));
+    return lines.join("\n");
   }
 }
 let currentSessionId = null;
@@ -13592,7 +13603,7 @@ async function http(method, path, body) {
     recordEvent("rest", `${method} ${path} → ${status}`);
   }
   if (!res.ok || payload.error) {
-    throw new RestError(res.status, payload.error ?? res.statusText, url);
+    throw new RestError(res.status, payload.error ?? res.statusText, url, method, body, payload);
   }
   return payload.data;
 }
@@ -14255,6 +14266,15 @@ function parseFacet(raw) {
         case "a":
           f.action = v;
           break;
+        case "e":
+          f.expose = v === "o" ? "output" : "input";
+          break;
+        case "c":
+          f.childComponent = Number(v);
+          break;
+        case "f":
+          f.facetProp = Number(v);
+          break;
         case "o":
           f.aliases = v.split(GS).map((o) => {
             const j = o.indexOf(FS);
@@ -14279,6 +14299,9 @@ function serializeFacet(facet) {
     if (f.hidden) fields.push("h1");
     if (f.order != null) fields.push("r" + f.order);
     if (f.action) fields.push("a" + f.action);
+    if (f.expose) fields.push("e" + (f.expose === "output" ? "o" : "i"));
+    if (f.childComponent != null) fields.push("c" + f.childComponent);
+    if (f.facetProp != null) fields.push("f" + f.facetProp);
     if (f.aliases && f.aliases.length) {
       fields.push("o" + f.aliases.map((a) => a.code + FS + a.label).join(GS));
     }
@@ -14298,6 +14321,13 @@ function facetFor(componentUid, raw) {
 function rawFacet(properties) {
   const v = properties?.[FACET_PROP]?.value;
   return typeof v === "string" ? v : void 0;
+}
+function exposedPorts(facet) {
+  const out = [];
+  for (const [uid, f] of facet) {
+    if (f.expose) out.push({ childUid: uid, side: f.expose, facet: f });
+  }
+  return out;
 }
 function aliasLabel(aliases, value) {
   if (!aliases || aliases.length === 0) return void 0;
@@ -14360,6 +14390,36 @@ function fmtValueFacet(v, dt, facet) {
   else base = fmtValue(v, dt);
   return facet?.unit && base !== "—" ? `${base} ${facet.unit}` : base;
 }
+function CopyUid({ label, value }) {
+  const [copied, setCopied] = useState(false);
+  return /* @__PURE__ */ jsxs(
+    "span",
+    {
+      onClick: (e) => {
+        e.stopPropagation();
+        void navigator.clipboard?.writeText(String(value)).then(
+          () => {
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 900);
+          },
+          () => {
+          }
+        );
+      },
+      title: "click to copy",
+      style: {
+        cursor: "pointer",
+        textDecoration: "underline dotted",
+        color: copied ? "#7ee787" : "inherit"
+      },
+      children: [
+        label,
+        " ",
+        copied ? "copied" : value
+      ]
+    }
+  );
+}
 function PropertyContextMenu({
   x,
   y,
@@ -14369,6 +14429,8 @@ function PropertyContextMenu({
   dataType,
   currentValue,
   overridden,
+  exposed,
+  portOwner,
   componentUid,
   onClose
 }) {
@@ -14378,21 +14440,22 @@ function PropertyContextMenu({
     currentValue == null ? "" : typeof currentValue === "string" ? currentValue : String(currentValue)
   );
   const [durationSec, setDurationSec] = useState(60);
+  const ctx = useContext(CeWiresheetContext);
   useEffect(() => {
     const dismiss = (e) => {
       const el = e.target;
       if (el && el.closest("[data-ce-menu]")) return;
       onClose();
     };
-    document.addEventListener("mousedown", dismiss);
-    document.addEventListener("contextmenu", dismiss);
+    document.addEventListener("pointerdown", dismiss, true);
+    document.addEventListener("contextmenu", dismiss, true);
     return () => {
-      document.removeEventListener("mousedown", dismiss);
-      document.removeEventListener("contextmenu", dismiss);
+      document.removeEventListener("pointerdown", dismiss, true);
+      document.removeEventListener("contextmenu", dismiss, true);
     };
   }, [onClose]);
   const canConnect = category === CATEGORY_INPUT || category === CATEGORY_OUTPUT;
-  const overridable = category === CATEGORY_INPUT || category === CATEGORY_CONFIG || category === CATEGORY_OUTPUT;
+  const overridable = !exposed && (category === CATEGORY_INPUT || category === CATEGORY_CONFIG || category === CATEGORY_OUTPUT);
   const parse = (raw) => {
     const t = raw.trim();
     if (t === "") return null;
@@ -14482,7 +14545,23 @@ function PropertyContextMenu({
                 /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
                   "· ",
                   dataType
-                ] })
+                ] }),
+                /* @__PURE__ */ jsxs(
+                  "div",
+                  {
+                    style: {
+                      fontSize: 9,
+                      color: "#5a6172",
+                      fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                      marginTop: 2
+                    },
+                    children: [
+                      /* @__PURE__ */ jsx(CopyUid, { label: "prop", value: propUid }),
+                      " · ",
+                      /* @__PURE__ */ jsx(CopyUid, { label: "comp", value: componentUid })
+                    ]
+                  }
+                )
               ]
             }
           ),
@@ -14582,7 +14661,43 @@ function PropertyContextMenu({
               }
             ),
             overridable && overridden && /* @__PURE__ */ jsx(MenuItem, { onClick: clearOverride, label: "Clear override", danger: true }),
-            canConnect && /* @__PURE__ */ jsx(MenuItem, { onClick: () => setPickerOpen(true), label: "Connect to…" })
+            canConnect && /* @__PURE__ */ jsx(MenuItem, { onClick: () => setPickerOpen(true), label: "Connect to…" }),
+            canConnect && ctx?.exposeProp && ctx.parentName && /* @__PURE__ */ jsx(
+              MenuItem,
+              {
+                onClick: () => {
+                  ctx.exposeProp?.(
+                    propUid,
+                    componentUid,
+                    category === CATEGORY_OUTPUT ? "output" : "input",
+                    propName
+                  );
+                  onClose();
+                },
+                label: `Expose on ${ctx.parentName}`
+              }
+            ),
+            exposed && ctx?.openDetails && /* @__PURE__ */ jsx(
+              MenuItem,
+              {
+                onClick: () => {
+                  ctx.openDetails?.(componentUid);
+                  onClose();
+                },
+                label: "Details…"
+              }
+            ),
+            exposed && ctx?.unexposeProp && portOwner != null && /* @__PURE__ */ jsx(
+              MenuItem,
+              {
+                onClick: () => {
+                  ctx.unexposeProp?.(portOwner, propUid);
+                  onClose();
+                },
+                label: "Un-expose",
+                danger: true
+              }
+            )
           ] }),
           pickerOpen && /* @__PURE__ */ jsx(
             ConnectPicker,
@@ -15432,7 +15547,12 @@ function FunctionBlockInner({ data, selected }) {
   const restComp = useStructural((s) => s.components.get(data.componentUid));
   const ourUids = useMemo(() => {
     if (!restComp) return [];
-    return Object.values(restComp.properties).map((p) => p.uid);
+    const own = Object.values(restComp.properties).map((p) => p.uid);
+    for (const ep of exposedPorts(facetFor(restComp.uid, rawFacet(restComp.properties)))) {
+      own.push(ep.childUid);
+      if (ep.facet.facetProp != null) own.push(ep.facet.facetProp);
+    }
+    return own;
   }, [restComp]);
   const lod = useStore$1((s) => s.transform[2] < LOD_ZOOM);
   const valuesByUid = useValues(
@@ -15473,19 +15593,32 @@ function FunctionBlockInner({ data, selected }) {
     const isUserFacing = (p) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL;
     const entries = Object.entries(restComp.properties);
     const facet = facetFor(restComp.uid, rawFacet(restComp.properties));
-    const userRows = entries.filter(([, p]) => isUserFacing(p)).map(([name, p]) => ({
+    const mappedRows = entries.filter(([, p]) => isUserFacing(p)).map(([name, p]) => ({
       uid: p.uid,
       name,
       category: p.category,
       dataType: propertyDataType.get(p.uid) ?? inferDataType(p.value),
       systemRole: p.systemRole,
       facet: facet.get(p.uid)
-    })).filter((r) => !r.facet?.hidden);
+    }));
+    const hiddenCount2 = mappedRows.filter((r) => r.facet?.hidden).length;
+    const userRows = mappedRows.filter((r) => !r.facet?.hidden);
+    const portRows = exposedPorts(facet).map((ep) => ({
+      uid: ep.childUid,
+      name: ep.facet.label ?? `#${ep.childUid}`,
+      category: ep.side === "input" ? CATEGORY_INPUT : CATEGORY_OUTPUT,
+      dataType: propertyDataType.get(ep.childUid) ?? inferDataType(void 0),
+      facet: ep.facet,
+      exposed: true,
+      exposedComponent: ep.facet.childComponent,
+      facetPropUid: ep.facet.facetProp
+    }));
+    const allRows = [...userRows, ...portRows];
     const byOrder = (a, b) => (a.facet?.order ?? Number.MAX_SAFE_INTEGER) - (b.facet?.order ?? Number.MAX_SAFE_INTEGER);
     const rows2 = [
-      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT).sort(byOrder),
-      ...userRows.filter((r) => r.category === CATEGORY_INPUT).sort(byOrder),
-      ...userRows.filter((r) => r.category === CATEGORY_CONFIG).sort(byOrder)
+      ...allRows.filter((r) => r.category === CATEGORY_OUTPUT).sort(byOrder),
+      ...allRows.filter((r) => r.category === CATEGORY_INPUT).sort(byOrder),
+      ...allRows.filter((r) => r.category === CATEGORY_CONFIG).sort(byOrder)
     ];
     const statusEntry = entries.find(([, p]) => p.systemRole === ROLE_STATUS);
     const statusText2 = parseStatus(statusEntry?.[1].value);
@@ -15496,7 +15629,8 @@ function FunctionBlockInner({ data, selected }) {
       kind: restComp.type,
       statusText: statusText2,
       statusColor: statusColorFor(statusText2),
-      statusPropExists: statusEntry != null
+      statusPropExists: statusEntry != null,
+      hiddenCount: hiddenCount2
     };
   }, [restComp, schemaV]);
   diagRecordRender("FunctionBlock");
@@ -15526,7 +15660,7 @@ function FunctionBlockInner({ data, selected }) {
   }
   const values = valuesByUid;
   const statusFlagsMap = flagsByUid;
-  const { rows, nodeH, kind, statusText, statusColor, statusPropExists } = structural;
+  const { rows, nodeH, kind, statusText, statusColor, statusPropExists, hiddenCount } = structural;
   return /* @__PURE__ */ jsxs(
     "div",
     {
@@ -15555,7 +15689,10 @@ function FunctionBlockInner({ data, selected }) {
           category: p.category,
           dataType: p.dataType,
           currentValue: values[p.uid],
-          overridden: (flags & STATUS_OVERRIDDEN) !== 0
+          overridden: (flags & STATUS_OVERRIDDEN) !== 0,
+          exposed: !!p.exposed,
+          exposedComponent: p.exposedComponent,
+          portOwner: p.exposed ? data.componentUid : void 0
         });
       },
       style: {
@@ -15695,14 +15832,24 @@ function FunctionBlockInner({ data, selected }) {
               cursor: "pointer"
             },
             children: [
-              /* @__PURE__ */ jsx(
-                "span",
-                {
-                  title: data.hasActions ? "This component has actions" : void 0,
-                  style: { fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` },
-                  children: data.hasActions ? "⚡" : ""
-                }
-              ),
+              /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    title: data.hasActions ? "This component has actions" : void 0,
+                    style: { fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` },
+                    children: data.hasActions ? "⚡" : ""
+                  }
+                ),
+                hiddenCount > 0 && /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    title: `${hiddenCount} hidden propert${hiddenCount === 1 ? "y" : "ies"}`,
+                    style: { fontSize: 11, color: "#5a6172", lineHeight: `${ROW_H}px` },
+                    children: "⊘"
+                  }
+                )
+              ] }),
               data.hasChildren && /* @__PURE__ */ jsxs(
                 "span",
                 {
@@ -15726,13 +15873,23 @@ function FunctionBlockInner({ data, selected }) {
           const isInput = p.category === CATEGORY_INPUT;
           const isOutput = p.category === CATEGORY_OUTPUT;
           const v = values[p.uid];
+          let rowFacet = p.facet;
+          if (p.exposed && p.facetPropUid != null && p.exposedComponent != null) {
+            const fv = values[p.facetPropUid];
+            if (typeof fv === "string") {
+              const live = facetFor(p.exposedComponent, fv).get(p.uid);
+              if (live) rowFacet = { ...p.facet, ...live, label: live.label ?? p.facet?.label };
+            }
+          }
           const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
           const overridden = (flags & STATUS_OVERRIDDEN) !== 0;
-          const editable = isInput || p.category === CATEGORY_CONFIG;
+          const editable = !p.exposed && (isInput || p.category === CATEGORY_CONFIG);
+          const rowTitle = `${p.name} — prop uid ${p.uid} · component uid ${p.exposed ? p.exposedComponent ?? "?" : data.componentUid}`;
           return /* @__PURE__ */ jsxs(
             "div",
             {
               "data-row-uid": p.uid,
+              title: rowTitle,
               style: {
                 position: "absolute",
                 left: 0,
@@ -15758,7 +15915,8 @@ function FunctionBlockInner({ data, selected }) {
                       gap: 4
                     },
                     children: [
-                      /* @__PURE__ */ jsx("span", { title: p.facet?.label ? p.name : void 0, children: p.facet?.label ?? p.name }),
+                      p.exposed && /* @__PURE__ */ jsx("span", { style: { color: "#7a8a9f" }, title: "exposed from a child", children: "↪" }),
+                      /* @__PURE__ */ jsx("span", { title: rowFacet?.label ? p.name : void 0, children: rowFacet?.label ?? p.name }),
                       p.category === CATEGORY_CONFIG ? " (cfg)" : "",
                       overridden && /* @__PURE__ */ jsx(
                         "span",
@@ -15785,7 +15943,7 @@ function FunctionBlockInner({ data, selected }) {
                     propName: p.name,
                     value: v,
                     dataType: p.dataType,
-                    facet: p.facet
+                    facet: rowFacet
                   }
                 ) : /* @__PURE__ */ jsx(
                   "span",
@@ -15799,7 +15957,7 @@ function FunctionBlockInner({ data, selected }) {
                       padding: "0 2px"
                     },
                     title: DATATYPE_LABEL[p.dataType],
-                    children: fmtValueFacet(v, p.dataType, p.facet)
+                    children: fmtValueFacet(v, p.dataType, rowFacet)
                   }
                 )
               ]
@@ -15868,7 +16026,9 @@ function FunctionBlockInner({ data, selected }) {
             dataType: menu.dataType,
             currentValue: menu.currentValue,
             overridden: menu.overridden,
-            componentUid: data.componentUid,
+            exposed: menu.exposed,
+            portOwner: menu.portOwner,
+            componentUid: menu.exposedComponent ?? data.componentUid,
             onClose: () => setMenu(null)
           }
         )
@@ -16351,6 +16511,11 @@ class CeRestWs {
   explicitlyClosed = false;
   subscribedComponents = /* @__PURE__ */ new Set();
   desiredSubscribed = /* @__PURE__ */ new Set();
+  // Property-level subscription (alongside component-level) — used for exposed
+  // ports, where we want a single off-canvas prop's value, not its whole
+  // component. Diffed/sent the same way as components.
+  subscribedProps = /* @__PURE__ */ new Set();
+  desiredSubscribedProps = /* @__PURE__ */ new Set();
   sessionId = null;
   // Highest topology `seq` we've received. Sent on reconnect via `lastSeq` so the server
   // can replay missed topology events from its ring buffer instead of forcing a full
@@ -16422,6 +16587,7 @@ class CeRestWs {
         `→ configure${this.sessionId ? ` sid=${this.sessionId.slice(0, 8)}` : ""}${this.lastSeq != null ? ` lastSeq=${this.lastSeq}` : ""}${this.tickHz != null ? ` tickHz=${this.tickHz}` : ""}`
       );
       this.subscribedComponents.clear();
+      this.subscribedProps.clear();
     };
     ws.onclose = () => {
       metrics.wsConnected = false;
@@ -16508,6 +16674,11 @@ class CeRestWs {
     this.desiredSubscribed = desired;
     this.flushSubscriptions();
   }
+  /** Property-level subscription (exposed ports). Diff-and-send like components. */
+  setDesiredPropSubscription(desired) {
+    this.desiredSubscribedProps = desired;
+    this.flushSubscriptions();
+  }
   flushSubscriptions() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const added = [];
@@ -16527,6 +16698,24 @@ class CeRestWs {
       this.ws.send(JSON.stringify({ type: "unsubscribe", components: removed }));
       for (const u of removed) this.subscribedComponents.delete(u);
       recordEvent("unsubscribe", `-[${removed.join(",")}]`);
+    }
+    const addedP = [];
+    const removedP = [];
+    for (const uid of this.desiredSubscribedProps) {
+      if (!this.subscribedProps.has(uid)) addedP.push(uid);
+    }
+    for (const uid of this.subscribedProps) {
+      if (!this.desiredSubscribedProps.has(uid)) removedP.push(uid);
+    }
+    if (addedP.length > 0) {
+      this.ws.send(JSON.stringify({ type: "subscribe", properties: addedP }));
+      for (const u of addedP) this.subscribedProps.add(u);
+      recordEvent("subscribe", `props +[${addedP.join(",")}]`);
+    }
+    if (removedP.length > 0) {
+      this.ws.send(JSON.stringify({ type: "unsubscribe", properties: removedP }));
+      for (const u of removedP) this.subscribedProps.delete(u);
+      recordEvent("unsubscribe", `props -[${removedP.join(",")}]`);
     }
   }
   /** Most-recently observed sessionId; exposed so REST mutations can send the
@@ -16683,6 +16872,7 @@ function Inner({ base }) {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [pendingEdges, setPendingEdges] = useState(null);
+  const exposedRemapRef = useRef(/* @__PURE__ */ new Map());
   const sessionIdRef = useRef(null);
   const POS_SETTLE_PX = 0.5;
   const posAnims = useRef(
@@ -16758,6 +16948,10 @@ function Inner({ base }) {
     };
   }, []);
   const [error, setError] = useState(null);
+  const reportError = useCallback((e) => {
+    if (e instanceof RestError) setError({ message: e.message, debug: e.debug });
+    else setError({ message: e instanceof Error ? e.message : String(e) });
+  }, []);
   const [palette, setPalette] = useState([]);
   const [actionsByType, setActionsByType] = useState(
     () => /* @__PURE__ */ new Map()
@@ -16975,7 +17169,7 @@ function Inner({ base }) {
       setFocusAfterLoad(uid);
       setCrumbs([{ uid: ROOT_UID, name: "root" }, ...chain]);
     } catch (e) {
-      setError(e.message);
+      reportError(e);
     }
   }, []);
   const [nodeMenu, setNodeMenu] = useState(
@@ -16983,7 +17177,7 @@ function Inner({ base }) {
   );
   const [movePickerOpen, setMovePickerOpen] = useState(false);
   const [actionPickerOpen, setActionPickerOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsUid, setDetailsUid] = useState(null);
   const [paneMenu, setPaneMenu] = useState(null);
   const openNodeContextMenu = useCallback(
     (uid, x, y) => {
@@ -17037,7 +17231,7 @@ function Inner({ base }) {
     try {
       await removeEdge(edgeUid);
     } catch (e) {
-      setError(e.message);
+      reportError(e);
       return;
     }
     useStructural.getState().removeEdge(edgeUid);
@@ -17080,9 +17274,52 @@ function Inner({ base }) {
         else if (src !== dst) crossEdges.push(e);
       }
       useStructural.getState().setNodes(children, inEdges);
+      const exposedIndex = /* @__PURE__ */ new Map();
+      const exposedRemap = /* @__PURE__ */ new Map();
+      const subProps = /* @__PURE__ */ new Set();
+      for (const child of children) {
+        for (const ep of exposedPorts(facetFor(child.uid, rawFacet(child.properties)))) {
+          exposedIndex.set(ep.childUid, { parentUid: child.uid });
+          if (ep.facet.childComponent != null) exposedRemap.set(ep.childUid, ep.facet.childComponent);
+          subProps.add(ep.childUid);
+          if (ep.facet.facetProp != null) subProps.add(ep.facet.facetProp);
+        }
+      }
+      exposedRemapRef.current = exposedRemap;
+      wsClient?.setDesiredPropSubscription(subProps);
+      const portEdges = [];
       const ghostGroups = /* @__PURE__ */ new Map();
       for (const e of crossEdges) {
         const externalIsTarget = childUids.has(e.sourceUid);
+        const externalPropUid = externalIsTarget ? e.targetPropertyUid : e.sourcePropertyUid;
+        const exposed = externalPropUid != null ? exposedIndex.get(externalPropUid) : void 0;
+        if (exposed) {
+          const vUid = externalIsTarget ? e.sourceUid : e.targetUid;
+          const vPropUid = externalIsTarget ? e.sourcePropertyUid : e.targetPropertyUid;
+          if (vPropUid != null) {
+            const style = e.loopBack === true ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 };
+            portEdges.push(
+              externalIsTarget ? {
+                id: String(e.uid),
+                source: String(vUid),
+                sourceHandle: String(vPropUid),
+                target: String(exposed.parentUid),
+                targetHandle: String(externalPropUid),
+                style,
+                animated: false
+              } : {
+                id: String(e.uid),
+                source: String(exposed.parentUid),
+                sourceHandle: String(externalPropUid),
+                target: String(vUid),
+                targetHandle: String(vPropUid),
+                style,
+                animated: false
+              }
+            );
+            continue;
+          }
+        }
         const visibleUid = externalIsTarget ? e.sourceUid : e.targetUid;
         const externalUid = externalIsTarget ? e.targetUid : e.sourceUid;
         const visibleComp = childByUid.get(visibleUid);
@@ -17176,9 +17413,9 @@ function Inner({ base }) {
         return [...real, ...ghostNodes];
       });
       setEdges([]);
-      setPendingEdges([...buildRfEdges(inEdges, children), ...ghostEdges]);
+      setPendingEdges([...buildRfEdges(inEdges, children), ...ghostEdges, ...portEdges]);
     } catch (e) {
-      setError(e.message);
+      reportError(e);
     }
   }, [currentParentUid, enter, openNodeContextMenu, goToComponent, deleteGhostEdge]);
   const reloadRef = useRef(reload);
@@ -17194,7 +17431,7 @@ function Inner({ base }) {
       });
       const clones = res.nodes ?? [];
       if (clones.length === 0) {
-        setError("paste: nothing cloned (sources may have been deleted)");
+        setError({ message: "paste: nothing cloned (sources may have been deleted)" });
         return;
       }
       const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
@@ -17215,7 +17452,7 @@ function Inner({ base }) {
       pushUndo({ kind: "delete", componentUids: newUids });
       await reload();
     } catch (e) {
-      setError(e.message);
+      reportError(e);
     }
   }, [currentParentUid, reload, rf]);
   const undo = useCallback(async () => {
@@ -17244,7 +17481,7 @@ function Inner({ base }) {
       }
       await reload();
     } catch (e) {
-      setError(e.message);
+      reportError(e);
     }
   }, [reload]);
   useEffect(() => {
@@ -17705,7 +17942,7 @@ function Inner({ base }) {
       ids.map((uid) => updateEdge(uid, { reEvaluate: true }))
     );
     const failed = results.find((r) => r.status === "rejected");
-    if (failed) setError(failed.reason.message);
+    if (failed) reportError(failed.reason);
   }, []);
   const setEdgesLoopBack = useCallback(async (ids) => {
     if (ids.length === 0) return;
@@ -17713,7 +17950,7 @@ function Inner({ base }) {
       ids.map((uid) => updateEdge(uid, { loopBack: true }))
     );
     const failed = results.find((r) => r.status === "rejected");
-    if (failed) setError(failed.reason.message);
+    if (failed) reportError(failed.reason);
     const ok = ids.filter((_, i) => results[i].status === "fulfilled");
     if (ok.length === 0) return;
     const okSet = new Set(ok.map(String));
@@ -17814,10 +18051,10 @@ function Inner({ base }) {
       if (updates.length === 1) {
         const u = updates[0];
         updateNode(u.uid, { position: u.position }).catch(
-          (e) => setError(e.message)
+          (e) => reportError(e)
         );
       } else {
-        bulkUpdate(updates).catch((e) => setError(e.message));
+        bulkUpdate(updates).catch((e) => reportError(e));
       }
     },
     [cancelDragPatch, pushUndo]
@@ -17825,10 +18062,13 @@ function Inner({ base }) {
   const onConnect = useCallback(async (c) => {
     if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) return;
     try {
+      const remap = exposedRemapRef.current;
+      const srcUid = remap.get(Number(c.sourceHandle)) ?? Number(c.source);
+      const tgtUid = remap.get(Number(c.targetHandle)) ?? Number(c.target);
       const created = await addEdge({
-        sourceUid: Number(c.source),
+        sourceUid: srcUid,
         sourcePropUid: Number(c.sourceHandle),
-        targetUid: Number(c.target),
+        targetUid: tgtUid,
         targetPropUid: Number(c.targetHandle)
       });
       if (created?.uid != null) {
@@ -17848,7 +18088,7 @@ function Inner({ base }) {
         await reload();
       }
     } catch (e) {
-      setError(e.message);
+      reportError(e);
     }
   }, [reload]);
   const onNodesDelete = useCallback(
@@ -17865,7 +18105,7 @@ function Inner({ base }) {
         for (const uid of uids) useStructural.getState().removeComponent(uid);
         pushUndo({ kind: "restore", componentUids: uids });
       } catch (e) {
-        setError(e.message);
+        reportError(e);
       }
       await reload();
     },
@@ -17884,7 +18124,7 @@ function Inner({ base }) {
         for (const uid of uids) useStructural.getState().removeEdge(uid);
         pushUndo({ kind: "restore", edgeUids: uids });
       } catch (err) {
-        setError(err.message);
+        reportError(err);
       }
       setEdges((cur) => cur.filter((e) => !es.find((d) => d.id === e.id)));
     },
@@ -17931,7 +18171,7 @@ function Inner({ base }) {
           await reload();
         }
       } catch (e) {
-        setError(e.message);
+        reportError(e);
       }
     },
     [rf, reload, currentParentUid, pushUndo, enter, openNodeContextMenu]
@@ -17988,7 +18228,7 @@ function Inner({ base }) {
         }
         return created ?? null;
       } catch (e) {
-        setError(e.message);
+        reportError(e);
         return null;
       }
     },
@@ -18019,9 +18259,74 @@ function Inner({ base }) {
     },
     [reload]
   );
+  const exposeProp = useCallback(
+    async (childPropUid, childComponentUid, side, defaultLabel) => {
+      const parentUid = currentParentUid;
+      try {
+        const resp = await getNodeByUid(parentUid, { depth: 0 });
+        const parent = resp.nodes[0];
+        const facet = parseFacet(rawFacet(parent?.properties) ?? "");
+        const child = useStructural.getState().components.get(childComponentUid);
+        const facetPropUid = child?.properties?.[FACET_PROP]?.uid;
+        const existing = facet.get(childPropUid) ?? {};
+        facet.set(childPropUid, {
+          ...existing,
+          expose: side,
+          childComponent: childComponentUid,
+          facetProp: facetPropUid,
+          // Fallback display name only — live label/unit/aliases come from the
+          // child's streamed __facets.
+          label: existing.label ?? defaultLabel
+        });
+        await updateNode(parentUid, {
+          properties: { [FACET_PROP]: { value: serializeFacet(facet) } }
+        });
+        await reload();
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [currentParentUid, reload]
+  );
+  const unexposeProp = useCallback(
+    async (folderUid, childPropUid) => {
+      try {
+        const resp = await getNodeByUid(folderUid, { depth: 0 });
+        const folder = resp.nodes[0];
+        const facet = parseFacet(rawFacet(folder?.properties) ?? "");
+        facet.delete(childPropUid);
+        await updateNode(folderUid, {
+          properties: { [FACET_PROP]: { value: serializeFacet(facet) } }
+        });
+        await reload();
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [reload, reportError]
+  );
+  const openDetails = useCallback(async (componentUid) => {
+    if (!useStructural.getState().components.has(componentUid)) {
+      try {
+        const resp = await getNodeByUid(componentUid, { depth: 0 });
+        const c = resp.nodes[0];
+        if (c) useStructural.getState().upsertComponent(c);
+      } catch {
+      }
+    }
+    setDetailsUid(componentUid);
+  }, []);
   const ceCtx = useMemo(
-    () => ({ componentTypes, createComponent, connectEdge }),
-    [componentTypes, createComponent, connectEdge]
+    () => ({
+      componentTypes,
+      createComponent,
+      connectEdge,
+      exposeProp,
+      unexposeProp,
+      openDetails,
+      parentName: crumbs.length > 1 ? crumbs[crumbs.length - 1]?.name : void 0
+    }),
+    [componentTypes, createComponent, connectEdge, exposeProp, unexposeProp, openDetails, crumbs]
   );
   const onDragOver = useCallback((e) => {
     if (e.dataTransfer.types.includes(DND_TYPE)) {
@@ -18156,13 +18461,16 @@ function Inner({ base }) {
         }
       }
     ),
-    nodeMenu && !movePickerOpen && !actionPickerOpen && !detailsOpen && /* @__PURE__ */ jsx(
+    nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
       NodeContextMenu,
       {
         x: nodeMenu.x,
         y: nodeMenu.y,
         hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
         canRename: nodes.filter((n) => n.selected).length === 1,
+        count: nodes.filter((n) => n.selected).length,
+        uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
+        name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
         onRename: async () => {
           const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
           setNodeMenu(null);
@@ -18177,10 +18485,13 @@ function Inner({ base }) {
             await updateNode(uid, { name: trimmed });
             await reload();
           } catch (e) {
-            setError(e.message);
+            reportError(e);
           }
         },
-        onDetails: () => setDetailsOpen(true),
+        onDetails: () => {
+          const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+          if (sel.length === 1) setDetailsUid(sel[0]);
+        },
         onMoveInto: () => setMovePickerOpen(true),
         onAction: () => setActionPickerOpen(true),
         onClose: () => setNodeMenu(null)
@@ -18212,7 +18523,7 @@ function Inner({ base }) {
             try {
               await updateNode(uid, { parentUid: newParent });
             } catch (e) {
-              setError(e.message);
+              reportError(e);
             }
           }
           setMovePickerOpen(false);
@@ -18225,22 +18536,22 @@ function Inner({ base }) {
         }
       }
     ),
-    nodeMenu && detailsOpen && /* @__PURE__ */ jsx(
+    detailsUid != null && /* @__PURE__ */ jsx(
       DetailsPanel,
       {
-        componentUid: nodes.filter((n) => n.selected).map((n) => Number(n.id))[0],
+        componentUid: detailsUid,
         onSave: async (facetString) => {
-          const uid = nodes.filter((n) => n.selected).map((n) => Number(n.id))[0];
-          if (uid == null) return;
           try {
-            await updateNode(uid, { properties: { [FACET_PROP]: { value: facetString } } });
+            await updateNode(detailsUid, {
+              properties: { [FACET_PROP]: { value: facetString } }
+            });
             await reload();
           } catch (e) {
-            setError(e.message);
+            reportError(e);
           }
         },
         onClose: () => {
-          setDetailsOpen(false);
+          setDetailsUid(null);
           setNodeMenu(null);
         }
       }
@@ -18293,7 +18604,7 @@ function Inner({ base }) {
         }
       );
     })(),
-    error && /* @__PURE__ */ jsx(ErrorBanner, { message: error, onClose: () => setError(null) })
+    error && /* @__PURE__ */ jsx(ErrorBanner, { error, onClose: () => setError(null) })
   ] });
 }
 function selectedEdgeIds(edges, rightClickedId) {
@@ -18836,6 +19147,9 @@ function NodeContextMenu({
   y,
   hasActions,
   canRename,
+  name,
+  uid,
+  count,
   onRename,
   onDetails,
   onMoveInto,
@@ -18876,6 +19190,27 @@ function NodeContextMenu({
         fontFamily: "-apple-system, system-ui, sans-serif"
       },
       children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: { padding: "4px 8px", color: "#8892a0", borderBottom: "1px solid #2c313c", marginBottom: 4 },
+            children: [
+              uid != null ? name || "component" : `${count} components`,
+              /* @__PURE__ */ jsx(
+                "div",
+                {
+                  style: {
+                    fontSize: 9,
+                    color: "#5a6172",
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                    marginTop: 2
+                  },
+                  children: uid != null ? /* @__PURE__ */ jsx(CopyUid, { label: "comp", value: uid }) : `${count} selected`
+                }
+              )
+            ]
+          }
+        ),
         canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Rename…", onClick: onRename }),
         canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Details…", onClick: onDetails }),
         /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Move into…", onClick: onMoveInto }),
@@ -19694,29 +20029,83 @@ function PaletteItem({
     }
   );
 }
-function ErrorBanner({ message, onClose }) {
+function ErrorBanner({
+  error,
+  onClose
+}) {
+  const [copied, setCopied] = useState(false);
+  const copy = (e) => {
+    e.stopPropagation();
+    const text = error.debug ?? error.message;
+    void navigator.clipboard?.writeText(text).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1200);
+      },
+      () => {
+      }
+    );
+  };
   return /* @__PURE__ */ jsxs(
     "div",
     {
-      onClick: onClose,
       style: {
         position: "fixed",
         bottom: 12,
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 30,
+        maxWidth: "min(720px, 90vw)",
         background: "#3a1a1a",
         border: "1px solid #6b2a2a",
         color: "#ffb8b8",
-        padding: "6px 12px",
+        padding: "6px 10px",
         borderRadius: 4,
         fontSize: 12,
-        cursor: "pointer",
-        fontFamily: "ui-monospace, monospace"
+        fontFamily: "ui-monospace, monospace",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8
       },
       children: [
-        message,
-        "  (click to dismiss)"
+        /* @__PURE__ */ jsx("span", { style: { whiteSpace: "pre-wrap", overflow: "hidden", flex: 1, maxHeight: 120 }, children: error.message }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: copy,
+            title: error.debug ? "Copy request + response" : "Copy error",
+            style: {
+              flexShrink: 0,
+              background: "#5a2a2a",
+              color: "#ffd8d8",
+              border: "1px solid #6b2a2a",
+              borderRadius: 3,
+              padding: "1px 8px",
+              fontSize: 11,
+              cursor: "pointer",
+              fontFamily: "inherit"
+            },
+            children: copied ? "copied" : "copy"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: onClose,
+            title: "Dismiss",
+            style: {
+              flexShrink: 0,
+              background: "transparent",
+              color: "#ffb8b8",
+              border: "none",
+              fontSize: 13,
+              cursor: "pointer",
+              lineHeight: 1,
+              padding: "0 2px"
+            },
+            children: "✕"
+          }
+        )
       ]
     }
   );
@@ -19792,7 +20181,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-11T02:25:46.484Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-11T10:11:00.719Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

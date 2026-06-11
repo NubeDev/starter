@@ -23,8 +23,25 @@ export function setEngineBase(origin: string) {
 }
 
 export class RestError extends Error {
-  constructor(public status: number, message: string, public url: string) {
+  constructor(
+    public status: number,
+    message: string,
+    public url: string,
+    public method = "",
+    public requestBody?: unknown,
+    public responseBody?: unknown,
+  ) {
     super(message);
+  }
+
+  // A copy-pasteable dump of the failed round-trip for debugging.
+  get debug(): string {
+    const fmt = (v: unknown) =>
+      v === undefined ? "" : typeof v === "string" ? v : JSON.stringify(v, null, 2);
+    const lines = [`${this.method} ${this.url}`, `→ ${this.status} ${this.message}`];
+    if (this.requestBody !== undefined) lines.push("", "Request:", fmt(this.requestBody));
+    if (this.responseBody !== undefined) lines.push("", "Response:", fmt(this.responseBody));
+    return lines.join("\n");
   }
 }
 
@@ -60,7 +77,7 @@ async function http<T>(method: string, path: string, body?: unknown): Promise<T>
     recordEvent("rest", `${method} ${path} → ${status}`);
   }
   if (!res.ok || payload.error) {
-    throw new RestError(res.status, payload.error ?? res.statusText, url);
+    throw new RestError(res.status, payload.error ?? res.statusText, url, method, body, payload);
   }
   return payload.data as T;
 }
