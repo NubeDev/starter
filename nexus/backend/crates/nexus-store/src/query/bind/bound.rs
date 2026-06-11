@@ -18,6 +18,12 @@ use chrono::{DateTime, Utc};
 pub enum SqlValue {
     /// A text value (a `$var` value, a host token id, a `$__sqlIn` element).
     Text(String),
+    /// A text array — the `$caller_team_ids` host token, bound from
+    /// `Principal.teams` and consumed as `= ANY($N)`. Postgres binds a
+    /// `Vec<String>` directly to a `text[]` parameter, so this never
+    /// touches the SQL string (the same un-spoofable, fully-bound path the
+    /// scalar tokens use).
+    TextArray(Vec<String>),
     /// An integer value (a numeric variable/param).
     Int(i64),
     /// A floating-point value.

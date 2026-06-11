@@ -59,6 +59,13 @@ pub struct HostTokens {
     pub caller_tenant_id: Option<String>,
     /// The caller's user id, bound from `Principal.subject`.
     pub caller_user_id: Option<String>,
+    /// The caller's teams, bound from `Principal.teams` (P3a /
+    /// identity-scoped-pages gap #1). Consumed as `= ANY($caller_team_ids)`
+    /// to scope a reusable page to "my team's rows". Equally un-spoofable:
+    /// rejected in caller-supplied position, bound only from the verified
+    /// `Principal`. RLS remains the backstop. An empty list binds an empty
+    /// `text[]` (matches nothing), never a silent skip.
+    pub caller_team_ids: Vec<String>,
 }
 
 /// Everything one `bind()` call needs beyond the SQL text itself. Build with

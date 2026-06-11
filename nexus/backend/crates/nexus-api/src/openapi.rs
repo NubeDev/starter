@@ -83,18 +83,13 @@ use utoipa::OpenApi;
         crate::routes::flows::debug::stream_flow_debug,
         crate::routes::flows::table_query::query_flow_table,
         crate::routes::ingest::push::push_ingest,
-        crate::routes::alerts::rules::list_rules,
-        crate::routes::alerts::rules::create_rule,
-        crate::routes::alerts::rules::get_rule,
-        crate::routes::alerts::rules::update_rule,
-        crate::routes::alerts::rules::delete_rule,
-        crate::routes::alerts::events::list_events,
-        crate::routes::alerts::channels::list_channels,
-        crate::routes::alerts::channels::create_channel,
-        crate::routes::alerts::channels::delete_channel,
-        crate::routes::alerts::silences::list_silences,
-        crate::routes::alerts::silences::create_silence,
-        crate::routes::alerts::silences::delete_silence,
+        crate::routes::detections::notify::list_channels,
+        crate::routes::detections::notify::create_channel,
+        crate::routes::detections::notify::delete_channel,
+        crate::routes::detections::notify::list_silences,
+        crate::routes::detections::notify::create_silence,
+        crate::routes::detections::notify::delete_silence,
+        crate::routes::detections::notify::list_notify_events,
         crate::routes::detections::crud::list_detections,
         crate::routes::detections::crud::create_detection,
         crate::routes::detections::crud::get_detection,
@@ -156,7 +151,7 @@ pub fn document() -> OpenApiDoc {
         .version(env!("CARGO_PKG_VERSION"))
         .description(Some(
             "Control plane for the Nexus observability/BI platform: datasources, \
-             one-shot queries, live SSE streams, dashboards, panels, flows, and alerts.",
+             one-shot queries, live SSE streams, dashboards, panels, flows, and detections.",
         ))
         .build();
     doc.merge(nexus_spi::openapi::Schemas::openapi());

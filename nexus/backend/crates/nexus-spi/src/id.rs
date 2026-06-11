@@ -19,12 +19,9 @@ pub enum Panel {}
 pub enum Stream {}
 /// Phantom marker for a saved-flow id.
 pub enum Flow {}
-/// Phantom marker for an alert-rule id.
-pub enum AlertRule {}
 
 pub type DatasourceId = Id<Datasource>;
 pub type DashboardId = Id<Dashboard>;
 pub type PanelId = Id<Panel>;
 pub type StreamId = Id<Stream>;
 pub type FlowId = Id<Flow>;
-pub type AlertRuleId = Id<AlertRule>;

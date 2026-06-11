@@ -13,7 +13,7 @@ pub enum TaggableKind {
     Dashboard,
     Datasource,
     Flow,
-    AlertRule,
+    Detection,
     User,
     Team,
 }

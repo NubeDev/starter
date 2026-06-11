@@ -280,6 +280,9 @@ impl NexusHostMethods {
         let identity = nexus_store::QueryIdentity {
             tenant_id: Some(tenant),
             user_id: caller.and_then(|c| c.user_id.clone()),
+            // CallerIdentity (the extension host-method frame) carries no
+            // team membership, so `$caller_team_ids` binds empty here (P3a).
+            teams: Vec::new(),
         };
         let query_req = nexus_spi::dto::query::QueryRequest {
             sql: String::new(),

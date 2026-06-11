@@ -53,6 +53,15 @@ pub fn build(req: &QueryRequest, identity: &QueryIdentity, datasource: &str) -> 
     // A length-prefixed framing keeps fields from running together — e.g. a
     // tenant `"ab"` + datasource `"c"` cannot collide with `"a"` + `"bc"`.
     feed(&mut hasher, "tenant", identity.tenant_id.as_deref().unwrap_or(""));
+    // Identity-scoped host tokens (`$caller_user_id`, `$caller_team_ids` —
+    // P3a) make query results depend on WHO is asking, so the caller's
+    // identity MUST be part of the cache key — otherwise one user's rows
+    // could be served from another's cached entry. Teams are sorted so the
+    // key is order-independent.
+    feed(&mut hasher, "caller_user", identity.user_id.as_deref().unwrap_or(""));
+    let mut teams = identity.teams.clone();
+    teams.sort();
+    feed(&mut hasher, "caller_teams", &teams.join(","));
     feed(&mut hasher, "datasource", datasource);
     feed_query(&mut hasher, req);
     feed_sources(&mut hasher, req);
@@ -162,6 +171,7 @@ mod tests {
         QueryIdentity {
             tenant_id: Some(tenant.to_string()),
             user_id: Some("u1".to_string()),
+            teams: Vec::new(),
         }
     }
 

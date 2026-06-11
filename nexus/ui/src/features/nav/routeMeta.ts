@@ -1,6 +1,7 @@
 import {
   Bell,
   Bot,
+  CircleHelp,
   Compass,
   Database,
   Folder,
@@ -40,7 +41,7 @@ export const ROUTE_META: Record<
   datasources: { label: "Datasources", icon: Database, category: "workspace" },
   flows: { label: "Flows", icon: Workflow, category: "automation" },
   insights: { label: "Insights", icon: Sparkles, category: "automation" },
-  alerts: { label: "Alerts", icon: Bell, category: "automation" },
+  detections: { label: "Detections", icon: Bell, category: "automation" },
   findings: { label: "Findings", icon: Radar, category: "automation" },
   agents: { label: "Agents", icon: Bot, category: "automation" },
   access: { label: "Access", icon: Shield, category: "admin" },
@@ -54,9 +55,40 @@ export function nodeCategory(
   target: { kind: string; route?: StaticRoute },
 ): NavCategory {
   if (target.kind === "route" && target.route) {
-    return ROUTE_META[target.route].category;
+    return routeMeta(target.route).category;
   }
   return "workspace";
+}
+
+/** Fallback metadata for a `route` node whose route is not in the allow-list. */
+const UNKNOWN_ROUTE_META = {
+  label: "Unknown",
+  icon: CircleHelp,
+  category: "workspace" as NavCategory,
+};
+
+/** Resolve a route's display metadata, tolerating an unknown route.
+ *
+ *  `ROUTE_META` is a closed allow-list, so a `route` node may reference a route
+ *  the frontend no longer knows about — e.g. a removed built-in (`alerts` →
+ *  `detections`) still seeded in an older tenant's nav tree, or a route from a
+ *  stale bundle. A raw `ROUTE_META[route]` lookup returns `undefined` for those,
+ *  and dereferencing `.icon`/`.label`/`.category` used to crash the entire
+ *  NavTree. This logs a console error and returns a safe placeholder so one
+ *  orphaned node degrades gracefully instead of taking down the sidebar. */
+export function routeMeta(route: StaticRoute): {
+  label: string;
+  icon: LucideIcon;
+  category: NavCategory;
+} {
+  const meta = ROUTE_META[route];
+  if (!meta) {
+    console.error(
+      `nav: unknown route "${route}" — not in ROUTE_META (removed or stale nav node); rendering as a placeholder`,
+    );
+    return UNKNOWN_ROUTE_META;
+  }
+  return meta;
 }
 
 /** The closed list of routes a `route` node may target, for the builder's
@@ -67,7 +99,7 @@ export const STATIC_ROUTES: StaticRoute[] = [
   "datasources",
   "flows",
   "insights",
-  "alerts",
+  "detections",
   "findings",
   "agents",
   "access",

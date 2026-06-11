@@ -442,7 +442,10 @@ function NodeCell({
     node.target.kind === "group"
       ? GROUP_ICON
       : node.target.kind === "route"
-        ? ROUTE_META[node.target.route].icon
+        ? // Unknown route (removed built-in still in an older tenant's tree, or a
+          // stale bundle): fall back to a generic icon rather than crash, matching
+          // NavTree's posture.
+          (ROUTE_META[node.target.route]?.icon ?? dashboardIcon("Activity"))
         : dashboardIcon(node.icon ?? "Activity");
 
   return (

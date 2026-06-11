@@ -190,6 +190,61 @@ fn host_tokens_bind_from_context_never_from_input() {
 }
 
 #[test]
+fn caller_team_ids_binds_as_text_array_from_context() {
+    // P3a: `$caller_team_ids` mirrors the scalar tokens but binds a
+    // `text[]` from Principal.teams, consumed via `= ANY(...)`.
+    let ctx = BindCtx {
+        host_tokens: HostTokens {
+            caller_team_ids: vec!["ahu-roof".to_string(), "hvac-ops".to_string()],
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let bound = bind(
+        "SELECT * FROM meters WHERE site_team = ANY($caller_team_ids)",
+        &ctx,
+    )
+    .expect("bind");
+    assert_eq!(bound.sql, "SELECT * FROM meters WHERE site_team = ANY($1)");
+    assert_eq!(
+        bound.args,
+        vec![SqlValue::TextArray(vec![
+            "ahu-roof".to_string(),
+            "hvac-ops".to_string()
+        ])]
+    );
+}
+
+#[test]
+fn caller_team_ids_binds_empty_array_when_no_teams() {
+    // An empty team list is a valid bind (matches no rows), NOT a 4xx —
+    // distinct from the scalar tokens whose absence errors.
+    let bound = bind(
+        "SELECT * FROM meters WHERE site_team = ANY($caller_team_ids)",
+        &BindCtx::default(),
+    )
+    .expect("bind");
+    assert_eq!(bound.args, vec![SqlValue::TextArray(vec![])]);
+}
+
+#[test]
+fn a_caller_supplied_team_token_value_is_rejected() {
+    // P3a: the team token is equally un-spoofable — rejected in
+    // caller-supplied (variable) position.
+    let mut variables = BTreeMap::new();
+    variables.insert(
+        "teams".to_string(),
+        VarValue::Single(ScalarValue::Text("$caller_team_ids".to_string())),
+    );
+    let ctx = BindCtx {
+        variables,
+        ..Default::default()
+    };
+    let err = bind("WHERE site_team = ANY($teams)", &ctx).unwrap_err();
+    assert!(matches!(err, BindError::HostTokenInInput(_)));
+}
+
+#[test]
 fn a_caller_supplied_host_token_value_is_rejected() {
     let mut variables = BTreeMap::new();
     variables.insert(
@@ -284,6 +339,7 @@ fn tokens_after_a_comment_still_expand() {
         host_tokens: HostTokens {
             caller_tenant_id: Some("t1".into()),
             caller_user_id: None,
+            ..Default::default()
         },
         ..Default::default()
     };

@@ -26,6 +26,26 @@ pub struct FindingRecord {
     pub updated_at: DateTime<Utc>,
 }
 
+/// A finding that changed lifecycle state during a reconcile — the signal the
+/// detection runner notifies on. `opened` is a finding that went from absent (or
+/// resolved) to open this run; `resolved` is one auto-resolved because its target
+/// stopped flagging. Carries just what a notification needs.
+#[derive(Debug, Clone)]
+pub struct FindingTransition {
+    pub finding_id: Uuid,
+    pub target: Value,
+    pub value: Option<f64>,
+    pub context: Value,
+}
+
+/// What [`super::upsert::reconcile`] changed this run: the newly opened findings
+/// and the auto-resolved ones, for the runner to fan out as notifications.
+#[derive(Debug, Clone, Default)]
+pub struct Reconciled {
+    pub opened: Vec<FindingTransition>,
+    pub resolved: Vec<FindingTransition>,
+}
+
 /// A flagged row to upsert as a finding. `dedup_key` is the hash of the target
 /// values: a re-flag of the same key updates the open finding instead of
 /// creating a new one (see [`super::upsert::upsert`]).

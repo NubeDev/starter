@@ -9,7 +9,6 @@
 //! [`tenant_tx`].
 
 pub mod agent;
-pub mod alert;
 pub mod changelog;
 pub mod dashboard;
 pub mod datasource;
@@ -22,6 +21,7 @@ pub mod folder;
 pub mod insight;
 pub mod migrate;
 pub mod nav_node;
+pub mod notify;
 pub mod query;
 pub mod query_history;
 pub mod query_kind;

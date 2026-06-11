@@ -12,5 +12,7 @@ pub mod record;
 pub mod upsert;
 
 pub use browse::{acknowledge, get, list, resolve};
-pub use record::{FindingFilter, FindingRecord, NewFinding};
+pub use record::{
+    FindingFilter, FindingRecord, FindingTransition, NewFinding, Reconciled,
+};
 pub use upsert::{latest_open_at, reconcile};

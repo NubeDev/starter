@@ -9,7 +9,8 @@ use super::record::{DetectionPatch, DetectionRecord, NewDetection};
 use crate::tenant_tx;
 
 const COLS: &str = "id, tenant_id, name, insight_id, datasource_id, sql, params, sources, \
-     flag_column, target_columns, value_column, for_secs, interval_secs, enabled";
+     flag_column, target_columns, value_column, for_secs, interval_secs, enabled, \
+     channel_ids, message_template";
 
 /// Insert a detection. A duplicate name in the tenant is a `Conflict`; an
 /// `insight_id` that does not resolve under the tenant is a foreign-key error
@@ -23,8 +24,9 @@ pub async fn insert(
     let row = sqlx::query(
         "INSERT INTO nexus_detections \
          (tenant_id, name, insight_id, datasource_id, sql, params, sources, flag_column, \
-          target_columns, value_column, for_secs, interval_secs, enabled) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id",
+          target_columns, value_column, for_secs, interval_secs, enabled, channel_ids, \
+          message_template) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id",
     )
     .bind(tenant_id)
     .bind(&new.name)
@@ -39,6 +41,8 @@ pub async fn insert(
     .bind(new.for_secs)
     .bind(new.interval_secs)
     .bind(new.enabled)
+    .bind(&new.channel_ids)
+    .bind(&new.message_template)
     .fetch_one(&mut *tx)
     .await
     .map_err(conflict_or_invalid)?;
@@ -60,6 +64,8 @@ pub async fn insert(
         for_secs: new.for_secs,
         interval_secs: new.interval_secs,
         enabled: new.enabled,
+        channel_ids: new.channel_ids.clone(),
+        message_template: new.message_template.clone(),
     })
 }
 
@@ -117,7 +123,9 @@ pub async fn update(
            value_column   = COALESCE($9, value_column), \
            for_secs       = COALESCE($10, for_secs), \
            interval_secs  = COALESCE($11, interval_secs), \
-           enabled        = COALESCE($12, enabled) \
+           enabled        = COALESCE($12, enabled), \
+           channel_ids    = COALESCE($15, channel_ids), \
+           message_template = COALESCE($16, message_template) \
          WHERE id = $1",
     )
     .bind(id)
@@ -134,6 +142,8 @@ pub async fn update(
     .bind(patch.enabled)
     .bind(patch.datasource_id.is_some()) // $13: touch the datasource?
     .bind(patch.datasource_id.flatten()) // $14: the new value (may be NULL)
+    .bind(patch.channel_ids.as_deref()) // $15
+    .bind(&patch.message_template) // $16
     .execute(&mut *tx)
     .await
     .map_err(conflict_or_invalid)?;
@@ -169,6 +179,8 @@ fn row_to_record(row: &sqlx::postgres::PgRow) -> DetectionRecord {
         for_secs: row.get::<i32, _>("for_secs"),
         interval_secs: row.get::<i32, _>("interval_secs"),
         enabled: row.get::<bool, _>("enabled"),
+        channel_ids: row.get::<Vec<Uuid>, _>("channel_ids"),
+        message_template: row.get::<Option<String>, _>("message_template"),
     }
 }
 

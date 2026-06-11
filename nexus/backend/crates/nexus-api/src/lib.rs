@@ -6,7 +6,6 @@
 //! going through `fn main`.
 
 pub mod agents;
-pub mod alerting;
 pub mod authz;
 pub mod boot;
 pub mod bootstrap;

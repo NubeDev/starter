@@ -294,8 +294,13 @@ function NavRowRecursive({
 function TargetBadge({ node }: { node: NavTreeNode }) {
   if (node.target.kind === "group")
     return <Badge variant="secondary">Group</Badge>;
-  if (node.target.kind === "route")
-    return <Badge variant="outline">{ROUTE_META[node.target.route].label}</Badge>;
+  if (node.target.kind === "route") {
+    // Unknown route (removed built-in still in an older tenant's tree, or a stale
+    // bundle): `ROUTE_META` is a closed allow-list, so fall back to the raw route
+    // string rather than crash on `undefined.label` — matching NavTree's posture.
+    const label = ROUTE_META[node.target.route]?.label ?? node.target.route;
+    return <Badge variant="outline">{label}</Badge>;
+  }
   return <Badge variant="outline">Dashboard</Badge>;
 }
 

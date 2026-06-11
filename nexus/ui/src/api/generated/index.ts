@@ -100,118 +100,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/alerts/channels": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_channels"];
-        put?: never;
-        post: operations["create_channel"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alerts/channels/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["delete_channel"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alerts/events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_alert_events"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alerts/rules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_alert_rules"];
-        put?: never;
-        post: operations["create_alert_rule"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alerts/rules/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["get_alert_rule"];
-        put: operations["update_alert_rule"];
-        post?: never;
-        delete: operations["delete_alert_rule"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alerts/silences": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["list_silences"];
-        put?: never;
-        post: operations["create_silence"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/alerts/silences/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["delete_silence"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/audit": {
         parameters: {
             query?: never;
@@ -500,6 +388,86 @@ export interface paths {
         put?: never;
         post: operations["create_detection"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_channels"];
+        put?: never;
+        post: operations["create_channel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/channels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_channel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/notify-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_notify_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/silences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_silences"];
+        put?: never;
+        post: operations["create_silence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detections/silences/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_silence"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1343,63 +1311,6 @@ export interface components {
             model: string;
             name: string;
         };
-        /** @description One condition of an alert rule. */
-        AlertCondition: {
-            /** @description Comparison operator: gt|gte|lt|lte|eq|ne. */
-            op: string;
-            /** @description The query whose reduced first column is the evaluated value. */
-            query: string;
-            /** @description How the query's rows collapse to one value: last|min|max|avg|sum|count. */
-            reducer?: string;
-            /** Format: double */
-            threshold: number;
-        };
-        /**
-         * @description One recorded transition: when a rule fired or resolved, the value that
-         *     triggered it, and whether it was silenced / actually notified.
-         */
-        AlertEvent: {
-            /** Format: date-time */
-            at: string;
-            detail?: string | null;
-            /** Format: uuid */
-            id: string;
-            notified: boolean;
-            /** Format: uuid */
-            rule_id: string;
-            silenced: boolean;
-            /** @description firing | resolved. */
-            transition: string;
-            /** Format: double */
-            value?: number | null;
-        };
-        /** @description An alert rule in full. */
-        AlertRuleDetail: {
-            channel_ids: string[];
-            combinator: string;
-            /**
-             * @description The multi-condition list, when the rule uses one. `None` for a legacy
-             *     single-condition rule (its single condition is the top-level fields).
-             */
-            conditions?: components["schemas"]["AlertCondition"][] | null;
-            /** Format: uuid */
-            datasource_id?: string | null;
-            enabled: boolean;
-            exec_error_policy: string;
-            /** Format: int32 */
-            for_secs: number;
-            /** Format: uuid */
-            id: string;
-            /** Format: int32 */
-            interval_secs: number;
-            message_template?: string | null;
-            name: string;
-            no_data_policy: string;
-            op: string;
-            query: string;
-            /** Format: double */
-            threshold: number;
-        };
         /**
          * @description An assist request: a task, the user's natural-language intent, and optional
          *     grounding context.
@@ -1514,7 +1425,7 @@ export interface components {
             /** @description Cursor to pass into the next [`ChangeFilter`]. `None` at end. */
             next_cursor?: string | null;
         };
-        /** @description A notification channel. */
+        /** @description A notification channel as returned by the API (secrets redacted). */
         ChannelDetail: {
             config: unknown;
             /** Format: uuid */
@@ -1542,45 +1453,8 @@ export interface components {
             system_prompt?: string | null;
         };
         /**
-         * @description Create an alert rule. A rule is either a legacy single condition (the
-         *     top-level `query`/`op`/`threshold`) or a multi-condition rule (`conditions`
-         *     combined by `combinator`). `no_data_policy`/`exec_error_policy` say how a
-         *     missing or failed evaluation resolves (`ok`|`alerting`|`keep_last`).
-         */
-        CreateAlertRuleRequest: {
-            channel_ids?: string[] | null;
-            /** @description How conditions combine: `and`|`or` (default `and`). */
-            combinator?: string | null;
-            /** @description Multi-condition list; when set it supersedes the single `query`/`op`. */
-            conditions?: components["schemas"]["AlertCondition"][] | null;
-            /** Format: uuid */
-            datasource_id?: string | null;
-            enabled?: boolean | null;
-            /** @description Execution-error policy: `ok`|`alerting`|`keep_last` (default `ok`). */
-            exec_error_policy?: string | null;
-            /**
-             * Format: int32
-             * @description Pending dwell in seconds before firing (0 = fire on first breach).
-             */
-            for_secs?: number | null;
-            /**
-             * Format: int32
-             * @description Evaluation cadence in seconds.
-             */
-            interval_secs?: number | null;
-            /** @description Optional notification message template; omitted uses the default. */
-            message_template?: string | null;
-            name: string;
-            /** @description No-data policy: `ok`|`alerting`|`keep_last` (default `ok`). */
-            no_data_policy?: string | null;
-            op: string;
-            query: string;
-            /** Format: double */
-            threshold: number;
-        };
-        /**
-         * @description Create a notification channel. `kind` selects the delivery (webhook in v1);
-         *     `config` is the kind-specific settings (e.g. `{ "url": "…" }`).
+         * @description Create a notification channel. `kind` is `webhook|slack|email`; `config` is
+         *     the kind-specific settings (secrets are redacted on read).
          */
         CreateChannelRequest: {
             config: unknown;
@@ -1650,6 +1524,12 @@ export interface components {
          *     numeric column carried onto the finding.
          */
         CreateDetectionRequest: {
+            /**
+             * @description Notification channels findings fan out to. Empty (the default) is a pure
+             *     analytic detection; a non-empty list makes it an "alert-type" detection
+             *     that notifies when a finding opens or resolves.
+             */
+            channel_ids?: string[];
             /** Format: uuid */
             datasource_id?: string | null;
             enabled?: boolean | null;
@@ -1667,6 +1547,8 @@ export interface components {
              * @description Run cadence in seconds (default 300).
              */
             interval_secs?: number | null;
+            /** @description Optional notification message template; None uses the default. */
+            message_template?: string | null;
             name: string;
             /** @description Params passed to the insight (thresholds, window, z, …). */
             params?: unknown;
@@ -1797,16 +1679,15 @@ export interface components {
             token: string;
         };
         /**
-         * @description Create a silence. `rule_id = None` silences every rule in the tenant for the
-         *     window; a value silences just that rule. Silencing suppresses notification,
-         *     not evaluation — the event history still records what fired.
+         * @description Create a silence (maintenance window). `detection_id` None silences every
+         *     detection in the tenant; a value silences only that detection.
          */
         CreateSilenceRequest: {
+            /** Format: uuid */
+            detection_id?: string | null;
             /** Format: date-time */
             ends_at: string;
             reason?: string | null;
-            /** Format: uuid */
-            rule_id?: string | null;
             /** Format: date-time */
             starts_at: string;
         };
@@ -2014,6 +1895,7 @@ export interface components {
         DateFormat: "auto" | "YYYY-MM-DD" | "DD/MM/YYYY" | "MM/DD/YYYY";
         /** @description A detection as returned by the API. */
         DetectionDetail: {
+            channel_ids: string[];
             /** Format: uuid */
             datasource_id?: string | null;
             enabled: boolean;
@@ -2026,6 +1908,7 @@ export interface components {
             insight_id: string;
             /** Format: int32 */
             interval_secs: number;
+            message_template?: string | null;
             name: string;
             params: unknown;
             sources: unknown;
@@ -2629,6 +2512,26 @@ export interface components {
         NodeTypeList: {
             node_types: components["schemas"]["NodeType"][];
         };
+        /** @description A notification event — one per finding transition the runner tried to deliver. */
+        NotifyEvent: {
+            /** Format: date-time */
+            at: string;
+            detail?: string | null;
+            /** Format: uuid */
+            detection_id: string;
+            /** Format: uuid */
+            finding_id?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** @description Whether at least one channel delivery succeeded. */
+            notified: boolean;
+            /** @description Whether an active silence suppressed delivery. */
+            silenced: boolean;
+            /** @description opened | resolved. */
+            transition: string;
+            /** Format: double */
+            value?: number | null;
+        };
         /**
          * @description Closed enum of number-format choices. Variants locked in stage 1.
          *     *Revisit trigger:* Indian grouping (`1,23,456.78`) becomes a
@@ -3157,15 +3060,15 @@ export interface components {
         SetTagsRequest: {
             tags: components["schemas"]["Tag"][];
         };
-        /** @description A silence window. */
+        /** @description A silence as returned by the API. */
         SilenceDetail: {
+            /** Format: uuid */
+            detection_id?: string | null;
             /** Format: date-time */
             ends_at: string;
             /** Format: uuid */
             id: string;
             reason?: string | null;
-            /** Format: uuid */
-            rule_id?: string | null;
             /** Format: date-time */
             starts_at: string;
         };
@@ -3180,7 +3083,7 @@ export interface components {
          *     a nav node exactly like a dashboard mount (WS-13 §4).
          * @enum {string}
          */
-        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "insights" | "alerts" | "findings" | "agents" | "access" | "audit";
+        StaticRoute: "dashboards" | "explore" | "datasources" | "flows" | "insights" | "detections" | "findings" | "agents" | "access" | "audit";
         /**
          * @description One `data:` frame on a live stream. `seq` is the monotonic per-stream event
          *     id echoed in the SSE `id:` field so a reconnecting client can send
@@ -3212,7 +3115,7 @@ export interface components {
          *     add-only within a major.
          * @enum {string}
          */
-        TaggableKind: "dashboard" | "datasource" | "flow" | "alert_rule" | "user" | "team";
+        TaggableKind: "dashboard" | "datasource" | "flow" | "detection" | "user" | "team";
         /** @description An entity returned by a by-tag lookup: its kind and id. */
         TaggedEntity: {
             /** @description The entity's id as a string (ids owned by other layers are not uuids). */
@@ -3307,25 +3210,6 @@ export interface components {
             name?: string | null;
             system_prompt?: string | null;
         };
-        /** @description Partially update an alert rule; omitted fields are unchanged. */
-        UpdateAlertRuleRequest: {
-            channel_ids?: string[] | null;
-            combinator?: string | null;
-            conditions?: components["schemas"]["AlertCondition"][] | null;
-            enabled?: boolean | null;
-            exec_error_policy?: string | null;
-            /** Format: int32 */
-            for_secs?: number | null;
-            /** Format: int32 */
-            interval_secs?: number | null;
-            message_template?: string | null;
-            name?: string | null;
-            no_data_policy?: string | null;
-            op?: string | null;
-            query?: string | null;
-            /** Format: double */
-            threshold?: number | null;
-        };
         /**
          * @description Partial update. Renaming the slug changes only the route alias — grants and
          *     panel refs keep pointing at the immutable id, so nothing is orphaned. Moving
@@ -3366,6 +3250,7 @@ export interface components {
         };
         /** @description Partially update a detection; omitted fields are unchanged. */
         UpdateDetectionRequest: {
+            channel_ids?: string[] | null;
             /**
              * @description Clear the datasource (run against the dev pool). Takes precedence over
              *     `datasource_id`.
@@ -3388,6 +3273,7 @@ export interface components {
             insight_id?: string | null;
             /** Format: int32 */
             interval_secs?: number | null;
+            message_template?: string | null;
             name?: string | null;
             params?: unknown;
             sources?: unknown;
@@ -3961,304 +3847,6 @@ export interface operations {
             };
             /** @description The model call failed */
             502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_channels: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Channels */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChannelDetail"][];
-                };
-            };
-        };
-    };
-    create_channel: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateChannelRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ChannelDetail"];
-                };
-            };
-        };
-    };
-    delete_channel: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Channel id */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_alert_events: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Events */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertEvent"][];
-                };
-            };
-        };
-    };
-    list_alert_rules: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Rules */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertRuleDetail"][];
-                };
-            };
-        };
-    };
-    create_alert_rule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateAlertRuleRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertRuleDetail"];
-                };
-            };
-        };
-    };
-    get_alert_rule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Rule id */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Rule */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AlertRuleDetail"];
-                };
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_alert_rule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Rule id */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateAlertRuleRequest"];
-            };
-        };
-        responses: {
-            /** @description Updated */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_alert_rule: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Rule id */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    list_silences: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Silences */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SilenceDetail"][];
-                };
-            };
-        };
-    };
-    create_silence: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSilenceRequest"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SilenceDetail"];
-                };
-            };
-        };
-    };
-    delete_silence: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Silence id */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not found */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -5127,6 +4715,170 @@ export interface operations {
             };
             /** @description References a missing insight */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_channels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Channels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelDetail"][];
+                };
+            };
+        };
+    };
+    create_channel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChannelDetail"];
+                };
+            };
+        };
+    };
+    delete_channel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Channel id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_notify_events: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent notification events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotifyEvent"][];
+                };
+            };
+        };
+    };
+    list_silences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Silences */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SilenceDetail"][];
+                };
+            };
+        };
+    };
+    create_silence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSilenceRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SilenceDetail"];
+                };
+            };
+        };
+    };
+    delete_silence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Silence id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

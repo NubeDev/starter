@@ -30,12 +30,9 @@ use crate::dto::datasource::{
     DatasourceKindSummary, DatasourceSchema, DatasourceSummary, RedactedConnection, SchemaColumn,
     SchemaTable, TestConnectionRequest, TestDatasourceResponse, UpdateDatasourceRequest,
 };
-use crate::dto::alert::{
-    AlertCondition, AlertEvent, AlertRuleDetail, ChannelDetail, CreateAlertRuleRequest,
-    CreateChannelRequest, CreateSilenceRequest, SilenceDetail, UpdateAlertRuleRequest,
-};
 use crate::dto::detection::{
-    CreateDetectionRequest, DetectionDetail, DetectionStats, Finding, FindingActionRequest,
+    ChannelDetail, CreateChannelRequest, CreateDetectionRequest, CreateSilenceRequest,
+    DetectionDetail, DetectionStats, Finding, FindingActionRequest, NotifyEvent, SilenceDetail,
     UpdateDetectionRequest,
 };
 use crate::dto::flow::{
@@ -143,21 +140,17 @@ use crate::Problem;
     IngestAccepted,
     DryRunRequest,
     DryRunResponse,
-    AlertCondition,
-    AlertRuleDetail,
     CreateDetectionRequest,
     UpdateDetectionRequest,
     DetectionDetail,
     DetectionStats,
     Finding,
     FindingActionRequest,
-    CreateAlertRuleRequest,
-    UpdateAlertRuleRequest,
-    AlertEvent,
     ChannelDetail,
     CreateChannelRequest,
     SilenceDetail,
     CreateSilenceRequest,
+    NotifyEvent,
     Tag,
     SetTagsRequest,
     TaggableKind,

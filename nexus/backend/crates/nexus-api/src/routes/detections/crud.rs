@@ -65,6 +65,8 @@ pub async fn create_detection(
         for_secs: req.for_secs.unwrap_or(0),
         interval_secs: req.interval_secs.unwrap_or(300),
         enabled: req.enabled.unwrap_or(true),
+        channel_ids: req.channel_ids,
+        message_template: req.message_template,
     };
     match detection::insert(&state.metadata, &tenant, &new).await {
         Ok(d) => Json(detection_to_detail(&d)).into_response(),
@@ -131,6 +133,8 @@ pub async fn update_detection(
         for_secs: req.for_secs,
         interval_secs: req.interval_secs,
         enabled: req.enabled,
+        channel_ids: req.channel_ids,
+        message_template: req.message_template,
     };
     match detection::update(&state.metadata, &tenant, id, &patch).await {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),

@@ -1,0 +1,25 @@
+[package]
+name        = "starter-setup-spi"
+description = "Setup / Automation Builder — service provider interface. Template, SetupRun, store traits, YAML envelope. Contracts-only; no runtime logic."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Contracts-only, mirroring starter-flow-spi: domain types + store
+# traits + the YAML envelope shape. Depends on starter-flow-spi for
+# FlowBody/RunId/Principal and on starter-flow for the FlowBody type
+# re-export. No tokio runtime, no I/O.
+[dependencies]
+starter-spi      = { workspace = true }
+starter-flow-spi = { workspace = true }
+starter-flow     = { workspace = true }
+serde            = { workspace = true }
+serde_json       = { workspace = true }
+serde_yaml       = { workspace = true }
+thiserror        = { workspace = true }
+async-trait      = { workspace = true }
+chrono           = { workspace = true }
+
+[dev-dependencies]

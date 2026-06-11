@@ -114,6 +114,7 @@ fn bind_arg<'q>(
 ) -> sqlx::query::Query<'q, sqlx::Postgres, sqlx::postgres::PgArguments> {
     match arg {
         SqlValue::Text(s) => query.bind(s),
+        SqlValue::TextArray(v) => query.bind(v),
         SqlValue::Int(i) => query.bind(i),
         SqlValue::Float(f) => query.bind(f),
         SqlValue::Bool(b) => query.bind(b),

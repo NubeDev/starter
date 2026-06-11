@@ -149,13 +149,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The runtime canary tick task spawned above its AppState build.
     let _canary_watch = watch("runtime_canary", canary_task);
 
-    // The alert scheduler runs for the process's lifetime, evaluating due rules
-    // on its own cadence. Single-node for v1.
-    let _alert_watch = watch("alert_scheduler", nexus_api::alerting::schedule::spawn(state.clone()));
-
-    // The detection scheduler (WS-15) is the alert scheduler's analytic sibling:
-    // it runs due detections, each producing findings rather than notifications.
-    // Same single-node, claim-and-advance cadence.
+    // The detection scheduler runs for the process's lifetime, running due
+    // detections on their own cadence — each producing findings and, for
+    // alert-type detections, notifying their channels. Single-node for v1. This
+    // subsumes the former standalone alert scheduler.
     let _detection_watch =
         watch("detection_scheduler", nexus_api::detecting::schedule::spawn(state.clone()));
 

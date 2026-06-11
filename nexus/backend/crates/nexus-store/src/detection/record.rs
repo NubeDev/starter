@@ -29,6 +29,13 @@ pub struct DetectionRecord {
     pub for_secs: i32,
     pub interval_secs: i32,
     pub enabled: bool,
+    /// Notification channels a finding transition fans out to. Empty = a pure
+    /// analytic detection (records findings, notifies no one); non-empty makes
+    /// it an "alert-type" detection.
+    pub channel_ids: Vec<Uuid>,
+    /// Optional override of the default notification message; None uses the
+    /// built-in template.
+    pub message_template: Option<String>,
 }
 
 /// Run stats for one detection — a glanceable summary of what it's producing.
@@ -60,6 +67,8 @@ pub struct NewDetection {
     pub for_secs: i32,
     pub interval_secs: i32,
     pub enabled: bool,
+    pub channel_ids: Vec<Uuid>,
+    pub message_template: Option<String>,
 }
 
 /// A partial detection update; `None` fields are unchanged.
@@ -80,4 +89,6 @@ pub struct DetectionPatch {
     pub for_secs: Option<i32>,
     pub interval_secs: Option<i32>,
     pub enabled: Option<bool>,
+    pub channel_ids: Option<Vec<Uuid>>,
+    pub message_template: Option<String>,
 }

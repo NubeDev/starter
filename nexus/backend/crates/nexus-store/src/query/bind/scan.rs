@@ -164,7 +164,7 @@ fn dispatch(
 /// it with a same-named variable), then a kind param, then a dashboard
 /// variable. A name that matches none is an undefined-variable 4xx.
 fn expand_bare(out: &mut BoundQueryBuilder, ctx: &BindCtx, name: &str) -> Result<(), BindError> {
-    if name == "caller_tenant_id" || name == "caller_user_id" {
+    if name == "caller_tenant_id" || name == "caller_user_id" || name == "caller_team_ids" {
         return vars::expand_host_token(out, ctx, name);
     }
     if ctx.params.contains_key(name) {

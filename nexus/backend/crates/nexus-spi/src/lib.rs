@@ -13,7 +13,7 @@ pub mod dto;
 pub mod id;
 pub mod openapi;
 
-pub use id::{AlertRuleId, DashboardId, DatasourceId, FlowId, PanelId, StreamId};
+pub use id::{DashboardId, DatasourceId, FlowId, PanelId, StreamId};
 
 /// The error body every nexus endpoint returns on failure — reused from
 /// `starter-spi` so the whole platform speaks one error shape.

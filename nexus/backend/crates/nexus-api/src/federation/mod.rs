@@ -33,6 +33,7 @@ pub async fn respond(
     let identity = QueryIdentity {
         tenant_id: Some(tenant.to_string()),
         user_id: Some(principal.subject.clone()),
+        teams: principal.teams.clone(),
     };
     match run_cached(state, principal, tenant, req, &identity).await {
         Ok(out) => Json(out).into_response(),

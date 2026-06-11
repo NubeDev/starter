@@ -21,7 +21,7 @@ use starter_spi::auth::Principal;
 use uuid::Uuid;
 
 use crate::authz::{
-    self, ACTION_EDIT, ACTION_VIEW, KIND_ALERT_RULE, KIND_DASHBOARD, KIND_DATASOURCE, KIND_FLOW,
+    self, ACTION_EDIT, ACTION_VIEW, KIND_DASHBOARD, KIND_DATASOURCE, KIND_DETECTION, KIND_FLOW,
 };
 use crate::state::AppState;
 
@@ -60,7 +60,7 @@ fn resource_kind(kind: TaggableKind) -> Option<&'static str> {
         TaggableKind::Dashboard => Some(KIND_DASHBOARD),
         TaggableKind::Datasource => Some(KIND_DATASOURCE),
         TaggableKind::Flow => Some(KIND_FLOW),
-        TaggableKind::AlertRule => Some(KIND_ALERT_RULE),
+        TaggableKind::Detection => Some(KIND_DETECTION),
         TaggableKind::User | TaggableKind::Team => None,
     }
 }
@@ -83,7 +83,7 @@ async fn exists_in_tenant(
         TaggableKind::Flow => nexus_store::flow::get(&state.metadata, tenant, id)
             .await?
             .is_some(),
-        TaggableKind::AlertRule => nexus_store::alert::rule::get(&state.metadata, tenant, id)
+        TaggableKind::Detection => nexus_store::detection::get(&state.metadata, tenant, id)
             .await?
             .is_some(),
         // Identity kinds are not validated here (owned by another layer); the

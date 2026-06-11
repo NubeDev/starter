@@ -7,7 +7,7 @@ import { createDatasource } from "@/api/datasources/create";
 import { removeDatasource } from "@/api/datasources/remove";
 import { queryDatasource } from "@/api/datasources/query";
 import { testDatasource } from "@/api/datasources/test";
-import { listAlertRules } from "@/api/alerts/rules";
+import { listDetections } from "@/api/detections/detections";
 import { createDashboard } from "@/api/dashboards/create";
 import { getDashboard } from "@/api/dashboards/get";
 import { removeDashboard } from "@/api/dashboards/remove";
@@ -112,9 +112,9 @@ describe.skipIf(!BASE)("integration: nexus-api", () => {
     expect(res.stats.truncated).toBe(false);
   }, 20_000);
 
-  it("lists alert rules without error", async () => {
-    const rules = await listAlertRules(client);
-    expect(Array.isArray(rules)).toBe(true);
+  it("lists detections without error", async () => {
+    const detections = await listDetections(client);
+    expect(Array.isArray(detections)).toBe(true);
   });
 
   it("probes the datasource connection (test endpoint)", async () => {

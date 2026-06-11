@@ -30,7 +30,10 @@ pub enum VarFormat {
 fn reject_host_token(value: &ScalarValue) -> Result<(), BindError> {
     if let ScalarValue::Text(s) = value {
         let lowered = s.to_ascii_lowercase();
-        if lowered == "$caller_tenant_id" || lowered == "$caller_user_id" {
+        if lowered == "$caller_tenant_id"
+            || lowered == "$caller_user_id"
+            || lowered == "$caller_team_ids"
+        {
             return Err(BindError::HostTokenInInput(s.clone()));
         }
     }
@@ -133,6 +136,13 @@ pub fn expand_host_token(
     ctx: &BindCtx,
     token: &str,
 ) -> Result<(), BindError> {
+    // The array token binds a `text[]` from `Principal.teams`; an empty
+    // list is a valid bind (matches no rows via `= ANY`), distinct from the
+    // scalar tokens whose absence is a 4xx.
+    if token == "caller_team_ids" {
+        out.push_arg(SqlValue::TextArray(ctx.host_tokens.caller_team_ids.clone()));
+        return Ok(());
+    }
     let value = match token {
         "caller_tenant_id" => ctx.host_tokens.caller_tenant_id.clone(),
         "caller_user_id" => ctx.host_tokens.caller_user_id.clone(),

@@ -1,7 +1,10 @@
 //! Detection DTOs — the saved analytic rules that run on a schedule and emit
-//! findings (WS-15). A detection references a stored insight (the Rhai rule) and
-//! adds the query, the schedule, and the column mapping that turns flagged rows
-//! into findings.
+//! findings. A detection references a stored insight (the Rhai rule) and adds the
+//! query, the schedule, and the column mapping that turns flagged rows into
+//! findings. An "alert-type" detection additionally names notification
+//! `channel_ids`; the runner pages those channels when a finding opens or
+//! resolves. The channel/silence/notify-event DTOs here are the delivery surface
+//! the old standalone alert subsystem owned, re-homed under detections.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -43,6 +46,14 @@ pub struct CreateDetectionRequest {
     pub interval_secs: Option<i32>,
     #[serde(default)]
     pub enabled: Option<bool>,
+    /// Notification channels findings fan out to. Empty (the default) is a pure
+    /// analytic detection; a non-empty list makes it an "alert-type" detection
+    /// that notifies when a finding opens or resolves.
+    #[serde(default)]
+    pub channel_ids: Vec<Uuid>,
+    /// Optional notification message template; None uses the default.
+    #[serde(default)]
+    pub message_template: Option<String>,
 }
 
 /// Partially update a detection; omitted fields are unchanged.
@@ -81,6 +92,10 @@ pub struct UpdateDetectionRequest {
     pub interval_secs: Option<i32>,
     #[serde(default)]
     pub enabled: Option<bool>,
+    #[serde(default)]
+    pub channel_ids: Option<Vec<Uuid>>,
+    #[serde(default)]
+    pub message_template: Option<String>,
 }
 
 /// A detection as returned by the API.
@@ -99,6 +114,8 @@ pub struct DetectionDetail {
     pub for_secs: i32,
     pub interval_secs: i32,
     pub enabled: bool,
+    pub channel_ids: Vec<Uuid>,
+    pub message_template: Option<String>,
 }
 
 /// One persistent finding emitted by a detection run.
@@ -138,4 +155,63 @@ pub struct DetectionStats {
 pub struct FindingActionRequest {
     #[serde(default)]
     pub note: Option<String>,
+}
+
+// ── Notification delivery (the alert subsystem's surface, re-homed) ──────────
+
+/// Create a notification channel. `kind` is `webhook|slack|email`; `config` is
+/// the kind-specific settings (secrets are redacted on read).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct CreateChannelRequest {
+    pub name: String,
+    pub kind: String,
+    pub config: Value,
+}
+
+/// A notification channel as returned by the API (secrets redacted).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct ChannelDetail {
+    pub id: Uuid,
+    pub name: String,
+    pub kind: String,
+    pub config: Value,
+}
+
+/// Create a silence (maintenance window). `detection_id` None silences every
+/// detection in the tenant; a value silences only that detection.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct CreateSilenceRequest {
+    #[serde(default)]
+    pub detection_id: Option<Uuid>,
+    pub starts_at: DateTime<Utc>,
+    pub ends_at: DateTime<Utc>,
+    #[serde(default)]
+    pub reason: Option<String>,
+}
+
+/// A silence as returned by the API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct SilenceDetail {
+    pub id: Uuid,
+    pub detection_id: Option<Uuid>,
+    pub starts_at: DateTime<Utc>,
+    pub ends_at: DateTime<Utc>,
+    pub reason: Option<String>,
+}
+
+/// A notification event — one per finding transition the runner tried to deliver.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct NotifyEvent {
+    pub id: Uuid,
+    pub detection_id: Uuid,
+    pub finding_id: Option<Uuid>,
+    pub at: DateTime<Utc>,
+    /// opened | resolved.
+    pub transition: String,
+    pub value: Option<f64>,
+    /// Whether an active silence suppressed delivery.
+    pub silenced: bool,
+    /// Whether at least one channel delivery succeeded.
+    pub notified: bool,
+    pub detail: Option<String>,
 }

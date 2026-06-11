@@ -37,8 +37,6 @@ pub const KIND_FOLDER: &str = "nexus.folder";
 pub const KIND_DATASOURCE: &str = "nexus.datasource";
 /// Registry kind for a saved flow.
 pub const KIND_FLOW: &str = "nexus.flow";
-/// Registry kind for an alert rule.
-pub const KIND_ALERT_RULE: &str = "nexus.alert_rule";
 /// Registry kind for an AI agent (its sessions inherit the agent's grants).
 pub const KIND_AGENT: &str = "nexus.agent";
 /// Registry kind for a tenant-authored query-kind (WS-10 §4.5c): a named SQL
@@ -77,7 +75,6 @@ pub fn register_nexus_resources(registry: &dyn ResourceRegistry) {
         KIND_FOLDER,
         KIND_DATASOURCE,
         KIND_FLOW,
-        KIND_ALERT_RULE,
         KIND_AGENT,
         KIND_QUERY_KIND,
         KIND_NAV_NODE,

@@ -1,11 +1,13 @@
-//! Detection runner (WS-15): the scheduled analytic engine that turns a stored
-//! insight + a query into persistent findings.
+//! Detection runner: the scheduled analytic engine that turns a stored insight +
+//! a query into persistent findings, and — for "alert-type" detections that name
+//! notification channels — delivers those findings to webhook/slack/email.
 //!
-//! Sibling of [`crate::alerting`], by design. The scheduler is a near-copy of
-//! the alert scheduler; the per-item body runs the insight over the query frame
-//! and upserts findings instead of reducing to a scalar and notifying. Keeping
-//! it a parallel module (rather than forking a shared scaffold) is the lower-risk
-//! v1 choice the WS calls for.
+//! The runner runs the insight over the query frame and reconciles findings; a
+//! finding opening or auto-resolving is the transition the [`notify`] layer fans
+//! out to the detection's channels. This subsumes the old standalone alert
+//! subsystem: a threshold "alert" is now a detection whose insight flags the
+//! breaching rows and whose `channel_ids` page someone.
 
+pub mod notify;
 pub mod run;
 pub mod schedule;

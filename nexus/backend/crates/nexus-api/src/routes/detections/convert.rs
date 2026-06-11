@@ -19,6 +19,8 @@ pub fn detection_to_detail(r: &DetectionRecord) -> DetectionDetail {
         for_secs: r.for_secs,
         interval_secs: r.interval_secs,
         enabled: r.enabled,
+        channel_ids: r.channel_ids.clone(),
+        message_template: r.message_template.clone(),
     }
 }
 

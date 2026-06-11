@@ -92,7 +92,7 @@ bin-build:
 
 ui-build:
 	@echo "==> vite build → ui/remoteEntry.js"
-	cd $(UI_SRC_DIR) && pnpm run build
+	cd $(UI_SRC_DIR) && pnpm install && pnpm run build
 
 ui-dev:
 	cd $(UI_SRC_DIR) && pnpm run dev

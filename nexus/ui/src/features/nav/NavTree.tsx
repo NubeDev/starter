@@ -125,9 +125,13 @@ function NavTreeItem({
   }
 
   const href = navNodeHref(node, slugOf);
+  // A `route` node may reference a route the frontend no longer knows about (a
+  // removed built-in still seeded in an older tenant's tree, or a stale bundle).
+  // `ROUTE_META` is a closed allow-list, so fall back to a generic icon rather
+  // than crash when the route is unknown — matching `nodeCategory`'s posture.
   const Icon =
     node.target.kind === "route"
-      ? ROUTE_META[node.target.route].icon
+      ? (ROUTE_META[node.target.route]?.icon ?? dashboardIcon("Activity"))
       : dashboardIcon(node.icon ?? "Activity");
 
   // A dashboard target whose page is gone (swept) renders disabled rather than

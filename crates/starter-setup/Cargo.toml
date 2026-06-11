@@ -1,0 +1,48 @@
+[package]
+name        = "starter-setup"
+description = "Setup / Automation Builder — run service, YAML import/export, progress projector, resume. Composes starter-flow + starter-setup-spi."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi      = { workspace = true }
+starter-setup-spi = { workspace = true }
+starter-flow-spi = { workspace = true }
+starter-flow     = { workspace = true }
+serde            = { workspace = true }
+serde_json       = { workspace = true }
+serde_yaml       = { workspace = true }
+thiserror        = { workspace = true }
+async-trait      = { workspace = true }
+chrono           = { workspace = true }
+tokio            = { workspace = true }
+tracing          = { workspace = true }
+jsonschema       = { workspace = true }
+uuid             = { workspace = true }
+
+# Surface adapters — feature-gated so the core run service stays
+# dep-light. `rest` pulls axum + the server SSE helper + authz; `mcp`
+# pulls the MCP tool surface.
+axum             = { workspace = true, optional = true }
+futures          = { workspace = true, optional = true }
+tokio-stream     = { workspace = true, optional = true }
+starter-server   = { workspace = true, optional = true }
+starter-authz    = { workspace = true, optional = true }
+starter-mcp      = { workspace = true, optional = true }
+
+[features]
+default = []
+# REST + SSE surface (P2/P3): mounts /setup routes, the SSE progress
+# endpoint, and the authz resource-kind registration + route gates.
+rest = ["dep:axum", "dep:futures", "dep:tokio-stream", "dep:starter-server", "dep:starter-authz"]
+# MCP tool surface (P4): setup.* tools sharing the run service.
+mcp = ["dep:starter-mcp"]
+
+[dev-dependencies]
+starter-store-sqlite = { workspace = true, features = ["flow", "setup", "testing"] }
+starter-spi          = { workspace = true }
+async-trait          = { workspace = true }
+tokio                = { workspace = true, features = ["rt-multi-thread", "macros", "time", "sync"] }

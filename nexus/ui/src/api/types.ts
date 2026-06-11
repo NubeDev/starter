@@ -95,14 +95,13 @@ export type NodeCounters = S["NodeCounters"];
 export type NodeRole = S["NodeRole"];
 export type LogLevel = S["LogLevel"];
 
-export type AlertRuleDetail = S["AlertRuleDetail"];
-export type CreateAlertRuleRequest = S["CreateAlertRuleRequest"];
-export type UpdateAlertRuleRequest = S["UpdateAlertRuleRequest"];
+// Notification delivery for alert-type detections — channels, silences, and
+// the notify-event history (the old standalone alert subsystem, re-homed).
 export type ChannelDetail = S["ChannelDetail"];
 export type CreateChannelRequest = S["CreateChannelRequest"];
 export type SilenceDetail = S["SilenceDetail"];
 export type CreateSilenceRequest = S["CreateSilenceRequest"];
-export type AlertEvent = S["AlertEvent"];
+export type NotifyEvent = S["NotifyEvent"];
 
 // Detections & findings (WS-15) — a scheduled insight that emits findings.
 export type DetectionDetail = S["DetectionDetail"];

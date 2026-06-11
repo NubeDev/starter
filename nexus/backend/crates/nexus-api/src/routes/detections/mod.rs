@@ -1,18 +1,41 @@
-//! Detection + findings routes (WS-15): the `/api/v1/detections/*` CRUD surface
-//! and the `/api/v1/findings/*` browse + ack/resolve surface.
+//! Detection + findings routes: the `/api/v1/detections/*` CRUD surface, the
+//! `/api/v1/findings/*` browse + ack/resolve surface, and — for "alert-type"
+//! detections — the notification channels/silences/events surface ([`notify`]).
 
 pub mod convert;
 pub mod crud;
 pub mod findings;
+pub mod notify;
 
 use axum::routing::{get, post};
 use axum::Router;
 
 use crate::state::AppState;
 
-/// The detections + findings surface.
+/// The detections + findings + notification surface.
 pub fn router() -> Router<AppState> {
     Router::new()
+        // Notification config (static segments registered before `{id}`).
+        .route(
+            "/api/v1/detections/channels",
+            get(notify::list_channels).post(notify::create_channel),
+        )
+        .route(
+            "/api/v1/detections/channels/{id}",
+            axum::routing::delete(notify::delete_channel),
+        )
+        .route(
+            "/api/v1/detections/silences",
+            get(notify::list_silences).post(notify::create_silence),
+        )
+        .route(
+            "/api/v1/detections/silences/{id}",
+            axum::routing::delete(notify::delete_silence),
+        )
+        .route(
+            "/api/v1/detections/notify-events",
+            get(notify::list_notify_events),
+        )
         .route(
             "/api/v1/detections",
             get(crud::list_detections).post(crud::create_detection),

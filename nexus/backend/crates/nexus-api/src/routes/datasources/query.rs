@@ -85,6 +85,7 @@ pub async fn query_datasource(
     let identity = nexus_store::QueryIdentity {
         tenant_id: Some(tenant.clone()),
         user_id: Some(caller_principal.subject.clone()),
+        teams: caller_principal.teams.clone(),
     };
     let mut result = crate::cache::run_cached(&state, &pool, &req, &identity, &id.to_string()).await;
     // RW-06 insight seam: an attached insight (inline script or a stored,

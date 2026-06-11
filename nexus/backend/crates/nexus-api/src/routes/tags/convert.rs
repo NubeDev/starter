@@ -13,7 +13,7 @@ pub fn kind_to_stored(kind: TaggableKind) -> &'static str {
         TaggableKind::Dashboard => "dashboard",
         TaggableKind::Datasource => "datasource",
         TaggableKind::Flow => "flow",
-        TaggableKind::AlertRule => "alert_rule",
+        TaggableKind::Detection => "detection",
         TaggableKind::User => "user",
         TaggableKind::Team => "team",
     }
@@ -27,7 +27,7 @@ pub fn kind_of(stored: &str) -> Option<TaggableKind> {
         "dashboard" => TaggableKind::Dashboard,
         "datasource" => TaggableKind::Datasource,
         "flow" => TaggableKind::Flow,
-        "alert_rule" => TaggableKind::AlertRule,
+        "detection" => TaggableKind::Detection,
         "user" => TaggableKind::User,
         "team" => TaggableKind::Team,
         _ => return None,

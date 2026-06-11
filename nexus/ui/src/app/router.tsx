@@ -3,7 +3,6 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "@/app/AppShell";
 import { DashboardsPage } from "@/features/dashboards/DashboardsPage";
 import { DashboardPage } from "@/features/dashboards/DashboardPage";
-import { AlertsPage } from "@/features/alerts/AlertsPage";
 import { FindingsPage } from "@/features/detections/FindingsPage";
 import { DatasourcesPage } from "@/features/datasources/DatasourcesPage";
 import { FlowsPage } from "@/features/flows/FlowsPage";
@@ -49,7 +48,7 @@ export const router = createBrowserRouter([
       { path: "flows/:flowName", element: <FlowEditorPage /> },
       { path: "insights", element: <InsightsListPage /> },
       { path: "insights/workbench", element: <InsightsPage /> },
-      { path: "alerts", element: <AlertsPage /> },
+      { path: "detections", element: <FindingsPage /> },
       { path: "findings", element: <FindingsPage /> },
       { path: "agents", element: <AgentsPage /> },
       {

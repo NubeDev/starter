@@ -24,6 +24,10 @@ use super::QueryGuards;
 pub struct QueryIdentity {
     pub tenant_id: Option<String>,
     pub user_id: Option<String>,
+    /// The caller's teams, from `Principal.teams`. Feeds the
+    /// `$caller_team_ids` host token (P3a). Empty when the principal has no
+    /// team membership.
+    pub teams: Vec<String>,
 }
 
 /// Bind `req` against its macro context and `identity`, then execute it. The
@@ -73,6 +77,7 @@ fn to_bind_ctx(req: &QueryRequest, identity: &QueryIdentity) -> BindCtx {
         host_tokens: HostTokens {
             caller_tenant_id: identity.tenant_id.clone(),
             caller_user_id: identity.user_id.clone(),
+            caller_team_ids: identity.teams.clone(),
         },
     }
 }

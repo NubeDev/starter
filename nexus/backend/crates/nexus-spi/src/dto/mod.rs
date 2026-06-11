@@ -9,7 +9,6 @@
 
 pub mod agent;
 pub mod ai;
-pub mod alert;
 pub mod audit;
 pub mod dashboard;
 pub mod datasource;

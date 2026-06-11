@@ -32,6 +32,11 @@ uuid             = { workspace = true, optional = true }
 # `--no-default-features` to skip both the dep and the migration.
 starter-skills = { workspace = true, optional = true }
 
+# `setup` feature deps (DOCS §5). The setup catalog/run-index store
+# impls live behind a default-off feature, mirroring `flow`. Pulls
+# `starter-setup-spi` (and transitively `starter-flow` for FlowBody).
+starter-setup-spi = { workspace = true, optional = true }
+
 [features]
 default = ["skill-approvals"]
 # Exposes `starter_store_sqlite::testing` with an in-memory pool
@@ -52,6 +57,10 @@ flow = ["dep:starter-flow-spi", "dep:chrono", "dep:uuid"]
 # but we declare it explicitly here too so the impl module compiles
 # without the `flow` feature being on.
 skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
+# Compiles the `setup` module with SQLite-backed `TemplateStore` and
+# `SetupRunStore` impls of the `starter-setup-spi` contracts (DOCS §5).
+# Default-off; pulls `uuid` for run-id parsing.
+setup = ["dep:starter-setup-spi", "dep:uuid"]
 
 [dev-dependencies]
 tokio    = { workspace = true }

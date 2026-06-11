@@ -80,15 +80,29 @@ async fn try_run(ctx: &RunContext<'_>, tenant: &str, id: Uuid) -> Result<(), Str
         .map_err(stringify)?;
 
     // Turn each flagged row into a finding payload, then reconcile in one tenant
-    // transaction (upsert flagged, auto-resolve the rest).
+    // transaction (upsert flagged, auto-resolve the rest). The reconcile surfaces
+    // which findings opened and which resolved this run.
     let flagged = flagged_findings(&det, &rows);
-    let (upserts, resolved) = finding::reconcile(ctx.metadata, tenant, det.id, &flagged)
+    let reconciled = finding::reconcile(ctx.metadata, tenant, det.id, &flagged)
         .await
         .map_err(stringify)?;
     tracing::debug!(
-        tenant, detection_id = %id, flagged = flagged.len(), upserts, resolved,
+        tenant, detection_id = %id, flagged = flagged.len(),
+        opened = reconciled.opened.len(), resolved = reconciled.resolved.len(),
         "detection run complete"
     );
+
+    // Fan the finding transitions out to the detection's notification channels.
+    // A pure analytic detection (no channels) returns immediately; an alert-type
+    // detection delivers an "opened"/"resolved" notification per transition.
+    crate::detecting::notify::notify_transitions(
+        ctx.metadata,
+        tenant,
+        &det,
+        &reconciled.opened,
+        &reconciled.resolved,
+    )
+    .await;
     Ok(())
 }
 
@@ -128,6 +142,7 @@ async fn run_detection_query(
     let identity = nexus_store::QueryIdentity {
         tenant_id: Some(tenant.to_string()),
         user_id: Some(principal.subject.clone()),
+        teams: principal.teams.clone(),
     };
     crate::federation::run_cached(ctx.state, &principal, tenant, &req, &identity)
         .await
@@ -308,6 +323,8 @@ mod tests {
             for_secs: 0,
             interval_secs: 300,
             enabled: true,
+            channel_ids: Vec::new(),
+            message_template: None,
         }
     }
 

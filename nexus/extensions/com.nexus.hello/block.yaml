@@ -71,12 +71,18 @@ contributes:
       params_schema: insights/zscore_params.json
 
   # `contributes.ui` → federation components the FE host mounts into named slots.
-  # `HelloNav` lands in the primary `sidebar-nav` slot (a real navigation entry,
-  # like rubix's extensions add). The host wraps that slot in a click interceptor
-  # so the plain `<a href>` navigates as SPA routing. (The old decorative
-  # `slot: sidebar` floating card was removed — that slot no longer exists in the
-  # nexus host.)
+  # The host resolves a slot by matching `exposes[*].slot` to the slot id, then
+  # looking up `exposes[*].name` among the components the remote's `init()`
+  # registered (`module` is metadata only). Two slots, mirroring com.nexus.demo:
+  #   - `HelloNav`   → `sidebar-nav` — a nav entry. Its `<a href>` points at the
+  #     host page route `/x/com.nexus.hello`; the host wraps the slot in a click
+  #     interceptor so the plain anchor navigates as SPA routing.
+  #   - `HelloPanel` → `main` — the page body. The host route `/x/:extId/*`
+  #     mounts it into the content area. Built from vendored shadcn/ui primitives
+  #     (`components/ui/`) on the extension's own scoped Tailwind bundle, so it
+  #     inherits the host theme/palette.
   ui:
     entry: ui/remoteEntry.js
     exposes:
+      - { name: HelloPanel, module: "./Panel", slot: main }
       - { name: HelloNav, module: "./Nav", slot: sidebar-nav }

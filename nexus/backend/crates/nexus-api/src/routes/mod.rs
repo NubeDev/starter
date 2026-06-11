@@ -3,7 +3,6 @@
 
 pub mod agents;
 pub mod ai;
-pub mod alerts;
 pub mod audit;
 pub mod dashboards;
 pub mod datasources;
@@ -45,7 +44,6 @@ pub fn product_router() -> Router<AppState> {
         .merge(folders::router())
         .merge(insights::router())
         .merge(nav::router())
-        .merge(alerts::router())
         .merge(detections::router())
         .merge(tags::router())
         .merge(agents::router())
