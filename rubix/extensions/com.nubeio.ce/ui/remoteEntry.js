@@ -14212,6 +14212,99 @@ const TYPE_STATUS = 64;
 const MSG_UPDATE = 1;
 const MSG_SNAPSHOT = 2;
 
+const RS = "";
+const US = "";
+const GS = "";
+const FS = "";
+const FACET_PROP = "__facets";
+function parseFacet(raw) {
+  const out = /* @__PURE__ */ new Map();
+  if (!raw) return out;
+  for (const rec of raw.split(RS)) {
+    if (!rec) continue;
+    const fields = rec.split(US);
+    const uid = Number(fields[0]);
+    if (!Number.isFinite(uid)) continue;
+    const f = {};
+    for (let i = 1; i < fields.length; i++) {
+      const fld = fields[i];
+      if (!fld) continue;
+      const v = fld.slice(1);
+      switch (fld[0]) {
+        case "l":
+          f.label = v;
+          break;
+        case "u":
+          f.unit = v;
+          break;
+        case "d":
+          f.decimals = Number(v);
+          break;
+        case "n":
+          f.min = Number(v);
+          break;
+        case "x":
+          f.max = Number(v);
+          break;
+        case "h":
+          f.hidden = v !== "0";
+          break;
+        case "r":
+          f.order = Number(v);
+          break;
+        case "a":
+          f.action = v;
+          break;
+        case "o":
+          f.aliases = v.split(GS).map((o) => {
+            const j = o.indexOf(FS);
+            return j < 0 ? { code: Number(o), label: o } : { code: Number(o.slice(0, j)), label: o.slice(j + 1) };
+          });
+          break;
+      }
+    }
+    out.set(uid, f);
+  }
+  return out;
+}
+function serializeFacet(facet) {
+  const recs = [];
+  for (const [uid, f] of facet) {
+    const fields = [String(uid)];
+    if (f.label) fields.push("l" + f.label);
+    if (f.unit) fields.push("u" + f.unit);
+    if (f.decimals != null) fields.push("d" + f.decimals);
+    if (f.min != null) fields.push("n" + f.min);
+    if (f.max != null) fields.push("x" + f.max);
+    if (f.hidden) fields.push("h1");
+    if (f.order != null) fields.push("r" + f.order);
+    if (f.action) fields.push("a" + f.action);
+    if (f.aliases && f.aliases.length) {
+      fields.push("o" + f.aliases.map((a) => a.code + FS + a.label).join(GS));
+    }
+    if (fields.length > 1) recs.push(fields.join(US));
+  }
+  return recs.join(RS);
+}
+const cache = /* @__PURE__ */ new Map();
+function facetFor(componentUid, raw) {
+  const key = raw ?? "";
+  const hit = cache.get(componentUid);
+  if (hit && hit.raw === key) return hit.parsed;
+  const parsed = parseFacet(key);
+  cache.set(componentUid, { raw: key, parsed });
+  return parsed;
+}
+function rawFacet(properties) {
+  const v = properties?.[FACET_PROP]?.value;
+  return typeof v === "string" ? v : void 0;
+}
+function aliasLabel(aliases, value) {
+  if (!aliases || aliases.length === 0) return void 0;
+  const code = value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
+  return aliases.find((a) => a.code === code)?.label;
+}
+
 const CeWiresheetContext = createContext(null);
 const COLOR_NUMBER = "#4a9eff";
 const COLOR_BOOL = "#4ade80";
@@ -14258,6 +14351,14 @@ function fmtValue(v, dt) {
   if (dt === DATATYPE_BOOL) return v ? "true" : "false";
   if (Number.isInteger(v)) return v.toString();
   return v.toFixed(2);
+}
+function fmtValueFacet(v, dt, facet) {
+  const al = aliasLabel(facet?.aliases, v);
+  if (al != null) return al;
+  let base;
+  if (facet?.decimals != null && typeof v === "number") base = v.toFixed(facet.decimals);
+  else base = fmtValue(v, dt);
+  return facet?.unit && base !== "—" ? `${base} ${facet.unit}` : base;
 }
 function PropertyContextMenu({
   x,
@@ -15067,11 +15168,12 @@ function PropertyValueEditor({
   componentUid,
   propName,
   value,
-  dataType
+  dataType,
+  facet
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
-  const display = fmtValue(value, dataType);
+  const display = fmtValueFacet(value, dataType, facet);
   const start = () => {
     setDraft(value == null ? "" : typeof value === "string" ? value : String(value));
     setEditing(true);
@@ -15100,6 +15202,27 @@ function PropertyValueEditor({
   };
   if (editing) {
     const stop = (e) => e.stopPropagation();
+    if (facet?.aliases && facet.aliases.length) {
+      const cur = value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
+      return /* @__PURE__ */ jsx(
+        "select",
+        {
+          autoFocus: true,
+          className: "nodrag",
+          value: String(cur),
+          onChange: (e) => commitAlias(Number(e.target.value)),
+          onKeyDown: (e) => {
+            if (e.key === "Escape") setEditing(false);
+            e.stopPropagation();
+          },
+          onBlur: () => setEditing(false),
+          onClick: stop,
+          onPointerDown: stop,
+          style: editorInputStyle,
+          children: facet.aliases.map((a) => /* @__PURE__ */ jsx("option", { value: String(a.code), children: a.label }, a.code))
+        }
+      );
+    }
     if (dataType === DATATYPE_BOOL) {
       return /* @__PURE__ */ jsxs(
         "select",
@@ -15176,6 +15299,16 @@ function PropertyValueEditor({
       if (!Number.isFinite(n)) return;
       parsed = n;
     }
+    try {
+      const { updateNode } = await Promise.resolve().then(() => rest);
+      await updateNode(componentUid, { properties: { [propName]: { value: parsed } } });
+    } catch (e) {
+      console.error("update value failed:", e.message);
+    }
+  }
+  async function commitAlias(code) {
+    setEditing(false);
+    const parsed = dataType === DATATYPE_BOOL ? code === 1 : code;
     try {
       const { updateNode } = await Promise.resolve().then(() => rest);
       await updateNode(componentUid, { properties: { [propName]: { value: parsed } } });
@@ -15339,17 +15472,20 @@ function FunctionBlockInner({ data, selected }) {
     if (!restComp) return null;
     const isUserFacing = (p) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL;
     const entries = Object.entries(restComp.properties);
+    const facet = facetFor(restComp.uid, rawFacet(restComp.properties));
     const userRows = entries.filter(([, p]) => isUserFacing(p)).map(([name, p]) => ({
       uid: p.uid,
       name,
       category: p.category,
       dataType: propertyDataType.get(p.uid) ?? inferDataType(p.value),
-      systemRole: p.systemRole
-    }));
+      systemRole: p.systemRole,
+      facet: facet.get(p.uid)
+    })).filter((r) => !r.facet?.hidden);
+    const byOrder = (a, b) => (a.facet?.order ?? Number.MAX_SAFE_INTEGER) - (b.facet?.order ?? Number.MAX_SAFE_INTEGER);
     const rows2 = [
-      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT),
-      ...userRows.filter((r) => r.category === CATEGORY_INPUT),
-      ...userRows.filter((r) => r.category === CATEGORY_CONFIG)
+      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT).sort(byOrder),
+      ...userRows.filter((r) => r.category === CATEGORY_INPUT).sort(byOrder),
+      ...userRows.filter((r) => r.category === CATEGORY_CONFIG).sort(byOrder)
     ];
     const statusEntry = entries.find(([, p]) => p.systemRole === ROLE_STATUS);
     const statusText2 = parseStatus(statusEntry?.[1].value);
@@ -15622,7 +15758,7 @@ function FunctionBlockInner({ data, selected }) {
                       gap: 4
                     },
                     children: [
-                      p.name,
+                      /* @__PURE__ */ jsx("span", { title: p.facet?.label ? p.name : void 0, children: p.facet?.label ?? p.name }),
                       p.category === CATEGORY_CONFIG ? " (cfg)" : "",
                       overridden && /* @__PURE__ */ jsx(
                         "span",
@@ -15648,7 +15784,8 @@ function FunctionBlockInner({ data, selected }) {
                     componentUid: data.componentUid,
                     propName: p.name,
                     value: v,
-                    dataType: p.dataType
+                    dataType: p.dataType,
+                    facet: p.facet
                   }
                 ) : /* @__PURE__ */ jsx(
                   "span",
@@ -15662,7 +15799,7 @@ function FunctionBlockInner({ data, selected }) {
                       padding: "0 2px"
                     },
                     title: DATATYPE_LABEL[p.dataType],
-                    children: fmtValue(v, p.dataType)
+                    children: fmtValueFacet(v, p.dataType, p.facet)
                   }
                 )
               ]
@@ -16846,6 +16983,7 @@ function Inner({ base }) {
   );
   const [movePickerOpen, setMovePickerOpen] = useState(false);
   const [actionPickerOpen, setActionPickerOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [paneMenu, setPaneMenu] = useState(null);
   const openNodeContextMenu = useCallback(
     (uid, x, y) => {
@@ -17182,27 +17320,34 @@ function Inner({ base }) {
     setEdges((es) => es.map((e) => e.selected ? { ...e, selected: false } : e));
     setPendingPasteSelection(null);
   }, [nodes, pendingPasteSelection]);
-  const handlesReady = useStore$1((s) => {
-    if (!pendingEdges) return false;
+  const readyKey = useStore$1((s) => {
+    if (!pendingEdges) return "";
     const lookup = s.nodeLookup;
-    if (!lookup) return false;
+    if (!lookup) return "";
+    const ids = [];
     for (const e of pendingEdges) {
       const src = lookup.get(e.source);
       const dst = lookup.get(e.target);
       const srcBounds = src?.internals?.handleBounds?.source;
       const dstBounds = dst?.internals?.handleBounds?.target;
-      if (!srcBounds || !dstBounds) return false;
-      if (!srcBounds.some((h) => h.id === e.sourceHandle)) return false;
-      if (!dstBounds.some((h) => h.id === e.targetHandle)) return false;
+      if (!srcBounds || !dstBounds) continue;
+      if (!srcBounds.some((h) => h.id === e.sourceHandle)) continue;
+      if (!dstBounds.some((h) => h.id === e.targetHandle)) continue;
+      ids.push(e.id);
     }
-    return true;
+    return ids.join(",");
   });
   useEffect(() => {
-    if (handlesReady && pendingEdges != null) {
-      setEdges(pendingEdges);
-      setPendingEdges(null);
-    }
-  }, [handlesReady, pendingEdges]);
+    if (!pendingEdges) return;
+    const ready = new Set(readyKey ? readyKey.split(",") : []);
+    setEdges(pendingEdges.filter((e) => ready.has(e.id)));
+    if (ready.size === pendingEdges.length) setPendingEdges(null);
+  }, [readyKey, pendingEdges]);
+  useEffect(() => {
+    if (!pendingEdges) return;
+    const t = window.setTimeout(() => setPendingEdges(null), 1500);
+    return () => window.clearTimeout(t);
+  }, [pendingEdges]);
   useEffect(() => {
     fetch(`${base}/api/v0/schema`).then((r) => r.json()).then((j) => {
       const exts = j.data;
@@ -18011,12 +18156,31 @@ function Inner({ base }) {
         }
       }
     ),
-    nodeMenu && !movePickerOpen && !actionPickerOpen && /* @__PURE__ */ jsx(
+    nodeMenu && !movePickerOpen && !actionPickerOpen && !detailsOpen && /* @__PURE__ */ jsx(
       NodeContextMenu,
       {
         x: nodeMenu.x,
         y: nodeMenu.y,
         hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
+        canRename: nodes.filter((n) => n.selected).length === 1,
+        onRename: async () => {
+          const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+          setNodeMenu(null);
+          if (sel.length !== 1) return;
+          const uid = sel[0];
+          const cur = useStructural.getState().components.get(uid);
+          const next = window.prompt("Rename component", cur?.name ?? "");
+          if (next == null) return;
+          const trimmed = next.trim();
+          if (!trimmed || trimmed === cur?.name) return;
+          try {
+            await updateNode(uid, { name: trimmed });
+            await reload();
+          } catch (e) {
+            setError(e.message);
+          }
+        },
+        onDetails: () => setDetailsOpen(true),
         onMoveInto: () => setMovePickerOpen(true),
         onAction: () => setActionPickerOpen(true),
         onClose: () => setNodeMenu(null)
@@ -18057,6 +18221,26 @@ function Inner({ base }) {
         },
         onClose: () => {
           setMovePickerOpen(false);
+          setNodeMenu(null);
+        }
+      }
+    ),
+    nodeMenu && detailsOpen && /* @__PURE__ */ jsx(
+      DetailsPanel,
+      {
+        componentUid: nodes.filter((n) => n.selected).map((n) => Number(n.id))[0],
+        onSave: async (facetString) => {
+          const uid = nodes.filter((n) => n.selected).map((n) => Number(n.id))[0];
+          if (uid == null) return;
+          try {
+            await updateNode(uid, { properties: { [FACET_PROP]: { value: facetString } } });
+            await reload();
+          } catch (e) {
+            setError(e.message);
+          }
+        },
+        onClose: () => {
+          setDetailsOpen(false);
           setNodeMenu(null);
         }
       }
@@ -18190,6 +18374,279 @@ function EdgeMenuItem({
         borderRadius: 3
       },
       children: label
+    }
+  );
+}
+function parseAliasInput(s) {
+  const out = [];
+  for (const part of s.split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const j = t.indexOf("=");
+    if (j < 0) continue;
+    const code = Number(t.slice(0, j).trim());
+    const label = t.slice(j + 1).trim();
+    if (Number.isFinite(code) && label) out.push({ code, label });
+  }
+  return out;
+}
+const detailsField = {
+  background: "#0f1115",
+  color: "#e6e8eb",
+  border: "1px solid #2c313c",
+  borderRadius: 2,
+  padding: "2px 5px",
+  fontSize: 11,
+  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+  boxSizing: "border-box",
+  outline: "none",
+  minWidth: 0
+};
+function DetailsPanel({
+  componentUid,
+  onSave,
+  onClose
+}) {
+  const comp = useStructural((s) => s.components.get(componentUid));
+  const props = useMemo(() => {
+    if (!comp) return [];
+    return Object.entries(comp.properties).filter(([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL).map(([name, p]) => ({ uid: p.uid, name }));
+  }, [comp]);
+  const initial = useMemo(
+    () => facetFor(componentUid, rawFacet(comp?.properties)),
+    [comp, componentUid]
+  );
+  const [draft, setDraft] = useState(() => {
+    const d = {};
+    for (const p of props) {
+      const f = initial.get(p.uid);
+      d[p.uid] = {
+        label: f?.label ?? "",
+        unit: f?.unit ?? "",
+        decimals: f?.decimals != null ? String(f.decimals) : "",
+        hidden: f?.hidden ?? false,
+        aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? ""
+      };
+    }
+    return d;
+  });
+  const empty = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
+  const set = (uid, patch) => setDraft((d) => ({ ...d, [uid]: { ...d[uid] ?? empty, ...patch } }));
+  useEffect(() => {
+    const onEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+  const save = () => {
+    const facet = /* @__PURE__ */ new Map();
+    for (const p of props) {
+      const d = draft[p.uid] ?? empty;
+      const f = {};
+      if (d.label.trim()) f.label = d.label.trim();
+      if (d.unit.trim()) f.unit = d.unit.trim();
+      const dec = Number(d.decimals);
+      if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
+      if (d.hidden) f.hidden = true;
+      const aliases = parseAliasInput(d.aliases);
+      if (aliases.length) f.aliases = aliases;
+      const init = initial.get(p.uid);
+      if (init?.action) f.action = init.action;
+      if (init?.min != null) f.min = init.min;
+      if (init?.max != null) f.max = init.max;
+      if (init?.order != null) f.order = init.order;
+      if (Object.keys(f).length > 0) facet.set(p.uid, f);
+    }
+    onSave(serializeFacet(facet));
+    onClose();
+  };
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      onClick: onClose,
+      onContextMenu: (e) => e.preventDefault(),
+      style: {
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      },
+      children: /* @__PURE__ */ jsxs(
+        "div",
+        {
+          onClick: (e) => e.stopPropagation(),
+          style: {
+            width: 480,
+            maxHeight: "80vh",
+            background: "#1a1d24",
+            border: "1px solid #2c313c",
+            borderRadius: 6,
+            boxShadow: "0 8px 28px rgba(0,0,0,0.6)",
+            display: "flex",
+            flexDirection: "column",
+            color: "#e6e8eb",
+            fontFamily: "-apple-system, system-ui, sans-serif",
+            fontSize: 12
+          },
+          children: [
+            /* @__PURE__ */ jsxs(
+              "div",
+              {
+                style: {
+                  padding: "8px 12px",
+                  borderBottom: "1px solid #2c313c",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                },
+                children: [
+                  /* @__PURE__ */ jsxs("span", { style: { fontWeight: 600 }, children: [
+                    "Details — ",
+                    /* @__PURE__ */ jsx("span", { style: { color: "#9ecbff" }, children: comp?.name ?? componentUid })
+                  ] }),
+                  /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: "label · unit · decimals · aliases" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsx("div", { style: { overflowY: "auto" }, children: props.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "12px", color: "#5a6172" }, children: "no editable properties" }) : props.map((p) => {
+              const d = draft[p.uid] ?? empty;
+              return /* @__PURE__ */ jsxs("div", { style: { borderBottom: "1px solid #232733", padding: "8px 12px" }, children: [
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    style: {
+                      color: "#9ecbff",
+                      marginBottom: 5,
+                      fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                    },
+                    children: p.name
+                  }
+                ),
+                /* @__PURE__ */ jsxs(
+                  "div",
+                  {
+                    style: {
+                      display: "grid",
+                      gridTemplateColumns: "1fr 64px 46px auto",
+                      gap: 6,
+                      alignItems: "center"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsx(
+                        "input",
+                        {
+                          placeholder: "label",
+                          value: d.label,
+                          onChange: (e) => set(p.uid, { label: e.target.value }),
+                          onKeyDown: (e) => e.stopPropagation(),
+                          style: detailsField
+                        }
+                      ),
+                      /* @__PURE__ */ jsx(
+                        "input",
+                        {
+                          placeholder: "unit",
+                          value: d.unit,
+                          onChange: (e) => set(p.uid, { unit: e.target.value }),
+                          onKeyDown: (e) => e.stopPropagation(),
+                          style: detailsField
+                        }
+                      ),
+                      /* @__PURE__ */ jsx(
+                        "input",
+                        {
+                          placeholder: "dec",
+                          value: d.decimals,
+                          onChange: (e) => set(p.uid, { decimals: e.target.value }),
+                          onKeyDown: (e) => e.stopPropagation(),
+                          style: detailsField
+                        }
+                      ),
+                      /* @__PURE__ */ jsxs(
+                        "label",
+                        {
+                          style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
+                          children: [
+                            /* @__PURE__ */ jsx(
+                              "input",
+                              {
+                                type: "checkbox",
+                                checked: d.hidden,
+                                onChange: (e) => set(p.uid, { hidden: e.target.checked })
+                              }
+                            ),
+                            "hide"
+                          ]
+                        }
+                      )
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    placeholder: "aliases   e.g.  0=off, 1=auto, 2=manual",
+                    value: d.aliases,
+                    onChange: (e) => set(p.uid, { aliases: e.target.value }),
+                    onKeyDown: (e) => e.stopPropagation(),
+                    style: { ...detailsField, width: "100%", marginTop: 6 }
+                  }
+                )
+              ] }, p.uid);
+            }) }),
+            /* @__PURE__ */ jsxs(
+              "div",
+              {
+                style: {
+                  padding: "8px 12px",
+                  borderTop: "1px solid #2c313c",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 8
+                },
+                children: [
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      onClick: onClose,
+                      style: {
+                        background: "transparent",
+                        color: "#9aa3b2",
+                        border: "1px solid #2c313c",
+                        borderRadius: 3,
+                        padding: "4px 12px",
+                        cursor: "pointer",
+                        fontSize: 12
+                      },
+                      children: "Cancel"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      onClick: save,
+                      style: {
+                        background: "#2c3a55",
+                        color: "#9ecbff",
+                        border: "1px solid #3b5388",
+                        borderRadius: 3,
+                        padding: "4px 14px",
+                        cursor: "pointer",
+                        fontSize: 12
+                      },
+                      children: "Save"
+                    }
+                  )
+                ]
+              }
+            )
+          ]
+        }
+      )
     }
   );
 }
@@ -18378,6 +18835,9 @@ function NodeContextMenu({
   x,
   y,
   hasActions,
+  canRename,
+  onRename,
+  onDetails,
   onMoveInto,
   onAction,
   onClose
@@ -18416,6 +18876,8 @@ function NodeContextMenu({
         fontFamily: "-apple-system, system-ui, sans-serif"
       },
       children: [
+        canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Rename…", onClick: onRename }),
+        canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Details…", onClick: onDetails }),
         /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Move into…", onClick: onMoveInto }),
         hasActions && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Action…", onClick: onAction })
       ]
@@ -18461,6 +18923,17 @@ function MoveIntoPicker({
     }
     return false;
   };
+  const movingComp = (allComponents ?? []).find((c) => movingSet.has(c.uid));
+  const curFolderUid = movingComp?.parent;
+  const curFolder = (allComponents ?? []).find((c) => c.uid === curFolderUid);
+  const upUid = curFolder?.parent;
+  const curFolderPath = curFolder?.path;
+  const tierOf = (c) => {
+    if (upUid !== void 0 && c.uid === upUid) return 0;
+    if (curFolderUid !== void 0 && c.parent === curFolderUid) return 1;
+    if (curFolderPath && c.path.startsWith(curFolderPath + "/")) return 2;
+    return 3;
+  };
   const candidates = [];
   for (const c of allComponents ?? []) {
     if (movingSet.has(c.uid)) continue;
@@ -18469,10 +18942,11 @@ function MoveIntoPicker({
       uid: c.uid,
       name: c.name || c.type,
       kind: c.type,
-      path: c.path
+      path: c.path,
+      tier: tierOf(c)
     });
   }
-  candidates.sort((a, b) => a.path.localeCompare(b.path));
+  candidates.sort((a, b) => a.tier !== b.tier ? a.tier - b.tier : a.path.localeCompare(b.path));
   const f = filter.trim().toLowerCase();
   const visible = f ? candidates.filter(
     (c) => c.name.toLowerCase().includes(f) || c.kind.toLowerCase().includes(f) || c.path.toLowerCase().includes(f)
@@ -18549,49 +19023,67 @@ function MoveIntoPicker({
             }
           )
         ] }),
-        /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto" }, children: visible.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 12 }, children: allComponents == null ? "loading…" : "no destinations" }) : visible.map((c) => {
+        /* @__PURE__ */ jsx("div", { style: { flex: 1, overflowY: "auto" }, children: visible.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 8px", color: "#5a6172", fontSize: 12 }, children: allComponents == null ? "loading…" : "no destinations" }) : visible.map((c, idx) => {
           const pathLabel = c.path === "root" ? "root" : c.path.startsWith("root/") ? c.path.slice(5) : c.path;
-          return /* @__PURE__ */ jsxs(
-            "button",
-            {
-              onClick: () => onMove(c.uid),
-              style: {
-                display: "flex",
-                width: "100%",
-                textAlign: "left",
-                padding: "5px 8px",
-                background: "transparent",
-                color: "#e6e8eb",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 12,
-                fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                alignItems: "baseline",
-                gap: 6
-              },
-              onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
-              onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-              children: [
-                /* @__PURE__ */ jsx(
-                  "span",
-                  {
-                    style: {
-                      color: "#9ecbff",
-                      flex: 1,
-                      minWidth: 0,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    },
-                    title: c.path,
-                    children: pathLabel
-                  }
-                ),
-                /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 11, flexShrink: 0 }, children: c.kind })
-              ]
-            },
-            c.uid
-          );
+          const showSection = c.tier !== (idx > 0 ? visible[idx - 1].tier : -1);
+          const sectionLabel = c.tier === 0 ? "up one level" : c.tier === 1 ? "same level" : c.tier === 2 ? "inside this folder" : "other";
+          return /* @__PURE__ */ jsxs("div", { children: [
+            showSection && /* @__PURE__ */ jsx(
+              "div",
+              {
+                style: {
+                  padding: "6px 8px 2px 8px",
+                  color: "#5a6172",
+                  fontSize: 9,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4,
+                  borderTop: idx > 0 ? "1px solid #2c313c" : "none",
+                  marginTop: idx > 0 ? 2 : 0
+                },
+                children: sectionLabel
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: () => onMove(c.uid),
+                style: {
+                  display: "flex",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "5px 8px",
+                  background: "transparent",
+                  color: "#e6e8eb",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  alignItems: "baseline",
+                  gap: 6
+                },
+                onMouseEnter: (e) => e.currentTarget.style.background = "#2c313c",
+                onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+                children: [
+                  /* @__PURE__ */ jsx(
+                    "span",
+                    {
+                      style: {
+                        color: "#9ecbff",
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      },
+                      title: c.path,
+                      children: pathLabel
+                    }
+                  ),
+                  /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 11, flexShrink: 0 }, children: c.kind })
+                ]
+              }
+            )
+          ] }, c.uid);
         }) })
       ]
     }
@@ -19300,7 +19792,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-10T05:54:21.245Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-11T02:25:46.484Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

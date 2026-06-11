@@ -88,6 +88,15 @@ import {
 } from "./lib/diagnostics";
 import { usePresence, type PresenceState } from "./lib/presence";
 import { CeRestWs, wsUrlFromBase } from "./lib/ws";
+import {
+  facetFor,
+  rawFacet,
+  serializeFacet,
+  FACET_PROP,
+  type Alias,
+  type ComponentFacet,
+  type PropFacet,
+} from "./lib/facet";
 
 const nodeTypes = { fb: FunctionBlock, ghost: GhostNode };
 
@@ -623,6 +632,7 @@ function Inner({ base }: { base: string }) {
   );
   const [movePickerOpen, setMovePickerOpen] = useState(false);
   const [actionPickerOpen, setActionPickerOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   // Right-click on empty pane → menu (up a folder / add component / paste).
   const [paneMenu, setPaneMenu] = useState<{ x: number; y: number } | null>(null);
   const openNodeContextMenu = useCallback(
@@ -1115,10 +1125,17 @@ function Inner({ base }: { base: string }) {
   // React Flow's internal store. Handle registration happens in a useEffect inside the
   // Handle component (after mount + measurement); subscribing to `nodeLookup` here
   // re-evaluates on every internal store change, so we flush exactly when ready.
-  const handlesReady = useRfStore((s) => {
-    if (!pendingEdges) return false;
+  // Promote parked edges to the live `edges` array as their handles mount.
+  // Checked PER EDGE: an edge whose handles can never resolve (e.g. a malformed
+  // output→output edge persisted by the engine — its "target" handle is a source
+  // handle) is skipped instead of blocking EVERY edge from rendering. Returns a
+  // stable string key (the ready edge ids) so the selector only re-renders when
+  // the ready SET changes, not on every store tick.
+  const readyKey = useRfStore((s) => {
+    if (!pendingEdges) return "";
     const lookup = (s as unknown as { nodeLookup: Map<string, unknown> }).nodeLookup;
-    if (!lookup) return false;
+    if (!lookup) return "";
+    const ids: string[] = [];
     for (const e of pendingEdges) {
       const src = lookup.get(e.source) as
         | { internals?: { handleBounds?: { source?: { id?: string | null }[] | null } } }
@@ -1128,18 +1145,27 @@ function Inner({ base }: { base: string }) {
         | undefined;
       const srcBounds = src?.internals?.handleBounds?.source;
       const dstBounds = dst?.internals?.handleBounds?.target;
-      if (!srcBounds || !dstBounds) return false;
-      if (!srcBounds.some((h) => h.id === e.sourceHandle)) return false;
-      if (!dstBounds.some((h) => h.id === e.targetHandle)) return false;
+      if (!srcBounds || !dstBounds) continue;
+      if (!srcBounds.some((h) => h.id === e.sourceHandle)) continue;
+      if (!dstBounds.some((h) => h.id === e.targetHandle)) continue;
+      ids.push(e.id);
     }
-    return true;
+    return ids.join(",");
   });
   useEffect(() => {
-    if (handlesReady && pendingEdges != null) {
-      setEdges(pendingEdges);
-      setPendingEdges(null);
-    }
-  }, [handlesReady, pendingEdges]);
+    if (!pendingEdges) return;
+    const ready = new Set(readyKey ? readyKey.split(",") : []);
+    setEdges(pendingEdges.filter((e) => ready.has(e.id)));
+    if (ready.size === pendingEdges.length) setPendingEdges(null);
+  }, [readyKey, pendingEdges]);
+  useEffect(() => {
+    // Grace period: the ready edges are already live; stop tracking so any
+    // still-unresolved (malformed) edges are dropped rather than pinning
+    // pendingEdges and re-running the selector on every store change.
+    if (!pendingEdges) return;
+    const t = window.setTimeout(() => setPendingEdges(null), 1500);
+    return () => window.clearTimeout(t);
+  }, [pendingEdges]);
 
   // Available component types grouped by extension (the palette). /api/v0/schema
   // returns each extension's component definitions; the full type string is
@@ -2309,13 +2335,32 @@ function Inner({ base }: { base: string }) {
           }}
         />
       )}
-      {nodeMenu && !movePickerOpen && !actionPickerOpen && (
+      {nodeMenu && !movePickerOpen && !actionPickerOpen && !detailsOpen && (
         <NodeContextMenu
           x={nodeMenu.x}
           y={nodeMenu.y}
           hasActions={
             getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0
           }
+          canRename={nodes.filter((n) => n.selected).length === 1}
+          onRename={async () => {
+            const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+            setNodeMenu(null);
+            if (sel.length !== 1) return;
+            const uid = sel[0];
+            const cur = useStructural.getState().components.get(uid);
+            const next = window.prompt("Rename component", cur?.name ?? "");
+            if (next == null) return;
+            const trimmed = next.trim();
+            if (!trimmed || trimmed === cur?.name) return;
+            try {
+              await updateNode(uid, { name: trimmed });
+              await reload();
+            } catch (e) {
+              setError((e as Error).message);
+            }
+          }}
+          onDetails={() => setDetailsOpen(true)}
           onMoveInto={() => setMovePickerOpen(true)}
           onAction={() => setActionPickerOpen(true)}
           onClose={() => setNodeMenu(null)}
@@ -2362,6 +2407,25 @@ function Inner({ base }: { base: string }) {
           }}
           onClose={() => {
             setMovePickerOpen(false);
+            setNodeMenu(null);
+          }}
+        />
+      )}
+      {nodeMenu && detailsOpen && (
+        <DetailsPanel
+          componentUid={nodes.filter((n) => n.selected).map((n) => Number(n.id))[0]}
+          onSave={async (facetString) => {
+            const uid = nodes.filter((n) => n.selected).map((n) => Number(n.id))[0];
+            if (uid == null) return;
+            try {
+              await updateNode(uid, { properties: { [FACET_PROP]: { value: facetString } } });
+              await reload();
+            } catch (e) {
+              setError((e as Error).message);
+            }
+          }}
+          onClose={() => {
+            setDetailsOpen(false);
             setNodeMenu(null);
           }}
         />
@@ -2526,8 +2590,273 @@ function EdgeMenuItem({
   );
 }
 
-// Node-body right-click menu. Currently only "Move into…"; new items (rename,
-// duplicate, etc.) can stack here as needed.
+// Parse the Details panel's alias text field ("0=off, 1=auto, 2=manual") into
+// {code,label} entries; ignores blanks / malformed parts.
+function parseAliasInput(s: string): Alias[] {
+  const out: Alias[] = [];
+  for (const part of s.split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const j = t.indexOf("=");
+    if (j < 0) continue;
+    const code = Number(t.slice(0, j).trim());
+    const label = t.slice(j + 1).trim();
+    if (Number.isFinite(code) && label) out.push({ code, label });
+  }
+  return out;
+}
+
+const detailsField: CSSProperties = {
+  background: "#0f1115",
+  color: "#e6e8eb",
+  border: "1px solid #2c313c",
+  borderRadius: 2,
+  padding: "2px 5px",
+  fontSize: 11,
+  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+  boxSizing: "border-box",
+  outline: "none",
+  minWidth: 0,
+};
+
+// Details panel — author the per-prop __facet (labels, units, decimals,
+// aliases, hidden). Read-modify-write: starts from the current facet and
+// preserves fields it doesn't edit (action/min/max/order), serialises, and
+// hands the string to the caller to PATCH + reload.
+function DetailsPanel({
+  componentUid,
+  onSave,
+  onClose,
+}: {
+  componentUid: number;
+  onSave: (facetString: string) => void;
+  onClose: () => void;
+}) {
+  const comp = useStructural((s) => s.components.get(componentUid));
+  const props = useMemo(() => {
+    if (!comp) return [] as { uid: number; name: string }[];
+    return Object.entries(comp.properties)
+      .filter(([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL)
+      .map(([name, p]) => ({ uid: p.uid, name }));
+  }, [comp]);
+  const initial = useMemo(
+    () => facetFor(componentUid, rawFacet(comp?.properties)),
+    [comp, componentUid],
+  );
+  type Draft = {
+    label: string;
+    unit: string;
+    decimals: string;
+    hidden: boolean;
+    aliases: string;
+  };
+  const [draft, setDraft] = useState<Record<number, Draft>>(() => {
+    const d: Record<number, Draft> = {};
+    for (const p of props) {
+      const f = initial.get(p.uid);
+      d[p.uid] = {
+        label: f?.label ?? "",
+        unit: f?.unit ?? "",
+        decimals: f?.decimals != null ? String(f.decimals) : "",
+        hidden: f?.hidden ?? false,
+        aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? "",
+      };
+    }
+    return d;
+  });
+  const empty: Draft = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
+  const set = (uid: number, patch: Partial<Draft>) =>
+    setDraft((d) => ({ ...d, [uid]: { ...(d[uid] ?? empty), ...patch } }));
+
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [onClose]);
+
+  const save = () => {
+    const facet: ComponentFacet = new Map();
+    for (const p of props) {
+      const d = draft[p.uid] ?? empty;
+      const f: PropFacet = {};
+      if (d.label.trim()) f.label = d.label.trim();
+      if (d.unit.trim()) f.unit = d.unit.trim();
+      const dec = Number(d.decimals);
+      if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
+      if (d.hidden) f.hidden = true;
+      const aliases = parseAliasInput(d.aliases);
+      if (aliases.length) f.aliases = aliases;
+      // Preserve fields this panel doesn't edit (engine / action set).
+      const init = initial.get(p.uid);
+      if (init?.action) f.action = init.action;
+      if (init?.min != null) f.min = init.min;
+      if (init?.max != null) f.max = init.max;
+      if (init?.order != null) f.order = init.order;
+      if (Object.keys(f).length > 0) facet.set(p.uid, f);
+    }
+    onSave(serializeFacet(facet));
+    onClose();
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      onContextMenu={(e) => e.preventDefault()}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 480,
+          maxHeight: "80vh",
+          background: "#1a1d24",
+          border: "1px solid #2c313c",
+          borderRadius: 6,
+          boxShadow: "0 8px 28px rgba(0,0,0,0.6)",
+          display: "flex",
+          flexDirection: "column",
+          color: "#e6e8eb",
+          fontFamily: "-apple-system, system-ui, sans-serif",
+          fontSize: 12,
+        }}
+      >
+        <div
+          style={{
+            padding: "8px 12px",
+            borderBottom: "1px solid #2c313c",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>
+            Details — <span style={{ color: "#9ecbff" }}>{comp?.name ?? componentUid}</span>
+          </span>
+          <span style={{ color: "#5a6172", fontSize: 10 }}>label · unit · decimals · aliases</span>
+        </div>
+        <div style={{ overflowY: "auto" }}>
+          {props.length === 0 ? (
+            <div style={{ padding: "12px", color: "#5a6172" }}>no editable properties</div>
+          ) : (
+            props.map((p) => {
+              const d = draft[p.uid] ?? empty;
+              return (
+                <div key={p.uid} style={{ borderBottom: "1px solid #232733", padding: "8px 12px" }}>
+                  <div
+                    style={{
+                      color: "#9ecbff",
+                      marginBottom: 5,
+                      fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                    }}
+                  >
+                    {p.name}
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 64px 46px auto",
+                      gap: 6,
+                      alignItems: "center",
+                    }}
+                  >
+                    <input
+                      placeholder="label"
+                      value={d.label}
+                      onChange={(e) => set(p.uid, { label: e.target.value })}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      style={detailsField}
+                    />
+                    <input
+                      placeholder="unit"
+                      value={d.unit}
+                      onChange={(e) => set(p.uid, { unit: e.target.value })}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      style={detailsField}
+                    />
+                    <input
+                      placeholder="dec"
+                      value={d.decimals}
+                      onChange={(e) => set(p.uid, { decimals: e.target.value })}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      style={detailsField}
+                    />
+                    <label
+                      style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={d.hidden}
+                        onChange={(e) => set(p.uid, { hidden: e.target.checked })}
+                      />
+                      hide
+                    </label>
+                  </div>
+                  <input
+                    placeholder="aliases   e.g.  0=off, 1=auto, 2=manual"
+                    value={d.aliases}
+                    onChange={(e) => set(p.uid, { aliases: e.target.value })}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    style={{ ...detailsField, width: "100%", marginTop: 6 }}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
+        <div
+          style={{
+            padding: "8px 12px",
+            borderTop: "1px solid #2c313c",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 8,
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              background: "transparent",
+              color: "#9aa3b2",
+              border: "1px solid #2c313c",
+              borderRadius: 3,
+              padding: "4px 12px",
+              cursor: "pointer",
+              fontSize: 12,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            style={{
+              background: "#2c3a55",
+              color: "#9ecbff",
+              border: "1px solid #3b5388",
+              borderRadius: 3,
+              padding: "4px 14px",
+              cursor: "pointer",
+              fontSize: 12,
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Node-body right-click menu. Currently "Rename / Details / Move into / Action".
 // Empty-pane context menu: navigate up a folder, add a component (filterable
 // picker → drops at the right-click position), and paste.
 function PaneContextMenu({
@@ -2730,6 +3059,9 @@ function NodeContextMenu({
   x,
   y,
   hasActions,
+  canRename,
+  onRename,
+  onDetails,
   onMoveInto,
   onAction,
   onClose,
@@ -2737,6 +3069,9 @@ function NodeContextMenu({
   x: number;
   y: number;
   hasActions: boolean;
+  canRename: boolean;
+  onRename: () => void;
+  onDetails: () => void;
   onMoveInto: () => void;
   onAction: () => void;
   onClose: () => void;
@@ -2777,6 +3112,8 @@ function NodeContextMenu({
         fontFamily: "-apple-system, system-ui, sans-serif",
       }}
     >
+      {canRename && <EdgeMenuItem label="Rename…" onClick={onRename} />}
+      {canRename && <EdgeMenuItem label="Details…" onClick={onDetails} />}
       <EdgeMenuItem label="Move into…" onClick={onMoveInto} />
       {hasActions && <EdgeMenuItem label="Action…" onClick={onAction} />}
     </div>
@@ -2850,7 +3187,22 @@ function MoveIntoPicker({
     name: string;
     kind: string;
     path: string;
+    tier: number;
   }
+  // Order destinations by relationship to the folder the moving component is in:
+  // up one level (its folder's parent) → same level (its siblings) → children
+  // (deeper inside the current folder) → everything else.
+  const movingComp = (allComponents ?? []).find((c) => movingSet.has(c.uid));
+  const curFolderUid = movingComp?.parent; // the folder we're moving FROM
+  const curFolder = (allComponents ?? []).find((c) => c.uid === curFolderUid);
+  const upUid = curFolder?.parent; // one level up
+  const curFolderPath = curFolder?.path;
+  const tierOf = (c: Component): number => {
+    if (upUid !== undefined && c.uid === upUid) return 0; // up one level
+    if (curFolderUid !== undefined && c.parent === curFolderUid) return 1; // same level
+    if (curFolderPath && c.path.startsWith(curFolderPath + "/")) return 2; // children
+    return 3; // everything else
+  };
   const candidates: Candidate[] = [];
   for (const c of allComponents ?? []) {
     if (movingSet.has(c.uid)) continue;
@@ -2860,11 +3212,11 @@ function MoveIntoPicker({
       name: c.name || c.type,
       kind: c.type,
       path: c.path,
+      tier: tierOf(c),
     });
   }
-  // Sort by path so folders cluster and ancestors of the same chain appear
-  // together. Root (path "root") sorts first naturally.
-  candidates.sort((a, b) => a.path.localeCompare(b.path));
+  // Tier first (preference order), then path so each tier stays clustered.
+  candidates.sort((a, b) => (a.tier !== b.tier ? a.tier - b.tier : a.path.localeCompare(b.path)));
 
   const f = filter.trim().toLowerCase();
   const visible = f
@@ -2952,16 +3304,40 @@ function MoveIntoPicker({
             {allComponents == null ? "loading…" : "no destinations"}
           </div>
         ) : (
-          visible.map((c) => {
+          visible.map((c, idx) => {
             // Drop the leading "root/" from the displayed path so the column
             // reads cleanly; bare "root" shows as the explicit top-level
             // option.
             const pathLabel =
               c.path === "root" ? "root" : c.path.startsWith("root/") ? c.path.slice(5) : c.path;
+            const showSection = c.tier !== (idx > 0 ? visible[idx - 1].tier : -1);
+            const sectionLabel =
+              c.tier === 0
+                ? "up one level"
+                : c.tier === 1
+                  ? "same level"
+                  : c.tier === 2
+                    ? "inside this folder"
+                    : "other";
             return (
-              <button
-                key={c.uid}
-                onClick={() => onMove(c.uid)}
+              <div key={c.uid}>
+                {showSection && (
+                  <div
+                    style={{
+                      padding: "6px 8px 2px 8px",
+                      color: "#5a6172",
+                      fontSize: 9,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.4,
+                      borderTop: idx > 0 ? "1px solid #2c313c" : "none",
+                      marginTop: idx > 0 ? 2 : 0,
+                    }}
+                  >
+                    {sectionLabel}
+                  </div>
+                )}
+                <button
+                  onClick={() => onMove(c.uid)}
                 style={{
                   display: "flex",
                   width: "100%",
@@ -2993,7 +3369,8 @@ function MoveIntoPicker({
                   {pathLabel}
                 </span>
                 <span style={{ color: "#5a6172", fontSize: 11, flexShrink: 0 }}>{c.kind}</span>
-              </button>
+                </button>
+              </div>
             );
           })
         )}

@@ -29,6 +29,7 @@ import {
   type PropertySystemRole,
 } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
+import { facetFor, rawFacet, aliasLabel, type PropFacet } from "../lib/facet";
 
 // Editor-level capabilities the ConnectPicker needs for its "New" flow — the
 // creatable component types and a "create one in the current folder" action.
@@ -58,6 +59,7 @@ interface PropRow {
   category: PropertyCategory;
   dataType: PropertyDataType;
   systemRole?: PropertySystemRole;
+  facet?: PropFacet; // per-prop presentation metadata from __facet
 }
 
 export type FunctionBlockData = {
@@ -170,6 +172,21 @@ function fmtValue(v: DecodedValue | undefined, dt: PropertyDataType): string {
   if (dt === DATATYPE_BOOL) return v ? "true" : "false";
   if (Number.isInteger(v)) return v.toString();
   return v.toFixed(2);
+}
+
+// fmtValue + facet: alias label wins; otherwise apply the facet's decimals and
+// unit suffix on top of the base formatting.
+function fmtValueFacet(
+  v: DecodedValue | undefined,
+  dt: PropertyDataType,
+  facet: PropFacet | undefined,
+): string {
+  const al = aliasLabel(facet?.aliases, v);
+  if (al != null) return al;
+  let base: string;
+  if (facet?.decimals != null && typeof v === "number") base = v.toFixed(facet.decimals);
+  else base = fmtValue(v, dt);
+  return facet?.unit && base !== "—" ? `${base} ${facet.unit}` : base;
 }
 
 function rowYCenter(rowIndex: number): number {
@@ -1185,16 +1202,18 @@ function PropertyValueEditor({
   propName,
   value,
   dataType,
+  facet,
 }: {
   componentUid: number;
   propName: string;
   value: DecodedValue | undefined;
   dataType: PropertyDataType;
+  facet?: PropFacet;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>("");
 
-  const display = fmtValue(value, dataType);
+  const display = fmtValueFacet(value, dataType, facet);
   const start = () => {
     setDraft(value == null ? "" : typeof value === "string" ? value : String(value));
     setEditing(true);
@@ -1225,6 +1244,34 @@ function PropertyValueEditor({
 
   if (editing) {
     const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+    // Aliased value (bool or int enum) → a dropdown of the alias labels, writing
+    // back the native value (the code; bool → code 1/0).
+    if (facet?.aliases && facet.aliases.length) {
+      const cur =
+        value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
+      return (
+        <select
+          autoFocus
+          className="nodrag"
+          value={String(cur)}
+          onChange={(e) => commitAlias(Number(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setEditing(false);
+            e.stopPropagation();
+          }}
+          onBlur={() => setEditing(false)}
+          onClick={stop}
+          onPointerDown={stop}
+          style={editorInputStyle}
+        >
+          {facet.aliases.map((a) => (
+            <option key={a.code} value={String(a.code)}>
+              {a.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
     // `nodrag` is React Flow's opt-out class: nodes won't start a drag from
     // pointer events on elements carrying it. Critical for native form
     // controls (especially <select>) because the OS dropdown captures the
@@ -1313,6 +1360,19 @@ function PropertyValueEditor({
       if (!Number.isFinite(n)) return;
       parsed = n;
     }
+    try {
+      const { updateNode } = await import("../lib/rest");
+      await updateNode(componentUid, { properties: { [propName]: { value: parsed } } });
+    } catch (e) {
+      console.error("update value failed:", (e as Error).message);
+    }
+  }
+
+  // Commit an aliased selection: write the native value (bool → code 1/0,
+  // otherwise the int code itself).
+  async function commitAlias(code: number) {
+    setEditing(false);
+    const parsed: number | boolean = dataType === DATATYPE_BOOL ? code === 1 : code;
     try {
       const { updateNode } = await import("../lib/rest");
       await updateNode(componentUid, { properties: { [propName]: { value: parsed } } });
@@ -1547,6 +1607,10 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
     // means an engine-managed slot).
     const isUserFacing = (p: Property) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL;
     const entries = Object.entries(restComp.properties);
+    // Parse this component's __facet (cached by raw string) and attach each
+    // prop's metadata to its row. Hidden rows are dropped; `order` sorts within
+    // each category group (stable for rows without it).
+    const facet = facetFor(restComp.uid, rawFacet(restComp.properties));
     const userRows: PropRow[] = entries
       .filter(([, p]) => isUserFacing(p))
       .map(([name, p]) => ({
@@ -1555,11 +1619,15 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         category: p.category,
         dataType: propertyDataType.get(p.uid) ?? inferDataType(p.value),
         systemRole: p.systemRole,
-      }));
+        facet: facet.get(p.uid),
+      }))
+      .filter((r) => !r.facet?.hidden);
+    const byOrder = (a: PropRow, b: PropRow) =>
+      (a.facet?.order ?? Number.MAX_SAFE_INTEGER) - (b.facet?.order ?? Number.MAX_SAFE_INTEGER);
     const rows: PropRow[] = [
-      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT),
-      ...userRows.filter((r) => r.category === CATEGORY_INPUT),
-      ...userRows.filter((r) => r.category === CATEGORY_CONFIG),
+      ...userRows.filter((r) => r.category === CATEGORY_OUTPUT).sort(byOrder),
+      ...userRows.filter((r) => r.category === CATEGORY_INPUT).sort(byOrder),
+      ...userRows.filter((r) => r.category === CATEGORY_CONFIG).sort(byOrder),
     ];
     const statusEntry = entries.find(([, p]) => p.systemRole === ROLE_STATUS);
     const statusText = parseStatus(statusEntry?.[1].value);
@@ -1872,7 +1940,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 gap: 4,
               }}
             >
-              {p.name}
+              <span title={p.facet?.label ? p.name : undefined}>{p.facet?.label ?? p.name}</span>
               {p.category === CATEGORY_CONFIG ? " (cfg)" : ""}
               {overridden && (
                 <span
@@ -1896,6 +1964,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 propName={p.name}
                 value={v}
                 dataType={p.dataType}
+                facet={p.facet}
               />
             ) : (
               <span
@@ -1909,7 +1978,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 }}
                 title={DATATYPE_LABEL[p.dataType]}
               >
-                {fmtValue(v, p.dataType)}
+                {fmtValueFacet(v, p.dataType, p.facet)}
               </span>
             )}
           </div>
