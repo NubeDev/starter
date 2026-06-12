@@ -29,7 +29,14 @@ import {
   type PropertySystemRole,
 } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
-import { facetFor, rawFacet, aliasLabel, exposedPorts, type PropFacet } from "../lib/facet";
+import {
+  facetFor,
+  rawFacet,
+  aliasLabel,
+  exposedPorts,
+  FACET_PROP,
+  type PropFacet,
+} from "../lib/facet";
 
 // Editor-level capabilities the ConnectPicker needs for its "New" flow — the
 // creatable component types and a "create one in the current folder" action.
@@ -63,6 +70,11 @@ export interface CeWiresheetCtx {
   // Open the Details panel for any component (e.g. the off-canvas child behind an
   // exposed port, so its facet — the source of truth — can be edited there).
   openDetails?: (componentUid: number) => void;
+  // Request a (debounced) scope reload. Used when a component's live __facets
+  // stream changes its EXPOSED-PORT set (expose/unexpose from another session):
+  // that alters port handles and thus edge routing, so ghosts/ports must be
+  // rebuilt — a row re-derive isn't enough. Cosmetic facet edits don't call this.
+  requestReload?: () => void;
 }
 export const CeWiresheetContext = createContext<CeWiresheetCtx | null>(null);
 
@@ -1621,6 +1633,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   // loses its hook-order invariant and throws "Rendered more hooks than during the
   // previous render."
   const schemaV = useSchemaVersion((s) => s.version);
+  const ctx = useContext(CeWiresheetContext);
   // Subscribe to the live REST component so structural changes re-render the
   // block without a manual reload. Default Object.is equality only re-renders when
   // THIS uid's entry changes (upsertComponent swaps just that one entry).
@@ -1712,6 +1725,32 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   // Only a real structural change (props added/removed → restComp identity
   // swaps) or a schema arrival (dataType table fills → schemaV bumps) recomputes
   // this. The live value/flag reads stay in the row JSX below.
+  // Cross-session facet sync, done SAFELY: the structural memo below renders from
+  // the REST copy of __facets (authoritative — never clobbered by a stale/empty
+  // stream value, which was breaking expose). The live stream is used ONLY as a
+  // "something changed" trigger: __facets is an input string, so its value streams
+  // into our value map keyed by its own uid; when that streamed value TRANSITIONS
+  // (another session edited the facet), request a debounced scope reload so REST
+  // refreshes structural and the rows/ports/edges rebuild consistently. Compared
+  // against the previous STREAMED value (not structural) so it can't loop.
+  const ownFacetUid = restComp?.properties[FACET_PROP]?.uid;
+  const liveFacetRaw =
+    ownFacetUid != null && typeof valuesByUid[ownFacetUid] === "string"
+      ? (valuesByUid[ownFacetUid] as string)
+      : undefined;
+  const prevFacetRaw = useRef<string | null>(null);
+  useEffect(() => {
+    if (liveFacetRaw == null) return;
+    if (prevFacetRaw.current === null) {
+      prevFacetRaw.current = liveFacetRaw; // seed; don't fire on first sight
+      return;
+    }
+    if (liveFacetRaw !== prevFacetRaw.current) {
+      prevFacetRaw.current = liveFacetRaw;
+      ctx?.requestReload?.();
+    }
+  }, [liveFacetRaw, ctx]);
+
   const structural = useMemo(() => {
     if (!restComp) return null;
     // User-facing = normal role (the `system` bool is gone; systemRole != 0
@@ -1721,6 +1760,9 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
     // Parse this component's __facet (cached by raw string) and attach each
     // prop's metadata to its row. Hidden rows are dropped; `order` sorts within
     // each category group (stable for rows without it).
+    // Authoritative: the REST copy of __facets (cached by raw string). The live
+    // stream only triggers a reload (above) — it never sources the render, so a
+    // stale/empty streamed value can't blank out exposed ports.
     const facet = facetFor(restComp.uid, rawFacet(restComp.properties));
     const mappedRows: PropRow[] = entries
       .filter(([, p]) => isUserFacing(p))

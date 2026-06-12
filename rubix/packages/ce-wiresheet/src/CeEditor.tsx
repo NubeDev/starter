@@ -34,7 +34,6 @@ import { DiagPanel } from "./components/DiagPanel";
 import { EventsPanel } from "./components/EventsPanel";
 import { FindPanel } from "./components/FindPanel";
 import { PresenceBar } from "./components/PresenceBar";
-import { SearchPanel } from "./components/SearchPanel";
 import { ZoomRateController } from "./components/ZoomRateController";
 import { VisibilitySub } from "./components/VisibilitySub";
 import {
@@ -94,15 +93,19 @@ import { CeRestWs, wsUrlFromBase } from "./lib/ws";
 import {
   facetFor,
   parseFacet,
+  parseAliasInput,
   rawFacet,
   serializeFacet,
   exposedPorts,
   remapFacetUids,
   FACET_PROP,
-  type Alias,
   type ComponentFacet,
   type PropFacet,
 } from "./lib/facet";
+import { sanitizeName, uniqueName } from "./lib/naming";
+import { layoutPositions } from "./lib/layout";
+import { groupBoundary } from "./lib/grouping";
+import { buildSearchIndex, rankSearchHits, type SearchHit } from "./lib/search";
 
 const nodeTypes = { fb: FunctionBlock, ghost: GhostNode };
 
@@ -2164,6 +2167,25 @@ function Inner({ base }: { base: string }) {
           x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
           y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom),
         };
+      // Don't drop a new node exactly on top of an existing one (repeated
+      // center-adds would pile up). Cascade diagonally off any node already at
+      // this spot. Persisted, so it stays put after reload too.
+      {
+        const STACK_OFFSET = 16;
+        const occupied = (x: number, y: number) =>
+          rf.getNodes().some(
+            (n) =>
+              n.type === "fb" && Math.round(n.position.x) === x && Math.round(n.position.y) === y,
+          );
+        let guard = 0;
+        while (occupied(Math.round(pos.x), Math.round(pos.y)) && guard < 200) {
+          pos.x += STACK_OFFSET;
+          pos.y += STACK_OFFSET;
+          guard += 1;
+        }
+        pos.x = Math.round(pos.x);
+        pos.y = Math.round(pos.y);
+      }
       // The engine validates names against a strict charset and the auto-derived default
       // can include `::` from the type → rejected with "Name contains invalid characters".
       // Derive a clean base from the type's local segment and find the first free suffix
@@ -2174,12 +2196,7 @@ function Inner({ base }: { base: string }) {
           .filter((c) => c.parent === currentParentUid)
           .map((c) => c.name),
       );
-      let name = base;
-      let n = 1;
-      while (siblings.has(name)) {
-        n += 1;
-        name = `${base}${n}`;
-      }
+      const name = uniqueName(base, siblings);
       try {
         const created = await restAddNode({
           type,
@@ -2238,12 +2255,7 @@ function Inner({ base }: { base: string }) {
           .filter((c) => c.parent === currentParentUid)
           .map((c) => c.name),
       );
-      let name = baseName;
-      let n = 1;
-      while (siblings.has(name)) {
-        n += 1;
-        name = `${baseName}${n}`;
-      }
+      const name = uniqueName(baseName, siblings);
       // Place next to the source component when the picker passes one — to its
       // right for an output→input link, to its left for an input←output link —
       // so the new node lands beside it, not at screen center. Fall back to the
@@ -2411,44 +2423,9 @@ function Inner({ base }: { base: string }) {
       const group = new Set(uids);
       const comps = useStructural.getState().components;
       const edges = useStructural.getState().edges;
-      // Boundary props: an edge with exactly one endpoint in the group → expose
-      // the in-group prop (output if the source is inside, input if the target).
-      const boundary = new Map<
-        number,
-        { childComponent: number; side: "input" | "output"; label: string; facetProp?: number }
-      >();
-      for (const e of edges.values()) {
-        const srcIn = group.has(e.sourceUid);
-        const dstIn = group.has(e.targetUid);
-        if (srcIn === dstIn) continue; // internal or fully-external
-        // Resolve the in-group prop uid, falling back to a name lookup if the
-        // stored edge lacks the *PropertyUid (some POST responses omit it). A
-        // missing uid would otherwise silently drop the boundary → the edge
-        // renders as a ghost instead of an exposed port.
-        if (srcIn) {
-          const child = comps.get(e.sourceUid);
-          const propUid = e.sourcePropertyUid ?? child?.properties[e.sourceProperty]?.uid;
-          if (propUid != null) {
-            boundary.set(propUid, {
-              childComponent: e.sourceUid,
-              side: "output",
-              label: e.sourceProperty,
-              facetProp: child?.properties[FACET_PROP]?.uid,
-            });
-          }
-        } else if (dstIn) {
-          const child = comps.get(e.targetUid);
-          const propUid = e.targetPropertyUid ?? child?.properties[e.targetProperty]?.uid;
-          if (propUid != null) {
-            boundary.set(propUid, {
-              childComponent: e.targetUid,
-              side: "input",
-              label: e.targetProperty,
-              facetProp: child?.properties[FACET_PROP]?.uid,
-            });
-          }
-        }
-      }
+      // Boundary props: edges with exactly one endpoint in the group → expose the
+      // in-group prop. Pure logic in lib/grouping (tested).
+      const boundary = groupBoundary(group, edges.values(), comps);
       // Folder position = bounding-box CENTER of the members, read from the LIVE
       // RF positions (the store positions can be stale if they were just dragged).
       const xs: number[] = [];
@@ -2471,12 +2448,7 @@ function Inner({ base }: { base: string }) {
           .filter((c) => c.parent === currentParentUid)
           .map((c) => c.name),
       );
-      let name = "group";
-      let k = 1;
-      while (siblings.has(name)) {
-        k += 1;
-        name = `group${k}`;
-      }
+      const name = uniqueName("group", siblings);
       try {
         const folder = await restAddNode({
           type: "core-extRoot::Folder",
@@ -2529,9 +2501,19 @@ function Inner({ base }: { base: string }) {
       exposeProp,
       unexposeProp,
       openDetails,
+      requestReload: scheduleTopologyReload,
       parentName: crumbs.length > 1 ? crumbs[crumbs.length - 1]?.name : undefined,
     }),
-    [componentTypes, createComponent, connectEdge, exposeProp, unexposeProp, openDetails, crumbs],
+    [
+      componentTypes,
+      createComponent,
+      connectEdge,
+      exposeProp,
+      unexposeProp,
+      openDetails,
+      scheduleTopologyReload,
+      crumbs,
+    ],
   );
 
   // DnD: dragging a palette item into the canvas drops a new component at the cursor.
@@ -2642,10 +2624,11 @@ function Inner({ base }: { base: string }) {
           <VisibilitySub onVisible={onVisibleSubscription} />
         </ReactFlow>
       </div>
-      <Palette
+      <LeftDock
         palette={palette}
         onAdd={(t) => onAddNode(t)}
         currentParentUid={currentParentUid}
+        onPick={(uid) => void goToComponent(uid)}
       />
       <Breadcrumb crumbs={crumbs} onGoTo={goToCrumb} />
       {clickDebugOpen && <ClickDebugger />}
@@ -2658,7 +2641,6 @@ function Inner({ base }: { base: string }) {
         onToggleAutoRate={() => setAutoRate((v) => !v)}
       />
       <PresenceBar />
-      <SearchPanel currentParentUid={currentParentUid} onPick={(uid) => void goToComponent(uid)} />
       <FindPanel
         open={findOpen}
         currentParentUid={currentParentUid}
@@ -2959,20 +2941,6 @@ function EdgeMenuItem({
 
 // Parse the Details panel's alias text field ("0=off, 1=auto, 2=manual") into
 // {code,label} entries; ignores blanks / malformed parts.
-function parseAliasInput(s: string): Alias[] {
-  const out: Alias[] = [];
-  for (const part of s.split(",")) {
-    const t = part.trim();
-    if (!t) continue;
-    const j = t.indexOf("=");
-    if (j < 0) continue;
-    const code = Number(t.slice(0, j).trim());
-    const label = t.slice(j + 1).trim();
-    if (Number.isFinite(code) && label) out.push({ code, label });
-  }
-  return out;
-}
-
 const detailsField: CSSProperties = {
   background: "#0f1115",
   color: "#e6e8eb",
@@ -4292,15 +4260,6 @@ function ActionPicker({
   );
 }
 
-function sanitizeName(type: string): string {
-  // type looks like "vendor-ext::ComponentName". Use the local segment, strip anything
-  // that isn't alphanumeric or underscore so the engine's name validator accepts it.
-  const idx = type.lastIndexOf("::");
-  const local = idx >= 0 ? type.slice(idx + 2) : type;
-  const cleaned = local.replace(/[^A-Za-z0-9_]/g, "");
-  return cleaned || "node";
-}
-
 function buildRfNodes(
   comps: Component[],
   onEnter: (uid: number) => void,
@@ -4312,21 +4271,13 @@ function buildRfNodes(
   // Component types that declare actions (from /schema) — drives the ⚡ marker.
   actionTypes?: Set<string>,
 ): RfNode<FunctionBlockData>[] {
-  // If every node has position (0,0) — i.e. the engine hasn't laid them out yet — fall
-  // back to a grid. As soon as the user drags a node, that node's position is persisted
-  // (PATCH /nodes/uid/{uid}), so subsequent loads use the saved layout.
-  const allZero = comps.every(
-    (c) => (c.metadata?.position?.x ?? 0) === 0 && (c.metadata?.position?.y ?? 0) === 0,
-  );
-  const cols = Math.max(1, Math.ceil(Math.sqrt(comps.length)));
-  const GRID_X = NODE_W + 60;
-  const GRID_Y = 220;
+  // Position math (grid fallback when unlaid-out + diagonal de-stacking of exact
+  // duplicates) lives in lib/layout so it can be tested directly. Display-only:
+  // dragging a node persists its real position; a reload re-derives the offsets
+  // deterministically from the (stable) REST order.
+  const positions = layoutPositions(comps, NODE_W);
   return comps.map((c, i) => {
-    const px = c.metadata?.position?.x ?? 0;
-    const py = c.metadata?.position?.y ?? 0;
-    const pos = allZero
-      ? { x: (i % cols) * GRID_X, y: Math.floor(i / cols) * GRID_Y }
-      : { x: px, y: py };
+    const pos = positions[i];
     const id = String(c.uid);
     return {
       id,
@@ -4442,17 +4393,21 @@ function Breadcrumb({ crumbs, onGoTo }: { crumbs: Crumb[]; onGoTo: (i: number) =
 // Left-side palette: collapsible list of extensions, each expanding to its components.
 // Click an extension row to toggle. Components are draggable onto the canvas (drop is
 // handled by the ReactFlow wrapper) AND double-clickable for one-click add.
-function Palette({
+// Combined left dock: two tabs — "Add" (the component palette) and "Search"
+// (full-tree component + prop-label/alias search). A SHARED filter box drives
+// both, so Tab hops between them carrying whatever you've typed. ↑/↓ move the
+// selection, Enter activates it (add the component / jump to the hit).
+function LeftDock({
   palette,
   onAdd,
   currentParentUid,
+  onPick,
 }: {
   palette: PaletteExtension[];
   onAdd: (type: string) => void;
   currentParentUid: number;
+  onPick: (uid: number) => void;
 }) {
-  // Collapsed state persists in localStorage so the canvas stays clean on reload if the
-  // user explicitly hid the palette before.
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem("ce-ui.palette.collapsed") === "1";
@@ -4468,39 +4423,105 @@ function Palette({
     }
   }, [collapsed]);
 
-  const [open, setOpen] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<"add" | "search">("add");
   const [filter, setFilter] = useState("");
-  const toggle = (id: string) =>
-    setOpen((cur) => {
-      const next = new Set(cur);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
+  const [sel, setSel] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const f = filter.trim().toLowerCase();
-  const filtered = useMemo(() => {
-    if (!f) return palette;
-    return palette
-      .map((g) => ({
-        ...g,
-        components: g.components.filter(
-          (c) => c.name.toLowerCase().includes(f) || c.type.toLowerCase().includes(f),
-        ),
-      }))
-      .filter((g) => g.components.length > 0);
+
+  // Reset selection whenever the filter or active tab changes.
+  useEffect(() => setSel(0), [filter, tab]);
+  // Focus the shared input when expanded.
+  useEffect(() => {
+    if (!collapsed) {
+      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [collapsed, tab]);
+
+  // --- Add tab: flatten the (filtered) palette into a keyboard-navigable list,
+  // keeping group headers as non-selectable dividers. ---
+  const addRows = useMemo(() => {
+    const rows: { type: string; name: string; group: string }[] = [];
+    for (const g of palette) {
+      for (const c of g.components) {
+        if (!f || c.name.toLowerCase().includes(f) || c.type.toLowerCase().includes(f)) {
+          rows.push({ type: c.type, name: c.name, group: g.id });
+        }
+      }
+    }
+    return rows;
   }, [palette, f]);
 
-  // While filtering, auto-expand any group that has matches so the user sees results.
-  const effectivelyOpen = (id: string) => (f ? true : open.has(id));
+  // --- Search tab: fetch the whole tree (with facets) when this tab is shown. ---
+  // Index build + ranking are pure (lib/search, tested); this just wires the
+  // fetch and the query to them.
+  const [all, setAll] = useState<SearchHit[] | null>(null);
+  useEffect(() => {
+    if (collapsed || tab !== "search") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await getRootNodes({ depth: -1, nested: true });
+        if (cancelled) return;
+        setAll(buildSearchIndex(resp.nodes, currentParentUid));
+      } catch {
+        if (!cancelled) setAll([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [collapsed, tab, currentParentUid]);
 
-  // Collapsed: render only a slim "show" tab on the left edge so the canvas reclaims
-  // the space. Click anywhere on the tab to expand.
+  const searchHits = useMemo(() => (all ? rankSearchHits(all, f) : []), [all, f]);
+
+  const count = tab === "add" ? addRows.length : searchHits.length;
+  useEffect(() => {
+    if (sel >= count) setSel(0);
+  }, [count, sel]);
+  useEffect(() => {
+    listRef.current
+      ?.querySelector<HTMLElement>(`[data-idx="${sel}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [sel, tab]);
+
+  const activate = (i = sel) => {
+    if (tab === "add") {
+      const r = addRows[i];
+      if (r) onAdd(r.type);
+    } else {
+      const h = searchHits[i];
+      if (h) onPick(h.compUid);
+    }
+  };
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      setTab((t) => (t === "add" ? "search" : "add"));
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSel((s) => Math.min(count - 1, s + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSel((s) => Math.max(0, s - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      activate();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setCollapsed(true);
+    }
+    e.stopPropagation();
+  };
+
   if (collapsed) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        title="Show component palette"
+        title="Add / search components"
         style={{
           position: "fixed",
           top: 12,
@@ -4525,8 +4546,29 @@ function Palette({
     );
   }
 
+  const tabBtn = (id: "add" | "search", label: string) => (
+    <button
+      onClick={() => setTab(id)}
+      style={{
+        flex: 1,
+        background: tab === id ? "#2c3a55" : "transparent",
+        color: tab === id ? "#cfe0ff" : "#8892a0",
+        border: "none",
+        borderBottom: `2px solid ${tab === id ? "#4a9eff" : "transparent"}`,
+        padding: "7px 8px",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div
+      onPointerDown={(e) => e.stopPropagation()}
       style={{
         position: "fixed",
         top: 12,
@@ -4543,30 +4585,33 @@ function Palette({
         flexDirection: "column",
       }}
     >
-      <div style={{ padding: "10px 12px", borderBottom: "1px solid #2c313c" }}>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-          <div style={{ fontWeight: 600, fontSize: 13, flex: 1 }}>Add component</div>
-          <button
-            onClick={() => setCollapsed(true)}
-            title="Hide palette"
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#8892a0",
-              cursor: "pointer",
-              fontFamily: "inherit",
-              fontSize: 14,
-              padding: "0 4px",
-              lineHeight: 1,
-            }}
-          >
-            ◂
-          </button>
-        </div>
+      <div style={{ display: "flex", alignItems: "stretch", borderBottom: "1px solid #2c313c" }}>
+        {tabBtn("add", "Add")}
+        {tabBtn("search", "Search")}
+        <button
+          onClick={() => setCollapsed(true)}
+          title="Hide panel"
+          style={{
+            background: "transparent",
+            border: "none",
+            borderLeft: "1px solid #2c313c",
+            color: "#8892a0",
+            cursor: "pointer",
+            fontFamily: "inherit",
+            fontSize: 14,
+            padding: "0 10px",
+          }}
+        >
+          ◂
+        </button>
+      </div>
+      <div style={{ padding: "8px 10px", borderBottom: "1px solid #2c313c" }}>
         <input
+          ref={inputRef}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="filter…"
+          onKeyDown={onKey}
+          placeholder={tab === "add" ? "filter components…   (Tab → Search)" : "name, label, alias…   (Tab → Add)"}
           spellCheck={false}
           style={{
             width: "100%",
@@ -4574,69 +4619,157 @@ function Palette({
             color: "#cbd3e0",
             border: "1px solid #2c313c",
             borderRadius: 3,
-            padding: "4px 6px",
+            padding: "5px 7px",
             fontSize: 11,
             fontFamily: "ui-monospace, monospace",
             boxSizing: "border-box",
+            outline: "none",
           }}
         />
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
-        {filtered.length === 0 && (
+
+      <div ref={listRef} style={{ flex: 1, overflowY: "auto", padding: "4px 0" }}>
+        {tab === "add" ? (
+          addRows.length === 0 ? (
+            <div style={{ padding: "10px 12px", color: "#5a6172", fontSize: 11 }}>no matches</div>
+          ) : (
+            addRows.map((r, i) => {
+              const prev = i > 0 ? addRows[i - 1] : null;
+              const showHeader = !prev || prev.group !== r.group;
+              return (
+                <div key={`${r.type}:${i}`} data-idx={i}>
+                  {showHeader && (
+                    <div
+                      style={{
+                        padding: "6px 12px 2px",
+                        color: "#5a6172",
+                        fontSize: 9,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.5,
+                        fontFamily: "ui-monospace, monospace",
+                      }}
+                    >
+                      {r.group}
+                    </div>
+                  )}
+                  <PaletteItem
+                    component={{ name: r.name, type: r.type }}
+                    onAdd={() => onAdd(r.type)}
+                    selected={i === sel}
+                    onHover={() => setSel(i)}
+                  />
+                </div>
+              );
+            })
+          )
+        ) : all == null ? (
+          <div style={{ padding: "10px 12px", color: "#5a6172", fontSize: 11 }}>loading…</div>
+        ) : searchHits.length === 0 ? (
           <div style={{ padding: "10px 12px", color: "#5a6172", fontSize: 11 }}>no matches</div>
-        )}
-        {filtered.map((g) => {
-          const isOpen = effectivelyOpen(g.id);
-          return (
-            <div key={g.id}>
-              <button
-                onClick={() => toggle(g.id)}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  background: "transparent",
-                  color: "#e6e8eb",
-                  border: "none",
-                  padding: "6px 12px",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <span style={{ color: "#8892a0", fontFamily: "ui-monospace, monospace", width: 8 }}>
-                  {isOpen ? "▾" : "▸"}
-                </span>
-                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {g.id}
-                </span>
-                <span style={{ color: "#5a6172", fontSize: 10 }}>{g.components.length}</span>
-              </button>
-              {isOpen && (
-                <div style={{ paddingBottom: 4 }}>
-                  {g.components.map((c) => (
-                    <PaletteItem key={c.type} component={c} onAdd={() => onAdd(c.type)} />
-                  ))}
+        ) : (
+          searchHits.map((h, i) => (
+            <button
+              key={`${h.compUid}:${h.propName ?? ""}:${i}`}
+              data-idx={i}
+              onMouseEnter={() => setSel(i)}
+              onClick={() => onPick(h.compUid)}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                width: "100%",
+                textAlign: "left",
+                padding: "6px 12px",
+                background: i === sel ? "#2c3a55" : "transparent",
+                border: "none",
+                borderLeft: `2px solid ${h.here ? "#4a9eff" : "transparent"}`,
+                cursor: "pointer",
+                fontFamily: "ui-monospace, SFMono-Regular, monospace",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                {h.propName ? (
+                  <>
+                    <span style={{ color: "#e6e8eb", fontSize: 12 }}>{h.label || h.propName}</span>
+                    <span
+                      style={{
+                        color: "#7a8aa0",
+                        fontSize: 9,
+                        border: "1px solid #2c3a55",
+                        borderRadius: 3,
+                        padding: "0 4px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      prop
+                    </span>
+                    <span
+                      style={{
+                        color: "#5a6172",
+                        fontSize: 11,
+                        marginLeft: "auto",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={h.path}
+                    >
+                      {h.compName}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ color: "#e6e8eb", fontSize: 12 }}>{h.compName}</span>
+                    <span
+                      style={{
+                        color: "#5a6172",
+                        fontSize: 11,
+                        marginLeft: "auto",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={`${h.path} · ${h.type}`}
+                    >
+                      {h.here ? h.type : h.path}
+                    </span>
+                  </>
+                )}
+              </div>
+              {h.propName && h.aliasText && (
+                <div
+                  style={{
+                    color: "#5a6172",
+                    fontSize: 10,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {h.aliasText}
                 </div>
               )}
-            </div>
-          );
-        })}
+            </button>
+          ))
+        )}
       </div>
+
       <div
         style={{
-          padding: "8px 12px",
+          padding: "6px 12px",
           borderTop: "1px solid #2c313c",
           fontSize: 10,
-          color: "#8892a0",
+          color: "#5a6172",
           lineHeight: 1.5,
         }}
       >
-        drag onto canvas, or double-click to add at center.<br />
-        drag handle → handle to connect • Delete to remove.
-        <div style={{ marginTop: 4, color: "#5a6172" }}>parent uid: {currentParentUid}</div>
+        Tab: switch • ↑↓ select • ↵ {tab === "add" ? "add" : "go"}
+        {tab === "add" && (
+          <>
+            <br />
+            drag onto canvas to place • parent uid: {currentParentUid}
+          </>
+        )}
       </div>
     </div>
   );
@@ -4645,14 +4778,19 @@ function Palette({
 function PaletteItem({
   component,
   onAdd,
+  selected,
+  onHover,
 }: {
   component: PaletteComponent;
   onAdd: () => void;
+  selected?: boolean;
+  onHover?: () => void;
 }) {
   const [dragging, setDragging] = useState(false);
   return (
     <div
       draggable
+      data-idx-item
       onDragStart={(e) => {
         e.dataTransfer.effectAllowed = "copy";
         e.dataTransfer.setData(DND_TYPE, component.type);
@@ -4660,11 +4798,12 @@ function PaletteItem({
       }}
       onDragEnd={() => setDragging(false)}
       onDoubleClick={onAdd}
+      onMouseEnter={onHover}
       title={`${component.type} — double-click to add, drag to drop on canvas`}
       style={{
         margin: "0 8px 2px 8px",
         padding: "4px 8px 4px 22px",
-        background: dragging ? "#2c3a55" : "#1a1d24",
+        background: dragging || selected ? "#2c3a55" : "#1a1d24",
         color: "#cbd3e0",
         border: "1px solid #2c313c",
         borderRadius: 3,

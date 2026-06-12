@@ -162,6 +162,22 @@ export function exposedPorts(facet: ComponentFacet): ExposedPort[] {
   return out;
 }
 
+// Parse the Configure panel's alias text field ("0=off, 1=auto, 2=manual") into
+// Alias records. Skips blank / malformed parts and non-numeric codes.
+export function parseAliasInput(s: string): Alias[] {
+  const out: Alias[] = [];
+  for (const part of s.split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const j = t.indexOf("=");
+    if (j < 0) continue;
+    const code = Number(t.slice(0, j).trim());
+    const label = t.slice(j + 1).trim();
+    if (Number.isFinite(code) && label) out.push({ code, label });
+  }
+  return out;
+}
+
 // Resolve a property's native value to its alias label, if the facet aliases it.
 export function aliasLabel(aliases: Alias[] | undefined, value: unknown): string | undefined {
   if (!aliases || aliases.length === 0) return undefined;

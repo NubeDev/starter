@@ -14083,6 +14083,125 @@ function PresenceBar() {
   );
 }
 
+const BUCKETS = [
+  { minZoom: 0, hz: 1 },
+  // far out — can't read anything
+  { minZoom: 0.3, hz: 4 },
+  // shapes legible, values not really
+  { minZoom: 0.55, hz: 10 },
+  // readable → full (ceiling) rate
+  { minZoom: 1.3, hz: 15 }
+  // deep zoom on a few nodes
+];
+function rateForZoom(zoom) {
+  let hz = BUCKETS[0].hz;
+  for (const b of BUCKETS) {
+    if (zoom >= b.minZoom) hz = b.hz;
+  }
+  return hz;
+}
+const POLL_MS = 1e3;
+const LOW_FPS = 30;
+const GOOD_FPS = 50;
+const MIN_HZ = 1;
+const BACKOFF = 0.5;
+const RECOVER = 0.25;
+function ZoomRateController({
+  enabled,
+  setRate
+}) {
+  const store = useStoreApi();
+  const scale = useRef(1);
+  const lastSent = useRef(null);
+  useEffect(() => {
+    if (!enabled) {
+      lastSent.current = null;
+      scale.current = 1;
+      return;
+    }
+    const evaluate = () => {
+      const zoom = store.getState().transform[2];
+      const ceiling = rateForZoom(zoom);
+      const fps = metrics.fps;
+      if (fps > 0) {
+        if (fps < LOW_FPS) scale.current = Math.max(0.02, scale.current * BACKOFF);
+        else if (fps > GOOD_FPS) scale.current = Math.min(1, scale.current + RECOVER);
+      }
+      const want = Math.max(MIN_HZ, Math.min(ceiling, Math.round(ceiling * scale.current)));
+      if (want !== lastSent.current) {
+        lastSent.current = want;
+        setRate(want);
+      }
+    };
+    evaluate();
+    const id = window.setInterval(evaluate, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [enabled, setRate, store]);
+  return null;
+}
+
+const isIterable = (obj) => Symbol.iterator in obj;
+const hasIterableEntries = (value) => (
+  // HACK: avoid checking entries type
+  "entries" in value
+);
+const compareEntries = (valueA, valueB) => {
+  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
+  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
+  if (mapA.size !== mapB.size) {
+    return false;
+  }
+  for (const [key, value] of mapA) {
+    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
+      return false;
+    }
+  }
+  return true;
+};
+const compareIterables = (valueA, valueB) => {
+  const iteratorA = valueA[Symbol.iterator]();
+  const iteratorB = valueB[Symbol.iterator]();
+  let nextA = iteratorA.next();
+  let nextB = iteratorB.next();
+  while (!nextA.done && !nextB.done) {
+    if (!Object.is(nextA.value, nextB.value)) {
+      return false;
+    }
+    nextA = iteratorA.next();
+    nextB = iteratorB.next();
+  }
+  return !!nextA.done && !!nextB.done;
+};
+function shallow(valueA, valueB) {
+  if (Object.is(valueA, valueB)) {
+    return true;
+  }
+  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
+    return false;
+  }
+  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
+    return false;
+  }
+  if (isIterable(valueA) && isIterable(valueB)) {
+    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
+      return compareEntries(valueA, valueB);
+    }
+    return compareIterables(valueA, valueB);
+  }
+  return compareEntries(
+    { entries: () => Object.entries(valueA) },
+    { entries: () => Object.entries(valueB) }
+  );
+}
+
+function useShallow(selector) {
+  const prev = React__default.useRef(void 0);
+  return (state) => {
+    const next = selector(state);
+    return shallow(prev.current, next) ? prev.current : prev.current = next;
+  };
+}
+
 const CATEGORY_INPUT = 0;
 const CATEGORY_OUTPUT = 1;
 const CATEGORY_CONFIG = 2;
@@ -14223,406 +14342,23 @@ function exposedPorts(facet) {
   }
   return out;
 }
+function parseAliasInput(s) {
+  const out = [];
+  for (const part of s.split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const j = t.indexOf("=");
+    if (j < 0) continue;
+    const code = Number(t.slice(0, j).trim());
+    const label = t.slice(j + 1).trim();
+    if (Number.isFinite(code) && label) out.push({ code, label });
+  }
+  return out;
+}
 function aliasLabel(aliases, value) {
   if (!aliases || aliases.length === 0) return void 0;
   const code = value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
   return aliases.find((a) => a.code === code)?.label;
-}
-
-function SearchPanel({
-  currentParentUid,
-  onPick
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [all, setAll] = useState(null);
-  const [sel, setSel] = useState(0);
-  const inputRef = useRef(null);
-  const listRef = useRef(null);
-  useEffect(() => {
-    if (!open) return;
-    setSel(0);
-    let cancelled = false;
-    (async () => {
-      try {
-        const resp = await getRootNodes({ depth: -1, nested: true });
-        if (cancelled) return;
-        const flat = [];
-        const walk = (c) => {
-          if (c.uid !== 0) {
-            const path = c.path.startsWith("root/") ? c.path.slice(5) : c.path;
-            const here = c.parent === currentParentUid;
-            const compName = c.name || c.type;
-            flat.push({ compUid: c.uid, compName, type: c.type, path, here });
-            const facet = parseFacet(rawFacet(c.properties) ?? "");
-            for (const [propName, p] of Object.entries(c.properties)) {
-              if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
-              const f = facet.get(p.uid);
-              const aliasText = f?.aliases?.map((a) => a.label).join(" ") ?? "";
-              if (!f?.label && !aliasText) continue;
-              flat.push({
-                compUid: c.uid,
-                compName,
-                type: c.type,
-                path,
-                here,
-                propName,
-                label: f?.label,
-                aliasText
-              });
-            }
-          }
-          c.children?.forEach(walk);
-        };
-        resp.nodes.forEach(walk);
-        setAll(flat);
-      } catch {
-        if (!cancelled) setAll([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, currentParentUid]);
-  useEffect(() => {
-    if (open) {
-      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
-      return () => window.clearTimeout(t);
-    }
-  }, [open]);
-  const results = useMemo(() => {
-    if (!all) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return all.filter((h) => !h.propName).slice(0, 60);
-    const scored = all.map((h) => {
-      let score = -1;
-      if (h.propName) {
-        const label = (h.label ?? "").toLowerCase();
-        const al = (h.aliasText ?? "").toLowerCase();
-        const pn = h.propName.toLowerCase();
-        if (label === q || al.split(" ").includes(q)) score = 1;
-        else if (label.startsWith(q) || pn.startsWith(q)) score = 2;
-        else if (label.includes(q) || al.includes(q) || pn.includes(q)) score = 3;
-      } else {
-        const name = h.compName.toLowerCase();
-        if (name === q) score = 0;
-        else if (name.startsWith(q)) score = 1;
-        else if (name.includes(q)) score = 2;
-        else if (h.path.toLowerCase().includes(q) || h.type.toLowerCase().includes(q)) score = 3;
-      }
-      return { h, score };
-    }).filter((x) => x.score >= 0).sort(
-      (a, b) => Number(b.h.here) - Number(a.h.here) || a.score - b.score || a.h.compName.localeCompare(b.h.compName)
-    ).slice(0, 80).map((x) => x.h);
-    return scored;
-  }, [all, query]);
-  useEffect(() => {
-    if (sel >= results.length) setSel(0);
-  }, [results, sel]);
-  useEffect(() => {
-    const el = listRef.current?.querySelector(`[data-idx="${sel}"]`);
-    el?.scrollIntoView({ block: "nearest" });
-  }, [sel]);
-  const pick = (h) => {
-    if (!h) return;
-    onPick(h.compUid);
-  };
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      onPointerDown: (e) => e.stopPropagation(),
-      style: {
-        position: "fixed",
-        top: 12,
-        left: 12,
-        zIndex: 32,
-        width: open ? 300 : "auto",
-        background: "#1a1d24",
-        border: "1px solid #2c313c",
-        borderRadius: 6,
-        boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        fontFamily: "-apple-system, system-ui, sans-serif",
-        maxHeight: open ? "70vh" : void 0
-      },
-      children: [
-        /* @__PURE__ */ jsxs(
-          "button",
-          {
-            onClick: () => setOpen((v) => !v),
-            title: open ? "Collapse search" : "Search components & props",
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 10px",
-              background: "transparent",
-              border: "none",
-              color: "#c7ccd6",
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600
-            },
-            children: [
-              /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: open ? "▾" : "▸" }),
-              /* @__PURE__ */ jsx("span", { children: "Search" }),
-              !open && /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontWeight: 400, fontSize: 11 }, children: "⌕" })
-            ]
-          }
-        ),
-        open && /* @__PURE__ */ jsxs(Fragment, { children: [
-          /* @__PURE__ */ jsx(
-            "input",
-            {
-              ref: inputRef,
-              value: query,
-              onChange: (e) => {
-                setQuery(e.target.value);
-                setSel(0);
-              },
-              onKeyDown: (e) => {
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setOpen(false);
-                } else if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setSel((s) => Math.min(results.length - 1, s + 1));
-                } else if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setSel((s) => Math.max(0, s - 1));
-                } else if (e.key === "Enter") {
-                  e.preventDefault();
-                  pick(results[sel]);
-                }
-                e.stopPropagation();
-              },
-              placeholder: "name, label, or alias…",
-              spellCheck: false,
-              style: {
-                background: "#0f1115",
-                color: "#e6e8eb",
-                border: "none",
-                borderTop: "1px solid #2c313c",
-                borderBottom: "1px solid #2c313c",
-                padding: "8px 10px",
-                fontSize: 13,
-                fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                outline: "none"
-              }
-            }
-          ),
-          /* @__PURE__ */ jsx("div", { ref: listRef, style: { overflowY: "auto" }, children: all == null ? /* @__PURE__ */ jsx("div", { style: { padding: "10px", color: "#5a6172", fontSize: 12 }, children: "loading…" }) : results.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px", color: "#5a6172", fontSize: 12 }, children: "no matches" }) : results.map((h, i) => /* @__PURE__ */ jsxs(
-            "button",
-            {
-              "data-idx": i,
-              onMouseEnter: () => setSel(i),
-              onClick: () => pick(h),
-              style: {
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "stretch",
-                gap: 2,
-                width: "100%",
-                textAlign: "left",
-                padding: "6px 10px",
-                background: i === sel ? "#2c3a55" : "transparent",
-                border: "none",
-                borderLeft: `2px solid ${h.here ? "#4a9eff" : "transparent"}`,
-                cursor: "pointer",
-                fontFamily: "ui-monospace, SFMono-Regular, monospace"
-              },
-              children: [
-                /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "baseline", gap: 6 }, children: h.propName ? /* @__PURE__ */ jsxs(Fragment, { children: [
-                  /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 12 }, children: h.label || h.propName }),
-                  /* @__PURE__ */ jsx(
-                    "span",
-                    {
-                      style: {
-                        color: "#7a8aa0",
-                        fontSize: 9,
-                        border: "1px solid #2c3a55",
-                        borderRadius: 3,
-                        padding: "0 4px",
-                        flexShrink: 0
-                      },
-                      children: "prop"
-                    }
-                  ),
-                  /* @__PURE__ */ jsx(
-                    "span",
-                    {
-                      style: {
-                        color: "#5a6172",
-                        fontSize: 11,
-                        marginLeft: "auto",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      },
-                      title: h.path,
-                      children: h.compName
-                    }
-                  )
-                ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
-                  /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 12 }, children: h.compName }),
-                  /* @__PURE__ */ jsx(
-                    "span",
-                    {
-                      style: {
-                        color: "#5a6172",
-                        fontSize: 11,
-                        marginLeft: "auto",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      },
-                      title: `${h.path} · ${h.type}`,
-                      children: h.here ? h.type : h.path
-                    }
-                  )
-                ] }) }),
-                h.propName && h.aliasText && /* @__PURE__ */ jsx(
-                  "div",
-                  {
-                    style: {
-                      color: "#5a6172",
-                      fontSize: 10,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap"
-                    },
-                    children: h.aliasText
-                  }
-                )
-              ]
-            },
-            `${h.compUid}:${h.propName ?? ""}:${i}`
-          )) })
-        ] })
-      ]
-    }
-  );
-}
-
-const BUCKETS = [
-  { minZoom: 0, hz: 1 },
-  // far out — can't read anything
-  { minZoom: 0.3, hz: 4 },
-  // shapes legible, values not really
-  { minZoom: 0.55, hz: 10 },
-  // readable → full (ceiling) rate
-  { minZoom: 1.3, hz: 15 }
-  // deep zoom on a few nodes
-];
-function rateForZoom(zoom) {
-  let hz = BUCKETS[0].hz;
-  for (const b of BUCKETS) {
-    if (zoom >= b.minZoom) hz = b.hz;
-  }
-  return hz;
-}
-const POLL_MS = 1e3;
-const LOW_FPS = 30;
-const GOOD_FPS = 50;
-const MIN_HZ = 1;
-const BACKOFF = 0.5;
-const RECOVER = 0.25;
-function ZoomRateController({
-  enabled,
-  setRate
-}) {
-  const store = useStoreApi();
-  const scale = useRef(1);
-  const lastSent = useRef(null);
-  useEffect(() => {
-    if (!enabled) {
-      lastSent.current = null;
-      scale.current = 1;
-      return;
-    }
-    const evaluate = () => {
-      const zoom = store.getState().transform[2];
-      const ceiling = rateForZoom(zoom);
-      const fps = metrics.fps;
-      if (fps > 0) {
-        if (fps < LOW_FPS) scale.current = Math.max(0.02, scale.current * BACKOFF);
-        else if (fps > GOOD_FPS) scale.current = Math.min(1, scale.current + RECOVER);
-      }
-      const want = Math.max(MIN_HZ, Math.min(ceiling, Math.round(ceiling * scale.current)));
-      if (want !== lastSent.current) {
-        lastSent.current = want;
-        setRate(want);
-      }
-    };
-    evaluate();
-    const id = window.setInterval(evaluate, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [enabled, setRate, store]);
-  return null;
-}
-
-const isIterable = (obj) => Symbol.iterator in obj;
-const hasIterableEntries = (value) => (
-  // HACK: avoid checking entries type
-  "entries" in value
-);
-const compareEntries = (valueA, valueB) => {
-  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
-  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
-  if (mapA.size !== mapB.size) {
-    return false;
-  }
-  for (const [key, value] of mapA) {
-    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
-      return false;
-    }
-  }
-  return true;
-};
-const compareIterables = (valueA, valueB) => {
-  const iteratorA = valueA[Symbol.iterator]();
-  const iteratorB = valueB[Symbol.iterator]();
-  let nextA = iteratorA.next();
-  let nextB = iteratorB.next();
-  while (!nextA.done && !nextB.done) {
-    if (!Object.is(nextA.value, nextB.value)) {
-      return false;
-    }
-    nextA = iteratorA.next();
-    nextB = iteratorB.next();
-  }
-  return !!nextA.done && !!nextB.done;
-};
-function shallow(valueA, valueB) {
-  if (Object.is(valueA, valueB)) {
-    return true;
-  }
-  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
-    return false;
-  }
-  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
-    return false;
-  }
-  if (isIterable(valueA) && isIterable(valueB)) {
-    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
-      return compareEntries(valueA, valueB);
-    }
-    return compareIterables(valueA, valueB);
-  }
-  return compareEntries(
-    { entries: () => Object.entries(valueA) },
-    { entries: () => Object.entries(valueB) }
-  );
-}
-
-function useShallow(selector) {
-  const prev = React__default.useRef(void 0);
-  return (state) => {
-    const next = selector(state);
-    return shallow(prev.current, next) ? prev.current : prev.current = next;
-  };
 }
 
 const CeWiresheetContext = createContext(null);
@@ -15834,6 +15570,7 @@ function statusColorFor(s) {
 }
 function FunctionBlockInner({ data, selected }) {
   const schemaV = useSchemaVersion((s) => s.version);
+  const ctx = useContext(CeWiresheetContext);
   const restComp = useStructural((s) => s.components.get(data.componentUid));
   const ourUids = useMemo(() => {
     if (!restComp) return [];
@@ -15878,6 +15615,20 @@ function FunctionBlockInner({ data, selected }) {
     const [color, name] = k.split("	");
     return { color, name };
   });
+  const ownFacetUid = restComp?.properties[FACET_PROP]?.uid;
+  const liveFacetRaw = ownFacetUid != null && typeof valuesByUid[ownFacetUid] === "string" ? valuesByUid[ownFacetUid] : void 0;
+  const prevFacetRaw = useRef(null);
+  useEffect(() => {
+    if (liveFacetRaw == null) return;
+    if (prevFacetRaw.current === null) {
+      prevFacetRaw.current = liveFacetRaw;
+      return;
+    }
+    if (liveFacetRaw !== prevFacetRaw.current) {
+      prevFacetRaw.current = liveFacetRaw;
+      ctx?.requestReload?.();
+    }
+  }, [liveFacetRaw, ctx]);
   const structural = useMemo(() => {
     if (!restComp) return null;
     const isUserFacing = (p) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL;
@@ -17136,6 +16887,134 @@ function summarizeTopology(t) {
 }
 function wsUrlFromBase(origin) {
   return `${origin.replace(/^http/, "ws").replace(/\/+$/, "")}/ws`;
+}
+
+function sanitizeName(type) {
+  const idx = type.lastIndexOf("::");
+  const local = idx >= 0 ? type.slice(idx + 2) : type;
+  const cleaned = local.replace(/[^A-Za-z0-9_]/g, "");
+  return cleaned || "node";
+}
+function uniqueName(base, taken) {
+  const set = taken instanceof Set ? taken : new Set(taken);
+  let name = base;
+  let n = 1;
+  while (set.has(name)) {
+    n += 1;
+    name = `${base}${n}`;
+  }
+  return name;
+}
+
+const STACK_OFFSET = 16;
+function layoutPositions(comps, nodeWidth) {
+  const allZero = comps.every(
+    (c) => (c.metadata?.position?.x ?? 0) === 0 && (c.metadata?.position?.y ?? 0) === 0
+  );
+  const cols = Math.max(1, Math.ceil(Math.sqrt(comps.length)));
+  const GRID_X = nodeWidth + 60;
+  const GRID_Y = 220;
+  const stackSeen = /* @__PURE__ */ new Map();
+  return comps.map((c, i) => {
+    const px = c.metadata?.position?.x ?? 0;
+    const py = c.metadata?.position?.y ?? 0;
+    if (allZero) {
+      return { x: i % cols * GRID_X, y: Math.floor(i / cols) * GRID_Y };
+    }
+    const key = `${px},${py}`;
+    const dup = stackSeen.get(key) ?? 0;
+    stackSeen.set(key, dup + 1);
+    return { x: px + dup * STACK_OFFSET, y: py + dup * STACK_OFFSET };
+  });
+}
+
+function groupBoundary(group, edges, comps) {
+  const boundary = /* @__PURE__ */ new Map();
+  for (const e of edges) {
+    const srcIn = group.has(e.sourceUid);
+    const dstIn = group.has(e.targetUid);
+    if (srcIn === dstIn) continue;
+    if (srcIn) {
+      const child = comps.get(e.sourceUid);
+      const propUid = e.sourcePropertyUid ?? child?.properties[e.sourceProperty]?.uid;
+      if (propUid != null) {
+        boundary.set(propUid, {
+          childComponent: e.sourceUid,
+          side: "output",
+          label: e.sourceProperty,
+          facetProp: child?.properties[FACET_PROP]?.uid
+        });
+      }
+    } else {
+      const child = comps.get(e.targetUid);
+      const propUid = e.targetPropertyUid ?? child?.properties[e.targetProperty]?.uid;
+      if (propUid != null) {
+        boundary.set(propUid, {
+          childComponent: e.targetUid,
+          side: "input",
+          label: e.targetProperty,
+          facetProp: child?.properties[FACET_PROP]?.uid
+        });
+      }
+    }
+  }
+  return boundary;
+}
+
+function buildSearchIndex(nodes, currentParentUid) {
+  const flat = [];
+  const walk = (c) => {
+    if (c.uid !== 0) {
+      const path = c.path.startsWith("root/") ? c.path.slice(5) : c.path;
+      const here = c.parent === currentParentUid;
+      const compName = c.name || c.type;
+      flat.push({ compUid: c.uid, compName, type: c.type, path, here });
+      const facet = parseFacet(rawFacet(c.properties) ?? "");
+      for (const [propName, p] of Object.entries(c.properties)) {
+        if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
+        const fc = facet.get(p.uid);
+        const aliasText = fc?.aliases?.map((a) => a.label).join(" ") ?? "";
+        if (!fc?.label && !aliasText) continue;
+        flat.push({
+          compUid: c.uid,
+          compName,
+          type: c.type,
+          path,
+          here,
+          propName,
+          label: fc?.label,
+          aliasText
+        });
+      }
+    }
+    c.children?.forEach(walk);
+  };
+  nodes.forEach(walk);
+  return flat;
+}
+function rankSearchHits(all, query) {
+  const f = query.trim().toLowerCase();
+  if (!f) return all.filter((h) => !h.propName).slice(0, 60);
+  return all.map((h) => {
+    let score = -1;
+    if (h.propName) {
+      const label = (h.label ?? "").toLowerCase();
+      const al = (h.aliasText ?? "").toLowerCase();
+      const pn = h.propName.toLowerCase();
+      if (label === f || al.split(" ").includes(f)) score = 1;
+      else if (label.startsWith(f) || pn.startsWith(f)) score = 2;
+      else if (label.includes(f) || al.includes(f) || pn.includes(f)) score = 3;
+    } else {
+      const name = h.compName.toLowerCase();
+      if (name === f) score = 0;
+      else if (name.startsWith(f)) score = 1;
+      else if (name.includes(f)) score = 2;
+      else if (h.path.toLowerCase().includes(f) || h.type.toLowerCase().includes(f)) score = 3;
+    }
+    return { h, score };
+  }).filter((x) => x.score >= 0).sort(
+    (a, b) => Number(b.h.here) - Number(a.h.here) || a.score - b.score || a.h.compName.localeCompare(b.h.compName)
+  ).slice(0, 80).map((x) => x.h);
 }
 
 const EDGE_SELECTED_CSS = `
@@ -18464,16 +18343,25 @@ function Inner({ base }) {
         x: Math.round((window.innerWidth / 2 - vp.x) / vp.zoom),
         y: Math.round((window.innerHeight / 2 - vp.y) / vp.zoom)
       };
+      {
+        const STACK_OFFSET = 16;
+        const occupied = (x, y) => rf.getNodes().some(
+          (n) => n.type === "fb" && Math.round(n.position.x) === x && Math.round(n.position.y) === y
+        );
+        let guard = 0;
+        while (occupied(Math.round(pos.x), Math.round(pos.y)) && guard < 200) {
+          pos.x += STACK_OFFSET;
+          pos.y += STACK_OFFSET;
+          guard += 1;
+        }
+        pos.x = Math.round(pos.x);
+        pos.y = Math.round(pos.y);
+      }
       const base2 = sanitizeName(type);
       const siblings = new Set(
         Array.from(useStructural.getState().components.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
       );
-      let name = base2;
-      let n = 1;
-      while (siblings.has(name)) {
-        n += 1;
-        name = `${base2}${n}`;
-      }
+      const name = uniqueName(base2, siblings);
       try {
         const created = await addNode({
           type,
@@ -18492,7 +18380,7 @@ function Inner({ base }) {
             actionTypesRef.current
           );
           if (rfNode) {
-            setNodes((ns) => ns.some((n2) => n2.id === rfNode.id) ? ns : [...ns, rfNode]);
+            setNodes((ns) => ns.some((n) => n.id === rfNode.id) ? ns : [...ns, rfNode]);
           }
         } else {
           await reload();
@@ -18515,12 +18403,7 @@ function Inner({ base }) {
       const siblings = new Set(
         Array.from(useStructural.getState().components.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
       );
-      let name = baseName;
-      let n = 1;
-      while (siblings.has(name)) {
-        n += 1;
-        name = `${baseName}${n}`;
-      }
+      const name = uniqueName(baseName, siblings);
       const near = opts?.nearUid != null ? useStructural.getState().components.get(opts.nearUid) : void 0;
       let pos;
       if (near?.metadata?.position) {
@@ -18551,7 +18434,7 @@ function Inner({ base }) {
             void 0,
             actionTypesRef.current
           );
-          if (rfNode) setNodes((ns) => ns.some((n2) => n2.id === rfNode.id) ? ns : [...ns, rfNode]);
+          if (rfNode) setNodes((ns) => ns.some((n) => n.id === rfNode.id) ? ns : [...ns, rfNode]);
         }
         return created ?? null;
       } catch (e) {
@@ -18644,35 +18527,7 @@ function Inner({ base }) {
       const group = new Set(uids);
       const comps = useStructural.getState().components;
       const edges2 = useStructural.getState().edges;
-      const boundary = /* @__PURE__ */ new Map();
-      for (const e of edges2.values()) {
-        const srcIn = group.has(e.sourceUid);
-        const dstIn = group.has(e.targetUid);
-        if (srcIn === dstIn) continue;
-        if (srcIn) {
-          const child = comps.get(e.sourceUid);
-          const propUid = e.sourcePropertyUid ?? child?.properties[e.sourceProperty]?.uid;
-          if (propUid != null) {
-            boundary.set(propUid, {
-              childComponent: e.sourceUid,
-              side: "output",
-              label: e.sourceProperty,
-              facetProp: child?.properties[FACET_PROP]?.uid
-            });
-          }
-        } else if (dstIn) {
-          const child = comps.get(e.targetUid);
-          const propUid = e.targetPropertyUid ?? child?.properties[e.targetProperty]?.uid;
-          if (propUid != null) {
-            boundary.set(propUid, {
-              childComponent: e.targetUid,
-              side: "input",
-              label: e.targetProperty,
-              facetProp: child?.properties[FACET_PROP]?.uid
-            });
-          }
-        }
-      }
+      const boundary = groupBoundary(group, edges2.values(), comps);
       const xs = [];
       const ys = [];
       for (const node of rf.getNodes()) {
@@ -18688,12 +18543,7 @@ function Inner({ base }) {
       const siblings = new Set(
         Array.from(comps.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
       );
-      let name = "group";
-      let k = 1;
-      while (siblings.has(name)) {
-        k += 1;
-        name = `group${k}`;
-      }
+      const name = uniqueName("group", siblings);
       try {
         const folder = await addNode({
           type: "core-extRoot::Folder",
@@ -18743,9 +18593,19 @@ function Inner({ base }) {
       exposeProp,
       unexposeProp,
       openDetails,
+      requestReload: scheduleTopologyReload,
       parentName: crumbs.length > 1 ? crumbs[crumbs.length - 1]?.name : void 0
     }),
-    [componentTypes, createComponent, connectEdge, exposeProp, unexposeProp, openDetails, crumbs]
+    [
+      componentTypes,
+      createComponent,
+      connectEdge,
+      exposeProp,
+      unexposeProp,
+      openDetails,
+      scheduleTopologyReload,
+      crumbs
+    ]
   );
   const onDragOver = useCallback((e) => {
     if (e.dataTransfer.types.includes(DND_TYPE)) {
@@ -18834,11 +18694,12 @@ function Inner({ base }) {
       }
     ),
     /* @__PURE__ */ jsx(
-      Palette,
+      LeftDock,
       {
         palette,
         onAdd: (t) => onAddNode(t),
-        currentParentUid
+        currentParentUid,
+        onPick: (uid) => void goToComponent(uid)
       }
     ),
     /* @__PURE__ */ jsx(Breadcrumb, { crumbs, onGoTo: goToCrumb }),
@@ -18855,7 +18716,6 @@ function Inner({ base }) {
       }
     ),
     /* @__PURE__ */ jsx(PresenceBar, {}),
-    /* @__PURE__ */ jsx(SearchPanel, { currentParentUid, onPick: (uid) => void goToComponent(uid) }),
     /* @__PURE__ */ jsx(
       FindPanel,
       {
@@ -19114,19 +18974,6 @@ function EdgeMenuItem({
       children: label
     }
   );
-}
-function parseAliasInput(s) {
-  const out = [];
-  for (const part of s.split(",")) {
-    const t = part.trim();
-    if (!t) continue;
-    const j = t.indexOf("=");
-    if (j < 0) continue;
-    const code = Number(t.slice(0, j).trim());
-    const label = t.slice(j + 1).trim();
-    if (Number.isFinite(code) && label) out.push({ code, label });
-  }
-  return out;
 }
 const detailsField = {
   background: "#0f1115",
@@ -20307,23 +20154,10 @@ function ActionPicker({
     }
   );
 }
-function sanitizeName(type) {
-  const idx = type.lastIndexOf("::");
-  const local = idx >= 0 ? type.slice(idx + 2) : type;
-  const cleaned = local.replace(/[^A-Za-z0-9_]/g, "");
-  return cleaned || "node";
-}
 function buildRfNodes(comps, onEnter, onContextMenu, selectedIds, actionTypes) {
-  const allZero = comps.every(
-    (c) => (c.metadata?.position?.x ?? 0) === 0 && (c.metadata?.position?.y ?? 0) === 0
-  );
-  const cols = Math.max(1, Math.ceil(Math.sqrt(comps.length)));
-  const GRID_X = NODE_W + 60;
-  const GRID_Y = 220;
+  const positions = layoutPositions(comps, NODE_W);
   return comps.map((c, i) => {
-    const px = c.metadata?.position?.x ?? 0;
-    const py = c.metadata?.position?.y ?? 0;
-    const pos = allZero ? { x: i % cols * GRID_X, y: Math.floor(i / cols) * GRID_Y } : { x: px, y: py };
+    const pos = positions[i];
     const id = String(c.uid);
     return {
       id,
@@ -20425,10 +20259,11 @@ function Breadcrumb({ crumbs, onGoTo }) {
     }
   );
 }
-function Palette({
+function LeftDock({
   palette,
   onAdd,
-  currentParentUid
+  currentParentUid,
+  onPick
 }) {
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -20443,31 +20278,89 @@ function Palette({
     } catch {
     }
   }, [collapsed]);
-  const [open, setOpen] = useState(/* @__PURE__ */ new Set());
+  const [tab, setTab] = useState("add");
   const [filter, setFilter] = useState("");
-  const toggle = (id) => setOpen((cur) => {
-    const next = new Set(cur);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    return next;
-  });
+  const [sel, setSel] = useState(0);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
   const f = filter.trim().toLowerCase();
-  const filtered = useMemo(() => {
-    if (!f) return palette;
-    return palette.map((g) => ({
-      ...g,
-      components: g.components.filter(
-        (c) => c.name.toLowerCase().includes(f) || c.type.toLowerCase().includes(f)
-      )
-    })).filter((g) => g.components.length > 0);
+  useEffect(() => setSel(0), [filter, tab]);
+  useEffect(() => {
+    if (!collapsed) {
+      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [collapsed, tab]);
+  const addRows = useMemo(() => {
+    const rows = [];
+    for (const g of palette) {
+      for (const c of g.components) {
+        if (!f || c.name.toLowerCase().includes(f) || c.type.toLowerCase().includes(f)) {
+          rows.push({ type: c.type, name: c.name, group: g.id });
+        }
+      }
+    }
+    return rows;
   }, [palette, f]);
-  const effectivelyOpen = (id) => f ? true : open.has(id);
+  const [all, setAll] = useState(null);
+  useEffect(() => {
+    if (collapsed || tab !== "search") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await getRootNodes({ depth: -1, nested: true });
+        if (cancelled) return;
+        setAll(buildSearchIndex(resp.nodes, currentParentUid));
+      } catch {
+        if (!cancelled) setAll([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [collapsed, tab, currentParentUid]);
+  const searchHits = useMemo(() => all ? rankSearchHits(all, f) : [], [all, f]);
+  const count = tab === "add" ? addRows.length : searchHits.length;
+  useEffect(() => {
+    if (sel >= count) setSel(0);
+  }, [count, sel]);
+  useEffect(() => {
+    listRef.current?.querySelector(`[data-idx="${sel}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [sel, tab]);
+  const activate = (i = sel) => {
+    if (tab === "add") {
+      const r = addRows[i];
+      if (r) onAdd(r.type);
+    } else {
+      const h = searchHits[i];
+      if (h) onPick(h.compUid);
+    }
+  };
+  const onKey = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      setTab((t) => t === "add" ? "search" : "add");
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSel((s) => Math.min(count - 1, s + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSel((s) => Math.max(0, s - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      activate();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setCollapsed(true);
+    }
+    e.stopPropagation();
+  };
   if (collapsed) {
     return /* @__PURE__ */ jsx(
       "button",
       {
         onClick: () => setCollapsed(false),
-        title: "Show component palette",
+        title: "Add / search components",
         style: {
           position: "fixed",
           top: 12,
@@ -20490,9 +20383,29 @@ function Palette({
       }
     );
   }
+  const tabBtn = (id, label) => /* @__PURE__ */ jsx(
+    "button",
+    {
+      onClick: () => setTab(id),
+      style: {
+        flex: 1,
+        background: tab === id ? "#2c3a55" : "transparent",
+        color: tab === id ? "#cfe0ff" : "#8892a0",
+        border: "none",
+        borderBottom: `2px solid ${tab === id ? "#4a9eff" : "transparent"}`,
+        padding: "7px 8px",
+        cursor: "pointer",
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 600
+      },
+      children: label
+    }
+  );
   return /* @__PURE__ */ jsxs(
     "div",
     {
+      onPointerDown: (e) => e.stopPropagation(),
       style: {
         position: "fixed",
         top: 12,
@@ -20509,99 +20422,181 @@ function Palette({
         flexDirection: "column"
       },
       children: [
-        /* @__PURE__ */ jsxs("div", { style: { padding: "10px 12px", borderBottom: "1px solid #2c313c" }, children: [
-          /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", marginBottom: 8 }, children: [
-            /* @__PURE__ */ jsx("div", { style: { fontWeight: 600, fontSize: 13, flex: 1 }, children: "Add component" }),
-            /* @__PURE__ */ jsx(
-              "button",
-              {
-                onClick: () => setCollapsed(true),
-                title: "Hide palette",
-                style: {
-                  background: "transparent",
-                  border: "none",
-                  color: "#8892a0",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: 14,
-                  padding: "0 4px",
-                  lineHeight: 1
-                },
-                children: "◂"
-              }
-            )
-          ] }),
+        /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "stretch", borderBottom: "1px solid #2c313c" }, children: [
+          tabBtn("add", "Add"),
+          tabBtn("search", "Search"),
           /* @__PURE__ */ jsx(
-            "input",
+            "button",
             {
-              value: filter,
-              onChange: (e) => setFilter(e.target.value),
-              placeholder: "filter…",
-              spellCheck: false,
+              onClick: () => setCollapsed(true),
+              title: "Hide panel",
               style: {
-                width: "100%",
-                background: "#222731",
-                color: "#cbd3e0",
-                border: "1px solid #2c313c",
-                borderRadius: 3,
-                padding: "4px 6px",
-                fontSize: 11,
-                fontFamily: "ui-monospace, monospace",
-                boxSizing: "border-box"
-              }
+                background: "transparent",
+                border: "none",
+                borderLeft: "1px solid #2c313c",
+                color: "#8892a0",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 14,
+                padding: "0 10px"
+              },
+              children: "◂"
             }
           )
         ] }),
-        /* @__PURE__ */ jsxs("div", { style: { flex: 1, overflowY: "auto", padding: "4px 0" }, children: [
-          filtered.length === 0 && /* @__PURE__ */ jsx("div", { style: { padding: "10px 12px", color: "#5a6172", fontSize: 11 }, children: "no matches" }),
-          filtered.map((g) => {
-            const isOpen = effectivelyOpen(g.id);
-            return /* @__PURE__ */ jsxs("div", { children: [
-              /* @__PURE__ */ jsxs(
-                "button",
+        /* @__PURE__ */ jsx("div", { style: { padding: "8px 10px", borderBottom: "1px solid #2c313c" }, children: /* @__PURE__ */ jsx(
+          "input",
+          {
+            ref: inputRef,
+            value: filter,
+            onChange: (e) => setFilter(e.target.value),
+            onKeyDown: onKey,
+            placeholder: tab === "add" ? "filter components…   (Tab → Search)" : "name, label, alias…   (Tab → Add)",
+            spellCheck: false,
+            style: {
+              width: "100%",
+              background: "#222731",
+              color: "#cbd3e0",
+              border: "1px solid #2c313c",
+              borderRadius: 3,
+              padding: "5px 7px",
+              fontSize: 11,
+              fontFamily: "ui-monospace, monospace",
+              boxSizing: "border-box",
+              outline: "none"
+            }
+          }
+        ) }),
+        /* @__PURE__ */ jsx("div", { ref: listRef, style: { flex: 1, overflowY: "auto", padding: "4px 0" }, children: tab === "add" ? addRows.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 12px", color: "#5a6172", fontSize: 11 }, children: "no matches" }) : addRows.map((r, i) => {
+          const prev = i > 0 ? addRows[i - 1] : null;
+          const showHeader = !prev || prev.group !== r.group;
+          return /* @__PURE__ */ jsxs("div", { "data-idx": i, children: [
+            showHeader && /* @__PURE__ */ jsx(
+              "div",
+              {
+                style: {
+                  padding: "6px 12px 2px",
+                  color: "#5a6172",
+                  fontSize: 9,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  fontFamily: "ui-monospace, monospace"
+                },
+                children: r.group
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              PaletteItem,
+              {
+                component: { name: r.name, type: r.type },
+                onAdd: () => onAdd(r.type),
+                selected: i === sel,
+                onHover: () => setSel(i)
+              }
+            )
+          ] }, `${r.type}:${i}`);
+        }) : all == null ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 12px", color: "#5a6172", fontSize: 11 }, children: "loading…" }) : searchHits.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px 12px", color: "#5a6172", fontSize: 11 }, children: "no matches" }) : searchHits.map((h, i) => /* @__PURE__ */ jsxs(
+          "button",
+          {
+            "data-idx": i,
+            onMouseEnter: () => setSel(i),
+            onClick: () => onPick(h.compUid),
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              width: "100%",
+              textAlign: "left",
+              padding: "6px 12px",
+              background: i === sel ? "#2c3a55" : "transparent",
+              border: "none",
+              borderLeft: `2px solid ${h.here ? "#4a9eff" : "transparent"}`,
+              cursor: "pointer",
+              fontFamily: "ui-monospace, SFMono-Regular, monospace"
+            },
+            children: [
+              /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "baseline", gap: 6 }, children: h.propName ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 12 }, children: h.label || h.propName }),
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      color: "#7a8aa0",
+                      fontSize: 9,
+                      border: "1px solid #2c3a55",
+                      borderRadius: 3,
+                      padding: "0 4px",
+                      flexShrink: 0
+                    },
+                    children: "prop"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      color: "#5a6172",
+                      fontSize: 11,
+                      marginLeft: "auto",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    },
+                    title: h.path,
+                    children: h.compName
+                  }
+                )
+              ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 12 }, children: h.compName }),
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    style: {
+                      color: "#5a6172",
+                      fontSize: 11,
+                      marginLeft: "auto",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    },
+                    title: `${h.path} · ${h.type}`,
+                    children: h.here ? h.type : h.path
+                  }
+                )
+              ] }) }),
+              h.propName && h.aliasText && /* @__PURE__ */ jsx(
+                "div",
                 {
-                  onClick: () => toggle(g.id),
                   style: {
-                    width: "100%",
-                    textAlign: "left",
-                    background: "transparent",
-                    color: "#e6e8eb",
-                    border: "none",
-                    padding: "6px 12px",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    fontSize: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6
+                    color: "#5a6172",
+                    fontSize: 10,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap"
                   },
-                  children: [
-                    /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", fontFamily: "ui-monospace, monospace", width: 8 }, children: isOpen ? "▾" : "▸" }),
-                    /* @__PURE__ */ jsx("span", { style: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: g.id }),
-                    /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: g.components.length })
-                  ]
+                  children: h.aliasText
                 }
-              ),
-              isOpen && /* @__PURE__ */ jsx("div", { style: { paddingBottom: 4 }, children: g.components.map((c) => /* @__PURE__ */ jsx(PaletteItem, { component: c, onAdd: () => onAdd(c.type) }, c.type)) })
-            ] }, g.id);
-          })
-        ] }),
+              )
+            ]
+          },
+          `${h.compUid}:${h.propName ?? ""}:${i}`
+        )) }),
         /* @__PURE__ */ jsxs(
           "div",
           {
             style: {
-              padding: "8px 12px",
+              padding: "6px 12px",
               borderTop: "1px solid #2c313c",
               fontSize: 10,
-              color: "#8892a0",
+              color: "#5a6172",
               lineHeight: 1.5
             },
             children: [
-              "drag onto canvas, or double-click to add at center.",
-              /* @__PURE__ */ jsx("br", {}),
-              "drag handle → handle to connect • Delete to remove.",
-              /* @__PURE__ */ jsxs("div", { style: { marginTop: 4, color: "#5a6172" }, children: [
-                "parent uid: ",
+              "Tab: switch • ↑↓ select • ↵ ",
+              tab === "add" ? "add" : "go",
+              tab === "add" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("br", {}),
+                "drag onto canvas to place • parent uid: ",
                 currentParentUid
               ] })
             ]
@@ -20613,13 +20608,16 @@ function Palette({
 }
 function PaletteItem({
   component,
-  onAdd
+  onAdd,
+  selected,
+  onHover
 }) {
   const [dragging, setDragging] = useState(false);
   return /* @__PURE__ */ jsxs(
     "div",
     {
       draggable: true,
+      "data-idx-item": true,
       onDragStart: (e) => {
         e.dataTransfer.effectAllowed = "copy";
         e.dataTransfer.setData(DND_TYPE, component.type);
@@ -20627,11 +20625,12 @@ function PaletteItem({
       },
       onDragEnd: () => setDragging(false),
       onDoubleClick: onAdd,
+      onMouseEnter: onHover,
       title: `${component.type} — double-click to add, drag to drop on canvas`,
       style: {
         margin: "0 8px 2px 8px",
         padding: "4px 8px 4px 22px",
-        background: dragging ? "#2c3a55" : "#1a1d24",
+        background: dragging || selected ? "#2c3a55" : "#1a1d24",
         color: "#cbd3e0",
         border: "1px solid #2c313c",
         borderRadius: 3,
@@ -20802,7 +20801,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T03:47:53.047Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T05:43:20.105Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
