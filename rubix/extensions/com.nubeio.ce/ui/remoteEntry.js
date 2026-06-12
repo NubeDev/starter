@@ -14083,125 +14083,6 @@ function PresenceBar() {
   );
 }
 
-const BUCKETS = [
-  { minZoom: 0, hz: 1 },
-  // far out — can't read anything
-  { minZoom: 0.3, hz: 4 },
-  // shapes legible, values not really
-  { minZoom: 0.55, hz: 10 },
-  // readable → full (ceiling) rate
-  { minZoom: 1.3, hz: 15 }
-  // deep zoom on a few nodes
-];
-function rateForZoom(zoom) {
-  let hz = BUCKETS[0].hz;
-  for (const b of BUCKETS) {
-    if (zoom >= b.minZoom) hz = b.hz;
-  }
-  return hz;
-}
-const POLL_MS = 1e3;
-const LOW_FPS = 30;
-const GOOD_FPS = 50;
-const MIN_HZ = 1;
-const BACKOFF = 0.5;
-const RECOVER = 0.25;
-function ZoomRateController({
-  enabled,
-  setRate
-}) {
-  const store = useStoreApi();
-  const scale = useRef(1);
-  const lastSent = useRef(null);
-  useEffect(() => {
-    if (!enabled) {
-      lastSent.current = null;
-      scale.current = 1;
-      return;
-    }
-    const evaluate = () => {
-      const zoom = store.getState().transform[2];
-      const ceiling = rateForZoom(zoom);
-      const fps = metrics.fps;
-      if (fps > 0) {
-        if (fps < LOW_FPS) scale.current = Math.max(0.02, scale.current * BACKOFF);
-        else if (fps > GOOD_FPS) scale.current = Math.min(1, scale.current + RECOVER);
-      }
-      const want = Math.max(MIN_HZ, Math.min(ceiling, Math.round(ceiling * scale.current)));
-      if (want !== lastSent.current) {
-        lastSent.current = want;
-        setRate(want);
-      }
-    };
-    evaluate();
-    const id = window.setInterval(evaluate, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [enabled, setRate, store]);
-  return null;
-}
-
-const isIterable = (obj) => Symbol.iterator in obj;
-const hasIterableEntries = (value) => (
-  // HACK: avoid checking entries type
-  "entries" in value
-);
-const compareEntries = (valueA, valueB) => {
-  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
-  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
-  if (mapA.size !== mapB.size) {
-    return false;
-  }
-  for (const [key, value] of mapA) {
-    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
-      return false;
-    }
-  }
-  return true;
-};
-const compareIterables = (valueA, valueB) => {
-  const iteratorA = valueA[Symbol.iterator]();
-  const iteratorB = valueB[Symbol.iterator]();
-  let nextA = iteratorA.next();
-  let nextB = iteratorB.next();
-  while (!nextA.done && !nextB.done) {
-    if (!Object.is(nextA.value, nextB.value)) {
-      return false;
-    }
-    nextA = iteratorA.next();
-    nextB = iteratorB.next();
-  }
-  return !!nextA.done && !!nextB.done;
-};
-function shallow(valueA, valueB) {
-  if (Object.is(valueA, valueB)) {
-    return true;
-  }
-  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
-    return false;
-  }
-  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
-    return false;
-  }
-  if (isIterable(valueA) && isIterable(valueB)) {
-    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
-      return compareEntries(valueA, valueB);
-    }
-    return compareIterables(valueA, valueB);
-  }
-  return compareEntries(
-    { entries: () => Object.entries(valueA) },
-    { entries: () => Object.entries(valueB) }
-  );
-}
-
-function useShallow(selector) {
-  const prev = React__default.useRef(void 0);
-  return (state) => {
-    const next = selector(state);
-    return shallow(prev.current, next) ? prev.current : prev.current = next;
-  };
-}
-
 const CATEGORY_INPUT = 0;
 const CATEGORY_OUTPUT = 1;
 const CATEGORY_CONFIG = 2;
@@ -14346,6 +14227,402 @@ function aliasLabel(aliases, value) {
   if (!aliases || aliases.length === 0) return void 0;
   const code = value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
   return aliases.find((a) => a.code === code)?.label;
+}
+
+function SearchPanel({
+  currentParentUid,
+  onPick
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [all, setAll] = useState(null);
+  const [sel, setSel] = useState(0);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    setSel(0);
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await getRootNodes({ depth: -1, nested: true });
+        if (cancelled) return;
+        const flat = [];
+        const walk = (c) => {
+          if (c.uid !== 0) {
+            const path = c.path.startsWith("root/") ? c.path.slice(5) : c.path;
+            const here = c.parent === currentParentUid;
+            const compName = c.name || c.type;
+            flat.push({ compUid: c.uid, compName, type: c.type, path, here });
+            const facet = parseFacet(rawFacet(c.properties) ?? "");
+            for (const [propName, p] of Object.entries(c.properties)) {
+              if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
+              const f = facet.get(p.uid);
+              const aliasText = f?.aliases?.map((a) => a.label).join(" ") ?? "";
+              if (!f?.label && !aliasText) continue;
+              flat.push({
+                compUid: c.uid,
+                compName,
+                type: c.type,
+                path,
+                here,
+                propName,
+                label: f?.label,
+                aliasText
+              });
+            }
+          }
+          c.children?.forEach(walk);
+        };
+        resp.nodes.forEach(walk);
+        setAll(flat);
+      } catch {
+        if (!cancelled) setAll([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, currentParentUid]);
+  useEffect(() => {
+    if (open) {
+      const t = window.setTimeout(() => inputRef.current?.focus(), 0);
+      return () => window.clearTimeout(t);
+    }
+  }, [open]);
+  const results = useMemo(() => {
+    if (!all) return [];
+    const q = query.trim().toLowerCase();
+    if (!q) return all.filter((h) => !h.propName).slice(0, 60);
+    const scored = all.map((h) => {
+      let score = -1;
+      if (h.propName) {
+        const label = (h.label ?? "").toLowerCase();
+        const al = (h.aliasText ?? "").toLowerCase();
+        const pn = h.propName.toLowerCase();
+        if (label === q || al.split(" ").includes(q)) score = 1;
+        else if (label.startsWith(q) || pn.startsWith(q)) score = 2;
+        else if (label.includes(q) || al.includes(q) || pn.includes(q)) score = 3;
+      } else {
+        const name = h.compName.toLowerCase();
+        if (name === q) score = 0;
+        else if (name.startsWith(q)) score = 1;
+        else if (name.includes(q)) score = 2;
+        else if (h.path.toLowerCase().includes(q) || h.type.toLowerCase().includes(q)) score = 3;
+      }
+      return { h, score };
+    }).filter((x) => x.score >= 0).sort(
+      (a, b) => Number(b.h.here) - Number(a.h.here) || a.score - b.score || a.h.compName.localeCompare(b.h.compName)
+    ).slice(0, 80).map((x) => x.h);
+    return scored;
+  }, [all, query]);
+  useEffect(() => {
+    if (sel >= results.length) setSel(0);
+  }, [results, sel]);
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-idx="${sel}"]`);
+    el?.scrollIntoView({ block: "nearest" });
+  }, [sel]);
+  const pick = (h) => {
+    if (!h) return;
+    onPick(h.compUid);
+  };
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      onPointerDown: (e) => e.stopPropagation(),
+      style: {
+        position: "fixed",
+        top: 12,
+        left: 12,
+        zIndex: 32,
+        width: open ? 300 : "auto",
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        boxShadow: "0 6px 20px rgba(0,0,0,0.5)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        maxHeight: open ? "70vh" : void 0
+      },
+      children: [
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: () => setOpen((v) => !v),
+            title: open ? "Collapse search" : "Search components & props",
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 10px",
+              background: "transparent",
+              border: "none",
+              color: "#c7ccd6",
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 600
+            },
+            children: [
+              /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: open ? "▾" : "▸" }),
+              /* @__PURE__ */ jsx("span", { children: "Search" }),
+              !open && /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontWeight: 400, fontSize: 11 }, children: "⌕" })
+            ]
+          }
+        ),
+        open && /* @__PURE__ */ jsxs(Fragment, { children: [
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              ref: inputRef,
+              value: query,
+              onChange: (e) => {
+                setQuery(e.target.value);
+                setSel(0);
+              },
+              onKeyDown: (e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setOpen(false);
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSel((s) => Math.min(results.length - 1, s + 1));
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSel((s) => Math.max(0, s - 1));
+                } else if (e.key === "Enter") {
+                  e.preventDefault();
+                  pick(results[sel]);
+                }
+                e.stopPropagation();
+              },
+              placeholder: "name, label, or alias…",
+              spellCheck: false,
+              style: {
+                background: "#0f1115",
+                color: "#e6e8eb",
+                border: "none",
+                borderTop: "1px solid #2c313c",
+                borderBottom: "1px solid #2c313c",
+                padding: "8px 10px",
+                fontSize: 13,
+                fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                outline: "none"
+              }
+            }
+          ),
+          /* @__PURE__ */ jsx("div", { ref: listRef, style: { overflowY: "auto" }, children: all == null ? /* @__PURE__ */ jsx("div", { style: { padding: "10px", color: "#5a6172", fontSize: 12 }, children: "loading…" }) : results.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "10px", color: "#5a6172", fontSize: 12 }, children: "no matches" }) : results.map((h, i) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              "data-idx": i,
+              onMouseEnter: () => setSel(i),
+              onClick: () => pick(h),
+              style: {
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "stretch",
+                gap: 2,
+                width: "100%",
+                textAlign: "left",
+                padding: "6px 10px",
+                background: i === sel ? "#2c3a55" : "transparent",
+                border: "none",
+                borderLeft: `2px solid ${h.here ? "#4a9eff" : "transparent"}`,
+                cursor: "pointer",
+                fontFamily: "ui-monospace, SFMono-Regular, monospace"
+              },
+              children: [
+                /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "baseline", gap: 6 }, children: h.propName ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                  /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 12 }, children: h.label || h.propName }),
+                  /* @__PURE__ */ jsx(
+                    "span",
+                    {
+                      style: {
+                        color: "#7a8aa0",
+                        fontSize: 9,
+                        border: "1px solid #2c3a55",
+                        borderRadius: 3,
+                        padding: "0 4px",
+                        flexShrink: 0
+                      },
+                      children: "prop"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "span",
+                    {
+                      style: {
+                        color: "#5a6172",
+                        fontSize: 11,
+                        marginLeft: "auto",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      },
+                      title: h.path,
+                      children: h.compName
+                    }
+                  )
+                ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+                  /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb", fontSize: 12 }, children: h.compName }),
+                  /* @__PURE__ */ jsx(
+                    "span",
+                    {
+                      style: {
+                        color: "#5a6172",
+                        fontSize: 11,
+                        marginLeft: "auto",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      },
+                      title: `${h.path} · ${h.type}`,
+                      children: h.here ? h.type : h.path
+                    }
+                  )
+                ] }) }),
+                h.propName && h.aliasText && /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    style: {
+                      color: "#5a6172",
+                      fontSize: 10,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap"
+                    },
+                    children: h.aliasText
+                  }
+                )
+              ]
+            },
+            `${h.compUid}:${h.propName ?? ""}:${i}`
+          )) })
+        ] })
+      ]
+    }
+  );
+}
+
+const BUCKETS = [
+  { minZoom: 0, hz: 1 },
+  // far out — can't read anything
+  { minZoom: 0.3, hz: 4 },
+  // shapes legible, values not really
+  { minZoom: 0.55, hz: 10 },
+  // readable → full (ceiling) rate
+  { minZoom: 1.3, hz: 15 }
+  // deep zoom on a few nodes
+];
+function rateForZoom(zoom) {
+  let hz = BUCKETS[0].hz;
+  for (const b of BUCKETS) {
+    if (zoom >= b.minZoom) hz = b.hz;
+  }
+  return hz;
+}
+const POLL_MS = 1e3;
+const LOW_FPS = 30;
+const GOOD_FPS = 50;
+const MIN_HZ = 1;
+const BACKOFF = 0.5;
+const RECOVER = 0.25;
+function ZoomRateController({
+  enabled,
+  setRate
+}) {
+  const store = useStoreApi();
+  const scale = useRef(1);
+  const lastSent = useRef(null);
+  useEffect(() => {
+    if (!enabled) {
+      lastSent.current = null;
+      scale.current = 1;
+      return;
+    }
+    const evaluate = () => {
+      const zoom = store.getState().transform[2];
+      const ceiling = rateForZoom(zoom);
+      const fps = metrics.fps;
+      if (fps > 0) {
+        if (fps < LOW_FPS) scale.current = Math.max(0.02, scale.current * BACKOFF);
+        else if (fps > GOOD_FPS) scale.current = Math.min(1, scale.current + RECOVER);
+      }
+      const want = Math.max(MIN_HZ, Math.min(ceiling, Math.round(ceiling * scale.current)));
+      if (want !== lastSent.current) {
+        lastSent.current = want;
+        setRate(want);
+      }
+    };
+    evaluate();
+    const id = window.setInterval(evaluate, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [enabled, setRate, store]);
+  return null;
+}
+
+const isIterable = (obj) => Symbol.iterator in obj;
+const hasIterableEntries = (value) => (
+  // HACK: avoid checking entries type
+  "entries" in value
+);
+const compareEntries = (valueA, valueB) => {
+  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
+  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
+  if (mapA.size !== mapB.size) {
+    return false;
+  }
+  for (const [key, value] of mapA) {
+    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
+      return false;
+    }
+  }
+  return true;
+};
+const compareIterables = (valueA, valueB) => {
+  const iteratorA = valueA[Symbol.iterator]();
+  const iteratorB = valueB[Symbol.iterator]();
+  let nextA = iteratorA.next();
+  let nextB = iteratorB.next();
+  while (!nextA.done && !nextB.done) {
+    if (!Object.is(nextA.value, nextB.value)) {
+      return false;
+    }
+    nextA = iteratorA.next();
+    nextB = iteratorB.next();
+  }
+  return !!nextA.done && !!nextB.done;
+};
+function shallow(valueA, valueB) {
+  if (Object.is(valueA, valueB)) {
+    return true;
+  }
+  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
+    return false;
+  }
+  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
+    return false;
+  }
+  if (isIterable(valueA) && isIterable(valueB)) {
+    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
+      return compareEntries(valueA, valueB);
+    }
+    return compareIterables(valueA, valueB);
+  }
+  return compareEntries(
+    { entries: () => Object.entries(valueA) },
+    { entries: () => Object.entries(valueB) }
+  );
+}
+
+function useShallow(selector) {
+  const prev = React__default.useRef(void 0);
+  return (state) => {
+    const next = selector(state);
+    return shallow(prev.current, next) ? prev.current : prev.current = next;
+  };
 }
 
 const CeWiresheetContext = createContext(null);
@@ -18578,6 +18855,7 @@ function Inner({ base }) {
       }
     ),
     /* @__PURE__ */ jsx(PresenceBar, {}),
+    /* @__PURE__ */ jsx(SearchPanel, { currentParentUid, onPick: (uid) => void goToComponent(uid) }),
     /* @__PURE__ */ jsx(
       FindPanel,
       {
@@ -18924,6 +19202,31 @@ function ConfigurePanel({
       cancelled = true;
     };
   }, [canExposeHere, currentParentUid, componentUid]);
+  const [portInfo, setPortInfo] = useState(
+    () => /* @__PURE__ */ new Map()
+  );
+  useEffect(() => {
+    if (portRows.length === 0) return;
+    let cancelled = false;
+    void getNodeByUid(componentUid, { depth: 1, nested: true }).then((resp) => {
+      if (cancelled) return;
+      const children = resp.nodes[0]?.children ?? [];
+      const byComp = new Map(children.map((c) => [c.uid, c]));
+      const m = /* @__PURE__ */ new Map();
+      for (const [uid, f] of initial) {
+        if (!f.expose || f.childComponent == null) continue;
+        const child = byComp.get(f.childComponent);
+        if (!child) continue;
+        const propName = Object.entries(child.properties).find(([, p]) => p.uid === uid)?.[0];
+        m.set(uid, { comp: child.name, prop: propName ?? String(uid) });
+      }
+      setPortInfo(m);
+    }).catch(() => {
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [componentUid, initial, portRows.length]);
   const toggleExpose = (p) => {
     const side = p.category === CATEGORY_INPUT ? "input" : "output";
     const next = new Set(exposedOnParent);
@@ -19168,59 +19471,62 @@ function ConfigurePanel({
                   children: "exposed ports"
                 }
               ),
-              portRows.map((pr) => /* @__PURE__ */ jsxs("div", { style: { borderBottom: "1px solid #232733", padding: "8px 12px" }, children: [
-                /* @__PURE__ */ jsxs(
-                  "div",
-                  {
-                    style: {
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: 5
-                    },
-                    children: [
-                      /* @__PURE__ */ jsxs(
-                        "span",
-                        {
-                          style: {
-                            color: "#9ecbff",
-                            fontFamily: "ui-monospace, SFMono-Regular, monospace"
-                          },
-                          children: [
-                            "↪ ",
-                            pr.name,
-                            " ",
-                            /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
-                              "(",
-                              pr.side,
-                              ")"
-                            ] })
-                          ]
-                        }
-                      ),
-                      /* @__PURE__ */ jsxs(
-                        "label",
-                        {
-                          title: "Un-expose this port",
-                          style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
-                          children: [
-                            /* @__PURE__ */ jsx(
-                              "input",
-                              {
-                                type: "checkbox",
-                                checked: true,
-                                onChange: () => void unexposeProp(componentUid, pr.uid)
-                              }
-                            ),
-                            "exposed"
-                          ]
-                        }
-                      )
-                    ]
-                  }
-                ),
-                cosmeticFields(pr.uid)
-              ] }, pr.uid))
+              portRows.map((pr) => {
+                const info = portInfo.get(pr.uid);
+                return /* @__PURE__ */ jsxs("div", { style: { borderBottom: "1px solid #232733", padding: "8px 12px" }, children: [
+                  /* @__PURE__ */ jsxs(
+                    "div",
+                    {
+                      style: {
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 5
+                      },
+                      children: [
+                        /* @__PURE__ */ jsxs(
+                          "span",
+                          {
+                            style: {
+                              color: "#9ecbff",
+                              fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                            },
+                            children: [
+                              "↪ ",
+                              info ? `${info.comp} · ${info.prop}` : pr.name,
+                              " ",
+                              /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
+                                "(",
+                                pr.side,
+                                ")"
+                              ] })
+                            ]
+                          }
+                        ),
+                        /* @__PURE__ */ jsxs(
+                          "label",
+                          {
+                            title: "Un-expose this port",
+                            style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
+                            children: [
+                              /* @__PURE__ */ jsx(
+                                "input",
+                                {
+                                  type: "checkbox",
+                                  checked: true,
+                                  onChange: () => void unexposeProp(componentUid, pr.uid)
+                                }
+                              ),
+                              "exposed"
+                            ]
+                          }
+                        )
+                      ]
+                    }
+                  ),
+                  cosmeticFields(pr.uid)
+                ] }, pr.uid);
+              })
             ] }),
             /* @__PURE__ */ jsxs(
               "div",
@@ -20496,7 +20802,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T00:52:58.055Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T03:47:53.047Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

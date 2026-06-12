@@ -34,6 +34,7 @@ import { DiagPanel } from "./components/DiagPanel";
 import { EventsPanel } from "./components/EventsPanel";
 import { FindPanel } from "./components/FindPanel";
 import { PresenceBar } from "./components/PresenceBar";
+import { SearchPanel } from "./components/SearchPanel";
 import { ZoomRateController } from "./components/ZoomRateController";
 import { VisibilitySub } from "./components/VisibilitySub";
 import {
@@ -2657,6 +2658,7 @@ function Inner({ base }: { base: string }) {
         onToggleAutoRate={() => setAutoRate((v) => !v)}
       />
       <PresenceBar />
+      <SearchPanel currentParentUid={currentParentUid} onPick={(uid) => void goToComponent(uid)} />
       <FindPanel
         open={findOpen}
         currentParentUid={currentParentUid}
@@ -3085,6 +3087,36 @@ function ConfigurePanel({
     };
   }, [canExposeHere, currentParentUid, componentUid]);
 
+  // Resolve each exposed port's child component name + prop name (the child is
+  // off-canvas — we're configuring the folder, not inside it). Fetch the folder's
+  // children once so port rows can show "compName · propName" instead of a uid.
+  const [portInfo, setPortInfo] = useState<Map<number, { comp: string; prop: string }>>(
+    () => new Map(),
+  );
+  useEffect(() => {
+    if (portRows.length === 0) return;
+    let cancelled = false;
+    void getNodeByUid(componentUid, { depth: 1, nested: true })
+      .then((resp) => {
+        if (cancelled) return;
+        const children = resp.nodes[0]?.children ?? [];
+        const byComp = new Map(children.map((c) => [c.uid, c]));
+        const m = new Map<number, { comp: string; prop: string }>();
+        for (const [uid, f] of initial) {
+          if (!f.expose || f.childComponent == null) continue;
+          const child = byComp.get(f.childComponent);
+          if (!child) continue;
+          const propName = Object.entries(child.properties).find(([, p]) => p.uid === uid)?.[0];
+          m.set(uid, { comp: child.name, prop: propName ?? String(uid) });
+        }
+        setPortInfo(m);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [componentUid, initial, portRows.length]);
+
   const toggleExpose = (p: { uid: number; name: string; category: number }) => {
     const side: "input" | "output" = p.category === CATEGORY_INPUT ? "input" : "output";
     const next = new Set(exposedOnParent);
@@ -3311,7 +3343,9 @@ function ConfigurePanel({
               exposed ports
             </div>
           )}
-          {portRows.map((pr) => (
+          {portRows.map((pr) => {
+            const info = portInfo.get(pr.uid);
+            return (
             <div key={pr.uid} style={{ borderBottom: "1px solid #232733", padding: "8px 12px" }}>
               <div
                 style={{
@@ -3327,7 +3361,8 @@ function ConfigurePanel({
                     fontFamily: "ui-monospace, SFMono-Regular, monospace",
                   }}
                 >
-                  ↪ {pr.name} <span style={{ color: "#5a6172" }}>({pr.side})</span>
+                  ↪ {info ? `${info.comp} · ${info.prop}` : pr.name}{" "}
+                  <span style={{ color: "#5a6172" }}>({pr.side})</span>
                 </span>
                 <label
                   title="Un-expose this port"
@@ -3343,7 +3378,8 @@ function ConfigurePanel({
               </div>
               {cosmeticFields(pr.uid)}
             </div>
-          ))}
+            );
+          })}
         </div>
         <div
           style={{
