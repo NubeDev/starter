@@ -31,9 +31,16 @@ themselves** when no engine is reachable, so they're safe in CI / offline.
   rest of the engine is left untouched.
 - Correctness is read off the **value stream** (REST returns stored config, not
   the live computed value). Inputs are seeded with `defaultValues` at creation.
-- `dataflow.itest.ts` covers: `add` = in1+in2, `subtract` = in1−in2, a **chain of
-  5 adds (each input 1) summing to 5**, an **override** driving the live value
-  (set → 7, clear → 0), and edge-delete halting propagation.
+- `dataflow.itest.ts` — `add`, `subtract`, a **chain of 5 adds (each input 1) → 5**,
+  **fan-out** (one output → many inputs), a **cycle** (back-edge flagged loopBack),
+  an **override** driving the live value (set → 7, clear → 0), and edge-delete
+  halting propagation.
+- `protocol.itest.ts` — **property-level subscription** (a single off-canvas prop
+  streams; the exposed-ports path), an **override sets the OVERRIDDEN STATUS bit**,
+  and a REST add **pushes a topologyAdded** event to a connected socket.
+- `structure.itest.ts` — **copy/nodes** duplicates a component and returns the
+  old→new **uidMap**, **Configure** write-through (`__facets` persists labels/unit/
+  aliases), and **grouping** (reparent into a folder keeps cross-folder dataflow).
 - Gotcha encoded in the helpers: the engine rejects 1-character component names.
 
 Run the suite after any change to `src/` — if a test goes red you've lost

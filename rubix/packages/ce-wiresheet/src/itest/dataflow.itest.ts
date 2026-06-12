@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterAll } from "vitest";
-import { setEngineBase, addNode, addEdge } from "../lib/rest";
+import { setEngineBase, addNode, addEdge, getNodeByUid } from "../lib/rest";
 import {
   CE_BASE,
   ADD,
@@ -70,6 +70,52 @@ describe.skipIf(!reachable)("CE dataflow (live engine + NubeIO math)", () => {
       expect: { [finalOut]: N },
     });
     expect(vals.get(finalOut)).toBe(N);
+  });
+
+  it("fan-out: one output drives multiple inputs", async () => {
+    const src = await makeAdd(folder, "src", 2, 0); // out = 2
+    const tb = await makeAdd(folder, "tgtB", 10, 0); // 10 + 2 = 12
+    const tc = await makeAdd(folder, "tgtC", 20, 0); // 20 + 2 = 22
+    for (const t of [tb, tc]) {
+      await addEdge({
+        sourceUid: src.uid,
+        sourcePropUid: src.properties.out.uid,
+        targetUid: t.uid,
+        targetPropUid: t.properties.in2.uid,
+      });
+    }
+    const bOut = tb.properties.out.uid;
+    const cOut = tc.properties.out.uid;
+    const vals = await readValues({
+      components: [src.uid, tb.uid, tc.uid],
+      watch: [bOut, cOut],
+      expect: { [bOut]: 12, [cOut]: 22 },
+    });
+    expect(vals.get(bOut)).toBe(12);
+    expect(vals.get(cOut)).toBe(22);
+  });
+
+  it("a cycle is accepted and exactly one back-edge is flagged loopBack", async () => {
+    const a = await makeAdd(folder, "loopA", 1, 0);
+    const b = await makeAdd(folder, "loopB", 1, 0);
+    await addEdge({
+      sourceUid: a.uid,
+      sourcePropUid: a.properties.out.uid,
+      targetUid: b.uid,
+      targetPropUid: b.properties.in2.uid,
+    });
+    await addEdge({
+      sourceUid: b.uid,
+      sourcePropUid: b.properties.out.uid,
+      targetUid: a.uid,
+      targetPropUid: a.properties.in2.uid,
+    });
+    const resp = await getNodeByUid(folder, { depth: 1, nested: true, withEdges: true });
+    const edges = resp.edges ?? [];
+    expect(edges.length).toBe(2);
+    // The engine breaks the cycle by marking the back-edge as loopBack (the
+    // editor renders it dashed). Exactly one of the two should carry the flag.
+    expect(edges.filter((e) => e.loopBack === true).length).toBe(1);
   });
 
   it("an override sets the live value, and clearing returns it to engine control", async () => {
