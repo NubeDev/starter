@@ -7,8 +7,7 @@ use uuid::Uuid;
 use super::record::NavNodeRecord;
 use crate::tenant_tx;
 
-const COLUMNS: &str =
-    "id, tenant_id, parent_id, title, sort_order, target, context, icon, accent";
+const COLUMNS: &str = "id, tenant_id, parent_id, title, sort_order, target, context, icon, accent";
 
 /// List the tenant's nav nodes, parent-first then by sort order, so the caller
 /// can build the tree top-down without re-sorting.

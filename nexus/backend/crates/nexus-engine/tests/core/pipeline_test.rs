@@ -118,7 +118,10 @@ async fn finite_source_completes_with_ordered_batches_and_one_close() {
             }) as Box<dyn Source>)
         }),
     );
-    registry.register_processor("identity", Box::new(|_| Ok(Box::new(Identity) as Box<dyn Processor>)));
+    registry.register_processor(
+        "identity",
+        Box::new(|_| Ok(Box::new(Identity) as Box<dyn Processor>)),
+    );
     let seen_b = seen.clone();
     let closes_b = closes.clone();
     registry.register_sink(
@@ -143,7 +146,11 @@ async fn finite_source_completes_with_ordered_batches_and_one_close() {
     let outcome = pipeline.run(CancellationToken::new()).await.unwrap();
 
     assert_eq!(outcome, RunOutcome::Completed);
-    assert_eq!(*seen.lock().unwrap(), vec![0, 1, 2, 3, 4], "all batches in order");
+    assert_eq!(
+        *seen.lock().unwrap(),
+        vec![0, 1, 2, 3, 4],
+        "all batches in order"
+    );
     assert_eq!(closes.load(Ordering::SeqCst), 1, "sink closed exactly once");
 }
 
@@ -201,7 +208,11 @@ async fn cancellation_drains_in_flight_and_closes_sink_once() {
         .unwrap();
 
     assert_eq!(outcome, RunOutcome::Cancelled);
-    assert_eq!(closes.load(Ordering::SeqCst), 1, "sink closed exactly once on cancel");
+    assert_eq!(
+        closes.load(Ordering::SeqCst),
+        1,
+        "sink closed exactly once on cancel"
+    );
 }
 
 #[tokio::test]
@@ -277,7 +288,11 @@ async fn bounded_channel_blocks_fast_source_against_slow_sink() {
         .unwrap()
         .unwrap();
     assert_eq!(outcome, RunOutcome::Completed);
-    assert_eq!(seen.lock().unwrap().len(), 1000, "every batch eventually written");
+    assert_eq!(
+        seen.lock().unwrap().len(),
+        1000,
+        "every batch eventually written"
+    );
 }
 
 #[tokio::test]
@@ -344,5 +359,9 @@ async fn source_error_propagates_and_sink_is_closed() {
     let pipeline = Pipeline::build(&registry, &config).unwrap();
     let err = pipeline.run(CancellationToken::new()).await.unwrap_err();
     assert!(matches!(err, EngineError::Source(_)), "source error wins");
-    assert_eq!(closes.load(Ordering::SeqCst), 1, "sink still closed on error");
+    assert_eq!(
+        closes.load(Ordering::SeqCst),
+        1,
+        "sink still closed on error"
+    );
 }

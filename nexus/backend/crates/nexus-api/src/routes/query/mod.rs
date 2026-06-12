@@ -21,8 +21,5 @@ pub fn router() -> Router<AppState> {
         .route("/api/v1/query", post(run_query))
         .route("/api/v1/query/kinds", get(list_query_kinds))
         .route("/api/v1/query-history", get(list_query_history))
-        .route(
-            "/api/v1/query-history/{id}/star",
-            post(star_query_history),
-        )
+        .route("/api/v1/query-history/{id}/star", post(star_query_history))
 }

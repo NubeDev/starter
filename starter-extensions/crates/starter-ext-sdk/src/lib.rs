@@ -332,9 +332,19 @@ macro_rules! __requires_capability_method {
         /// In-process publish/subscribe bus. Granted by
         /// `capabilities.event_bus.publish:` / `subscribe:` in
         /// `block.yaml`; empty allowlists neutralise the
-        /// corresponding direction. V1 exposes `publish` only.
+        /// corresponding direction.
         pub fn event_bus(&self) -> &$crate::ctx::EventBusHandle {
             self.inner.event_bus()
+        }
+    };
+    (extension) => {
+        /// Synchronous peer-call into another extension's provided
+        /// tool/node (WS-18 Wave B). Granted by
+        /// `capabilities.extension.targets:` in `block.yaml`; an empty
+        /// `targets` allowlist neutralises every call. The call runs
+        /// under the caller's identity bound from `ctx.caller()`.
+        pub fn extension_call(&self) -> &$crate::ctx::ExtensionCallHandle {
+            self.inner.extension_call()
         }
     };
     (warehouse_write) => {
@@ -371,7 +381,7 @@ macro_rules! __requires_capability_method {
         compile_error!(concat!(
             "starter_ext_sdk::requires!: unknown capability category `",
             stringify!($other),
-            "`. Known categories: secrets, http_out, fs, wall_clock, tracing, warehouse_read, warehouse_write, event_bus, dashboard, authz. ",
+            "`. Known categories: secrets, http_out, fs, wall_clock, tracing, warehouse_read, warehouse_write, event_bus, extension, dashboard, authz. ",
             "If you need a host-specific category, declare it as `custom` in the manifest \
              and obtain it via the host's `Custom` capability variant — there is no untyped \
              `host_call` escape hatch (SCOPE R6)."

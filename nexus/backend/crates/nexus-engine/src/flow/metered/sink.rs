@@ -129,7 +129,10 @@ impl Sink for MeteredSink {
                     tracing::warn!(error = %e, rows = batch.num_rows(), "flow sink dead-lettering batch per on_error=dlq");
                     self.debug_log(
                         nexus_spi::dto::flow::LogLevel::Warn,
-                        format!("dead-lettering {} rows per on_error=dlq: {e}", batch.num_rows()),
+                        format!(
+                            "dead-lettering {} rows per on_error=dlq: {e}",
+                            batch.num_rows()
+                        ),
                     );
                     self.to_dlq(batch).await
                 }
@@ -215,7 +218,11 @@ mod tests {
         RecordBatch::try_new(schema, vec![Arc::new(Int64Array::from(vals))]).unwrap()
     }
 
-    fn policy(on_error: SinkOnError, max_attempts: u32, dlq: Option<serde_json::Value>) -> SinkPolicy {
+    fn policy(
+        on_error: SinkOnError,
+        max_attempts: u32,
+        dlq: Option<serde_json::Value>,
+    ) -> SinkPolicy {
         SinkPolicy {
             on_error,
             backoff: Backoff {
@@ -236,7 +243,11 @@ mod tests {
             policy(SinkOnError::Halt, 5, None),
         );
         sink.write(&batch(3)).await.expect("recovers after retries");
-        assert_eq!(landed.load(Ordering::SeqCst), 3, "all rows land after retry");
+        assert_eq!(
+            landed.load(Ordering::SeqCst),
+            3,
+            "all rows land after retry"
+        );
         let snap = metrics.snapshot();
         assert_eq!(snap.rows_written, 3);
         assert_eq!(snap.flush_count, 1);
@@ -252,7 +263,10 @@ mod tests {
             FlowMetrics::new(),
             policy(SinkOnError::Halt, 3, None),
         );
-        assert!(sink.write(&batch(2)).await.is_err(), "halt propagates the error");
+        assert!(
+            sink.write(&batch(2)).await.is_err(),
+            "halt propagates the error"
+        );
         assert_eq!(landed.load(Ordering::SeqCst), 0, "nothing landed");
     }
 

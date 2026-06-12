@@ -15,7 +15,8 @@ use starter_spi::Error;
 /// unrecognised/legacy shape falls back to `group` rather than failing the whole
 /// list (a swept mount is already a group, so this only guards corruption).
 pub fn to_detail(rec: &NavNodeRecord) -> NavNodeDetail {
-    let target = serde_json::from_value::<NavTarget>(rec.target.clone()).unwrap_or(NavTarget::Group);
+    let target =
+        serde_json::from_value::<NavTarget>(rec.target.clone()).unwrap_or(NavTarget::Group);
     let context = rec
         .context
         .as_ref()

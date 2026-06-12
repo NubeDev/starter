@@ -85,10 +85,7 @@ fn stamp_and_encode(rows: &[Row], tenant: &str) -> ExtResult<Vec<String>> {
     rows.iter()
         .map(|row| {
             let mut map = row.as_map().clone();
-            map.insert(
-                TENANT_COLUMN.to_string(),
-                Value::String(tenant.to_string()),
-            );
+            map.insert(TENANT_COLUMN.to_string(), Value::String(tenant.to_string()));
             serde_json::to_string(&map)
                 .map_err(|e| ExtError::extension_internal(format!("ingest.write encode row: {e}")))
         })
@@ -206,7 +203,10 @@ mod tests {
                 break;
             }
         }
-        assert!(saw_retry, "a tight burst over a 1-deep channel back-pressures");
+        assert!(
+            saw_retry,
+            "a tight burst over a 1-deep channel back-pressures"
+        );
         mgr.stop("ext-ingest-full");
     }
 }

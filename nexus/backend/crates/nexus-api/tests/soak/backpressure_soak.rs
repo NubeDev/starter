@@ -86,8 +86,14 @@ async fn steady_high_rate_is_bounded_and_lossless() {
     let expected_rows = (emits * batch) as i64;
 
     let resolved = datasource::resolve_sink_config(
-        &pg, &env, "acme", "tester", created.id, "soak_readings",
-        Some(8192), Some(500),
+        &pg,
+        &env,
+        "acme",
+        "tester",
+        created.id,
+        "soak_readings",
+        Some(8192),
+        Some(500),
     )
     .await
     .expect("resolve datasource sink config");
@@ -116,7 +122,10 @@ async fn steady_high_rate_is_bounded_and_lossless() {
         peak = peak.max(resident_bytes().expect("read RSS"));
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    assert!(!flows.is_running("soak-steady"), "the finite soak flow finished");
+    assert!(
+        !flows.is_running("soak-steady"),
+        "the finite soak flow finished"
+    );
     tokio::time::sleep(Duration::from_millis(500)).await;
 
     // Memory bound: the in-flight working set (bounded channel × max_batch_rows)
@@ -133,15 +142,24 @@ async fn steady_high_rate_is_bounded_and_lossless() {
         .fetch_one(admin.sqlx())
         .await
         .expect("count");
-    assert_eq!(landed, expected_rows, "count in == count landed (no silent loss)");
+    assert_eq!(
+        landed, expected_rows,
+        "count in == count landed (no silent loss)"
+    );
 
     // Flush latency is observable: the run stamped a last-write time and counted
     // flushes (the p99 of per-flush wall time is what an operator reads off the
     // metrics; here we assert the signal exists).
     let stats = flows.stats("soak-steady");
-    assert!(stats.metrics.last_write_ms.is_some(), "last write time recorded");
+    assert!(
+        stats.metrics.last_write_ms.is_some(),
+        "last write time recorded"
+    );
     assert!(stats.metrics.flush_count > 0, "flushes recorded");
-    assert!(stats.metrics.rows_written as i64 == expected_rows, "rows_written reconciles");
+    assert!(
+        stats.metrics.rows_written as i64 == expected_rows,
+        "rows_written reconciles"
+    );
     eprintln!(
         "soak steady: rows={expected_rows} flushes={} rss_growth={}MB",
         stats.metrics.flush_count,
@@ -174,7 +192,14 @@ async fn fat_batch_is_sliced_and_bounded() {
     // RecordBatch; with the default max_batch_rows it is sliced before the channel.
     let fat = 2_000_000usize;
     let resolved = datasource::resolve_sink_config(
-        &pg, &env, "acme", "tester", created.id, "fat_readings", Some(8192), Some(500),
+        &pg,
+        &env,
+        "acme",
+        "tester",
+        created.id,
+        "fat_readings",
+        Some(8192),
+        Some(500),
     )
     .await
     .expect("resolve");
@@ -216,7 +241,10 @@ async fn fat_batch_is_sliced_and_bounded() {
         growth < 512 * 1024 * 1024,
         "fat batch was not sliced: RSS growth {growth} bytes (peak {peak})"
     );
-    eprintln!("soak fat: rows={fat} rss_growth={}MB", growth / (1024 * 1024));
+    eprintln!(
+        "soak fat: rows={fat} rss_growth={}MB",
+        growth / (1024 * 1024)
+    );
 }
 
 /// DB-fault chaos: drop the destination table mid-run so sink writes fail, then
@@ -242,7 +270,14 @@ async fn db_fault_surfaces_error_without_silent_loss_under_halt() {
         .expect("register datasource");
 
     let mut resolved = datasource::resolve_sink_config(
-        &pg, &env, "acme", "tester", created.id, "chaos_readings", Some(2000), Some(200),
+        &pg,
+        &env,
+        "acme",
+        "tester",
+        created.id,
+        "chaos_readings",
+        Some(2000),
+        Some(200),
     )
     .await
     .expect("resolve");
@@ -281,11 +316,20 @@ async fn db_fault_surfaces_error_without_silent_loss_under_halt() {
     while flows.is_running("soak-chaos") && Instant::now() < deadline {
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    assert!(!flows.is_running("soak-chaos"), "halt policy stops the faulted flow");
+    assert!(
+        !flows.is_running("soak-chaos"),
+        "halt policy stops the faulted flow"
+    );
 
     let stats = flows.stats("soak-chaos");
-    assert!(stats.last_error.is_some(), "the DB fault surfaced as last_error");
-    assert!(stats.metrics.write_errors > 0, "failed write attempts were counted");
+    assert!(
+        stats.last_error.is_some(),
+        "the DB fault surfaced as last_error"
+    );
+    assert!(
+        stats.metrics.write_errors > 0,
+        "failed write attempts were counted"
+    );
     // No silent loss under halt: the rows the counter reports as written are the
     // rows that actually landed before the table was dropped (recreate to count).
     let written = stats.metrics.rows_written;

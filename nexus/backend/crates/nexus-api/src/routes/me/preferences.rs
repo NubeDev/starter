@@ -45,7 +45,12 @@ pub async fn get_me_preferences(
     let Some((user_id, workspace_id)) = keys(principal) else {
         return unauthorized();
     };
-    let user = match state.prefs.store.get_user_prefs(&user_id, &workspace_id).await {
+    let user = match state
+        .prefs
+        .store
+        .get_user_prefs(&user_id, &workspace_id)
+        .await
+    {
         Ok(u) => u,
         Err(e) => return internal(e),
     };
@@ -79,7 +84,12 @@ pub async fn patch_me_preferences(
     let Some((user_id, workspace_id)) = keys(principal) else {
         return unauthorized();
     };
-    let mut row = match state.prefs.store.get_user_prefs(&user_id, &workspace_id).await {
+    let mut row = match state
+        .prefs
+        .store
+        .get_user_prefs(&user_id, &workspace_id)
+        .await
+    {
         Ok(r) => r.unwrap_or_default(),
         Err(e) => return internal(e),
     };

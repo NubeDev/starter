@@ -52,8 +52,8 @@ fn apply_defaults(schema: &Value, config: &Value) -> Value {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::manifest::{Surface, TestSpec};
+    use super::*;
     use serde_json::json;
 
     fn kind(schema: Value) -> DatasourceKind {
@@ -100,8 +100,7 @@ mod tests {
             "type": "object",
             "properties": { "qos": { "type": "integer", "minimum": 0, "maximum": 2 } }
         }));
-        let err = validate(&k, &json!({ "qos": 9 }))
-            .expect_err("maximum bound is enforced");
+        let err = validate(&k, &json!({ "qos": 9 })).expect_err("maximum bound is enforced");
         assert!(matches!(err, DatasourceKindError::ConfigValidation { .. }));
     }
 }

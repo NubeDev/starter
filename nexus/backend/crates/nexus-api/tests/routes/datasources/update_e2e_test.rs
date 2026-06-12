@@ -36,7 +36,10 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: FlowManager::new().expect("flow manager init"),
-        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
+        sessions: nexus_api::agents::SessionRunner::new(
+            std::env::temp_dir().join("nexus-knowledge-test"),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),
@@ -120,7 +123,10 @@ async fn update_rotates_the_secret_so_a_corrected_query_connects() {
         .send()
         .await
         .expect("query");
-    assert!(bad.status().is_server_error(), "wrong secret cannot connect");
+    assert!(
+        bad.status().is_server_error(),
+        "wrong secret cannot connect"
+    );
 
     // Update: rename and rotate the secret to the correct password.
     let updated: Value = client
@@ -145,7 +151,10 @@ async fn update_rotates_the_secret_so_a_corrected_query_connects() {
         .json()
         .await
         .expect("body");
-    assert_eq!(ok["rows"][0]["n"], 7, "after eviction the corrected secret connects");
+    assert_eq!(
+        ok["rows"][0]["n"], 7,
+        "after eviction the corrected secret connects"
+    );
 
     drop(app);
 }

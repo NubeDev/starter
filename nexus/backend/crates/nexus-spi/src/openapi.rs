@@ -17,14 +17,6 @@ use crate::dto::dashboard::{
     CreateDashboardRequest, DashboardDetail, DashboardExport, DashboardSummary, PanelExport,
     UpdateDashboardRequest, VariableExport,
 };
-use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
-use crate::dto::insight::{
-    CreateInsightRequest, InsightFunctionCatalog, InsightFunctionDoc, InsightRef, InsightSummary,
-    PreviewInsightError, PreviewInsightRequest, PreviewInsightResponse, UpdateInsightRequest,
-};
-use crate::dto::nav::{
-    CreateNavNodeRequest, NavContext, NavNodeDetail, NavTarget, StaticRoute, UpdateNavNodeRequest,
-};
 use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceKindList,
     DatasourceKindSummary, DatasourceSchema, DatasourceSummary, RedactedConnection, SchemaColumn,
@@ -41,15 +33,23 @@ use crate::dto::flow::{
     FlowDebugStatus, FlowDetail, FlowExport, FlowMetrics, FlowSummary, LogLevel, NodeCategory,
     NodeCounters, NodeRole, NodeType, NodeTypeList, UpdateFlowRequest,
 };
+use crate::dto::folder::{CreateFolderRequest, FolderSummary, UpdateFolderRequest};
 use crate::dto::ingest::IngestAccepted;
+use crate::dto::insight::{
+    CreateInsightRequest, InsightFunctionCatalog, InsightFunctionDoc, InsightRef, InsightSummary,
+    PreviewInsightError, PreviewInsightRequest, PreviewInsightResponse, UpdateInsightRequest,
+};
 use crate::dto::me::{MeResponse, UserSettings};
-use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
-use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
+use crate::dto::nav::{
+    CreateNavNodeRequest, NavContext, NavNodeDetail, NavTarget, StaticRoute, UpdateNavNodeRequest,
+};
 use crate::dto::panel::{CreatePanelRequest, PanelDetail, UpdatePanelRequest};
 use crate::dto::query::{
     ColumnSchema, FederatedSourceRef, QueryKindList, QueryKindSummary, QueryRequest, QueryResponse,
     QueryStats, QueryTimeRange, QueryVariable, ResultColumnType,
 };
+use crate::dto::query_history::{QueryHistoryEntry, QueryHistoryList, StarQueryRequest};
+use crate::dto::query_kind::{CreateQueryKindRequest, QueryKindDetail, UpdateQueryKindRequest};
 use crate::dto::stream::{CreateStreamRequest, CreateStreamResponse, StreamEvent};
 use crate::dto::tag::{SetTagsRequest, Tag, TaggableKind, TaggedEntity};
 use crate::dto::variable::{

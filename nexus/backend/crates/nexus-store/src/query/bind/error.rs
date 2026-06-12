@@ -43,10 +43,7 @@ pub enum BindError {
     /// A macro needs context the request didn't carry (e.g. `$__timeFilter` with
     /// no time range, `$__interval` with no interval).
     #[error("macro $__{macro_name} needs {missing} but it was not provided")]
-    MissingContext {
-        macro_name: String,
-        missing: String,
-    },
+    MissingContext { macro_name: String, missing: String },
 
     /// An unterminated `${...}` / `$__macro(` in the input.
     #[error("unterminated token starting at byte {0}")]

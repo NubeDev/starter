@@ -23,7 +23,11 @@ pub const TABLE: &str = "frame";
 /// and collect the result batches. A fresh context per call keeps every primitive
 /// independent and stateless — there is no cross-call catalog to leak between
 /// tenants or executions.
-pub fn run(schema: SchemaRef, batches: Vec<RecordBatch>, sql: &str) -> InsightResult<Vec<RecordBatch>> {
+pub fn run(
+    schema: SchemaRef,
+    batches: Vec<RecordBatch>,
+    sql: &str,
+) -> InsightResult<Vec<RecordBatch>> {
     let ctx = SessionContext::new();
     let partitions = vec![batches];
     let table = MemTable::try_new(schema, partitions)

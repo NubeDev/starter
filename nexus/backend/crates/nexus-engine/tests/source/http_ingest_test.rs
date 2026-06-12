@@ -29,7 +29,10 @@ async fn push_to_running_flow_lands_rows() {
         .expect("start");
     // The source registers its channel as the run spins up.
     tokio::time::sleep(Duration::from_millis(20)).await;
-    assert!(mgr.ingest().is_open("ingest-ok"), "channel open while running");
+    assert!(
+        mgr.ingest().is_open("ingest-ok"),
+        "channel open while running"
+    );
 
     for n in 0..3 {
         mgr.ingest()
@@ -39,7 +42,10 @@ async fn push_to_running_flow_lands_rows() {
     tokio::time::sleep(Duration::from_millis(80)).await;
 
     let stats = mgr.stats("ingest-ok");
-    assert!(stats.metrics.rows_written >= 3, "pushed rows reach the sink");
+    assert!(
+        stats.metrics.rows_written >= 3,
+        "pushed rows reach the sink"
+    );
 
     mgr.stop("ingest-ok");
     tokio::time::sleep(Duration::from_millis(30)).await;
@@ -85,7 +91,10 @@ async fn full_channel_reports_backpressure() {
             Err(other) => panic!("unexpected push error: {other:?}"),
         }
     }
-    assert!(saw_full, "a tight burst over a 1-deep channel hits backpressure");
+    assert!(
+        saw_full,
+        "a tight burst over a 1-deep channel hits backpressure"
+    );
 
     mgr.stop("ingest-full");
 }

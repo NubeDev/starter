@@ -123,6 +123,27 @@ pub enum Capability {
         subscribe: Vec<String>,
     },
 
+    /// Synchronous peer-to-peer invocation of another extension's
+    /// **provided** tool/node via the `extension.call` host method
+    /// (WS-18 Wave B). The grant enumerates `"<ext_id>:<provided_id>"`
+    /// targets this extension may call. A target is only reachable when
+    /// it appears in **all three** of: this allowlist, the caller's
+    /// `requires.extensions[].provides`, and the callee's
+    /// `contributes.provides[]` — the host triple-checks before
+    /// dispatching.
+    ///
+    /// The call runs under the **caller's** identity (tenant + teams),
+    /// never the callee's — a callee cannot launder authority on the
+    /// caller's behalf (WS-14 §4.3: a capability is never broader than
+    /// the caller's own grants). Empty `targets` is the neutralised
+    /// form: the extension loads, every peer call is denied.
+    Extension {
+        /// Allowed `"<ext_id>:<provided_id>"` targets. Cross-checked
+        /// against each `extension.call` request at the host backend.
+        #[serde(default)]
+        targets: Vec<String>,
+    },
+
     /// SDUI dashboard pages the extension is allowed to **read**.
     /// Per
     /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
@@ -356,6 +377,25 @@ mod tests {
             publish: vec![],
             subscribe: vec![],
         };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn extension_round_trip() {
+        let cap = Capability::Extension {
+            targets: vec!["com.acme.geocode:com.acme.geocode.lookup".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "extension");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn extension_empty_targets_is_legal() {
+        let cap = Capability::Extension { targets: vec![] };
         let j = serde_json::to_string(&cap).unwrap();
         let back: Capability = serde_json::from_str(&j).unwrap();
         assert_eq!(back, cap);

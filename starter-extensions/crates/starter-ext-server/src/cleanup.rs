@@ -150,11 +150,7 @@ pub trait PostInstallHook: Send + Sync {
     /// carries the validated manifest (including `warehouse_tables[]`).
     /// Returns a short, human-readable summary for the install log on
     /// success.
-    async fn run(
-        &self,
-        id: &ExtensionId,
-        manifest: &Manifest,
-    ) -> Result<String, CleanupError>;
+    async fn run(&self, id: &ExtensionId, manifest: &Manifest) -> Result<String, CleanupError>;
 }
 
 // ---------------------------------------------------------------------------

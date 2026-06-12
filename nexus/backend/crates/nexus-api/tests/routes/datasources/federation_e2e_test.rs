@@ -144,7 +144,10 @@ async fn federated_join_across_two_datasources_runs_end_to_end() {
     // The federated request names both sources; `:id` in the path is one of them.
     // The engine registers each as `ds_<alias>` and resolves the join itself.
     let result: Value = client
-        .post(format!("{}/api/v1/datasources/{devices_id}/query", app.base_url))
+        .post(format!(
+            "{}/api/v1/datasources/{devices_id}/query",
+            app.base_url
+        ))
         .json(&json!({
             "sql": "SELECT d.name, r.temp_c \
                     FROM ds_devices d JOIN ds_readings r ON d.id = r.device_id \
@@ -161,7 +164,10 @@ async fn federated_join_across_two_datasources_runs_end_to_end() {
         .await
         .expect("body");
 
-    assert_eq!(result["stats"]["row_count"], 3, "the cross-source join produced three rows");
+    assert_eq!(
+        result["stats"]["row_count"], 3,
+        "the cross-source join produced three rows"
+    );
     let pairs: Vec<(String, i64)> = result["rows"]
         .as_array()
         .expect("rows")
@@ -335,7 +341,10 @@ async fn stored_parquet_joins_live_postgres_end_to_end() {
     let readings_id = register_self(&client, &app.base_url, port, "readings-ds").await;
 
     let result: Value = client
-        .post(format!("{}/api/v1/datasources/{readings_id}/query", app.base_url))
+        .post(format!(
+            "{}/api/v1/datasources/{readings_id}/query",
+            app.base_url
+        ))
         .json(&json!({
             "sql": "SELECT d.name, r.temp_c \
                     FROM ds_devices d JOIN ds_readings r ON d.id = r.device_id \

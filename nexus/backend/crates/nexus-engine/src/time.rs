@@ -23,7 +23,11 @@ pub fn parse_interval(s: &str) -> Result<Duration, String> {
         "s" => n,
         "m" => n * 60,
         "h" => n * 3600,
-        other => return Err(format!("interval `{s}` has unknown unit `{other}` (expected s/m/h)")),
+        other => {
+            return Err(format!(
+                "interval `{s}` has unknown unit `{other}` (expected s/m/h)"
+            ))
+        }
     };
     if secs == 0 {
         return Err(format!("interval `{s}` must be greater than zero"));

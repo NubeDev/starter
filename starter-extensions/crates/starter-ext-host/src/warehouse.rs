@@ -213,12 +213,7 @@ impl TemplateRegistry {
     /// funnels through here so `by_name` and `owners` can never
     /// drift. Builtins pass `owner = None`; extension-contributed
     /// templates pass `Some(ext_id)`.
-    fn insert_template(
-        &mut self,
-        name: String,
-        spec: TemplateSpec,
-        owner: Option<ExtensionId>,
-    ) {
+    fn insert_template(&mut self, name: String, spec: TemplateSpec, owner: Option<ExtensionId>) {
         self.by_name.insert(name.clone(), spec);
         match owner {
             Some(id) => {
@@ -417,6 +412,7 @@ mod tests {
             description_file: None,
             authors: vec![],
             requires: vec![],
+            requires_extensions: vec![],
             runtime: Runtime {
                 kind: RuntimeKind::Builtin,
                 bin: None,

@@ -56,9 +56,17 @@ async fn finite_run_returns_real_rows_and_completes() {
         .iter()
         .map(|r| r["city"].as_str().unwrap())
         .collect();
-    assert_eq!(cities, ["berlin", "madrid"], "rows arrive shaped by the SQL");
+    assert_eq!(
+        cities,
+        ["berlin", "madrid"],
+        "rows arrive shaped by the SQL"
+    );
     let names: Vec<&str> = drained.columns.iter().map(|c| c.name.as_str()).collect();
-    assert_eq!(names, ["city", "temp_c"], "column schema derives from Arrow");
+    assert_eq!(
+        names,
+        ["city", "temp_c"],
+        "column schema derives from Arrow"
+    );
 }
 
 #[tokio::test]
@@ -80,7 +88,10 @@ async fn row_cap_truncates_instead_of_buffering_unbounded() {
         .expect("run");
 
     let drained = store::take(&run_id);
-    assert!(drained.truncated, "hitting the cap is reported as truncated");
+    assert!(
+        drained.truncated,
+        "hitting the cap is reported as truncated"
+    );
     assert!(
         (drained.rows.len() as u64) <= 10,
         "the collector stops at the cap, it does not buffer all 1000 rows"

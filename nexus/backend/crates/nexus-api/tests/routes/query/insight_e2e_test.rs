@@ -91,7 +91,11 @@ async fn an_inline_filter_insight_shrinks_the_result() {
         .await
         .unwrap();
 
-    assert_eq!(body["rows"].as_array().unwrap().len(), 2, "filter kept kw > 10");
+    assert_eq!(
+        body["rows"].as_array().unwrap().len(),
+        2,
+        "filter kept kw > 10"
+    );
     assert_eq!(
         body["stats"]["row_count"], 2,
         "stats are recomputed from the transformed rows"
@@ -125,7 +129,11 @@ async fn a_passthrough_insight_leaves_rows_intact() {
         .json()
         .await
         .unwrap();
-    assert_eq!(body["rows"].as_array().unwrap().len(), 3, "passthrough keeps all rows");
+    assert_eq!(
+        body["rows"].as_array().unwrap().len(),
+        3,
+        "passthrough keeps all rows"
+    );
     assert_eq!(body["stats"]["row_count"], 3);
     app.shutdown().await;
 }
@@ -148,6 +156,10 @@ async fn a_pathological_script_is_a_clean_400_not_a_hang() {
         .send()
         .await
         .unwrap();
-    assert_eq!(resp.status(), 400, "a runaway insight is a bad request, not a hang");
+    assert_eq!(
+        resp.status(),
+        400,
+        "a runaway insight is a bad request, not a hang"
+    );
     app.shutdown().await;
 }

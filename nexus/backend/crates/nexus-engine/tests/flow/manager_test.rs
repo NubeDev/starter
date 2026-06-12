@@ -67,5 +67,8 @@ async fn run_populates_ingest_metrics() {
     assert!(stats.metrics.rows_written > 0, "rows written to the sink");
     assert!(stats.metrics.flush_count > 0, "sink flushes counted");
     assert!(stats.metrics.last_write_ms.is_some(), "last write stamped");
-    assert_eq!(stats.metrics.write_errors, 0, "no write errors on a healthy flow");
+    assert_eq!(
+        stats.metrics.write_errors, 0,
+        "no write errors on a healthy flow"
+    );
 }

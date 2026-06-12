@@ -47,7 +47,10 @@ async fn batches_by_row_count_then_flushes_the_tail_on_close() {
     let mut sink = DatasourceSink::with_writer(4, Duration::from_secs(60), Box::new(writer));
 
     sink.write(&batch(3)).await.unwrap();
-    assert!(seen.lock().unwrap().is_empty(), "3 < 4 rows: not yet flushed");
+    assert!(
+        seen.lock().unwrap().is_empty(),
+        "3 < 4 rows: not yet flushed"
+    );
     sink.write(&batch(2)).await.unwrap();
     // 3 + 2 = 5 >= 4 → one combined flush of 5 rows.
     assert_eq!(*seen.lock().unwrap(), vec![5]);

@@ -32,7 +32,11 @@ pub async fn apply_insight(
             message: e.to_string(),
         })?;
 
-    Ok(reshape(transformed, response.stats.elapsed_ms, response.stats.truncated))
+    Ok(reshape(
+        transformed,
+        response.stats.elapsed_ms,
+        response.stats.truncated,
+    ))
 }
 
 /// Pick the script. Precedence: a stored tenant id (resolved + tenant-authorised
@@ -76,7 +80,9 @@ async fn resolve_script(
 /// identically to the query path — one reshape, one rendered grid.
 pub(crate) fn reshape(rows: Vec<Value>, elapsed_ms: u64, truncated: bool) -> QueryResponse {
     let columns = derive_columns(&rows);
-    let byte_count = serde_json::to_vec(&rows).map(|b| b.len() as u64).unwrap_or(0);
+    let byte_count = serde_json::to_vec(&rows)
+        .map(|b| b.len() as u64)
+        .unwrap_or(0);
     let row_count = rows.len() as u64;
     QueryResponse {
         columns,
@@ -118,7 +124,10 @@ fn derive_columns(rows: &[Value]) -> Vec<ColumnSchema> {
 /// Coarse type of `name` across `rows`: the first non-null value decides.
 fn column_type(rows: &[Value], name: &str) -> ResultColumnType {
     for row in rows {
-        if let Some(v) = row.as_object().and_then(|m: &Map<String, Value>| m.get(name)) {
+        if let Some(v) = row
+            .as_object()
+            .and_then(|m: &Map<String, Value>| m.get(name))
+        {
             match v {
                 Value::Null => continue,
                 Value::Bool(_) => return ResultColumnType::Bool,
@@ -148,17 +157,17 @@ mod tests {
             json!({ "time": "t1", "value": 2.0, "value_diff": 1.0 }),
         ];
         let names: Vec<String> = derive_columns(&rows).into_iter().map(|c| c.name).collect();
-        assert!(names.iter().any(|n| n == "value_diff"), "expected value_diff in {names:?}");
+        assert!(
+            names.iter().any(|n| n == "value_diff"),
+            "expected value_diff in {names:?}"
+        );
         // First-seen order: row 0's keys first, then the new one.
         assert_eq!(names, vec!["time", "value", "value_diff"]);
     }
 
     #[test]
     fn derive_columns_types_use_first_non_null_value() {
-        let rows = vec![
-            json!({ "x": Value::Null }),
-            json!({ "x": 3.5 }),
-        ];
+        let rows = vec![json!({ "x": Value::Null }), json!({ "x": 3.5 })];
         let cols = derive_columns(&rows);
         assert_eq!(cols.len(), 1);
         assert_eq!(cols[0].name, "x");

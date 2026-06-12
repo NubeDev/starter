@@ -37,7 +37,9 @@ pub enum ContributeError {
         source: std::io::Error,
     },
     /// The `params_schema` file held invalid JSON.
-    #[error("extension `{extension}` template `{template}`: params_schema is not valid JSON: {source}")]
+    #[error(
+        "extension `{extension}` template `{template}`: params_schema is not valid JSON: {source}"
+    )]
     Schema {
         extension: String,
         template: String,
@@ -85,8 +87,7 @@ pub fn contributed_query_kinds(
         };
 
         let sql = read_bundle_file(extension_id, &tpl.name, bundle_dir, sql_rel)?;
-        let schema_raw =
-            read_bundle_file(extension_id, &tpl.name, bundle_dir, &tpl.params_schema)?;
+        let schema_raw = read_bundle_file(extension_id, &tpl.name, bundle_dir, &tpl.params_schema)?;
         let params_schema: serde_json::Value =
             serde_json::from_str(&schema_raw).map_err(|source| ContributeError::Schema {
                 extension: extension_id.to_string(),
@@ -183,10 +184,13 @@ mod tests {
     #[test]
     fn example_bundle_contributes_lint_clean_kinds() {
         let mut registry = starter_ext_host::ExtensionRegistry::new();
-        let records = starter_ext_host::Loader::scan(example_bundle().parent().unwrap())
-            .validate_all();
+        let records =
+            starter_ext_host::Loader::scan(example_bundle().parent().unwrap()).validate_all();
         let outcome = starter_ext_host::Loader::commit(records, &mut registry);
-        assert_eq!(outcome.failed, 0, "the shipped example bundle must validate");
+        assert_eq!(
+            outcome.failed, 0,
+            "the shipped example bundle must validate"
+        );
         registry.seal();
 
         let record = registry
@@ -194,25 +198,22 @@ mod tests {
             .expect("com.nexus.hello is in the pack");
         let manifest = record.manifest.as_ref().expect("validated ⇒ manifest");
 
-        let kinds =
-            contributed_query_kinds("com.nexus.hello", &record.bundle_dir, manifest)
-                .expect("shipped templates must read + lint clean");
+        let kinds = contributed_query_kinds("com.nexus.hello", &record.bundle_dir, manifest)
+            .expect("shipped templates must read + lint clean");
         assert_eq!(kinds.len(), 2, "ping + echo");
         assert!(kinds.iter().any(|k| k.name == "com.nexus.hello.ping"));
         assert!(kinds.iter().any(|k| k.name == "com.nexus.hello.echo"));
 
         // And they assemble into a registry the dispatcher can resolve.
-        let reg = crate::kinds::Registry::from_kinds(
-            kinds.iter().map(|k| QueryKind {
-                name: k.name.clone(),
-                sql: k.sql.clone(),
-                params_schema: k.params_schema.clone(),
-                datasource_kind: k.datasource_kind.clone(),
-                tables: k.tables.clone(),
-                datasource_binding: k.datasource_binding.clone(),
-                description: k.description.clone(),
-            }),
-        )
+        let reg = crate::kinds::Registry::from_kinds(kinds.iter().map(|k| QueryKind {
+            name: k.name.clone(),
+            sql: k.sql.clone(),
+            params_schema: k.params_schema.clone(),
+            datasource_kind: k.datasource_kind.clone(),
+            tables: k.tables.clone(),
+            datasource_binding: k.datasource_binding.clone(),
+            description: k.description.clone(),
+        }))
         .expect("no duplicate names");
         let bound = crate::kinds::resolve(
             &reg,

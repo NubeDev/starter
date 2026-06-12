@@ -222,7 +222,10 @@ async fn push_lands_rows_and_surfaces_backpressure_and_tenant_isolation() {
             break;
         }
     }
-    assert!(saw_429, "a burst over a 1-deep channel eventually backpressures");
+    assert!(
+        saw_429,
+        "a burst over a 1-deep channel eventually backpressures"
+    );
 
     drop(app);
 }

@@ -666,6 +666,7 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
         Arc::new(StubWarehouseWrite),
         Arc::new(StubDatasource),
         Arc::new(StubEventBus),
+        Arc::new(StubExtensionCall),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
     )
@@ -765,7 +766,9 @@ impl starter_ext_sdk::ctx::DatasourceBackend for StubDatasource {
         _sql: &str,
         _params: Vec<serde_json::Value>,
     ) -> starter_ext_spi::Result<Vec<starter_ext_spi::warehouse::Row>> {
-        Err(Error::capability("datasource not wired in CLI adapter Phase 6"))
+        Err(Error::capability(
+            "datasource not wired in CLI adapter Phase 6",
+        ))
     }
     fn execute(
         &self,
@@ -773,7 +776,9 @@ impl starter_ext_sdk::ctx::DatasourceBackend for StubDatasource {
         _stmt: &str,
         _params: Vec<serde_json::Value>,
     ) -> starter_ext_spi::Result<u64> {
-        Err(Error::capability("datasource not wired in CLI adapter Phase 6"))
+        Err(Error::capability(
+            "datasource not wired in CLI adapter Phase 6",
+        ))
     }
 }
 
@@ -783,6 +788,21 @@ impl starter_ext_sdk::ctx::EventBusBackend for StubEventBus {
     fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         Err(Error::capability(
             "event_bus not wired in CLI adapter Phase 6",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubExtensionCall;
+impl starter_ext_sdk::ctx::ExtensionCallBackend for StubExtensionCall {
+    fn call(
+        &self,
+        _extension_id: &str,
+        _provided_id: &str,
+        _input: serde_json::Value,
+    ) -> starter_ext_spi::Result<serde_json::Value> {
+        Err(Error::capability(
+            "extension_call not wired in CLI adapter Phase 6",
         ))
     }
 }

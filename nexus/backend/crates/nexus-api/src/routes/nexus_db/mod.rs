@@ -26,6 +26,12 @@ use crate::state::AppState;
 /// The `/api/v1/nexus-db` surface.
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/nexus-db/query", axum::routing::post(query::query_nexus_db))
-        .route("/api/v1/nexus-db/schema", axum::routing::get(schema::nexus_db_schema))
+        .route(
+            "/api/v1/nexus-db/query",
+            axum::routing::post(query::query_nexus_db),
+        )
+        .route(
+            "/api/v1/nexus-db/schema",
+            axum::routing::get(schema::nexus_db_schema),
+        )
 }

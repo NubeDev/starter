@@ -35,9 +35,7 @@ use std::sync::Arc;
 
 use sqlx::PgPool;
 use starter_ext_host::{ExtensionRegistry, Loader};
-use starter_ext_server::{
-    EnablementStore, ExtensionAdmin, WithHostMethodsFactory,
-};
+use starter_ext_server::{EnablementStore, ExtensionAdmin, WithHostMethodsFactory};
 use starter_ext_spi::RuntimeKind;
 use starter_ext_store_pg::PgEnablementStore;
 use starter_ext_supervisor::{reap_stale_groups, SharedHostMethodHandler};
@@ -49,10 +47,10 @@ use super::config::ExtensionsConfig;
 use super::contribute::{contributed_query_kinds, record_to_query_kind};
 use super::contribute_insights::contributed_insights;
 use super::contribute_nodes::register_contributed_nodes;
-use starter_flow::registry::NodeKindRegistry;
 use super::post_install::ContributionPostInstall;
 use crate::kinds::Registry as KindRegistry;
 use nexus_store::{extension_insight, extension_query_kind};
+use starter_flow::registry::NodeKindRegistry;
 
 /// The assembled extension runtime handed back to `main`.
 pub struct ExtensionRuntime {
@@ -85,6 +83,7 @@ pub async fn boot(
     metadata: PgPool,
     host_methods: SharedHostMethodHandler,
     extension_kinds: Arc<KindRegistry>,
+    peer_supervisors: Arc<super::peer::PeerSupervisors>,
 ) -> Result<ExtensionRuntime, String> {
     // 1. Reap orphaned process groups from a prior crash before spawning.
     let reaped = reap_stale_groups(&cfg.pidfile_dir);
@@ -157,8 +156,8 @@ pub async fn boot(
                 // admin's copy moved into `supervisors` below.
                 if let Some(manifest) = record.manifest.as_ref() {
                     if !manifest.contributes.nodes.is_empty() {
-                        let n = register_contributed_nodes(manifest, &handle, &flow_node_kinds)
-                            .await;
+                        let n =
+                            register_contributed_nodes(manifest, &handle, &flow_node_kinds).await;
                         tracing::info!(
                             target: "nexus_api::extensions::boot",
                             extension = %ext_id.as_str(),
@@ -179,6 +178,17 @@ pub async fn boot(
                 );
             }
         }
+    }
+
+    // 4b. WS-18: publish the spawned supervisor handles into the write-once
+    //     peer registry `AppState` already shares, so the `extension.call` host
+    //     method can reach a callee's child. `SupervisorHandle` is `Arc`-backed,
+    //     so this clone shares the same children the admin moves below.
+    if peer_supervisors.set(supervisors.clone()).is_err() {
+        tracing::warn!(
+            target: "nexus_api::extensions::boot",
+            "peer supervisor registry already populated; ignoring (boot ran twice?)"
+        );
     }
 
     // 5. Build the admin: PG store, host-method factory, the query-kind cleanup
@@ -369,10 +379,8 @@ mod tests {
     #[test]
     fn empty_installs_dir_does_not_wipe_the_pack_scan() {
         let pack = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("extensions");
-        let installs = std::env::temp_dir().join(format!(
-            "nexus-ext-boot-test-{}",
-            std::process::id()
-        ));
+        let installs =
+            std::env::temp_dir().join(format!("nexus-ext-boot-test-{}", std::process::id()));
         std::fs::create_dir_all(&installs).unwrap();
 
         let cfg = ExtensionsConfig {

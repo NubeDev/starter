@@ -498,9 +498,7 @@ impl ExtensionAdminBuilder {
                 pending_restart: RwLock::new(HashMap::new()),
                 uninstalled: RwLock::new(HashSet::new()),
                 metrics: self.metrics.unwrap_or_default(),
-                audit_sink: self
-                    .audit_sink
-                    .unwrap_or_else(|| Arc::new(NoopAuditSink)),
+                audit_sink: self.audit_sink.unwrap_or_else(|| Arc::new(NoopAuditSink)),
                 worker_states: self.worker_states,
                 installs_dir: self.installs_dir,
                 post_install_hook: self.post_install_hook,

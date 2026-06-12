@@ -57,8 +57,7 @@ fn write_devices_parquet(path: &std::path::Path, rows: &[(i64, &str)]) {
     ]));
     let ids: Int64Array = rows.iter().map(|(id, _)| *id).collect();
     let names: StringArray = rows.iter().map(|(_, n)| Some(*n)).collect();
-    let batch =
-        RecordBatch::try_new(schema.clone(), vec![Arc::new(ids), Arc::new(names)]).unwrap();
+    let batch = RecordBatch::try_new(schema.clone(), vec![Arc::new(ids), Arc::new(names)]).unwrap();
     let file = std::fs::File::create(path).unwrap();
     let mut writer = ArrowWriter::try_new(file, schema, None).unwrap();
     writer.write(&batch).unwrap();
@@ -110,7 +109,10 @@ async fn joins_a_parquet_against_a_csv_in_one_sql() {
         .expect("a file-to-file federated join runs to completion");
 
     assert_eq!(outcome.stats.row_count, 3, "the join produced three rows");
-    assert!(!outcome.stats.truncated, "an uncapped result is not truncated");
+    assert!(
+        !outcome.stats.truncated,
+        "an uncapped result is not truncated"
+    );
     let names: Vec<&str> = outcome.columns.iter().map(|c| c.name.as_str()).collect();
     assert_eq!(names, ["name", "temp_c"], "schema is the SELECT projection");
     // boiler has two readings (80, 82), chiller one (5); ORDER BY name, temp_c.

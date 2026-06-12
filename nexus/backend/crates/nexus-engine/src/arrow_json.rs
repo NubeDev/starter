@@ -40,7 +40,9 @@ pub fn json_carrier_batch(docs: &[String]) -> RecordBatch {
         DataType::Utf8,
         false,
     )]));
-    let column = Arc::new(StringArray::from_iter_values(docs.iter().map(String::as_str)));
+    let column = Arc::new(StringArray::from_iter_values(
+        docs.iter().map(String::as_str),
+    ));
     // try_new only fails on a column/length mismatch, which a single column built
     // from the same slice cannot hit.
     RecordBatch::try_new(schema, vec![column])

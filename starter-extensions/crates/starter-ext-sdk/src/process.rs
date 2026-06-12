@@ -42,8 +42,8 @@ use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Re
 use crate::ctx::{CtxInner, EventSender, NeverCancel};
 use crate::host_backends::{
     RealAuthzBackend, RealDashboardBackend, RealDatasourceBackend, RealEventBusBackend,
-    RealFsBackend, RealHttpOutBackend, RealSecretsBackend, RealTracingBackend,
-    RealWallClockBackend, RealWarehouseReadBackend, RealWarehouseWriteBackend,
+    RealExtensionCallBackend, RealFsBackend, RealHttpOutBackend, RealSecretsBackend,
+    RealTracingBackend, RealWallClockBackend, RealWarehouseReadBackend, RealWarehouseWriteBackend,
 };
 use crate::host_rpc::{self, HostRpc};
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
@@ -340,8 +340,7 @@ where
                 let writer_tx_handler = writer_tx.clone();
                 let id_for_task = id.clone();
                 tokio::task::spawn_blocking(move || {
-                    let dispatch =
-                        || instance_arc.dispatch_tool(&kind, &per_call_ctx, tool_params);
+                    let dispatch = || instance_arc.dispatch_tool(&kind, &per_call_ctx, tool_params);
                     let result = match caller {
                         Some(c) => crate::caller_local::scope_sync(c, dispatch),
                         None => dispatch(),
@@ -407,10 +406,7 @@ fn slotmap_to_params(input: Option<&serde_json::Value>) -> serde_json::Value {
 fn slot_value_to_json(sv: &serde_json::Value) -> serde_json::Value {
     match sv.get("type").and_then(|t| t.as_str()) {
         Some("null") => serde_json::Value::Null,
-        Some(_) => sv
-            .get("value")
-            .cloned()
-            .unwrap_or(serde_json::Value::Null),
+        Some(_) => sv.get("value").cloned().unwrap_or(serde_json::Value::Null),
         None => sv.clone(),
     }
 }
@@ -525,6 +521,7 @@ fn real_ctx_inner(events: EventSender, host_rpc: HostRpc) -> CtxInner {
         Arc::new(RealWarehouseWriteBackend::new(host_rpc.clone())),
         Arc::new(RealDatasourceBackend::new(host_rpc.clone())),
         Arc::new(RealEventBusBackend::new(host_rpc.clone())),
+        Arc::new(RealExtensionCallBackend::new(host_rpc.clone())),
         Arc::new(RealDashboardBackend::new(host_rpc.clone())),
         Arc::new(RealAuthzBackend::new(host_rpc)),
     )

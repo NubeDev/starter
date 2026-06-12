@@ -166,6 +166,7 @@ impl WasiCategory {
             | Capability::WarehouseWrite { .. }
             | Capability::Datasource { .. }
             | Capability::EventBus { .. }
+            | Capability::Extension { .. }
             | Capability::DashboardRead { .. }
             | Capability::DashboardWrite { .. }
             | Capability::AuthzCheck { .. }

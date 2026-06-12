@@ -153,8 +153,11 @@ mod tests {
             on_error: SourceOnError::Halt,
             backoff: fast_backoff(5),
         };
-        let mut src =
-            MeteredSource::new(Box::new(FlakySource::new(1, one_row_batch())), FlowMetrics::new(), policy);
+        let mut src = MeteredSource::new(
+            Box::new(FlakySource::new(1, one_row_batch())),
+            FlowMetrics::new(),
+            policy,
+        );
         assert!(src.read().await.is_err(), "halt does not retry");
     }
 
@@ -166,8 +169,14 @@ mod tests {
         };
         // Fails more times than the cap allows — the run halts on the error rather
         // than looping forever.
-        let mut src =
-            MeteredSource::new(Box::new(FlakySource::new(10, one_row_batch())), FlowMetrics::new(), policy);
-        assert!(src.read().await.is_err(), "exhausted retries surface the error");
+        let mut src = MeteredSource::new(
+            Box::new(FlakySource::new(10, one_row_batch())),
+            FlowMetrics::new(),
+            policy,
+        );
+        assert!(
+            src.read().await.is_err(),
+            "exhausted retries surface the error"
+        );
     }
 }

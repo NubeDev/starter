@@ -46,12 +46,18 @@ pub fn register_all(
     envelope: Envelope,
 ) -> ReversibleRegistry {
     registry
-        .insert(Arc::new(dashboard::DashboardReversible::new(metadata.clone())))
+        .insert(Arc::new(dashboard::DashboardReversible::new(
+            metadata.clone(),
+        )))
         .insert(Arc::new(panel::PanelReversible::new(metadata.clone())))
         .insert(Arc::new(folder::FolderReversible::new(metadata.clone())))
         .insert(Arc::new(nav_node::NavNodeReversible::new(metadata.clone())))
-        .insert(Arc::new(query_kind::QueryKindReversible::new(metadata.clone())))
-        .insert(Arc::new(datasource::DatasourceReversible::new(metadata, envelope)))
+        .insert(Arc::new(query_kind::QueryKindReversible::new(
+            metadata.clone(),
+        )))
+        .insert(Arc::new(datasource::DatasourceReversible::new(
+            metadata, envelope,
+        )))
 }
 
 /// The kinds [`register_all`] wires, as their stable discriminators. This is the

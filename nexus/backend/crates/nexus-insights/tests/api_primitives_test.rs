@@ -72,11 +72,7 @@ async fn rolling_sum_min_max() {
 
 #[tokio::test]
 async fn lag_diff_pct_change() {
-    let out = run(
-        r#"df.lag("kw", 1).diff("kw").pct_change("kw")"#,
-        sample(),
-    )
-    .await;
+    let out = run(r#"df.lag("kw", 1).diff("kw").pct_change("kw")"#, sample()).await;
     assert_eq!(out.len(), 3);
     assert!(out[0]["kw_lag"].is_null());
     assert_eq!(out[1]["kw_lag"], json!(10.0));
@@ -96,7 +92,10 @@ async fn anomalies_flags_outlier() {
     let mut rows = sample();
     rows.push(json!({ "kw": 1000.0, "site": "A" }));
     let out = run(r#"df.anomalies("kw", 1.5)"#, rows).await;
-    let flagged = out.iter().filter(|r| r["kw_anomaly"] == json!(true)).count();
+    let flagged = out
+        .iter()
+        .filter(|r| r["kw_anomaly"] == json!(true))
+        .count();
     assert_eq!(flagged, 1);
 }
 

@@ -30,13 +30,11 @@ pub async fn by_id(
     id: Uuid,
 ) -> Result<Option<FolderRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
-    let row = sqlx::query(
-        "SELECT id, tenant_id, parent_id, name FROM nexus_folders WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&mut *tx)
-    .await
-    .map_err(internal)?;
+    let row = sqlx::query("SELECT id, tenant_id, parent_id, name FROM nexus_folders WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(row.as_ref().map(row_to_record))
 }

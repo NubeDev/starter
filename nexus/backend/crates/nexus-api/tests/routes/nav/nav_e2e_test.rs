@@ -100,7 +100,9 @@ fn group(title: &str) -> NewNavNode {
 async fn the_nav_tree_is_access_filtered() {
     let (admin, _guard) = with_database().await;
     let pg = runtime_pool(admin.sqlx()).await;
-    nav_node::insert(&pg, "acme", &group("Buildings")).await.unwrap();
+    nav_node::insert(&pg, "acme", &group("Buildings"))
+        .await
+        .unwrap();
 
     // No grant ⇒ the node is filtered out (the row is visible to the tenant via
     // RLS, so an empty list here is the access filter, not a hidden row).
@@ -113,7 +115,11 @@ async fn the_nav_tree_is_access_filtered() {
         .json()
         .await
         .unwrap();
-    assert_eq!(body.as_array().unwrap().len(), 0, "ungranted ⇒ filtered out");
+    assert_eq!(
+        body.as_array().unwrap().len(),
+        0,
+        "ungranted ⇒ filtered out"
+    );
     drop(denied);
 
     // Granted ⇒ the node appears.
@@ -135,7 +141,9 @@ async fn the_nav_tree_is_access_filtered() {
 async fn opening_a_node_checks_view_on_the_node() {
     let (admin, _guard) = with_database().await;
     let pg = runtime_pool(admin.sqlx()).await;
-    let node = nav_node::insert(&pg, "acme", &group("Building-1")).await.unwrap();
+    let node = nav_node::insert(&pg, "acme", &group("Building-1"))
+        .await
+        .unwrap();
 
     let denied = app_with(&pg, Arc::new(DenyAll)).await;
     let resp = reqwest::Client::new()
@@ -208,7 +216,11 @@ async fn a_cross_tenant_dashboard_target_is_rejected() {
         .unwrap();
     // The handler's tenant-scoped existence check (RLS hides globex's row from
     // acme) rejects it as a bad request — never persists a cross-tenant mount.
-    assert_eq!(resp.status(), 400, "cross-tenant dashboard target ⇒ rejected");
+    assert_eq!(
+        resp.status(),
+        400,
+        "cross-tenant dashboard target ⇒ rejected"
+    );
     drop(app);
 }
 

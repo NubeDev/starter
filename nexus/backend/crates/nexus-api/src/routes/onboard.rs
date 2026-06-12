@@ -51,7 +51,9 @@ const ONBOARD_TENANT: &str = "nexus";
 
 /// `Error::Invalid` from a message.
 fn invalid(msg: impl Into<String>) -> Error {
-    Error::Invalid { message: msg.into() }
+    Error::Invalid {
+        message: msg.into(),
+    }
 }
 
 /// `Error::Internal` boxing a stringly-typed cause.
@@ -98,7 +100,10 @@ fn stable_id(prefix: &str, key: &str) -> String {
 
 /// Short stable suffix for per-user object slugs (team, dashboard).
 fn short(id: &str) -> String {
-    id.chars().filter(|c| c.is_ascii_alphanumeric()).take(8).collect()
+    id.chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .take(8)
+        .collect()
 }
 
 #[utoipa::path(
@@ -266,10 +271,9 @@ pub async fn onboard(
     {
         Some(existing) => existing,
         None => {
-            let target = serde_json::to_value(nexus_spi::dto::nav::NavTarget::Dashboard {
-                dashboard_id,
-            })
-            .map_err(|e| IntoResponse(internal(format!("nav target: {e}"))))?;
+            let target =
+                serde_json::to_value(nexus_spi::dto::nav::NavTarget::Dashboard { dashboard_id })
+                    .map_err(|e| IntoResponse(internal(format!("nav target: {e}"))))?;
             nexus_store::nav_node::insert(
                 &state.metadata,
                 ONBOARD_TENANT,
@@ -291,7 +295,9 @@ pub async fn onboard(
 
     // 6. The two grants (nav node + dashboard) to the per-user team, then reload.
     let grants = GrantStore::new(state.policy.store().clone());
-    let subject = GrantSubject::Team { slug: team_slug.clone() };
+    let subject = GrantSubject::Team {
+        slug: team_slug.clone(),
+    };
     for (kind, id) in [
         (KIND_NAV_NODE, nav_node_id.to_string()),
         (KIND_DASHBOARD, dashboard_id.to_string()),
@@ -372,22 +378,18 @@ async fn resolve_team_id(state: &AppState, slug: &str) -> Result<Option<String>,
 }
 
 async fn resolve_dashboard_id(state: &AppState, slug: &str) -> Result<Option<uuid::Uuid>, Error> {
-    let row: Option<(uuid::Uuid,)> = sqlx::query_as(
-        "SELECT id FROM nexus_dashboards WHERE tenant_id = $1 AND slug = $2",
-    )
-    .bind(ONBOARD_TENANT)
-    .bind(slug)
-    .fetch_optional(&state.metadata)
-    .await
-    .map_err(|e| internal(format!("dashboard resolve: {e}")))?;
+    let row: Option<(uuid::Uuid,)> =
+        sqlx::query_as("SELECT id FROM nexus_dashboards WHERE tenant_id = $1 AND slug = $2")
+            .bind(ONBOARD_TENANT)
+            .bind(slug)
+            .fetch_optional(&state.metadata)
+            .await
+            .map_err(|e| internal(format!("dashboard resolve: {e}")))?;
     Ok(row.map(|r| r.0))
 }
 
 /// Whether the dashboard already has at least one panel (re-onboard guard).
-async fn dashboard_has_panel(
-    state: &AppState,
-    dashboard_id: &uuid::Uuid,
-) -> Result<bool, Error> {
+async fn dashboard_has_panel(state: &AppState, dashboard_id: &uuid::Uuid) -> Result<bool, Error> {
     let row: Option<(uuid::Uuid,)> = sqlx::query_as(
         "SELECT id FROM nexus_panels WHERE tenant_id = $1 AND dashboard_id = $2 LIMIT 1",
     )

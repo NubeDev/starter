@@ -78,7 +78,9 @@ pub async fn ai_assist(
         .await
     {
         Ok(text) => text,
-        Err(e) => return (StatusCode::BAD_GATEWAY, format!("model call failed: {e}")).into_response(),
+        Err(e) => {
+            return (StatusCode::BAD_GATEWAY, format!("model call failed: {e}")).into_response()
+        }
     };
 
     let result = parse_result(req.task, &reply);
@@ -224,7 +226,10 @@ fn strip_fences(text: &str) -> String {
     if let Some(rest) = t.strip_prefix("```") {
         // Drop the language tag up to the first newline, and the trailing fence.
         let rest = rest.split_once('\n').map(|x| x.1).unwrap_or(rest);
-        rest.trim_end().strip_suffix("```").unwrap_or(rest).to_string()
+        rest.trim_end()
+            .strip_suffix("```")
+            .unwrap_or(rest)
+            .to_string()
     } else {
         t.to_string()
     }

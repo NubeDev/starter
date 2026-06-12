@@ -69,15 +69,10 @@ mod tests {
         let calls = Arc::new(AtomicU64::new(0));
         let calls_in = calls.clone();
         let token = CancellationToken::new();
-        spawn(
-            run_id,
-            Duration::from_millis(5),
-            token.clone(),
-            move || {
-                let n = calls_in.fetch_add(1, Ordering::Relaxed);
-                async move { Ok(vec![json!({ "n": n })]) }
-            },
-        );
+        spawn(run_id, Duration::from_millis(5), token.clone(), move || {
+            let n = calls_in.fetch_add(1, Ordering::Relaxed);
+            async move { Ok(vec![json!({ "n": n })]) }
+        });
 
         let first = tokio::time::timeout(Duration::from_secs(2), rx.recv())
             .await

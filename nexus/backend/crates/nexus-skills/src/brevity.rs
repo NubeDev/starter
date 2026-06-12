@@ -86,14 +86,25 @@ mod tests {
 
     #[test]
     fn inherit_takes_default_and_explicit_overrides() {
-        assert_eq!(BrevityMode::Inherit.resolve(BrevityMode::Lite), BrevityMode::Lite);
-        assert_eq!(BrevityMode::Off.resolve(BrevityMode::Full), BrevityMode::Off);
-        assert_eq!(BrevityMode::Full.resolve(BrevityMode::Lite), BrevityMode::Full);
+        assert_eq!(
+            BrevityMode::Inherit.resolve(BrevityMode::Lite),
+            BrevityMode::Lite
+        );
+        assert_eq!(
+            BrevityMode::Off.resolve(BrevityMode::Full),
+            BrevityMode::Off
+        );
+        assert_eq!(
+            BrevityMode::Full.resolve(BrevityMode::Lite),
+            BrevityMode::Full
+        );
     }
 
     #[test]
     fn off_and_inherit_inject_nothing() {
-        assert!(BrevityMode::Off.render_prompt_prefix(BrevityMode::Off).is_none());
+        assert!(BrevityMode::Off
+            .render_prompt_prefix(BrevityMode::Off)
+            .is_none());
         // inherit resolving to off → nothing.
         assert!(BrevityMode::Inherit
             .render_prompt_prefix(BrevityMode::Off)

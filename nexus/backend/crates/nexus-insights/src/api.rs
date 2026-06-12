@@ -35,10 +35,13 @@ pub fn register(engine: &mut Engine) {
     register_windows(engine);
     register_shape(engine);
 
-    engine.register_fn("resample", |df: &mut Frame, time_col: &str, every: &str, aggs: Array| {
-        let aggs = parse_aggs(aggs)?;
-        ok(df.resample(time_col, every, &aggs))
-    });
+    engine.register_fn(
+        "resample",
+        |df: &mut Frame, time_col: &str, every: &str, aggs: Array| {
+            let aggs = parse_aggs(aggs)?;
+            ok(df.resample(time_col, every, &aggs))
+        },
+    );
     engine.register_fn("anomalies", |df: &mut Frame, col: &str, z: f64| {
         ok(df.anomalies(col, z))
     });
@@ -47,23 +50,43 @@ pub fn register(engine: &mut Engine) {
 /// Filters take either a number or a string bound; Rhai dispatches on the arg
 /// type so a script writes `filter_gt("kw", 10.0)` or `filter_eq("site", "A")`.
 fn register_filters(engine: &mut Engine) {
-    engine.register_fn("filter_gt", |df: &mut Frame, c: &str, v: f64| ok(df.filter_gt(c, FilterValue::Num(v))));
-    engine.register_fn("filter_lt", |df: &mut Frame, c: &str, v: f64| ok(df.filter_lt(c, FilterValue::Num(v))));
-    engine.register_fn("filter_eq", |df: &mut Frame, c: &str, v: f64| ok(df.filter_eq(c, FilterValue::Num(v))));
+    engine.register_fn("filter_gt", |df: &mut Frame, c: &str, v: f64| {
+        ok(df.filter_gt(c, FilterValue::Num(v)))
+    });
+    engine.register_fn("filter_lt", |df: &mut Frame, c: &str, v: f64| {
+        ok(df.filter_lt(c, FilterValue::Num(v)))
+    });
+    engine.register_fn("filter_eq", |df: &mut Frame, c: &str, v: f64| {
+        ok(df.filter_eq(c, FilterValue::Num(v)))
+    });
     engine.register_fn("filter_eq", |df: &mut Frame, c: &str, v: &str| {
         ok(df.filter_eq(c, FilterValue::Str(v.to_string())))
     });
     // Integer literals are common in scripts; accept them without forcing a cast.
-    engine.register_fn("filter_gt", |df: &mut Frame, c: &str, v: i64| ok(df.filter_gt(c, FilterValue::Num(v as f64))));
-    engine.register_fn("filter_lt", |df: &mut Frame, c: &str, v: i64| ok(df.filter_lt(c, FilterValue::Num(v as f64))));
-    engine.register_fn("filter_eq", |df: &mut Frame, c: &str, v: i64| ok(df.filter_eq(c, FilterValue::Num(v as f64))));
+    engine.register_fn("filter_gt", |df: &mut Frame, c: &str, v: i64| {
+        ok(df.filter_gt(c, FilterValue::Num(v as f64)))
+    });
+    engine.register_fn("filter_lt", |df: &mut Frame, c: &str, v: i64| {
+        ok(df.filter_lt(c, FilterValue::Num(v as f64)))
+    });
+    engine.register_fn("filter_eq", |df: &mut Frame, c: &str, v: i64| {
+        ok(df.filter_eq(c, FilterValue::Num(v as f64)))
+    });
 }
 
 fn register_windows(engine: &mut Engine) {
-    engine.register_fn("rolling_mean", |df: &mut Frame, c: &str, w: i64| ok(df.rolling_mean(c, w)));
-    engine.register_fn("rolling_min", |df: &mut Frame, c: &str, w: i64| ok(df.rolling_min(c, w)));
-    engine.register_fn("rolling_max", |df: &mut Frame, c: &str, w: i64| ok(df.rolling_max(c, w)));
-    engine.register_fn("rolling_sum", |df: &mut Frame, c: &str, w: i64| ok(df.rolling_sum(c, w)));
+    engine.register_fn("rolling_mean", |df: &mut Frame, c: &str, w: i64| {
+        ok(df.rolling_mean(c, w))
+    });
+    engine.register_fn("rolling_min", |df: &mut Frame, c: &str, w: i64| {
+        ok(df.rolling_min(c, w))
+    });
+    engine.register_fn("rolling_max", |df: &mut Frame, c: &str, w: i64| {
+        ok(df.rolling_max(c, w))
+    });
+    engine.register_fn("rolling_sum", |df: &mut Frame, c: &str, w: i64| {
+        ok(df.rolling_sum(c, w))
+    });
     engine.register_fn("lag", |df: &mut Frame, c: &str, n: i64| ok(df.lag(c, n)));
     engine.register_fn("diff", |df: &mut Frame, c: &str| ok(df.diff(c)));
     engine.register_fn("pct_change", |df: &mut Frame, c: &str| ok(df.pct_change(c)));
@@ -73,8 +96,12 @@ fn register_windows(engine: &mut Engine) {
 fn register_shape(engine: &mut Engine) {
     engine.register_fn("head", |df: &mut Frame, n: i64| ok(df.head(n)));
     engine.register_fn("tail", |df: &mut Frame, n: i64| ok(df.tail(n)));
-    engine.register_fn("sort", |df: &mut Frame, c: &str, asc: bool| ok(df.sort(c, asc)));
-    engine.register_fn("fill_null", |df: &mut Frame, c: &str, s: &str| ok(df.fill_null(c, s)));
+    engine.register_fn("sort", |df: &mut Frame, c: &str, asc: bool| {
+        ok(df.sort(c, asc))
+    });
+    engine.register_fn("fill_null", |df: &mut Frame, c: &str, s: &str| {
+        ok(df.fill_null(c, s))
+    });
     engine.register_fn("describe", |df: &mut Frame| ok(df.describe()));
 }
 

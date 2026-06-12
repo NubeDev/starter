@@ -53,13 +53,24 @@ pub async fn list_findings(
     // When scoped to one detection, require view on it; otherwise the tenant-wide
     // feed is RLS-isolated already.
     if let Some(d) = q.detection_id {
-        if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_VIEW, KIND_DETECTION, &d.to_string(), &tenant).await {
+        if let Err(resp) = authz::require(
+            state.engine.as_ref(),
+            caller,
+            ACTION_VIEW,
+            KIND_DETECTION,
+            &d.to_string(),
+            &tenant,
+        )
+        .await
+        {
             return resp;
         }
     }
     let target_contains = match q.target.as_deref().map(serde_json::from_str::<Value>) {
         Some(Ok(v)) => Some(v),
-        Some(Err(_)) => return (StatusCode::BAD_REQUEST, "target must be a JSON object").into_response(),
+        Some(Err(_)) => {
+            return (StatusCode::BAD_REQUEST, "target must be a JSON object").into_response()
+        }
         None => None,
     };
     let filter = FindingFilter {
@@ -93,7 +104,16 @@ pub async fn get_finding(
         Ok(None) => return (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => return IntoResponse(e).into_response(),
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_VIEW, KIND_DETECTION, &f.detection_id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_VIEW,
+        KIND_DETECTION,
+        &f.detection_id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
     Json(finding_to_dto(&f)).into_response()
@@ -146,12 +166,23 @@ async fn transition(
         Ok(None) => return (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => return IntoResponse(e).into_response(),
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_EDIT, KIND_DETECTION, &f.detection_id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_EDIT,
+        KIND_DETECTION,
+        &f.detection_id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
     let note = req.note.as_deref();
     let result = match action {
-        Action::Ack => finding::acknowledge(&state.metadata, &tenant, id, &caller.subject, note).await,
+        Action::Ack => {
+            finding::acknowledge(&state.metadata, &tenant, id, &caller.subject, note).await
+        }
         Action::Resolve => finding::resolve(&state.metadata, &tenant, id, note).await,
     };
     match result {

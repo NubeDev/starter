@@ -48,7 +48,10 @@ async fn realistic_anomaly_pipeline_over_timeseries() {
     .expect("realistic pipeline succeeds");
 
     assert_eq!(out.len(), 24, "one row per hourly bucket");
-    let anomalies = out.iter().filter(|r| r["kw_anomaly"] == json!(true)).count();
+    let anomalies = out
+        .iter()
+        .filter(|r| r["kw_anomaly"] == json!(true))
+        .count();
     assert_eq!(anomalies, 1, "only the spike is flagged");
 }
 

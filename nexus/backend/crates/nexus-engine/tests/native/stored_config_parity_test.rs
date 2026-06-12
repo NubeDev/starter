@@ -53,10 +53,18 @@ async fn flow_stored_under_old_engine_runs_unchanged() {
         .run(token)
         .await
         .expect("stored flow runs to completion");
-    assert_eq!(outcome, RunOutcome::Completed, "finite stored flow completes");
+    assert_eq!(
+        outcome,
+        RunOutcome::Completed,
+        "finite stored flow completes"
+    );
 
     let drained = store::take(&run_id);
-    assert_eq!(drained.rows.len(), 3, "all stored rows flow through unchanged");
+    assert_eq!(
+        drained.rows.len(),
+        3,
+        "all stored rows flow through unchanged"
+    );
     let sensors: Vec<&str> = drained
         .rows
         .iter()

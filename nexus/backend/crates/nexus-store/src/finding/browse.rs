@@ -22,8 +22,7 @@ pub async fn list(
     filter: &FindingFilter,
 ) -> Result<Vec<FindingRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
-    let mut qb: QueryBuilder<sqlx::Postgres> =
-        QueryBuilder::new("SELECT ");
+    let mut qb: QueryBuilder<sqlx::Postgres> = QueryBuilder::new("SELECT ");
     qb.push(COLS).push(" FROM nexus_findings WHERE true");
     if let Some(d) = filter.detection_id {
         qb.push(" AND detection_id = ").push_bind(d);
@@ -48,11 +47,7 @@ pub async fn list(
 }
 
 /// Fetch one finding by id within the tenant.
-pub async fn get(
-    pool: &PgPool,
-    tenant_id: &str,
-    id: Uuid,
-) -> Result<Option<FindingRecord>, Error> {
+pub async fn get(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<Option<FindingRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     let row = sqlx::query(&format!("SELECT {COLS} FROM nexus_findings WHERE id = $1"))
         .bind(id)

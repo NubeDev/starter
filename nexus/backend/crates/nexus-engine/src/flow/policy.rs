@@ -108,7 +108,9 @@ impl RawBackoff {
         Backoff {
             max_attempts: self.max_attempts.unwrap_or(DEFAULT_MAX_ATTEMPTS),
             base: Duration::from_millis(
-                self.base_backoff_ms.unwrap_or(DEFAULT_BASE_BACKOFF_MS).max(1),
+                self.base_backoff_ms
+                    .unwrap_or(DEFAULT_BASE_BACKOFF_MS)
+                    .max(1),
             ),
         }
     }

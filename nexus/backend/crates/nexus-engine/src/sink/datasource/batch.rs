@@ -123,7 +123,10 @@ mod tests {
         acc.push(batch(1));
         assert!(!acc.time_due(), "the window has not elapsed yet");
         tokio::time::advance(Duration::from_millis(600)).await;
-        assert!(acc.time_due(), "past the window, a sub-threshold buffer is due");
+        assert!(
+            acc.time_due(),
+            "past the window, a sub-threshold buffer is due"
+        );
         assert!(!acc.rows_due(), "the row threshold was never reached");
     }
 

@@ -331,6 +331,7 @@ impl BuiltinRestDispatcher {
             self.capability_factory.warehouse_write(extension, caller),
             self.capability_factory.datasource(extension, caller),
             self.capability_factory.event_bus(extension, caller),
+            Arc::new(StubExtensionCall),
             self.capability_factory.dashboard(extension, caller),
             self.capability_factory.authz(extension, caller),
         )
@@ -812,6 +813,21 @@ impl WallClockBackend for StubWallClock {
 struct StubTracing;
 impl TracingBackend for StubTracing {
     fn event(&self, _level: &str, _msg: &str, _fields: serde_json::Value) {}
+}
+
+#[derive(Debug)]
+struct StubExtensionCall;
+impl starter_ext_sdk::ctx::ExtensionCallBackend for StubExtensionCall {
+    fn call(
+        &self,
+        _extension_id: &str,
+        _provided_id: &str,
+        _input: serde_json::Value,
+    ) -> starter_ext_spi::Result<serde_json::Value> {
+        Err(Error::capability(
+            "extension_call not wired in REST adapter Phase 5",
+        ))
+    }
 }
 
 #[derive(Debug, Default)]

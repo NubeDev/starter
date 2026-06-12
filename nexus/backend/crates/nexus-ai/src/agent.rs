@@ -58,10 +58,7 @@ pub struct AgentOutcome {
 pub trait Agent: Send + Sync {
     async fn run(&self, task: AgentTask) -> Result<AgentOutcome>;
 
-    async fn run_stream(
-        &self,
-        task: AgentTask,
-    ) -> Result<BoxStream<'static, Result<Event>>>;
+    async fn run_stream(&self, task: AgentTask) -> Result<BoxStream<'static, Result<Event>>>;
 }
 
 #[cfg(feature = "agent")]
@@ -152,10 +149,7 @@ mod zag_impl {
             })
         }
 
-        async fn run_stream(
-            &self,
-            task: AgentTask,
-        ) -> Result<BoxStream<'static, Result<Event>>> {
+        async fn run_stream(&self, task: AgentTask) -> Result<BoxStream<'static, Result<Event>>> {
             // zag's `exec_streaming` is built for the interactive TUI (it waits on
             // a stdin turn pipe) and does not yield events when driven one-shot
             // from a library, so we use the reliable batch `exec` for the reply.
@@ -177,7 +171,8 @@ mod zag_impl {
 
             // A tiny state machine: yield Progress immediately, then await the run
             // and yield Done (or an error), then end.
-            type RunFut = std::pin::Pin<Box<dyn std::future::Future<Output = Result<String>> + Send>>;
+            type RunFut =
+                std::pin::Pin<Box<dyn std::future::Future<Output = Result<String>> + Send>>;
             enum Phase {
                 Start(RunFut),
                 Running(RunFut),
@@ -186,7 +181,9 @@ mod zag_impl {
             let stream = futures::stream::unfold(Phase::Start(Box::pin(run)), |phase| async move {
                 match phase {
                     Phase::Start(fut) => {
-                        let progress = Event::Progress { message: "Working…".to_string() };
+                        let progress = Event::Progress {
+                            message: "Working…".to_string(),
+                        };
                         Some((Ok(progress), Phase::Running(fut)))
                     }
                     Phase::Running(fut) => match fut.await {

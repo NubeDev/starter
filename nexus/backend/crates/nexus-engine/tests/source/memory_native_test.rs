@@ -18,10 +18,16 @@ async fn replays_documents_then_ends() {
     .expect("build");
 
     let first = source.read().await.expect("read").expect("a batch");
-    assert_eq!(json_carrier_docs(&first).unwrap(), vec![json!({ "n": 1 }).to_string()]);
+    assert_eq!(
+        json_carrier_docs(&first).unwrap(),
+        vec![json!({ "n": 1 }).to_string()]
+    );
 
     let second = source.read().await.expect("read").expect("a batch");
-    assert_eq!(json_carrier_docs(&second).unwrap(), vec![json!({ "n": 2 }).to_string()]);
+    assert_eq!(
+        json_carrier_docs(&second).unwrap(),
+        vec![json!({ "n": 2 }).to_string()]
+    );
 
     assert!(
         source.read().await.expect("read").is_none(),

@@ -24,7 +24,9 @@ async fn flows_are_tenant_scoped_and_name_unique() {
     let (admin, _guard) = with_database().await;
     let pg = &runtime_pool(admin.sqlx()).await;
 
-    let f = flow::insert(pg, "acme", &new_flow("weather")).await.unwrap();
+    let f = flow::insert(pg, "acme", &new_flow("weather"))
+        .await
+        .unwrap();
     assert!(!f.enabled);
 
     // Same name, same tenant ⇒ conflict.
@@ -32,7 +34,9 @@ async fn flows_are_tenant_scoped_and_name_unique() {
     assert!(matches!(conflict, Err(starter_spi::Error::Conflict { .. })));
 
     // Same name, other tenant ⇒ fine.
-    flow::insert(pg, "globex", &new_flow("weather")).await.unwrap();
+    flow::insert(pg, "globex", &new_flow("weather"))
+        .await
+        .unwrap();
 
     // Tenant isolation on list + get.
     assert_eq!(flow::list(pg, "acme").await.unwrap().len(), 1);
@@ -46,7 +50,9 @@ async fn flows_are_tenant_scoped_and_name_unique() {
 async fn update_and_enable_toggle_apply() {
     let (admin, _guard) = with_database().await;
     let pg = &runtime_pool(admin.sqlx()).await;
-    let f = flow::insert(pg, "acme", &new_flow("weather")).await.unwrap();
+    let f = flow::insert(pg, "acme", &new_flow("weather"))
+        .await
+        .unwrap();
 
     // Partial update leaves untouched fields alone.
     flow::update(

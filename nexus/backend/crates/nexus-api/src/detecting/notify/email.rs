@@ -40,8 +40,8 @@ fn default_port() -> u16 {
 /// Send the notification as an email. Builds a text+HTML message and dispatches
 /// it over an async SMTP transport with rustls TLS.
 pub async fn deliver(config: &Value, notification: &Notification) -> Result<(), String> {
-    let cfg: EmailConfig = serde_json::from_value(config.clone())
-        .map_err(|e| format!("invalid email config: {e}"))?;
+    let cfg: EmailConfig =
+        serde_json::from_value(config.clone()).map_err(|e| format!("invalid email config: {e}"))?;
     let message = build_message(&cfg, notification)?;
     let transport = build_transport(&cfg)?;
     transport

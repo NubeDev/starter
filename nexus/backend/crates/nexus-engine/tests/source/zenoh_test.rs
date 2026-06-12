@@ -29,7 +29,8 @@ async fn publisher(endpoint: &str) -> zenoh::Session {
     cfg.insert_json5("listen/endpoints", &format!("[\"{endpoint}\"]"))
         .unwrap();
     // No multicast scouting needed — the subscriber connects directly.
-    cfg.insert_json5("scouting/multicast/enabled", "false").unwrap();
+    cfg.insert_json5("scouting/multicast/enabled", "false")
+        .unwrap();
     zenoh::open(cfg).await.expect("publisher session opens")
 }
 

@@ -122,7 +122,10 @@ async fn test_connection_probes_raw_config_before_save() {
     assert!(bad_resp.status().is_success(), "failed probe is a 200");
     let bad: Value = bad_resp.json().await.expect("body");
     assert_eq!(bad["ok"], false, "wrong secret probe fails");
-    assert!(bad["message"].as_str().is_some(), "failure carries a reason");
+    assert!(
+        bad["message"].as_str().is_some(),
+        "failure carries a reason"
+    );
 
     // No datasource was persisted by either probe.
     let list: Value = client

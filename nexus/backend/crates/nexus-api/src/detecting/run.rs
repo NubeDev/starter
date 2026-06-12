@@ -59,7 +59,10 @@ async fn try_run(ctx: &RunContext<'_>, tenant: &str, id: Uuid) -> Result<(), Str
         .await
         .map_err(stringify)?
     else {
-        return Err(format!("detection {id} references missing insight {}", det.insight_id));
+        return Err(format!(
+            "detection {id} references missing insight {}",
+            det.insight_id
+        ));
     };
 
     // Run the query under the same guards panels use. A detection that names
@@ -153,9 +156,7 @@ async fn run_detection_query(
 /// malformed array is a detection-config error, surfaced (not silently ignored)
 /// so a broken detection is visible in the run log rather than quietly running
 /// the bare `sql` against the wrong place.
-fn parse_sources(
-    raw: &Value,
-) -> Result<Vec<nexus_spi::dto::query::FederatedSourceRef>, String> {
+fn parse_sources(raw: &Value) -> Result<Vec<nexus_spi::dto::query::FederatedSourceRef>, String> {
     if raw.is_null() {
         return Ok(Vec::new());
     }
@@ -293,7 +294,13 @@ async fn resolve_pool(
         .map_err(stringify)?
         .ok_or_else(|| format!("detection names datasource {ds_id}, not visible to {tenant}"))?;
     ctx.pools
-        .get_or_connect(ctx.metadata, ctx.envelope, tenant, &det.id.to_string(), &record)
+        .get_or_connect(
+            ctx.metadata,
+            ctx.envelope,
+            tenant,
+            &det.id.to_string(),
+            &record,
+        )
         .await
         .map_err(stringify)
 }
@@ -351,8 +358,14 @@ mod tests {
         let fa = flagged_findings(&d, std::slice::from_ref(&a));
         let fb = flagged_findings(&d, std::slice::from_ref(&b));
         let fc = flagged_findings(&d, std::slice::from_ref(&c));
-        assert_eq!(fa[0].dedup_key, fb[0].dedup_key, "key stable across column order");
-        assert_ne!(fa[0].dedup_key, fc[0].dedup_key, "distinct target ⇒ distinct key");
+        assert_eq!(
+            fa[0].dedup_key, fb[0].dedup_key,
+            "key stable across column order"
+        );
+        assert_ne!(
+            fa[0].dedup_key, fc[0].dedup_key,
+            "distinct target ⇒ distinct key"
+        );
     }
 
     #[test]
@@ -365,7 +378,11 @@ mod tests {
         ];
         let f = flagged_findings(&d, &rows);
         assert_eq!(f.len(), 2, "every returned row is a finding");
-        assert_eq!(f[0].context, json!({"value":9.0}), "context excludes only target");
+        assert_eq!(
+            f[0].context,
+            json!({"value":9.0}),
+            "context excludes only target"
+        );
     }
 
     #[test]

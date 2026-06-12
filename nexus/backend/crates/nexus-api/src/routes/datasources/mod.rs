@@ -50,8 +50,5 @@ pub fn router() -> Router<AppState> {
             "/api/v1/datasources/{id}/schema",
             http_get(schema::datasource_schema),
         )
-        .route(
-            "/api/v1/datasources/{id}/test",
-            post(test::test_datasource),
-        )
+        .route("/api/v1/datasources/{id}/test", post(test::test_datasource))
 }

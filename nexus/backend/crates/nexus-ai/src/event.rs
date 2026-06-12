@@ -23,10 +23,7 @@ pub enum Event {
 
     /// Terminal event. Carries the full final text and, when available, a usage
     /// summary. After this no more events arrive on the stream.
-    Done {
-        text: String,
-        usage: Option<Usage>,
-    },
+    Done { text: String, usage: Option<Usage> },
 
     /// An escape hatch: a provider-native event we chose not to flatten, kept so
     /// power users aren't boxed in by the lowest-common-denominator surface.

@@ -6,7 +6,9 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 
 use chrono::{TimeZone, Utc};
-use nexus_store::{bind, BindCtx, BindError, HostTokens, ScalarValue, SqlValue, TimeRange, VarValue};
+use nexus_store::{
+    bind, BindCtx, BindError, HostTokens, ScalarValue, SqlValue, TimeRange, VarValue,
+};
 
 fn range() -> TimeRange {
     TimeRange {
@@ -55,14 +57,18 @@ fn time_group_renders_the_postgres_bucket() {
         ..Default::default()
     };
     let bound = bind("SELECT $__timeGroup(ts, $__interval) FROM t", &ctx).expect("bind");
-    assert!(bound.sql.contains("date_bin('300 seconds', ts, TIMESTAMPTZ 'epoch')"));
+    assert!(bound
+        .sql
+        .contains("date_bin('300 seconds', ts, TIMESTAMPTZ 'epoch')"));
     assert!(bound.args.is_empty());
 }
 
 #[test]
 fn time_group_accepts_a_literal_interval() {
     let bound = bind("SELECT $__timeGroup(ts, '1h') FROM t", &BindCtx::default()).expect("bind");
-    assert!(bound.sql.contains("date_bin('3600 seconds', ts, TIMESTAMPTZ 'epoch')"));
+    assert!(bound
+        .sql
+        .contains("date_bin('3600 seconds', ts, TIMESTAMPTZ 'epoch')"));
 }
 
 #[test]
@@ -71,7 +77,11 @@ fn time_from_and_to_bind_single_instants() {
         time_range: Some(range()),
         ..Default::default()
     };
-    let bound = bind("SELECT * FROM t WHERE a > $__timeFrom AND a < $__timeTo", &ctx).expect("bind");
+    let bound = bind(
+        "SELECT * FROM t WHERE a > $__timeFrom AND a < $__timeTo",
+        &ctx,
+    )
+    .expect("bind");
     assert_eq!(bound.sql, "SELECT * FROM t WHERE a > $1 AND a < $2");
     assert_eq!(bound.args.len(), 2);
 }
@@ -343,7 +353,8 @@ fn tokens_after_a_comment_still_expand() {
         },
         ..Default::default()
     };
-    let sql = "-- $caller_tenant_id is host-bound\nSELECT * FROM t WHERE tenant_id = $caller_tenant_id";
+    let sql =
+        "-- $caller_tenant_id is host-bound\nSELECT * FROM t WHERE tenant_id = $caller_tenant_id";
     let bound = bind(sql, &ctx).expect("bind");
     assert!(bound.sql.ends_with("WHERE tenant_id = $1"));
     assert!(bound.sql.starts_with("-- $caller_tenant_id is host-bound"));

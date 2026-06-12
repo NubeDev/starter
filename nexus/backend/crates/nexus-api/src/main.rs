@@ -121,6 +121,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         kinds: std::sync::Arc::new(kinds),
         extension_kinds: extension_kinds.clone(),
         extensions: extension_registry,
+        // WS-18: the event bus is dependency-free, built here; the peer
+        // supervisor registry is an empty write-once cell `boot` fills in after
+        // it spawns the process supervisors (below).
+        event_bus: std::sync::Arc::new(nexus_api::extensions::event_bus::ExtensionEventBus::new()),
+        peer_supervisors: std::sync::Arc::new(nexus_api::extensions::peer::PeerSupervisors::new()),
         datasource_kinds: std::sync::Arc::new(datasource_kinds),
         prefs,
         changelog,
@@ -141,6 +146,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         metadata.clone(),
         host_methods,
         extension_kinds,
+        state.peer_supervisors.clone(),
     )
     .await?;
     let ext_admin = ext_runtime.admin;
@@ -181,8 +187,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // detections on their own cadence — each producing findings and, for
     // alert-type detections, notifying their channels. Single-node for v1. This
     // subsumes the former standalone alert scheduler.
-    let _detection_watch =
-        watch("detection_scheduler", nexus_api::detecting::schedule::spawn(state.clone()));
+    let _detection_watch = watch(
+        "detection_scheduler",
+        nexus_api::detecting::schedule::spawn(state.clone()),
+    );
 
     // The audit-retention sweep prunes ledger rows past the retention horizon so
     // the append-only log stays bounded. Runs for the process's lifetime.
@@ -203,9 +211,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // kernel router bakes in its own `with_principal`; wrap the CSRF guard
     // outermost (it reads only raw cookie/header bytes and short-circuits a
     // forged cookie mutation with 403 before principal resolution).
-    let ext_router = starter_server::auth::csrf_guard(
-        nexus_api::extensions::router(ext_admin.clone(), identity.authenticator.clone()),
-    );
+    let ext_router = starter_server::auth::csrf_guard(nexus_api::extensions::router(
+        ext_admin.clone(),
+        identity.authenticator.clone(),
+    ));
 
     // The `/setup/*` surface reads the verified `Principal` (trusted identity
     // seeding + the per-template team check), so it is wrapped in its own

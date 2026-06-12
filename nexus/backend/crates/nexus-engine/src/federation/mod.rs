@@ -76,8 +76,12 @@ impl FederatedQuery {
     /// Returns the partial collection alongside whether it was truncated so the
     /// caller can report a capped result without treating it as a failure.
     async fn execute(&self, caps: Caps, token: CancellationToken) -> EngineResult<Collected> {
-        let ctx = context::build(&self.sources, DEFAULT_MAX_INPUT_BYTES, DEFAULT_MAX_FETCH_ROWS)
-            .await?;
+        let ctx = context::build(
+            &self.sources,
+            DEFAULT_MAX_INPUT_BYTES,
+            DEFAULT_MAX_FETCH_ROWS,
+        )
+        .await?;
 
         let options = SQLOptions::new()
             .with_allow_ddl(false)

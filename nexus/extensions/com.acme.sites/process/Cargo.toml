@@ -1,0 +1,17 @@
+# `com.acme.sites` — process flavour. The WS-18 caller: calls the geocode peer
+# via extension.call and publishes on the event bus.
+[package]
+name        = "acme-sites-extension"
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+publish.workspace      = true
+rust-version.workspace = true
+
+[[bin]]
+name = "acme-sites-extension"
+path = "src/main.rs"
+
+[dependencies]
+starter-ext-sdk = { path = "../../../../starter-extensions/crates/starter-ext-sdk", default-features = false, features = ["process"] }
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "io-std", "io-util", "time"] }

@@ -78,8 +78,9 @@ async fn resolve_one(
             let table = r.table.as_deref().ok_or_else(|| Error::Invalid {
                 message: format!("postgres federated source {:?} requires a table", r.alias),
             })?;
-            let secret = datasource::open_secret(&state.metadata, &state.envelope, tenant, actor, id)
-                .await?;
+            let secret =
+                datasource::open_secret(&state.metadata, &state.envelope, tenant, actor, id)
+                    .await?;
             let port = u16::try_from(record.port).map_err(|_| Error::Invalid {
                 message: format!("datasource port {} out of range", record.port),
             })?;

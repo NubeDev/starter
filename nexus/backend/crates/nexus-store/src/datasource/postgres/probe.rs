@@ -41,10 +41,9 @@ pub async fn probe(params: ProbeParams<'_>) -> Result<(), Error> {
         .username(params.user)
         .password(params.secret);
 
-    let mut conn = opts
-        .connect()
-        .await
-        .map_err(|e| Error::Internal { source: Box::new(e) })?;
+    let mut conn = opts.connect().await.map_err(|e| Error::Internal {
+        source: Box::new(e),
+    })?;
 
     // Bound the probe so a black-holed host can't hang the form indefinitely; the
     // round-trip itself is what proves the credentials, not pool construction.
@@ -57,7 +56,9 @@ pub async fn probe(params: ProbeParams<'_>) -> Result<(), Error> {
 
     match result {
         Ok(Ok(_)) => Ok(()),
-        Ok(Err(e)) => Err(Error::Internal { source: Box::new(e) }),
+        Ok(Err(e)) => Err(Error::Internal {
+            source: Box::new(e),
+        }),
         Err(_) => Err(Error::Invalid {
             message: "connection probe timed out".into(),
         }),

@@ -45,6 +45,7 @@ pub const CAPABILITY_HOST_METHODS: &[(&str, &str)] = &[
     ("tracing", "tracing"),
     ("warehouse", "warehouse_read"),
     ("event_bus", "event_bus"),
+    ("extension", "extension"),
     ("ingest", "ingest"),
     ("datasource", "datasource"),
 ];
@@ -176,6 +177,7 @@ fn category_of(c: &Capability) -> &'static str {
         Capability::WarehouseRead { .. } => "warehouse_read",
         Capability::WarehouseWrite { .. } => "warehouse_write",
         Capability::EventBus { .. } => "event_bus",
+        Capability::Extension { .. } => "extension",
         Capability::Ingest { .. } => "ingest",
         Capability::DashboardRead { .. } => "dashboard_read",
         Capability::DashboardWrite { .. } => "dashboard_write",
@@ -215,6 +217,7 @@ mod tests {
                     publish: vec![],
                     subscribe: vec![],
                 },
+                "extension" => Capability::Extension { targets: vec![] },
                 "ingest" => Capability::Ingest { names: vec![] },
                 other => Capability::Custom {
                     name: other.to_string(),
@@ -278,6 +281,30 @@ mod tests {
     }
 
     #[test]
+    fn event_bus_subscribe_gated_on_event_bus_category() {
+        // The subscribe method (WS-18) gates on the same `event_bus` category
+        // as publish — one grant, two directions (bounded host-side by the
+        // publish/subscribe topic allowlists).
+        let g = gate(&["event_bus"]);
+        assert_eq!(
+            g.check("event_bus.subscribe").unwrap().unwrap(),
+            "event_bus"
+        );
+    }
+
+    #[test]
+    fn extension_namespace_gated() {
+        // extension.call gates on the new `extension` category.
+        let g = gate(&["extension"]);
+        assert_eq!(g.check("extension.call").unwrap().unwrap(), "extension");
+        let g = gate(&["secrets"]);
+        assert!(matches!(
+            g.check("extension.call").unwrap_err(),
+            Error::Capability(_)
+        ));
+    }
+
+    #[test]
     fn counter_increments() {
         let c = CapabilityViolationCounter::default();
         assert_eq!(c.get(), 0);
@@ -303,7 +330,10 @@ mod tests {
         // warehouse.query maps to warehouse_read; warehouse.write/.update/.delete
         // map to warehouse_write — a read grant does not authorise a write.
         let read_only = gate(&["warehouse_read"]);
-        assert_eq!(read_only.check("warehouse.query").unwrap().unwrap(), "warehouse_read");
+        assert_eq!(
+            read_only.check("warehouse.query").unwrap().unwrap(),
+            "warehouse_read"
+        );
         for m in ["warehouse.write", "warehouse.update", "warehouse.delete"] {
             assert!(
                 matches!(read_only.check(m).unwrap_err(), Error::Capability(_)),

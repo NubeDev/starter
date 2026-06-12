@@ -352,16 +352,13 @@ impl<'a> WriteExecutor<'a> {
                 )))
             }
         }
-        self.specs
-            .iter()
-            .find(|t| t.name == table)
-            .ok_or_else(|| {
-                ExtError::validation(format!(
-                    "warehouse.write: table {table:?} is not declared in \
+        self.specs.iter().find(|t| t.name == table).ok_or_else(|| {
+            ExtError::validation(format!(
+                "warehouse.write: table {table:?} is not declared in \
                      contributes.warehouse_tables[] for extension {:?}",
-                    self.extension_id.as_str()
-                ))
-            })
+                self.extension_id.as_str()
+            ))
+        })
     }
 
     /// Insert `rows` into `table`, tenant-stamped. When the table declares an
@@ -494,8 +491,9 @@ impl<'a> WriteExecutor<'a> {
                     let s = value.as_str().ok_or_else(|| {
                         ExtError::extension_internal("tenant_id stamp produced a non-string (bug)")
                     })?;
-                    args.add(s.to_owned())
-                        .map_err(|e| ExtError::extension_internal(format!("bind tenant_id: {e}")))?;
+                    args.add(s.to_owned()).map_err(|e| {
+                        ExtError::extension_internal(format!("bind tenant_id: {e}"))
+                    })?;
                 } else {
                     bind_column(&mut args, value, column_names[col_idx])?;
                 }
@@ -573,7 +571,14 @@ impl<'a> WriteExecutor<'a> {
                 if i > 0 {
                     sql.push_str(", ");
                 }
-                let cast = placeholder_cast(spec.columns.iter().find(|c| &c.name == col).unwrap().ty.as_str());
+                let cast = placeholder_cast(
+                    spec.columns
+                        .iter()
+                        .find(|c| &c.name == col)
+                        .unwrap()
+                        .ty
+                        .as_str(),
+                );
                 sql.push_str(&format!("{} = ${idx}{cast}", quote_ident(col)));
                 idx += 1;
             }
@@ -596,7 +601,9 @@ impl<'a> WriteExecutor<'a> {
                 .execute(self.metadata)
                 .await
                 .map(|r| r.rows_affected())
-                .map_err(|e| ExtError::extension_internal(format!("warehouse.update UPDATE: {e}")))?;
+                .map_err(|e| {
+                    ExtError::extension_internal(format!("warehouse.update UPDATE: {e}"))
+                })?;
             total += affected;
         }
         Ok(total)
@@ -777,9 +784,21 @@ mod tests {
         ContributeWarehouseTable {
             name: "devices".into(),
             columns: vec![
-                Col { name: "device_id".into(), ty: "text".into(), default: None },
-                Col { name: "barcode".into(), ty: "text".into(), default: None },
-                Col { name: "location".into(), ty: "text".into(), default: Some("''".into()) },
+                Col {
+                    name: "device_id".into(),
+                    ty: "text".into(),
+                    default: None,
+                },
+                Col {
+                    name: "barcode".into(),
+                    ty: "text".into(),
+                    default: None,
+                },
+                Col {
+                    name: "location".into(),
+                    ty: "text".into(),
+                    default: Some("''".into()),
+                },
             ],
             order_by: vec!["device_id".into()],
             engine: None,
@@ -792,7 +811,10 @@ mod tests {
     #[test]
     fn sanitize_and_full_name() {
         assert_eq!(sanitize_extension_id(&ext()), "com_acme_devices");
-        assert_eq!(full_table_name(&ext(), "devices"), "com_acme_devices__devices");
+        assert_eq!(
+            full_table_name(&ext(), "devices"),
+            "com_acme_devices__devices"
+        );
     }
 
     #[test]

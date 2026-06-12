@@ -449,13 +449,21 @@ async fn undo_redo_of_panel_update_round_trips() {
         .send()
         .await
         .expect("undo");
-    assert_eq!(read(pg.clone(), panel.id).await, "Before", "undo restored before");
+    assert_eq!(
+        read(pg.clone(), panel.id).await,
+        "Before",
+        "undo restored before"
+    );
 
     http.post(format!("{}/api/v1/redo", app.base_url))
         .send()
         .await
         .expect("redo");
-    assert_eq!(read(pg.clone(), panel.id).await, "After", "redo re-applied after");
+    assert_eq!(
+        read(pg.clone(), panel.id).await,
+        "After",
+        "redo re-applied after"
+    );
 
     drop(app);
 }

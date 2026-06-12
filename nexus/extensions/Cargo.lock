@@ -11,6 +11,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "acme-geocode-extension"
+version = "0.0.0"
+dependencies = [
+ "starter-ext-sdk",
+ "tokio",
+]
+
+[[package]]
+name = "acme-sites-extension"
+version = "0.0.0"
+dependencies = [
+ "starter-ext-sdk",
+ "tokio",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

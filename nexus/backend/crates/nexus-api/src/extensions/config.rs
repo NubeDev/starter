@@ -87,7 +87,10 @@ impl ExtensionsConfig {
                         err = %e,
                         "resolve pids subdir failed; falling back to in-repo .installs/.pids"
                     );
-                    (extensions_dir.join(".installs"), extensions_dir.join(".pids"))
+                    (
+                        extensions_dir.join(".installs"),
+                        extensions_dir.join(".pids"),
+                    )
                 }
             },
             Err(e) => {
@@ -96,7 +99,10 @@ impl ExtensionsConfig {
                     err = %e,
                     "resolve nexus data root failed; falling back to in-repo .installs/.pids"
                 );
-                (extensions_dir.join(".installs"), extensions_dir.join(".pids"))
+                (
+                    extensions_dir.join(".installs"),
+                    extensions_dir.join(".pids"),
+                )
             }
         }
     }

@@ -31,9 +31,9 @@ impl ChangelogHandles {
     pub fn new(metadata: PgPool, envelope: Envelope) -> Self {
         Self {
             registry: Arc::new(build_registry(metadata.clone(), envelope)),
-            cursor: Arc::new(PgUndoCursor::new(
-                starter_store_postgres::Pool::from_sqlx(metadata),
-            )),
+            cursor: Arc::new(PgUndoCursor::new(starter_store_postgres::Pool::from_sqlx(
+                metadata,
+            ))),
         }
     }
 }
@@ -50,8 +50,13 @@ pub fn build_registry(metadata: PgPool, envelope: Envelope) -> ReversibleRegistr
 /// `nexus_changes`, the shared registry, and the shared redo cursor. The service
 /// only ever reads/writes the caller's tenant because the log binds
 /// `app.tenant_id` on every query.
-pub fn undo_service_for(handles: &ChangelogHandles, metadata: PgPool, tenant_id: &str) -> UndoService {
-    let log: Arc<dyn ChangeLog> =
-        Arc::new(nexus_store::changelog::NexusChangeLog::new(metadata, tenant_id));
+pub fn undo_service_for(
+    handles: &ChangelogHandles,
+    metadata: PgPool,
+    tenant_id: &str,
+) -> UndoService {
+    let log: Arc<dyn ChangeLog> = Arc::new(nexus_store::changelog::NexusChangeLog::new(
+        metadata, tenant_id,
+    ));
     UndoService::with_cursor(log, handles.registry.clone(), handles.cursor.clone())
 }

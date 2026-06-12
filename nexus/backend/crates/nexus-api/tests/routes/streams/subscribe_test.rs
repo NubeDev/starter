@@ -45,7 +45,10 @@ fn state_with_dev(metadata: &sqlx::PgPool, dev: sqlx::PgPool) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: nexus_engine::FlowManager::new().expect("flow manager init"),
-        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
+        sessions: nexus_api::agents::SessionRunner::new(
+            std::env::temp_dir().join("nexus-knowledge-test"),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),
@@ -128,8 +131,7 @@ async fn live_panel_streams_real_sql_rows_without_a_bearer_header() {
     // A dead dev pool: if the live path still used `state.datasource`, the poll
     // would error instead of streaming the row, failing this test.
     let dead = sqlx::PgPool::connect_lazy("postgres://nope:nope@127.0.0.1:1/none").unwrap();
-    let router =
-        serve::router(state_with_dev(&pool, dead)).layer(Extension(acme_member()));
+    let router = serve::router(state_with_dev(&pool, dead)).layer(Extension(acme_member()));
     let app = TestApp::spawn(router).await;
     let client = reqwest::Client::new();
 

@@ -95,7 +95,9 @@ impl Reversible for DashboardReversible {
             }
             starter_spi::changelog::Op::Create => {
                 let id = id_of(ch)?;
-                dashboard::delete(&self.metadata, tenant, id).await.map(drop)
+                dashboard::delete(&self.metadata, tenant, id)
+                    .await
+                    .map(drop)
             }
             starter_spi::changelog::Op::Delete => {
                 let before = snapshot_from(ch.before.as_ref(), "before")?;
@@ -117,7 +119,9 @@ impl Reversible for DashboardReversible {
             }
             starter_spi::changelog::Op::Delete => {
                 let id = id_of(ch)?;
-                dashboard::delete(&self.metadata, tenant, id).await.map(drop)
+                dashboard::delete(&self.metadata, tenant, id)
+                    .await
+                    .map(drop)
             }
             starter_spi::changelog::Op::Create => {
                 let after = snapshot_from(ch.after.as_ref(), "after")?;
@@ -151,9 +155,12 @@ impl Reversible for DashboardReversible {
 /// changelog codec. Absent means the row was recorded without a tenant binding —
 /// a substrate bug, not a caller error.
 fn tenant_of(ch: &Change) -> Result<&str> {
-    ch.resource.tenant.as_deref().ok_or_else(|| Error::Internal {
-        source: "dashboard change is missing its tenant binding".into(),
-    })
+    ch.resource
+        .tenant
+        .as_deref()
+        .ok_or_else(|| Error::Internal {
+            source: "dashboard change is missing its tenant binding".into(),
+        })
 }
 
 /// Parse the change's resource id as a dashboard [`Uuid`].

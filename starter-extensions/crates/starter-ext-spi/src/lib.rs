@@ -23,6 +23,7 @@ pub mod dashboard;
 pub mod datasource;
 pub mod error;
 pub mod event_bus;
+pub mod extension;
 pub mod fs_ext;
 pub mod http_out;
 pub mod id;
@@ -46,7 +47,10 @@ pub use datasource::{
     DatasourceQueryResponse,
 };
 pub use error::{Error, Result};
-pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
+pub use event_bus::{
+    EventBusMessage, EventBusPublishRequest, EventBusPublishResponse, EventBusSubscribeRequest,
+};
+pub use extension::{ExtensionCallRequest, ExtensionCallResponse};
 pub use id::ExtensionId;
 pub use identity::{CallerIdentity, FrameMeta};
 pub use ingest::{
@@ -61,10 +65,10 @@ pub use jsonrpc::{
 pub use lifecycle::LifecycleState;
 pub use manifest::{
     AuthGate, Backoff, CliStreaming, ContributeAnomalyRule, ContributeCli, ContributeGrpc,
-    ContributeNode, ContributeRest, ContributeSink, ContributeSkillsDir, ContributeSource,
-    ContributeTool, ContributeUi, ContributeUiExpose, ContributeWarehouseTable,
+    ContributeNode, ContributeProvides, ContributeRest, ContributeSink, ContributeSkillsDir,
+    ContributeSource, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWarehouseTable,
     ContributeWarehouseTemplate, ContributeWorker, Contributes, HealthConfig, IngestDirection,
-    Manifest, ManifestRequires, OnErrorPolicy, PermissionGate, Require,
+    Manifest, ManifestRequires, OnErrorPolicy, PermissionGate, Require, RequireExtension,
     RestStreaming, RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision, TableColumn,
     MANIFEST_VERSION,
 };

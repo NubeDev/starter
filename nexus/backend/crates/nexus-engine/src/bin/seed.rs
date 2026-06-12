@@ -36,7 +36,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map_err(|_| "rows_per_profile must be a number")?
         .unwrap_or(DEFAULT_ROWS);
 
-    let pool = PgPoolOptions::new().max_connections(2).connect(&uri).await?;
+    let pool = PgPoolOptions::new()
+        .max_connections(2)
+        .connect(&uri)
+        .await?;
 
     for profile in PROFILES {
         let n = seed_profile(&pool, profile, rows).await?;
@@ -49,7 +52,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// Each profile uses a fixed seed and device id so re-running yields the same
 /// data (after a truncate). Returns the number of rows inserted.
 async fn seed_profile(pool: &PgPool, profile: Profile, rows: usize) -> Result<usize, sqlx::Error> {
-    sqlx::query(&create_table_sql(profile)).execute(pool).await?;
+    sqlx::query(&create_table_sql(profile))
+        .execute(pool)
+        .await?;
 
     // Fixed per-profile seed → repeatable stream; one device per profile.
     let state = sim::seed_state(profile as u64 + 1);
@@ -93,9 +98,8 @@ async fn insert_row(pool: &PgPool, table: &str, row: &Value) -> Result<(), sqlx:
         .collect::<Vec<_>>()
         .join(", ");
 
-    let mut qb = sqlx::QueryBuilder::<sqlx::Postgres>::new(format!(
-        "INSERT INTO {table} ({column_list}) "
-    ));
+    let mut qb =
+        sqlx::QueryBuilder::<sqlx::Postgres>::new(format!("INSERT INTO {table} ({column_list}) "));
     qb.push_values(std::iter::once(()), |mut b, _| {
         for c in &cols {
             bind_value(&mut b, &obj[*c]);

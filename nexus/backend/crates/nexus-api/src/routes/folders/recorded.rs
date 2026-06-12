@@ -5,8 +5,8 @@
 //! a committed mutation must not be rolled back because the audit write tripped.
 
 use serde_json::Value;
-use starter_spi::authz::ResourceRef;
 use starter_spi::auth::Principal;
+use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::Op;
 use starter_undo::ChangeDraft;
 

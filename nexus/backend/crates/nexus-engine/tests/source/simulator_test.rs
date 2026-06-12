@@ -50,7 +50,9 @@ async fn simulator_feeds_a_stream_with_synthetic_rows() {
         .expect("event");
     assert_eq!(event.rows[0]["device_id"], "ahu-1");
     // hvac temps stay in the simulated 18..=24 band.
-    let temp = event.rows[0]["temp_c"].as_f64().expect("temp_c is a number");
+    let temp = event.rows[0]["temp_c"]
+        .as_f64()
+        .expect("temp_c is a number");
     assert!((18.0..=24.0).contains(&temp), "temp {temp} in band");
 
     drop(sub);

@@ -79,8 +79,9 @@ impl ZenohConfig {
         cfg.insert_json5("mode", &format!("\"{mode}\""))
             .map_err(|e| EngineError::Build(format!("zenoh mode rejected: {e}")))?;
         if !self.endpoints.is_empty() {
-            let json = serde_json::to_string(&self.endpoints)
-                .map_err(|e| EngineError::Build(format!("zenoh endpoints not serializable: {e}")))?;
+            let json = serde_json::to_string(&self.endpoints).map_err(|e| {
+                EngineError::Build(format!("zenoh endpoints not serializable: {e}"))
+            })?;
             cfg.insert_json5("connect/endpoints", &json)
                 .map_err(|e| EngineError::Build(format!("zenoh endpoints rejected: {e}")))?;
         }

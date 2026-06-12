@@ -76,8 +76,7 @@ pub(crate) async fn overview(State(admin): State<ExtensionAdmin>) -> impl IntoRe
     // registry has not surfaced yet — mirrors `routes::list`. These have
     // no live supervisor, so gauges are zero and the lifecycle is
     // `Validated`.
-    let known: std::collections::HashSet<String> =
-        rows.iter().map(|r| r.id.clone()).collect();
+    let known: std::collections::HashSet<String> = rows.iter().map(|r| r.id.clone()).collect();
     let pending: Vec<_> = admin
         .pending_rows()
         .into_iter()

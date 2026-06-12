@@ -31,9 +31,12 @@ pub async fn run_federated(
         sql: req.sql.clone(),
         sources,
     };
-    let outcome = query.run(caps_from(guards)).await.map_err(|e| Error::Invalid {
-        message: e.to_string(),
-    })?;
+    let outcome = query
+        .run(caps_from(guards))
+        .await
+        .map_err(|e| Error::Invalid {
+            message: e.to_string(),
+        })?;
     Ok(QueryResponse {
         columns: outcome.columns,
         rows: outcome.rows,

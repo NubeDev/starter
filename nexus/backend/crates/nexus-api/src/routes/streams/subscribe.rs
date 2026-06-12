@@ -59,7 +59,9 @@ pub async fn subscribe_stream(
         Some(sub) => sub,
         // Token is valid but its one-shot spec was already consumed and no stream
         // is running — the subscription window has passed; re-create to resume.
-        None => return (axum::http::StatusCode::GONE, "stream no longer available").into_response(),
+        None => {
+            return (axum::http::StatusCode::GONE, "stream no longer available").into_response()
+        }
     };
     let events = futures::stream::unfold(subscription, |mut sub| async move {
         // Lagged subscribers skip ahead rather than stall the producer; a closed
@@ -100,7 +102,10 @@ fn verify(state: &AppState, token: &str, path_id: &str) -> Result<StreamClaims, 
 /// Attach to the stream for `claims`' key, starting a poll loop over the parked
 /// SQL if none is running. Returns `None` when there is no running stream and no
 /// spec left to start one (the subscription window has closed).
-fn open_subscription(state: &AppState, claims: &StreamClaims) -> Option<nexus_engine::Subscription> {
+fn open_subscription(
+    state: &AppState,
+    claims: &StreamClaims,
+) -> Option<nexus_engine::Subscription> {
     // The stream id is the canonical spec: each create mints a fresh id for one
     // (sql, datasource, tenant) tuple, so subscribers of the same id share one
     // poll loop while different panels never collide.

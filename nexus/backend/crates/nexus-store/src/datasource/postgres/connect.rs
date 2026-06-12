@@ -36,7 +36,8 @@ pub async fn connect(
     actor: &str,
     record: &DatasourceRecord,
 ) -> Result<PgPool, Error> {
-    let secret = crate::datasource::open_secret(pool, envelope, tenant_id, actor, record.id).await?;
+    let secret =
+        crate::datasource::open_secret(pool, envelope, tenant_id, actor, record.id).await?;
 
     let opts = PgConnectOptions::new()
         .host(&record.host)

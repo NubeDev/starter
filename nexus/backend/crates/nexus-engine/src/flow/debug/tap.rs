@@ -79,7 +79,9 @@ impl Tap {
     fn observe(&self, rows_in: usize, rows_out: usize, sample_from: &RecordBatch) {
         // Always accumulate — cheap, and keeps totals truthful across an
         // enable-mid-run.
-        self.totals.rows_in.fetch_add(rows_in as u64, Ordering::Relaxed);
+        self.totals
+            .rows_in
+            .fetch_add(rows_in as u64, Ordering::Relaxed);
         let rows_out_total = self
             .totals
             .rows_out

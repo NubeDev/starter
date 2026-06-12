@@ -64,6 +64,10 @@ mod tests {
     #[test]
     fn exact_multiple_has_no_empty_trailer() {
         let pieces = slice_to_max(batch(2000), 1000);
-        assert_eq!(pieces.len(), 2, "exact multiple yields no trailing empty batch");
+        assert_eq!(
+            pieces.len(),
+            2,
+            "exact multiple yields no trailing empty batch"
+        );
     }
 }

@@ -89,7 +89,11 @@ async fn the_parent_patch_is_three_valued() {
     .await
     .unwrap()
     .unwrap();
-    assert_eq!(renamed.parent_id, Some(a.id), "None leaves parent unchanged");
+    assert_eq!(
+        renamed.parent_id,
+        Some(a.id),
+        "None leaves parent unchanged"
+    );
     assert_eq!(renamed.name, "B2");
 
     // Some(None) re-roots B.
@@ -159,11 +163,17 @@ async fn deleting_a_folder_reroots_children_and_dashboards() {
     assert_eq!(child_after.parent_id, None, "child re-rooted, not deleted");
 
     let dash_after = dashboard::by_slug(pg, "acme", "p1").await.unwrap().unwrap();
-    assert_eq!(dash_after.folder_id, None, "dashboard re-rooted, not deleted");
+    assert_eq!(
+        dash_after.folder_id, None,
+        "dashboard re-rooted, not deleted"
+    );
     assert_eq!(dash_after.id, dash.id);
 
     // The folder itself is gone.
-    assert!(folder::by_id(pg, "acme", parent.id).await.unwrap().is_none());
+    assert!(folder::by_id(pg, "acme", parent.id)
+        .await
+        .unwrap()
+        .is_none());
 }
 
 #[tokio::test]

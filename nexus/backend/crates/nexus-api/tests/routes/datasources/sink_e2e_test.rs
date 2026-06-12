@@ -94,7 +94,10 @@ async fn flow_writes_rows_to_a_datasource_via_copy() {
         }
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
-    assert!(!flows.is_running("rw04-e2e"), "the finite flow should finish");
+    assert!(
+        !flows.is_running("rw04-e2e"),
+        "the finite flow should finish"
+    );
     // A small grace for the close()/COPY to commit after the task drops from the set.
     tokio::time::sleep(Duration::from_millis(200)).await;
 
@@ -104,10 +107,9 @@ async fn flow_writes_rows_to_a_datasource_via_copy() {
         .expect("count");
     assert_eq!(rows, 2, "both rows landed via the datasource sink");
 
-    let watt: f64 =
-        sqlx::query_scalar("SELECT watt FROM device_readings WHERE device = 'b'")
-            .fetch_one(admin.sqlx())
-            .await
-            .expect("value");
+    let watt: f64 = sqlx::query_scalar("SELECT watt FROM device_readings WHERE device = 'b'")
+        .fetch_one(admin.sqlx())
+        .await
+        .expect("value");
     assert_eq!(watt, 12.0);
 }

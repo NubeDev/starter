@@ -71,7 +71,13 @@ impl Source for SimulatorSource {
             tokio::time::sleep(self.interval).await;
         }
         let ts = now_rfc3339();
-        let row = sim::build_row(self.profile, &self.device_id, &ts, &self.state, &self.kwh_milli);
+        let row = sim::build_row(
+            self.profile,
+            &self.device_id,
+            &ts,
+            &self.state,
+            &self.kwh_milli,
+        );
         Ok(Some(json_carrier_batch(&[row.to_string()])))
     }
 }

@@ -140,8 +140,8 @@ impl FlowManager {
             "pipeline": { "processors": processors },
             "output": output,
         });
-        let cfg = PipelineConfig::from_value(config)
-            .map_err(|e| format!("invalid flow config: {e}"))?;
+        let cfg =
+            PipelineConfig::from_value(config).map_err(|e| format!("invalid flow config: {e}"))?;
         let pipeline = Pipeline::build(&registry, &cfg).map_err(|e| e.to_string())?;
 
         // Install per-node debug taps for the whole run so debug can be toggled

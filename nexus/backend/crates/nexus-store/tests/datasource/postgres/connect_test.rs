@@ -74,9 +74,13 @@ async fn connect_opens_a_queryable_pool_for_a_sealed_datasource() {
         .expect("connect to datasource");
 
     // …and the pool runs a real query under the R4 guards.
-    let out = run_query(&ds_pool, "SELECT id, watt FROM readings ORDER BY id", guards())
-        .await
-        .expect("query runs");
+    let out = run_query(
+        &ds_pool,
+        "SELECT id, watt FROM readings ORDER BY id",
+        guards(),
+    )
+    .await
+    .expect("query runs");
     assert_eq!(out.stats.row_count, 2);
     assert_eq!(out.rows[1]["watt"], 12.0);
 
@@ -85,5 +89,8 @@ async fn connect_opens_a_queryable_pool_for_a_sealed_datasource() {
         .await
         .expect_err("write rejected");
     let msg = format!("{err}").to_lowercase();
-    assert!(msg.contains("read-only") || msg.contains("read only"), "got: {msg}");
+    assert!(
+        msg.contains("read-only") || msg.contains("read only"),
+        "got: {msg}"
+    );
 }

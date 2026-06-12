@@ -157,9 +157,12 @@ impl Reversible for PanelReversible {
 /// Read the change's tenant binding (surfaced by the codec). Absent = substrate
 /// bug.
 fn tenant_of(ch: &Change) -> Result<&str> {
-    ch.resource.tenant.as_deref().ok_or_else(|| Error::Internal {
-        source: "panel change is missing its tenant binding".into(),
-    })
+    ch.resource
+        .tenant
+        .as_deref()
+        .ok_or_else(|| Error::Internal {
+            source: "panel change is missing its tenant binding".into(),
+        })
 }
 
 /// Parse the change's resource id as a panel [`Uuid`].

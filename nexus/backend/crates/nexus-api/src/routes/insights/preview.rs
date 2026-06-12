@@ -134,7 +134,9 @@ mod tests {
         let result = reshape(out, 0, false);
         let resp = PreviewInsightResponse::ok(result, rows.len() as u64);
         match resp {
-            PreviewInsightResponse::Ok { ok, row_count_in, .. } => {
+            PreviewInsightResponse::Ok {
+                ok, row_count_in, ..
+            } => {
                 assert!(ok);
                 assert_eq!(row_count_in, 2);
             }

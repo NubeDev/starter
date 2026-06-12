@@ -41,5 +41,8 @@ fn reason(e: &starter_spi::Error) -> String {
 /// line — connection strings and DSNs that some drivers append to multi-line
 /// errors never reach the client.
 fn sanitize(raw: &str) -> String {
-    raw.lines().next().unwrap_or("connection failed").to_string()
+    raw.lines()
+        .next()
+        .unwrap_or("connection failed")
+        .to_string()
 }

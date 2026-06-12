@@ -81,7 +81,9 @@ impl QueryKindReversible {
             datasource_binding: snapshot.datasource_binding.clone(),
             description: snapshot.description.clone(),
         };
-        query_kind::insert(&self.metadata, tenant, &new).await.map(drop)
+        query_kind::insert(&self.metadata, tenant, &new)
+            .await
+            .map(drop)
     }
 }
 
@@ -103,7 +105,9 @@ impl Reversible for QueryKindReversible {
             }
             Op::Create => {
                 let id = id_of(ch)?;
-                query_kind::delete(&self.metadata, tenant, id).await.map(drop)
+                query_kind::delete(&self.metadata, tenant, id)
+                    .await
+                    .map(drop)
             }
             Op::Delete => {
                 let before = snapshot_from(ch.before.as_ref(), "before", tenant)?;
@@ -124,7 +128,9 @@ impl Reversible for QueryKindReversible {
             }
             Op::Delete => {
                 let id = id_of(ch)?;
-                query_kind::delete(&self.metadata, tenant, id).await.map(drop)
+                query_kind::delete(&self.metadata, tenant, id)
+                    .await
+                    .map(drop)
             }
             Op::Create => {
                 let after = snapshot_from(ch.after.as_ref(), "after", tenant)?;
@@ -155,9 +161,12 @@ impl Reversible for QueryKindReversible {
 /// Read the change's tenant binding (surfaced by the codec). Absent = substrate
 /// bug.
 fn tenant_of(ch: &Change) -> Result<&str> {
-    ch.resource.tenant.as_deref().ok_or_else(|| Error::Internal {
-        source: "query-kind change is missing its tenant binding".into(),
-    })
+    ch.resource
+        .tenant
+        .as_deref()
+        .ok_or_else(|| Error::Internal {
+            source: "query-kind change is missing its tenant binding".into(),
+        })
 }
 
 /// Parse the change's resource id as a query-kind [`Uuid`].

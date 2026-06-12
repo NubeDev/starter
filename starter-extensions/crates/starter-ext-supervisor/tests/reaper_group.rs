@@ -93,7 +93,9 @@ fn spawn_child_with_grandchild() -> (Child, i32, i32) {
     let stdout = child.stdout.take().expect("piped stdout");
     let mut reader = BufReader::new(stdout);
     let mut line = String::new();
-    reader.read_line(&mut line).expect("read grandchild pid line");
+    reader
+        .read_line(&mut line)
+        .expect("read grandchild pid line");
     let grandchild_pid: i32 = line.trim().parse().expect("grandchild pid is an integer");
 
     (child, pgid, grandchild_pid)
@@ -155,9 +157,7 @@ fn killpg_reaches_grandchild() {
     //    must `wait()` to reap it — otherwise it lingers as a zombie and a
     //    bare `kill(pid, 0)` would still report it "alive".
     if let Some(mut c) = guard.0.take() {
-        let status = c
-            .wait()
-            .expect("wait on the killpg'd group leader");
+        let status = c.wait().expect("wait on the killpg'd group leader");
         assert!(
             !status.success(),
             "leader must have been killed by the group signal, not exit cleanly"
@@ -201,7 +201,11 @@ fn reap_stale_groups_kills_a_real_live_group() {
     let report = reap_stale_groups(dir.path());
 
     assert_eq!(report.total(), 1, "one pidfile processed: {report:#?}");
-    assert_eq!(report.killed(), 1, "the live group must be killed: {report:#?}");
+    assert_eq!(
+        report.killed(),
+        1,
+        "the live group must be killed: {report:#?}"
+    );
     assert_eq!(report.groups.len(), 1);
     let g = &report.groups[0];
     assert_eq!(g.extension_id, "com.acme.leaky");
@@ -242,7 +246,10 @@ fn reap_records_dead_group_as_not_killed() {
     let dir = tempfile::tempdir().expect("tempdir");
     // A pgid that is essentially never live.
     let dead_pgid = i32::MAX;
-    assert!(!reaper::group_alive(dead_pgid), "precondition: group is dead");
+    assert!(
+        !reaper::group_alive(dead_pgid),
+        "precondition: group is dead"
+    );
 
     reaper::write_pidfile(dir.path(), "com.acme.gone", dead_pgid).expect("write_pidfile");
     let report = reap_stale_groups(dir.path());

@@ -38,9 +38,14 @@ async fn set_replaces_the_full_set_and_both_shapes_round_trip() {
 
     let e = entity("dash-1");
     // A mix of bare labels and key:value tags — the user's two examples.
-    tag::set_for_entity(pg, "acme", &e, &[bare("temp"), bare("site"), kv("building", "abc")])
-        .await
-        .expect("set");
+    tag::set_for_entity(
+        pg,
+        "acme",
+        &e,
+        &[bare("temp"), bare("site"), kv("building", "abc")],
+    )
+    .await
+    .expect("set");
 
     let mut got = tag::list_for_entity(pg, "acme", &e).await.unwrap();
     got.sort_by(|a, b| a.key.cmp(&b.key));
@@ -99,11 +104,16 @@ async fn tags_are_tenant_scoped() {
 
     // The same entity id in another tenant has its own (empty) tag set, and a
     // reverse lookup in that tenant sees nothing.
-    assert!(tag::list_for_entity(pg, "globex", &e).await.unwrap().is_empty());
-    assert!(tag::entities_with_tag(pg, "globex", "dashboard", "temp", None)
+    assert!(tag::list_for_entity(pg, "globex", &e)
         .await
         .unwrap()
         .is_empty());
+    assert!(
+        tag::entities_with_tag(pg, "globex", "dashboard", "temp", None)
+            .await
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[tokio::test]
@@ -135,5 +145,8 @@ async fn deleting_an_entity_sweeps_its_tags() {
 
     assert!(dashboard::delete(pg, "acme", d.id).await.unwrap());
     // The dashboard delete path swept the tags — no orphans left behind.
-    assert!(tag::list_for_entity(pg, "acme", &e).await.unwrap().is_empty());
+    assert!(tag::list_for_entity(pg, "acme", &e)
+        .await
+        .unwrap()
+        .is_empty());
 }

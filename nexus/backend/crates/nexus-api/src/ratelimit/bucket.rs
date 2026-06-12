@@ -91,8 +91,8 @@ impl TenantRateLimiter {
         // Lazily refill for the time elapsed since the last check, capped at the
         // burst ceiling, then try to spend one token.
         let elapsed = now.duration_since(bucket.last_refill).as_secs_f64();
-        bucket.tokens =
-            (bucket.tokens + elapsed * self.inner.config.refill_per_sec).min(self.inner.config.burst);
+        bucket.tokens = (bucket.tokens + elapsed * self.inner.config.refill_per_sec)
+            .min(self.inner.config.burst);
         bucket.last_refill = now;
 
         if bucket.tokens >= 1.0 {

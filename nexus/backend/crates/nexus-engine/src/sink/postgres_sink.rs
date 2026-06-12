@@ -296,15 +296,23 @@ PRIMARY KEY (\"site_id\", \"ts\"))"
 
     #[test]
     fn on_conflict_nothing_targets_the_key() {
-        let c = on_conflict_clause(OnConflict::Nothing, &["site_id".into(), "ts".into()], &schema())
-            .unwrap();
+        let c = on_conflict_clause(
+            OnConflict::Nothing,
+            &["site_id".into(), "ts".into()],
+            &schema(),
+        )
+        .unwrap();
         assert_eq!(c, "ON CONFLICT (\"site_id\", \"ts\") DO NOTHING");
     }
 
     #[test]
     fn on_conflict_upsert_updates_non_key_columns() {
-        let c = on_conflict_clause(OnConflict::Upsert, &["site_id".into(), "ts".into()], &schema())
-            .unwrap();
+        let c = on_conflict_clause(
+            OnConflict::Upsert,
+            &["site_id".into(), "ts".into()],
+            &schema(),
+        )
+        .unwrap();
         assert_eq!(
             c,
             "ON CONFLICT (\"site_id\", \"ts\") DO UPDATE SET \

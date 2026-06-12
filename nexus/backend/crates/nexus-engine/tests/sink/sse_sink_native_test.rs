@@ -2,9 +2,9 @@
 //! monotonic sequence number, so a `Last-Event-ID` resume sees no gap.
 
 use nexus_engine::arrow_json::json_carrier_batch;
+use nexus_engine::core::Processor;
 use nexus_engine::core::Sink;
 use nexus_engine::processor::JsonToArrow;
-use nexus_engine::core::Processor;
 use nexus_engine::sink::broadcast_store;
 use nexus_engine::sink::SseSink;
 use serde_json::json;
@@ -20,7 +20,10 @@ async fn publishes_batches_with_monotonic_sequence_numbers() {
 
     // Shape two single-row batches and publish each.
     let mut json = JsonToArrow::from_config(&json!({ "type": "json_to_arrow" })).unwrap();
-    for value in [json!({ "sensor": "a", "value": 1 }), json!({ "sensor": "b", "value": 2 })] {
+    for value in [
+        json!({ "sensor": "a", "value": 1 }),
+        json!({ "sensor": "b", "value": 2 }),
+    ] {
         let typed = json
             .process(json_carrier_batch(&[value.to_string()]))
             .await
@@ -64,7 +67,9 @@ async fn slow_subscriber_lags_alone_and_the_seq_gap_is_visible() {
             .unwrap()
             .pop()
             .unwrap();
-        sink.write(&typed).await.expect("publish never blocks on a slow subscriber");
+        sink.write(&typed)
+            .await
+            .expect("publish never blocks on a slow subscriber");
     }
 
     // The slow subscriber's first recv reports it lagged — the load-shed for that
@@ -82,7 +87,10 @@ async fn slow_subscriber_lags_alone_and_the_seq_gap_is_visible() {
             }
         }
     };
-    assert!(resumed_seq > 0, "the slow subscriber skipped a visible seq gap");
+    assert!(
+        resumed_seq > 0,
+        "the slow subscriber skipped a visible seq gap"
+    );
 
     // A subscriber that attaches now sees only fresh events, proving the producer
     // stayed healthy through the other subscriber's lag.
@@ -94,8 +102,14 @@ async fn slow_subscriber_lags_alone_and_the_seq_gap_is_visible() {
         .pop()
         .unwrap();
     sink.write(&typed).await.expect("write after lag");
-    let event = fresh.recv().await.expect("fresh subscriber receives current event");
-    assert_eq!(event.rows[0]["n"], 1000, "fresh subscriber is unaffected by the lag");
+    let event = fresh
+        .recv()
+        .await
+        .expect("fresh subscriber receives current event");
+    assert_eq!(
+        event.rows[0]["n"], 1000,
+        "fresh subscriber is unaffected by the lag"
+    );
 
     broadcast_store::close(&run_id);
 }

@@ -78,9 +78,7 @@ impl Registry {
     /// no per-request DB hit. A duplicate name is an error — the global
     /// `UNIQUE (name)` on the table makes that unreachable in practice, but the
     /// registry stays the single place that invariant is enforced in memory.
-    pub fn from_kinds(
-        kinds: impl IntoIterator<Item = QueryKind>,
-    ) -> Result<Self, KindError> {
+    pub fn from_kinds(kinds: impl IntoIterator<Item = QueryKind>) -> Result<Self, KindError> {
         let mut by_name = BTreeMap::new();
         for kind in kinds {
             if by_name.contains_key(&kind.name) {
@@ -253,8 +251,12 @@ mod tests {
     #[test]
     fn resolve_validates_params_and_binds_host_tenant_predicate() {
         let reg = Registry::load_dir(&builtin_pack_dir()).unwrap();
-        let bound = resolve(&reg, "nexus.core.meters_list", &serde_json::json!({ "site_id": "s1" }))
-            .expect("valid params resolve");
+        let bound = resolve(
+            &reg,
+            "nexus.core.meters_list",
+            &serde_json::json!({ "site_id": "s1" }),
+        )
+        .expect("valid params resolve");
         // The kind's SQL keeps the host-bound tenant predicate; the caller cannot
         // supply $caller_tenant_id as a param (it is not a declared property).
         assert!(bound.sql.contains("$caller_tenant_id"));

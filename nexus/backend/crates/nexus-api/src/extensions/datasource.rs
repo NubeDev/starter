@@ -91,7 +91,9 @@ async fn resolve(
         )));
     }
     let id = Uuid::parse_str(datasource_id).map_err(|e| {
-        ExtError::extension_internal(format!("datasource id {datasource_id:?} is not a UUID: {e}"))
+        ExtError::extension_internal(format!(
+            "datasource id {datasource_id:?} is not a UUID: {e}"
+        ))
     })?;
     let rec = nexus_store::datasource::get(&state.metadata, tenant, id)
         .await
@@ -390,22 +392,26 @@ mod tests {
         // …but allowed with it.
         assert!(enforce_ownership(&ext(), "INSERT INTO sales VALUES (1)", true).is_ok());
         // An owned-prefix DML is always allowed.
-        assert!(
-            enforce_ownership(&ext(), "INSERT INTO com_acme_devices__log VALUES (1)", false).is_ok()
-        );
+        assert!(enforce_ownership(
+            &ext(),
+            "INSERT INTO com_acme_devices__log VALUES (1)",
+            false
+        )
+        .is_ok());
     }
 
     #[test]
     fn schema_and_quotes_stripped() {
         assert_eq!(strip_schema_and_quotes("public.\"Foo\""), "foo");
-        assert_eq!(strip_schema_and_quotes("com_acme_devices__t("), "com_acme_devices__t");
+        assert_eq!(
+            strip_schema_and_quotes("com_acme_devices__t("),
+            "com_acme_devices__t"
+        );
     }
 
     #[test]
     fn delete_and_update_targets_resolved() {
         assert!(enforce_ownership(&ext(), "DELETE FROM widgets WHERE id = 1", false).is_err());
-        assert!(
-            enforce_ownership(&ext(), "UPDATE com_acme_devices__t SET x = 1", false).is_ok()
-        );
+        assert!(enforce_ownership(&ext(), "UPDATE com_acme_devices__t SET x = 1", false).is_ok());
     }
 }

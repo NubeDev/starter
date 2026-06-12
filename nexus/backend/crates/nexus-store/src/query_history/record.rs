@@ -14,11 +14,7 @@ use crate::tenant_tx;
 /// Record one query run for `(tenant, user)` and prune older rows beyond the
 /// retention bound. A starred row is never pruned — a user's pinned favourites
 /// outlive the rolling window.
-pub async fn record_run(
-    pool: &PgPool,
-    tenant_id: &str,
-    run: &NewQueryRun,
-) -> Result<(), Error> {
+pub async fn record_run(pool: &PgPool, tenant_id: &str, run: &NewQueryRun) -> Result<(), Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     sqlx::query(
         "INSERT INTO nexus_query_history \

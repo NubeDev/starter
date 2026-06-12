@@ -5,7 +5,7 @@
 //! one arm here plus the `nexus-spi` enum variant.
 
 use nexus_spi::dto::tag::{Tag, TaggableKind, TaggedEntity};
-use nexus_store::tag::{TaggedEntity as StoredTaggedEntity, TagRecord};
+use nexus_store::tag::{TagRecord, TaggedEntity as StoredTaggedEntity};
 
 /// The stored `entity_type` string for a wire kind.
 pub fn kind_to_stored(kind: TaggableKind) -> &'static str {

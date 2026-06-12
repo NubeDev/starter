@@ -78,5 +78,9 @@ async fn custom_table_name_is_honoured() {
 
     let out = proc.process(typed_batch().await).await.expect("process");
     let rows = batch_to_rows(&out[0]).expect("to rows").rows;
-    assert_eq!(rows.len(), 2, "batch registered under the custom table name");
+    assert_eq!(
+        rows.len(),
+        2,
+        "batch registered under the custom table name"
+    );
 }

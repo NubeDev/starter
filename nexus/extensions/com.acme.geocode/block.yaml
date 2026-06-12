@@ -1,0 +1,42 @@
+v: 1
+id: com.acme.geocode
+version: 0.1.0
+display_name: "Acme Geocode"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# A **process**-flavour extension that demonstrates the WS-18 **callee** side:
+# it publishes one tool (`lookup`) as part of its public peer-API via
+# `contributes.provides[]`, so another extension may invoke it synchronously
+# through the `extension.call` host method. A contributed tool NOT listed under
+# `provides[]` would stay private (reachable only on the normal MCP/REST
+# transports) — peer reachability is opt-in.
+runtime:
+  kind: process
+  bin: acme-geocode-extension
+
+supervision:
+  restart: on_crash
+  max_restarts: 5
+  within_seconds: 60
+  backoff: { initial_ms: 200, max_ms: 30000, jitter: true }
+  health:  { interval_ms: 5000, timeout_ms: 2000 }
+  shutdown_grace_ms: 5000
+
+# No capabilities: `lookup` is a pure transform (address string → coordinates),
+# so the callee needs no host grants of its own. It runs under the CALLER's
+# identity when invoked via extension.call (WS-14 §4.3), never widening it.
+capabilities: []
+
+contributes:
+  tools:
+    - id: com.acme.geocode.lookup
+      input_schema:  schemas/lookup_in.json
+      output_schema: schemas/lookup_out.json
+      description_file: docs/lookup.md
+
+  # The public peer-API: only `lookup` is callable by other extensions.
+  provides:
+    - id: com.acme.geocode.lookup
+      input_schema:  schemas/lookup_in.json
+      output_schema: schemas/lookup_out.json

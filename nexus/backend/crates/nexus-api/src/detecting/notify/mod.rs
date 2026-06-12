@@ -125,7 +125,10 @@ async fn deliver_all(
         if outcome.succeeded() {
             any_ok = true;
             if outcome.attempts > 1 {
-                details.push(format!("{}: ok after {} attempts", ch.name, outcome.attempts));
+                details.push(format!(
+                    "{}: ok after {} attempts",
+                    ch.name, outcome.attempts
+                ));
             }
         } else {
             details.push(format!(
@@ -231,6 +234,9 @@ mod tests {
     #[test]
     fn webhook_url_not_redacted() {
         let cfg = json!({ "url": "https://example.com/hook" });
-        assert_eq!(redact_config("webhook", &cfg)["url"], "https://example.com/hook");
+        assert_eq!(
+            redact_config("webhook", &cfg)["url"],
+            "https://example.com/hook"
+        );
     }
 }

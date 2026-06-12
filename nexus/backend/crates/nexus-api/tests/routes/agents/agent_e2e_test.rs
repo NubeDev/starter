@@ -38,7 +38,10 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: FlowManager::new().expect("flow manager init"),
-        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
+        sessions: nexus_api::agents::SessionRunner::new(
+            std::env::temp_dir().join("nexus-knowledge-test"),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),
@@ -139,7 +142,10 @@ async fn agent_crud_and_session_lifecycle() {
 
     // --- start a session --------------------------------------------------
     let session: Value = client
-        .post(format!("{}/api/v1/agents/{agent_id}/sessions", app.base_url))
+        .post(format!(
+            "{}/api/v1/agents/{agent_id}/sessions",
+            app.base_url
+        ))
         .json(&json!({ "prompt": "Say hi." }))
         .send()
         .await
@@ -157,7 +163,10 @@ async fn agent_crud_and_session_lifecycle() {
 
     // The session is listed under its agent.
     let sessions: Value = client
-        .get(format!("{}/api/v1/agents/{agent_id}/sessions", app.base_url))
+        .get(format!(
+            "{}/api/v1/agents/{agent_id}/sessions",
+            app.base_url
+        ))
         .send()
         .await
         .expect("list sessions")
@@ -173,7 +182,10 @@ async fn agent_crud_and_session_lifecycle() {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
     while tokio::time::Instant::now() < deadline {
         let s: Value = client
-            .get(format!("{}/api/v1/agents/sessions/{session_id}", app.base_url))
+            .get(format!(
+                "{}/api/v1/agents/sessions/{session_id}",
+                app.base_url
+            ))
             .send()
             .await
             .expect("get session")
@@ -201,7 +213,10 @@ async fn agent_crud_and_session_lifecycle() {
 
     // Its sessions cascaded with it.
     let gone = client
-        .get(format!("{}/api/v1/agents/sessions/{session_id}", app.base_url))
+        .get(format!(
+            "{}/api/v1/agents/sessions/{session_id}",
+            app.base_url
+        ))
         .send()
         .await
         .expect("get gone");

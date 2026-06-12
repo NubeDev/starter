@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GeocodeLookupOutput",
+  "type": "object",
+  "description": "Resolved coordinates for the input address.",
+  "properties": {
+    "address": { "type": "string", "description": "Echo of the input address." },
+    "lat":     { "type": "number", "description": "Latitude." },
+    "lon":     { "type": "number", "description": "Longitude." }
+  },
+  "required": ["address", "lat", "lon"]
+}

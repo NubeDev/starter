@@ -76,10 +76,15 @@ fn principal_from_caller(caller: Option<&CallerIdentity>) -> ExtResult<(Principa
         ExtError::extension_internal("host method requires a caller identity (none supplied)")
     })?;
     let tenant = caller.tenant_id.clone().ok_or_else(|| {
-        ExtError::extension_internal("host method requires a tenant-scoped caller (tenant_id is None)")
+        ExtError::extension_internal(
+            "host method requires a tenant-scoped caller (tenant_id is None)",
+        )
     })?;
     let role = highest_role(&caller.roles);
-    let subject = caller.user_id.clone().unwrap_or_else(|| "system".to_string());
+    let subject = caller
+        .user_id
+        .clone()
+        .unwrap_or_else(|| "system".to_string());
     let principal = Principal {
         subject,
         role,
@@ -135,7 +140,9 @@ impl HostMethodHandler for NexusHostMethods {
             "dashboard.read" => self.dashboard_read(params, caller).await,
             // The kernel's gate maps the `warehouse` category to `warehouse_read`;
             // the conventional method name is `warehouse.query`.
-            "warehouse.query" | "warehouse.read" => self.warehouse_query(extension, params, caller).await,
+            "warehouse.query" | "warehouse.read" => {
+                self.warehouse_query(extension, params, caller).await
+            }
             // WS-17 Wave A: write/upsert/update/delete into the calling
             // extension's own `<ext>__<table>`. Own-table allowlist + tenant
             // clamp enforced in `warehouse_write`. Gated by the `warehouse_write`
@@ -153,8 +160,21 @@ impl HostMethodHandler for NexusHostMethods {
             // additionally bounded host-side by the ownership-prefix rule + the
             // `allow_foreign_tables` grant. Gated by the `datasource` capability
             // category (execute via the gate's method-name override).
-            "datasource.query" => super::datasource::query(&self.state, extension, params, caller).await,
-            "datasource.execute" => super::datasource::execute(&self.state, extension, params, caller).await,
+            "datasource.query" => {
+                super::datasource::query(&self.state, extension, params, caller).await
+            }
+            "datasource.execute" => {
+                super::datasource::execute(&self.state, extension, params, caller).await
+            }
+            // WS-18 Wave A: in-process pub/sub. `publish` validates topic
+            // ownership + the grant allowlist, then fans out same-tenant.
+            // `subscribe` needs the stream-back transport (the documented
+            // follow-up) and returns a clear capability error until it lands.
+            "event_bus.publish" => self.event_bus_publish(extension, params, caller).await,
+            "event_bus.subscribe" => self.event_bus_subscribe(extension, params, caller).await,
+            // WS-18 Wave B: synchronous peer call into another extension's
+            // provided tool/node, triple-gated + caller-identity-bound.
+            "extension.call" => super::peer::call(&self.state, extension, params, caller).await,
             other => Err(ExtError::extension_internal(format!(
                 "host method {other:?} is not implemented by nexus"
             ))),
@@ -182,9 +202,15 @@ impl NexusHostMethods {
             None => (req.resource.clone(), "*".to_string()),
         };
 
-        let allowed =
-            crate::authz::can(&*self.state.engine, &principal, &req.action, &kind, &id, &tenant)
-                .await;
+        let allowed = crate::authz::can(
+            &*self.state.engine,
+            &principal,
+            &req.action,
+            &kind,
+            &id,
+            &tenant,
+        )
+        .await;
         serde_json::to_value(AuthzCheckResponse { allowed })
             .map_err(|e| ExtError::extension_internal(format!("authz.check response: {e}")))
     }
@@ -270,18 +296,16 @@ impl NexusHostMethods {
         // extension's own contributed kind resolves here.
         let bound = match crate::kinds::resolve(&self.state.kinds, &req.template, &req.params) {
             Ok(b) => b,
-            Err(crate::kinds::KindError::Unknown(_)) => crate::kinds::resolve(
-                &self.state.extension_kinds,
-                &req.template,
-                &req.params,
-            )
-            .map_err(|e| {
-                ExtError::extension_internal(format!(
-                    "warehouse.query: extension `{}` template `{}`: {e}",
-                    extension.as_str(),
-                    req.template
-                ))
-            })?,
+            Err(crate::kinds::KindError::Unknown(_)) => {
+                crate::kinds::resolve(&self.state.extension_kinds, &req.template, &req.params)
+                    .map_err(|e| {
+                        ExtError::extension_internal(format!(
+                            "warehouse.query: extension `{}` template `{}`: {e}",
+                            extension.as_str(),
+                            req.template
+                        ))
+                    })?
+            }
             Err(e) => {
                 return Err(ExtError::extension_internal(format!(
                     "warehouse.query template `{}`: {e}",
@@ -434,5 +458,85 @@ impl NexusHostMethods {
         let rows_affected = exec.delete(&req.table, &req.key_column, req.keys).await?;
         serde_json::to_value(WarehouseDeleteResponse { rows_affected })
             .map_err(|e| ExtError::extension_internal(format!("warehouse.delete response: {e}")))
+    }
+
+    /// `event_bus.publish` (WS-18 Wave A) → fan a message out to same-tenant
+    /// subscribers of `topic`. Two host-side gates beyond the supervisor's
+    /// category check:
+    /// 1. **Namespace ownership** — the topic must live under the calling
+    ///    extension's reverse-DNS namespace (`extension.owns(topic)`), the same
+    ///    rule the kernel applies to tool ids. An extension cannot publish on a
+    ///    topic it does not own even if it lists it.
+    /// 2. **Grant allowlist** — the topic must be in the extension's
+    ///    `EventBus { publish }` allowlist.
+    /// Delivery is tenant-scoped by `state.event_bus`; a tenant-less caller is a
+    /// hard deny.
+    async fn event_bus_publish(
+        &self,
+        extension: &ExtensionId,
+        params: serde_json::Value,
+        caller: Option<&CallerIdentity>,
+    ) -> ExtResult<serde_json::Value> {
+        use starter_ext_spi::event_bus::{EventBusPublishRequest, EventBusPublishResponse};
+        let req: EventBusPublishRequest = serde_json::from_value(params)
+            .map_err(|e| ExtError::extension_internal(format!("event_bus.publish params: {e}")))?;
+        let tenant = caller.and_then(|c| c.tenant_id.clone()).ok_or_else(|| {
+            ExtError::extension_internal("event_bus.publish requires a tenant-scoped caller")
+        })?;
+        // (1) Namespace ownership — publish only on an owned topic.
+        if !extension.owns(&req.topic) {
+            return Err(ExtError::capability(format!(
+                "event_bus.publish: topic {:?} is not owned by extension {:?}",
+                req.topic,
+                extension.as_str()
+            )));
+        }
+        // (2) Grant allowlist — topic must be in the `publish` list.
+        let allowed = self
+            .state
+            .extensions
+            .get_by_id_str(extension.as_str())
+            .and_then(|r| r.manifest.as_ref())
+            .map(|m| {
+                m.capabilities.iter().any(|c| {
+                    matches!(c, starter_ext_spi::Capability::EventBus { publish, .. }
+                        if publish.iter().any(|t| t == &req.topic))
+                })
+            })
+            .unwrap_or(false);
+        if !allowed {
+            return Err(ExtError::capability(format!(
+                "event_bus.publish: topic {:?} is not in extension {:?}'s `event_bus` publish allowlist",
+                req.topic,
+                extension.as_str()
+            )));
+        }
+        self.state
+            .event_bus
+            .publish(&tenant, &req.topic, req.payload);
+        serde_json::to_value(EventBusPublishResponse::default())
+            .map_err(|e| ExtError::extension_internal(format!("event_bus.publish response: {e}")))
+    }
+
+    /// `event_bus.subscribe` (WS-18 Wave A) → register a subscription and stream
+    /// matching messages back to the child.
+    ///
+    /// The bus itself (`state.event_bus`) fully supports tenant-scoped
+    /// subscriptions; the missing piece is the **stream-back transport** that
+    /// pushes `stream.event` notifications to the child over the lifetime of the
+    /// invocation (the same machinery `flow.node.invoke` streaming uses). Until
+    /// that lands, subscribe returns a clear capability error rather than
+    /// silently accepting a subscription it cannot deliver — the publish side is
+    /// fully functional and the SDK handle mirrors this.
+    async fn event_bus_subscribe(
+        &self,
+        _extension: &ExtensionId,
+        _params: serde_json::Value,
+        _caller: Option<&CallerIdentity>,
+    ) -> ExtResult<serde_json::Value> {
+        Err(ExtError::capability(
+            "event_bus.subscribe: the stream-back transport is not yet wired \
+             (WS-18 Wave A follow-up); publish is fully functional",
+        ))
     }
 }

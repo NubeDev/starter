@@ -66,9 +66,14 @@ pub async fn run_cached(
         .query_cache
         .get_or_load(key, || async {
             let _guard = state.quotas.admit(tenant).await?;
-            let sources =
-                resolve::resolve_sources(state, principal, tenant, &principal.subject, &req.sources)
-                    .await?;
+            let sources = resolve::resolve_sources(
+                state,
+                principal,
+                tenant,
+                &principal.subject,
+                &req.sources,
+            )
+            .await?;
             run::run_federated(req, sources, state.guards).await
         })
         .await

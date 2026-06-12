@@ -1,7 +1,7 @@
 //! Read insights for a tenant — list, and fetch one by id.
 
-use sqlx::{PgPool, Row};
 use serde_json::Value;
+use sqlx::{PgPool, Row};
 use starter_spi::Error;
 use uuid::Uuid;
 

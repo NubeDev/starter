@@ -87,7 +87,8 @@ pub async fn query_datasource(
         user_id: Some(caller_principal.subject.clone()),
         teams: caller_principal.teams.clone(),
     };
-    let mut result = crate::cache::run_cached(&state, &pool, &req, &identity, &id.to_string()).await;
+    let mut result =
+        crate::cache::run_cached(&state, &pool, &req, &identity, &id.to_string()).await;
     // RW-06 insight seam: an attached insight (inline script or a stored,
     // tenant-scoped reference) runs the result frame through the sandboxed engine
     // before history/serialization. Without one the response is unchanged.
@@ -107,7 +108,15 @@ pub async fn query_datasource(
         Some(kind) => format!("kind:{kind}"),
         None => req.sql.clone(),
     };
-    record(&state, &tenant, &caller_principal.subject, id, &recorded, &result).await;
+    record(
+        &state,
+        &tenant,
+        &caller_principal.subject,
+        id,
+        &recorded,
+        &result,
+    )
+    .await;
     match result {
         Ok(out) => Json(out).into_response(),
         Err(e) => IntoResponse(e).into_response(),

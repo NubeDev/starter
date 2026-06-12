@@ -29,13 +29,22 @@ pub enum Role {
 
 impl Message {
     pub fn system(c: impl Into<String>) -> Self {
-        Self { role: Role::System, content: c.into() }
+        Self {
+            role: Role::System,
+            content: c.into(),
+        }
     }
     pub fn user(c: impl Into<String>) -> Self {
-        Self { role: Role::User, content: c.into() }
+        Self {
+            role: Role::User,
+            content: c.into(),
+        }
     }
     pub fn assistant(c: impl Into<String>) -> Self {
-        Self { role: Role::Assistant, content: c.into() }
+        Self {
+            role: Role::Assistant,
+            content: c.into(),
+        }
     }
 }
 
@@ -52,7 +61,12 @@ pub struct ChatRequest {
 
 impl ChatRequest {
     pub fn new(model: impl Into<ModelRef>, messages: Vec<Message>) -> Self {
-        Self { model: model.into(), messages, temperature: None, max_tokens: None }
+        Self {
+            model: model.into(),
+            messages,
+            temperature: None,
+            max_tokens: None,
+        }
     }
 }
 
@@ -94,7 +108,10 @@ mod genai_impl {
 
     impl GenaiInference {
         pub fn new(aliases: AliasMap) -> Self {
-            Self { client: GenaiClient::default(), aliases }
+            Self {
+                client: GenaiClient::default(),
+                aliases,
+            }
         }
 
         fn to_genai(&self, req: &ChatRequest) -> (String, GChatRequest) {
@@ -132,10 +149,7 @@ mod genai_impl {
             })
         }
 
-        async fn stream(
-            &self,
-            req: ChatRequest,
-        ) -> Result<BoxStream<'static, Result<Event>>> {
+        async fn stream(&self, req: ChatRequest) -> Result<BoxStream<'static, Result<Event>>> {
             use genai::chat::ChatStreamEvent;
             let (model, greq) = self.to_genai(&req);
             let stream = self
@@ -147,9 +161,7 @@ mod genai_impl {
             // Normalise genai's native stream events into the unified `Event`.
             let mapped = stream.stream.filter_map(|ev| async move {
                 match ev {
-                    Ok(ChatStreamEvent::Chunk(c)) => {
-                        Some(Ok(Event::TextDelta { text: c.content }))
-                    }
+                    Ok(ChatStreamEvent::Chunk(c)) => Some(Ok(Event::TextDelta { text: c.content })),
                     Ok(ChatStreamEvent::End(end)) => Some(Ok(Event::Done {
                         text: end
                             .captured_first_text()

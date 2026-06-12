@@ -18,9 +18,7 @@
 
 use std::collections::BTreeSet;
 
-use nexus_api::extensions::warehouse::{
-    create_one_table, full_table_name, WriteExecutor,
-};
+use nexus_api::extensions::warehouse::{create_one_table, full_table_name, WriteExecutor};
 use nexus_store::testing::runtime_pool;
 use serde_json::json;
 use starter_ext_spi::manifest::{ContributeWarehouseTable, TableColumn, WarehouseTableKind};
@@ -36,11 +34,31 @@ fn devices_spec() -> ContributeWarehouseTable {
     ContributeWarehouseTable {
         name: "devices".into(),
         columns: vec![
-            TableColumn { name: "device_id".into(), ty: "text".into(), default: None },
-            TableColumn { name: "barcode".into(), ty: "text".into(), default: None },
-            TableColumn { name: "location".into(), ty: "text".into(), default: None },
-            TableColumn { name: "owner".into(), ty: "text".into(), default: None },
-            TableColumn { name: "team".into(), ty: "text".into(), default: None },
+            TableColumn {
+                name: "device_id".into(),
+                ty: "text".into(),
+                default: None,
+            },
+            TableColumn {
+                name: "barcode".into(),
+                ty: "text".into(),
+                default: None,
+            },
+            TableColumn {
+                name: "location".into(),
+                ty: "text".into(),
+                default: None,
+            },
+            TableColumn {
+                name: "owner".into(),
+                ty: "text".into(),
+                default: None,
+            },
+            TableColumn {
+                name: "team".into(),
+                ty: "text".into(),
+                default: None,
+            },
             TableColumn {
                 name: "created_at".into(),
                 ty: "timestamptz".into(),
@@ -184,7 +202,10 @@ async fn owns_table_persists_upserts_isolates_and_drops() {
         .fetch_one(&pool)
         .await
         .expect("count all");
-    assert_eq!(total, 2, "same device_id in two tenants are distinct rows (PK includes tenant_id)");
+    assert_eq!(
+        total, 2,
+        "same device_id in two tenants are distinct rows (PK includes tenant_id)"
+    );
 
     // --- a caller's read only sees its tenant's rows. ---
     let acme_rows: i64 = sqlx::query_scalar(

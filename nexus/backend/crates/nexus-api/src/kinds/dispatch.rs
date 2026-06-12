@@ -87,9 +87,12 @@ async fn load_tenant_kind(
     identity: &nexus_store::QueryIdentity,
     name: &str,
 ) -> Result<QueryKind, Error> {
-    let tenant = identity.tenant_id.as_deref().ok_or_else(|| Error::Invalid {
-        message: format!("query-kind `{name}` is not a known kind"),
-    })?;
+    let tenant = identity
+        .tenant_id
+        .as_deref()
+        .ok_or_else(|| Error::Invalid {
+            message: format!("query-kind `{name}` is not a known kind"),
+        })?;
     let record = nexus_store::query_kind::get_by_name(&state.metadata, tenant, name)
         .await?
         .ok_or_else(|| Error::Invalid {

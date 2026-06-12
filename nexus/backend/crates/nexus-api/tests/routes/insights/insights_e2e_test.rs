@@ -176,7 +176,11 @@ async fn insights_are_rls_isolated_across_tenants() {
         .json()
         .await
         .unwrap();
-    assert_eq!(list.as_array().unwrap().len(), 0, "no cross-tenant row in list");
+    assert_eq!(
+        list.as_array().unwrap().len(),
+        0,
+        "no cross-tenant row in list"
+    );
 
     let get = reqwest::Client::new()
         .get(format!("{}/api/v1/insights/{}", globex.base_url, id))

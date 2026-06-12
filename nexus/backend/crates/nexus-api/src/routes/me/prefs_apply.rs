@@ -95,8 +95,7 @@ mod tests {
             locale: Some("en-GB".into()),
             ..Default::default()
         };
-        let patch: Map<String, JsonValue> =
-            serde_json::from_str(r#"{"language":"fr"}"#).unwrap();
+        let patch: Map<String, JsonValue> = serde_json::from_str(r#"{"language":"fr"}"#).unwrap();
         apply_user_patch(&mut row, &patch).unwrap();
         assert_eq!(row.locale.as_deref(), Some("en-GB"));
         assert_eq!(row.language.as_deref(), Some("fr"));
@@ -128,7 +127,10 @@ mod tests {
         let patch: Map<String, JsonValue> =
             serde_json::from_str(r#"{"temperature_unit":"fahrenheit"}"#).unwrap();
         apply_user_patch(&mut row, &patch).unwrap();
-        assert_eq!(row.temperature_unit, Some(UnitPref::Explicit(Unit::Fahrenheit)));
+        assert_eq!(
+            row.temperature_unit,
+            Some(UnitPref::Explicit(Unit::Fahrenheit))
+        );
     }
 
     #[test]

@@ -59,10 +59,22 @@ mod tests {
     #[test]
     fn take_consumes_and_respects_expiry() {
         let now = Instant::now();
-        put("s1", "SELECT 1".into(), Duration::from_secs(1), Duration::from_secs(60), now);
+        put(
+            "s1",
+            "SELECT 1".into(),
+            Duration::from_secs(1),
+            Duration::from_secs(60),
+            now,
+        );
 
         // Expired spec is not returned.
-        put("s2", "SELECT 2".into(), Duration::from_secs(1), Duration::from_secs(1), now);
+        put(
+            "s2",
+            "SELECT 2".into(),
+            Duration::from_secs(1),
+            Duration::from_secs(1),
+            now,
+        );
         assert!(take("s2", now + Duration::from_secs(2)).is_none());
 
         // Live spec returns once, then is gone.

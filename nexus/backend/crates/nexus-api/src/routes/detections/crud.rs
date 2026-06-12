@@ -57,7 +57,9 @@ pub async fn create_detection(
         insight_id: req.insight_id,
         datasource_id: req.datasource_id,
         sql: req.sql,
-        params: req.params.unwrap_or_else(|| Value::Object(Default::default())),
+        params: req
+            .params
+            .unwrap_or_else(|| Value::Object(Default::default())),
         sources: req.sources.unwrap_or_else(|| Value::Array(Vec::new())),
         flag_column: req.flag_column,
         target_columns: req.target_columns,
@@ -91,7 +93,16 @@ pub async fn get_detection(
         Ok(None) => return (StatusCode::NOT_FOUND, "not found").into_response(),
         Err(e) => return IntoResponse(e).into_response(),
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_VIEW, KIND_DETECTION, &id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_VIEW,
+        KIND_DETECTION,
+        &id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
     Json(detection_to_detail(&d)).into_response()
@@ -110,7 +121,16 @@ pub async fn update_detection(
         Ok(c) => c,
         Err(resp) => return resp,
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_EDIT, KIND_DETECTION, &id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_EDIT,
+        KIND_DETECTION,
+        &id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
     let patch = DetectionPatch {
@@ -155,7 +175,16 @@ pub async fn delete_detection(
         Ok(c) => c,
         Err(resp) => return resp,
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_DELETE, KIND_DETECTION, &id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_DELETE,
+        KIND_DETECTION,
+        &id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
     match detection::delete(&state.metadata, &tenant, id).await {
@@ -180,10 +209,24 @@ pub async fn run_now(
         Ok(c) => c,
         Err(resp) => return resp,
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_EDIT, KIND_DETECTION, &id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_EDIT,
+        KIND_DETECTION,
+        &id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
-    if detection::get(&state.metadata, &tenant, id).await.ok().flatten().is_none() {
+    if detection::get(&state.metadata, &tenant, id)
+        .await
+        .ok()
+        .flatten()
+        .is_none()
+    {
         return (StatusCode::NOT_FOUND, "not found").into_response();
     }
     let ctx = crate::detecting::run::RunContext {
@@ -212,7 +255,16 @@ pub async fn get_stats(
         Ok(c) => c,
         Err(resp) => return resp,
     };
-    if let Err(resp) = authz::require(state.engine.as_ref(), caller, ACTION_VIEW, KIND_DETECTION, &id.to_string(), &tenant).await {
+    if let Err(resp) = authz::require(
+        state.engine.as_ref(),
+        caller,
+        ACTION_VIEW,
+        KIND_DETECTION,
+        &id.to_string(),
+        &tenant,
+    )
+    .await
+    {
         return resp;
     }
     match detection::stats(&state.metadata, &tenant, id).await {

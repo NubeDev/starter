@@ -17,7 +17,7 @@ use crate::tenant_tx;
 
 mod record;
 
-pub use record::{EntityRef, TaggedEntity, TagRecord};
+pub use record::{EntityRef, TagRecord, TaggedEntity};
 
 fn internal(e: sqlx::Error) -> Error {
     Error::Internal {

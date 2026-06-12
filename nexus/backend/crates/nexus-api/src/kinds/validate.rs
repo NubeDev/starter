@@ -19,7 +19,10 @@ use super::kind::QueryKind;
 /// Validate `params` against `kind`'s schema (after merging schema defaults) and
 /// return the binder param map. Rejects unknown keys, missing required keys, and
 /// any constraint violation as a 4xx-shaped [`KindError::ParamValidation`].
-pub fn validate(kind: &QueryKind, params: &Value) -> Result<BTreeMap<String, ParamValue>, KindError> {
+pub fn validate(
+    kind: &QueryKind,
+    params: &Value,
+) -> Result<BTreeMap<String, ParamValue>, KindError> {
     let merged = apply_defaults(&kind.params_schema, params);
     let validator = jsonschema::validator_for(&kind.params_schema).map_err(|e| {
         // A schema that fails to compile is a pack-author bug; surface it as a
@@ -142,8 +145,7 @@ mod tests {
             "type": "object",
             "properties": { "limit": { "type": "integer", "minimum": 1, "maximum": 100 } }
         }));
-        let err = validate(&k, &json!({ "limit": 9999 }))
-            .expect_err("maximum bound is enforced");
+        let err = validate(&k, &json!({ "limit": 9999 })).expect_err("maximum bound is enforced");
         assert!(matches!(err, KindError::ParamValidation { .. }));
     }
 

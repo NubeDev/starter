@@ -54,8 +54,8 @@ fn check_secret_fields(kind: &DatasourceKind) -> Result<(), DatasourceKindError>
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::manifest::{Surface, TestSpec};
+    use super::*;
     use serde_json::json;
 
     fn kind(schema: serde_json::Value, secrets: &[&str]) -> DatasourceKind {

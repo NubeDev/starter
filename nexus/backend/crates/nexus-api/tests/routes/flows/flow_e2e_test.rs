@@ -37,7 +37,10 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: FlowManager::new().expect("flow manager init"),
-        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
+        sessions: nexus_api::agents::SessionRunner::new(
+            std::env::temp_dir().join("nexus-knowledge-test"),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),
@@ -147,16 +150,20 @@ async fn flow_ingests_http_into_postgres_then_stops() {
     let mut inserted = 0i64;
     let deadline = tokio::time::Instant::now() + Duration::from_secs(8);
     while tokio::time::Instant::now() < deadline {
-        inserted = sqlx::query_scalar::<_, i64>("SELECT count(*) FROM ingested WHERE city='berlin'")
-            .fetch_one(admin.sqlx())
-            .await
-            .unwrap();
+        inserted =
+            sqlx::query_scalar::<_, i64>("SELECT count(*) FROM ingested WHERE city='berlin'")
+                .fetch_one(admin.sqlx())
+                .await
+                .unwrap();
         if inserted > 0 {
             break;
         }
         tokio::time::sleep(Duration::from_millis(200)).await;
     }
-    assert!(inserted > 0, "the flow ingested the HTTP response into postgres");
+    assert!(
+        inserted > 0,
+        "the flow ingested the HTTP response into postgres"
+    );
 
     // The flow detail surfaces the RW-08 ingest metrics, and they reconcile with
     // what landed: every metrics field is present and the counters are monotonic
@@ -173,8 +180,14 @@ async fn flow_ingests_http_into_postgres_then_stops() {
     let m = &detail["metrics"];
     assert_eq!(m["running"], true, "running surfaced");
     assert!(m["batches_in"].as_u64().unwrap() >= 1, "batches_in counted");
-    assert!(m["rows_written"].as_u64().unwrap() >= 1, "rows_written counted");
-    assert!(m["flush_count"].as_u64().unwrap() >= 1, "flush_count counted");
+    assert!(
+        m["rows_written"].as_u64().unwrap() >= 1,
+        "rows_written counted"
+    );
+    assert!(
+        m["flush_count"].as_u64().unwrap() >= 1,
+        "flush_count counted"
+    );
     assert_eq!(m["write_errors"], 0, "no write errors on a healthy flow");
     assert!(m["last_write_ms"].is_u64(), "last_write_ms stamped");
     assert!(m["channel_depth"].is_u64(), "channel_depth present");

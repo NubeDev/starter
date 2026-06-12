@@ -60,6 +60,16 @@ pub struct Manifest {
     #[serde(default, deserialize_with = "deserialize_requires")]
     pub requires: Vec<Require>,
 
+    /// Peer-extension dependencies (WS-18 Wave B). Each entry names another
+    /// extension and the specific `provides[]` ids this extension intends to
+    /// call via `extension.call`. Kept separate from [`Manifest::requires`]
+    /// (which names *host interfaces*) so the operator UI can render
+    /// "peer extensions" distinctly from "host interfaces", and so the host
+    /// can fail the load fast when a named peer is absent, disabled, or does
+    /// not `provide` the listed id.
+    #[serde(default)]
+    pub requires_extensions: Vec<RequireExtension>,
+
     /// How this extension is packaged (R1: exactly one of builtin / wasm /
     /// process).
     pub runtime: Runtime,
@@ -177,6 +187,35 @@ where
 /// to consumer crates.
 #[doc(hidden)]
 pub type ManifestRequires = Vec<Require>;
+
+/// `Manifest::requires_extensions` element — a peer-extension dependency
+/// (WS-18 Wave B).
+///
+/// ```yaml
+/// requires_extensions:
+///   - id: com.acme.geocode
+///     provides: [com.acme.geocode.lookup]   # ids this ext will `extension.call`
+///     version: "^1"
+/// ```
+///
+/// The host resolves each entry at load: the named extension must exist and
+/// `contributes.provides[]` every id listed here, at a compatible version.
+/// A missing/disabled peer or an unprovided id is a hard load error — peer
+/// edges are visible to the operator at install, never a runtime surprise.
+/// Each provided id must be owned by `id` (reverse-DNS), validated locally.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RequireExtension {
+    /// The peer extension's id.
+    pub id: ExtensionId,
+    /// The peer's `provides[]` ids this extension intends to call. Each must
+    /// be owned by `id`.
+    #[serde(default)]
+    pub provides: Vec<String>,
+    /// Semver requirement against the peer's version. Defaults to `"*"`.
+    #[serde(default = "any_version_req")]
+    pub version: semver::VersionReq,
+}
 
 /// How the extension is packaged.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -439,6 +478,15 @@ pub struct Contributes {
     /// builder simply ignores it, like every other contribution field.
     #[serde(default)]
     pub setup_templates: Vec<ContributeSetupTemplate>,
+    /// Peer-API surface (WS-18 Wave B). Each entry marks one of the
+    /// extension's *own* contributed tool/node ids as callable by another
+    /// extension via `extension.call`. A contributed tool/node **not** listed
+    /// here is private — reachable only on the extension's normal transports
+    /// (MCP/REST/flow), never as a peer call. There is no implicit
+    /// "all my tools are callable": peer reachability is opt-in. See
+    /// [`ContributeProvides`].
+    #[serde(default)]
+    pub provides: Vec<ContributeProvides>,
 }
 
 /// Direction of a data-plane contribution — whether the extension produces data
@@ -863,6 +911,38 @@ pub struct PermissionGate {
     pub resource: String,
     /// Action verb on the resource (e.g. `"read"`, `"refresh"`).
     pub action: String,
+}
+
+/// One `contributes.provides[]` entry — a tool/node id this extension makes
+/// callable by another extension via `extension.call` (WS-18 Wave B).
+///
+/// ```yaml
+/// provides:
+///   - id: com.acme.geocode.lookup            # a contributed tool OR node kind
+///     input_schema: schemas/lookup_in.json   # optional; validated host-side
+///     output_schema: schemas/lookup_out.json
+/// ```
+///
+/// `id` must be owned by the extension (reverse-DNS, R4) **and** reference an
+/// id this extension actually contributes — either a `contributes.tools[].id`
+/// or a `contributes.nodes[].kind`. Listing an id here does not create a new
+/// dispatch target; it marks an existing one as part of the public peer-API.
+/// The schema paths are optional; when present the host validates the peer
+/// call's `input`/`output` against them.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeProvides {
+    /// The contributed tool id or node kind exposed to peers. Owned by the
+    /// extension; must match a `tools[].id` or `nodes[].kind`.
+    pub id: String,
+    /// Optional path (relative to bundle root) to a JSON Schema validating
+    /// the peer call's `input`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub input_schema: Option<String>,
+    /// Optional path (relative to bundle root) to a JSON Schema validating
+    /// the peer call's `output`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_schema: Option<String>,
 }
 
 /// One flow node-kind the extension contributes.

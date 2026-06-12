@@ -287,7 +287,11 @@ fn expect_arity(name: &str, args: &[String], want: usize) -> Result<(), BindErro
 /// found from `name_end`. Returns the trimmed args and the index past the `)`.
 /// Splits on top-level commas only (no nesting is expected in macro args, but a
 /// quoted comma is respected).
-fn call_args(sql: &str, name_end: usize, token_start: usize) -> Result<(Vec<String>, usize), BindError> {
+fn call_args(
+    sql: &str,
+    name_end: usize,
+    token_start: usize,
+) -> Result<(Vec<String>, usize), BindError> {
     let open = name_end + sql[name_end..].find('(').unwrap();
     let close = sql[open..]
         .find(')')

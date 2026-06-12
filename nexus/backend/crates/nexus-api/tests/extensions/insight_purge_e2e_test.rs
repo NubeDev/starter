@@ -40,7 +40,9 @@ async fn purge_removes_a_contributed_insight() {
     // Dry-run discovers the contributed insight before any purge.
     let discovered = provider.discover(&id, None).await;
     assert!(
-        discovered.iter().any(|i| i.label.contains("com.nexus.hello.zscore")),
+        discovered
+            .iter()
+            .any(|i| i.label.contains("com.nexus.hello.zscore")),
         "the contributed insight shows in the cleanup dry-run"
     );
 

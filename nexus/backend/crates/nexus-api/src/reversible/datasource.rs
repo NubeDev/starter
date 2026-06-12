@@ -80,7 +80,9 @@ impl Reversible for DatasourceReversible {
             }
             Op::Create => {
                 let id = id_of(ch)?;
-                datasource::delete(&self.metadata, tenant, id).await.map(drop)
+                datasource::delete(&self.metadata, tenant, id)
+                    .await
+                    .map(drop)
             }
             Op::Delete => resurrect_unsupported(),
             Op::Custom(ref c) => Err(custom_unsupported(c)),
@@ -97,7 +99,9 @@ impl Reversible for DatasourceReversible {
             }
             Op::Delete => {
                 let id = id_of(ch)?;
-                datasource::delete(&self.metadata, tenant, id).await.map(drop)
+                datasource::delete(&self.metadata, tenant, id)
+                    .await
+                    .map(drop)
             }
             Op::Create => resurrect_unsupported(),
             Op::Custom(ref c) => Err(custom_unsupported(c)),
@@ -121,9 +125,12 @@ impl Reversible for DatasourceReversible {
 /// Read the change's tenant binding (surfaced by the codec). Absent = substrate
 /// bug.
 fn tenant_of(ch: &Change) -> Result<&str> {
-    ch.resource.tenant.as_deref().ok_or_else(|| Error::Internal {
-        source: "datasource change is missing its tenant binding".into(),
-    })
+    ch.resource
+        .tenant
+        .as_deref()
+        .ok_or_else(|| Error::Internal {
+            source: "datasource change is missing its tenant binding".into(),
+        })
 }
 
 /// Parse the change's resource id as a datasource [`Uuid`].

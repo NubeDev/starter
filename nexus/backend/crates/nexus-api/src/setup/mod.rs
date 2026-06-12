@@ -27,9 +27,9 @@
 use std::sync::Arc;
 
 use starter_ext_host::ExtensionRegistry;
+use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::registry::NodeKindRegistry;
 use starter_flow::run::{FlowRunner, InMemoryRunStore};
-use starter_flow::graph::InMemoryGraphStore;
 use starter_flow_spi::graph::GraphStore;
 use starter_setup::service::{RunService, RunServiceConfig, SetupEngine};
 use starter_store_postgres::flow::PgRunStore;

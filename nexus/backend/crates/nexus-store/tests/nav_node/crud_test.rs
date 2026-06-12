@@ -112,7 +112,11 @@ async fn the_parent_patch_is_three_valued_and_reorders() {
     .await
     .unwrap()
     .unwrap();
-    assert_eq!(retitled.parent_id, Some(a.id), "None leaves parent unchanged");
+    assert_eq!(
+        retitled.parent_id,
+        Some(a.id),
+        "None leaves parent unchanged"
+    );
     assert_eq!(retitled.title, "B2");
 
     // Some(None) re-roots B.

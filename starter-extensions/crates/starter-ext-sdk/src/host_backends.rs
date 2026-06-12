@@ -34,6 +34,7 @@ use starter_ext_spi::dashboard::{
     DashboardReadRequest, DashboardReadResponse, DashboardWriteRequest,
 };
 use starter_ext_spi::event_bus::EventBusPublishRequest;
+use starter_ext_spi::extension::{ExtensionCallRequest, ExtensionCallResponse};
 use starter_ext_spi::fs_ext::{FsReadRequest, FsReadResponse};
 use starter_ext_spi::http_out::HttpRequest;
 use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
@@ -52,8 +53,9 @@ use starter_ext_spi::datasource::{
 };
 
 use crate::ctx::{
-    AuthzBackend, DashboardBackend, DatasourceBackend, EventBusBackend, FsBackend, HttpOutBackend,
-    SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
+    AuthzBackend, DashboardBackend, DatasourceBackend, EventBusBackend, ExtensionCallBackend,
+    FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend,
+    WarehouseReadBackend, WarehouseWriteBackend,
 };
 use crate::host_rpc::HostRpc;
 
@@ -317,6 +319,48 @@ impl EventBusBackend for RealEventBusBackend {
             .map_err(|e| Error::transport(format!("encoding event_bus.publish: {e}")))?;
         let _raw = self.rpc.call_sync("event_bus.publish", wire_params)?;
         Ok(())
+    }
+
+    // `subscribe` uses the trait default (a capability error) until the
+    // stream-subscriber transport is wired through `HostRpc` — `publish` is
+    // a unary call over `call_sync`, but a subscription needs the host to
+    // push `stream.event` notifications back over the lifetime of the
+    // invocation. That transport is the documented WS-18 Wave A follow-up;
+    // the bus + host method already accept subscriptions on the nexus side.
+}
+
+/// `ExtensionCallBackend` whose `call` hops to the host via
+/// `extension.call` (WS-18 Wave B).
+#[derive(Debug, Clone)]
+pub struct RealExtensionCallBackend {
+    rpc: HostRpc,
+}
+
+impl RealExtensionCallBackend {
+    /// Construct over the shared `HostRpc`.
+    pub fn new(rpc: HostRpc) -> Self {
+        Self { rpc }
+    }
+}
+
+impl ExtensionCallBackend for RealExtensionCallBackend {
+    fn call(
+        &self,
+        extension_id: &str,
+        provided_id: &str,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value> {
+        let req = ExtensionCallRequest {
+            extension_id: extension_id.to_owned(),
+            provided_id: provided_id.to_owned(),
+            input,
+        };
+        let wire_params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding extension.call: {e}")))?;
+        let raw = self.rpc.call_sync("extension.call", wire_params)?;
+        let res: ExtensionCallResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding extension.call: {e}")))?;
+        Ok(res.output)
     }
 }
 

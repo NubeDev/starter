@@ -35,7 +35,9 @@ pub enum ContributeInsightError {
         source: std::io::Error,
     },
     /// The `params_schema` file held invalid JSON.
-    #[error("extension `{extension}` insight `{insight}`: params_schema is not valid JSON: {source}")]
+    #[error(
+        "extension `{extension}` insight `{insight}`: params_schema is not valid JSON: {source}"
+    )]
     Schema {
         extension: String,
         insight: String,
@@ -72,8 +74,7 @@ pub fn contributed_insights(
     for entry in &manifest.contributes.insights {
         check_namespace(extension_id, owner.as_ref(), &entry.name)?;
 
-        let script =
-            read_bundle_file(extension_id, &entry.name, bundle_dir, &entry.script_file)?;
+        let script = read_bundle_file(extension_id, &entry.name, bundle_dir, &entry.script_file)?;
 
         // The keystone safety check: an extension-contributed script passes the
         // identical sandbox compile a tenant-saved insight does. A script that
@@ -88,12 +89,13 @@ pub fn contributed_insights(
         let params_schema = match &entry.params_schema {
             Some(rel) => {
                 let raw = read_bundle_file(extension_id, &entry.name, bundle_dir, rel)?;
-                let parsed: serde_json::Value =
-                    serde_json::from_str(&raw).map_err(|source| ContributeInsightError::Schema {
+                let parsed: serde_json::Value = serde_json::from_str(&raw).map_err(|source| {
+                    ContributeInsightError::Schema {
                         extension: extension_id.to_string(),
                         insight: entry.name.clone(),
                         source,
-                    })?;
+                    }
+                })?;
                 Some(parsed)
             }
             None => None,
@@ -167,7 +169,10 @@ mod tests {
         let records =
             starter_ext_host::Loader::scan(example_bundle().parent().unwrap()).validate_all();
         let outcome = starter_ext_host::Loader::commit(records, &mut registry);
-        assert_eq!(outcome.failed, 0, "the shipped example bundle must validate");
+        assert_eq!(
+            outcome.failed, 0,
+            "the shipped example bundle must validate"
+        );
         registry.seal();
 
         let record = registry
@@ -187,8 +192,8 @@ mod tests {
     #[test]
     fn rejects_out_of_namespace_name() {
         let owner = ExtensionId::new("com.nexus.hello").ok();
-        let err = check_namespace("com.nexus.hello", owner.as_ref(), "com.other.thing")
-            .unwrap_err();
+        let err =
+            check_namespace("com.nexus.hello", owner.as_ref(), "com.other.thing").unwrap_err();
         assert!(matches!(err, ContributeInsightError::Namespace { .. }));
     }
 }

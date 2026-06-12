@@ -113,7 +113,10 @@ async fn an_extension_insight_resolved_by_name_shrinks_the_result() {
         2,
         "the contributed insight kept kw > 10"
     );
-    assert_eq!(body["stats"]["row_count"], 2, "stats recomputed from transformed rows");
+    assert_eq!(
+        body["stats"]["row_count"], 2,
+        "stats recomputed from transformed rows"
+    );
     let kws: Vec<i64> = body["rows"]
         .as_array()
         .unwrap()
@@ -142,6 +145,10 @@ async fn an_unknown_extension_insight_name_is_a_clean_404() {
         .send()
         .await
         .unwrap();
-    assert_eq!(resp.status(), 404, "an unknown extension insight name is not found");
+    assert_eq!(
+        resp.status(),
+        404,
+        "an unknown extension insight name is not found"
+    );
     app.shutdown().await;
 }

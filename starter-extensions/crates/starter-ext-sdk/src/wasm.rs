@@ -44,8 +44,8 @@ use starter_ext_spi::{Error, Result};
 
 use crate::ctx::{
     AuthzBackend, CtxInner, DashboardBackend, DatasourceBackend, EventBusBackend, EventSender,
-    FsBackend, HttpOutBackend, NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend,
-    WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
+    ExtensionCallBackend, FsBackend, HttpOutBackend, NeverCancel, Row, SecretsBackend,
+    TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 use crate::meta::ExtensionDispatch;
 
@@ -195,6 +195,15 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
                 self.0
             )))
         }
+        // `subscribe` inherits the trait default (a capability error).
+    }
+    impl ExtensionCallBackend for Stub {
+        fn call(&self, _ext_id: &str, _provided_id: &str, _input: Value) -> Result<Value> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
     }
     impl DashboardBackend for Stub {
         fn read(&self, _page_id: &str) -> Result<Value> {
@@ -230,6 +239,7 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
         Arc::new(Stub("warehouse_write")),
         Arc::new(Stub("datasource")),
         Arc::new(Stub("event_bus")),
+        Arc::new(Stub("extension_call")),
         Arc::new(Stub("dashboard")),
         Arc::new(Stub("authz")),
     )

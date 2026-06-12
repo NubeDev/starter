@@ -48,15 +48,16 @@ async fn variables_are_tenant_scoped_and_name_unique_per_dashboard() {
     let v = variable::insert(pg, "acme", &new_var(d.id, "region"))
         .await
         .expect("insert");
-    assert_eq!(v.current, vec!["a".to_string()], "current jsonb round-trips");
+    assert_eq!(
+        v.current,
+        vec!["a".to_string()],
+        "current jsonb round-trips"
+    );
     assert_eq!(v.options_config, json!({"options": ["a", "b"]}));
 
     // Same name on the same dashboard is a conflict.
     let conflict = variable::insert(pg, "acme", &new_var(d.id, "region")).await;
-    assert!(matches!(
-        conflict,
-        Err(starter_spi::Error::Conflict { .. })
-    ));
+    assert!(matches!(conflict, Err(starter_spi::Error::Conflict { .. })));
 
     // A second dashboard may reuse the name — uniqueness is per dashboard.
     let d2 = dashboard::insert(pg, "acme", &new_dash("plant-2"))

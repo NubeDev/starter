@@ -17,9 +17,7 @@ use starter_spi::{Error, Result};
 /// fourth tuple element is kept for symmetry with the read side and ignored on
 /// insert.
 #[allow(clippy::type_complexity)]
-pub(super) fn actor_columns(
-    actor: &Actor,
-) -> (String, Option<String>, Option<serde_json::Value>) {
+pub(super) fn actor_columns(actor: &Actor) -> (String, Option<String>, Option<serde_json::Value>) {
     match actor {
         Actor::User { subject } => ("user".into(), Some(subject.clone()), None),
         Actor::Agent { run_id, model } => (

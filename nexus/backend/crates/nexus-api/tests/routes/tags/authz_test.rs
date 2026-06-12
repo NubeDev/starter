@@ -160,7 +160,11 @@ async fn tagging_a_nonexistent_dashboard_is_not_found() {
         .send()
         .await
         .expect("request");
-    assert_eq!(resp.status(), 404, "nonexistent id ⇒ not found, never tagged");
+    assert_eq!(
+        resp.status(),
+        404,
+        "nonexistent id ⇒ not found, never tagged"
+    );
 
     drop(app);
 }

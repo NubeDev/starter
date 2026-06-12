@@ -89,11 +89,13 @@ pub async fn get(
     id: Uuid,
 ) -> Result<Option<DetectionRecord>, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
-    let row = sqlx::query(&format!("SELECT {COLS} FROM nexus_detections WHERE id = $1"))
-        .bind(id)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(internal)?;
+    let row = sqlx::query(&format!(
+        "SELECT {COLS} FROM nexus_detections WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(row.as_ref().map(row_to_record))
 }

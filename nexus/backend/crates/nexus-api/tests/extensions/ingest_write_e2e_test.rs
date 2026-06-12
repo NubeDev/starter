@@ -56,7 +56,14 @@ async fn ingest_write_lands_rows_with_host_stamped_tenant() {
         .await
         .expect("register datasource");
     let resolved = datasource::resolve_sink_config(
-        &pg, &env, "acme", "tester", created.id, "ext_readings", Some(1), None,
+        &pg,
+        &env,
+        "acme",
+        "tester",
+        created.id,
+        "ext_readings",
+        Some(1),
+        None,
     )
     .await
     .expect("resolve datasource sink config");

@@ -139,9 +139,12 @@ impl Reversible for NavNodeReversible {
 
 /// Read the change's tenant, surfaced onto [`ResourceRef::tenant`] by the codec.
 fn tenant_of(ch: &Change) -> Result<&str> {
-    ch.resource.tenant.as_deref().ok_or_else(|| Error::Internal {
-        source: "nav node change is missing its tenant binding".into(),
-    })
+    ch.resource
+        .tenant
+        .as_deref()
+        .ok_or_else(|| Error::Internal {
+            source: "nav node change is missing its tenant binding".into(),
+        })
 }
 
 /// Parse the change's resource id as a nav-node [`Uuid`].
@@ -167,7 +170,10 @@ fn snapshot_from(value: Option<&serde_json::Value>, which: &str) -> Result<NavNo
         parent_id,
         title: field_str(v, "title")?,
         sort_order: v.get("sort_order").and_then(|s| s.as_i64()).unwrap_or(0) as i32,
-        target: v.get("target").cloned().unwrap_or(json!({ "kind": "group" })),
+        target: v
+            .get("target")
+            .cloned()
+            .unwrap_or(json!({ "kind": "group" })),
         context: v.get("context").cloned().filter(|c| !c.is_null()),
         icon: v.get("icon").and_then(|s| s.as_str()).map(str::to_owned),
         accent: v.get("accent").and_then(|s| s.as_str()).map(str::to_owned),

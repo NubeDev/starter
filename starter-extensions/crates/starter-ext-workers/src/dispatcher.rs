@@ -318,6 +318,7 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
         Arc::new(StubWarehouseWrite),
         Arc::new(StubDatasource),
         Arc::new(StubEventBus),
+        Arc::new(StubExtensionCall),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
     )
@@ -434,6 +435,21 @@ struct StubEventBus;
 impl starter_ext_sdk::ctx::EventBusBackend for StubEventBus {
     fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         Err(Error::capability("event_bus not wired in workers adapter"))
+    }
+}
+
+#[derive(Debug)]
+struct StubExtensionCall;
+impl starter_ext_sdk::ctx::ExtensionCallBackend for StubExtensionCall {
+    fn call(
+        &self,
+        _extension_id: &str,
+        _provided_id: &str,
+        _input: serde_json::Value,
+    ) -> starter_ext_spi::Result<serde_json::Value> {
+        Err(Error::capability(
+            "extension_call not wired in workers adapter",
+        ))
     }
 }
 

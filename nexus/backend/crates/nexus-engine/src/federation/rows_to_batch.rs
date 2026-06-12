@@ -86,7 +86,10 @@ mod tests {
 
     #[test]
     fn objects_become_typed_columns() {
-        let rows = vec![json!({ "id": 1, "name": "a" }), json!({ "id": 2, "name": "b" })];
+        let rows = vec![
+            json!({ "id": 1, "name": "a" }),
+            json!({ "id": 2, "name": "b" }),
+        ];
         let batch = json_rows_to_batch(&rows).unwrap();
         assert_eq!(batch.num_rows(), 2);
         assert_eq!(batch.num_columns(), 2);

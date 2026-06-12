@@ -81,9 +81,12 @@ pub async fn subscribe_agent_session(
     // single terminal event so a client that connected after the (fast) run
     // still gets the answer — no 410, no EventSource reconnect loop.
     let session =
-        match nexus_store::agent::get_session(&state.metadata, &claims.tenant_id, session_id).await {
+        match nexus_store::agent::get_session(&state.metadata, &claims.tenant_id, session_id).await
+        {
             Ok(Some(s)) => s,
-            Ok(None) => return (axum::http::StatusCode::NOT_FOUND, "session not found").into_response(),
+            Ok(None) => {
+                return (axum::http::StatusCode::NOT_FOUND, "session not found").into_response()
+            }
             Err(e) => {
                 return starter_server::error::IntoResponse(e).into_response();
             }

@@ -90,7 +90,10 @@ mod tests {
         let res = run(serde_json::json!({ "type": "no_such_input" }), vec![], None)
             .await
             .expect("engine init ok");
-        assert!(res.error.is_some(), "build failure should be reported inline");
+        assert!(
+            res.error.is_some(),
+            "build failure should be reported inline"
+        );
         assert!(res.rows.is_empty());
     }
 
@@ -105,9 +108,18 @@ mod tests {
             "device_id": "test-1",
         });
         let processors = vec![serde_json::json!({ "type": "json_to_arrow" })];
-        let res = run(input, processors, Some(5)).await.expect("engine init ok");
-        assert!(res.error.is_none(), "valid flow should not error: {:?}", res.error);
+        let res = run(input, processors, Some(5))
+            .await
+            .expect("engine init ok");
+        assert!(
+            res.error.is_none(),
+            "valid flow should not error: {:?}",
+            res.error
+        );
         assert!(!res.rows.is_empty(), "simulator should produce sample rows");
-        assert!(res.rows.len() as u64 <= 5, "sample respects the requested cap");
+        assert!(
+            res.rows.len() as u64 <= 5,
+            "sample respects the requested cap"
+        );
     }
 }

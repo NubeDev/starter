@@ -55,5 +55,8 @@ async fn over_cap_batch_trips_truncation_and_cancels() {
     assert!(token.is_cancelled(), "a breached cap cancels the run token");
     let drained = store::take(&run_id);
     assert!(drained.truncated, "the over-cap batch flags truncation");
-    assert!(drained.rows.is_empty(), "an over-cap batch is dropped whole");
+    assert!(
+        drained.rows.is_empty(),
+        "an over-cap batch is dropped whole"
+    );
 }

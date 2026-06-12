@@ -55,7 +55,11 @@ pub async fn probe(params: ProbeParams<'_>) -> Result<(), Error> {
             match eventloop.poll().await {
                 Ok(Event::Incoming(Packet::ConnAck(_))) => return Ok(()),
                 Ok(_) => continue,
-                Err(e) => return Err(Error::Internal { source: Box::new(e) }),
+                Err(e) => {
+                    return Err(Error::Internal {
+                        source: Box::new(e),
+                    })
+                }
             }
         }
     })
@@ -81,8 +85,9 @@ pub async fn probe(params: ProbeParams<'_>) -> Result<(), Error> {
 #[cfg(not(feature = "mqtt"))]
 pub async fn probe(_params: ProbeParams<'_>) -> Result<(), Error> {
     Err(Error::Invalid {
-        message: "the MQTT connector is not enabled in this build (rebuild with the `mqtt` feature)"
-            .into(),
+        message:
+            "the MQTT connector is not enabled in this build (rebuild with the `mqtt` feature)"
+                .into(),
     })
 }
 
@@ -126,6 +131,9 @@ mod tests {
         .expect_err("a closed port is not a reachable broker");
         // Either an immediate connection error or the bounded timeout — both are
         // a failed probe, never a false Ok.
-        assert!(matches!(err, Error::Internal { .. } | Error::Invalid { .. }));
+        assert!(matches!(
+            err,
+            Error::Internal { .. } | Error::Invalid { .. }
+        ));
     }
 }

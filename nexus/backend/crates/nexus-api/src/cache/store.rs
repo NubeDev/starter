@@ -182,7 +182,9 @@ impl QueryCache {
             Flightboard::Follower(mut rx) => {
                 // A concurrent miss already started the load; await its result.
                 self.inner.stats.coalesced.fetch_add(1, Ordering::Relaxed);
-                return wait_for_flight(&mut rx).await.map_err(FlightError::into_error);
+                return wait_for_flight(&mut rx)
+                    .await
+                    .map_err(FlightError::into_error);
             }
         };
 

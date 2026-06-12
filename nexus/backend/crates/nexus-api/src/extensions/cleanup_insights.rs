@@ -71,9 +71,7 @@ impl CleanupProvider for InsightCleanupProvider {
         // Idempotent — a second purge deletes zero rows and still returns Ok.
         let removed = extension_insight::delete_by_extension(&self.metadata, id.as_str())
             .await
-            .map_err(|e| {
-                CleanupError::new(format!("delete insights for {}: {e}", id.as_str()))
-            })?;
+            .map_err(|e| CleanupError::new(format!("delete insights for {}: {e}", id.as_str())))?;
         if removed > 0 {
             tracing::info!(
                 target: "nexus_api::extensions::cleanup_insights",

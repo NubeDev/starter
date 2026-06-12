@@ -26,10 +26,7 @@ pub fn router() -> Router<AppState> {
             "/api/v1/dashboards",
             post(create::create_dashboard).get(list::list_dashboards),
         )
-        .route(
-            "/api/v1/dashboards/import",
-            post(import::import_dashboard),
-        )
+        .route("/api/v1/dashboards/import", post(import::import_dashboard))
         .route(
             "/api/v1/dashboards/{slug}",
             http_get(get::get_dashboard)

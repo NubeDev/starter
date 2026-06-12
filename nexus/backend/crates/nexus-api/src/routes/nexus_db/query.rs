@@ -51,13 +51,8 @@ pub async fn query_nexus_db(
     if principal.role != Role::Admin {
         return (StatusCode::FORBIDDEN, "admin only").into_response();
     }
-    match nexus_store::query::run_query_tenant_ro(
-        &state.metadata,
-        &tenant,
-        &req.sql,
-        state.guards,
-    )
-    .await
+    match nexus_store::query::run_query_tenant_ro(&state.metadata, &tenant, &req.sql, state.guards)
+        .await
     {
         Ok(result) => Json(result).into_response(),
         Err(e) => IntoResponse(e).into_response(),

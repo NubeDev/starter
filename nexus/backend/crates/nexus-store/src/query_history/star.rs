@@ -19,15 +19,14 @@ pub async fn set_starred(
     starred: bool,
 ) -> Result<bool, Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
-    let done = sqlx::query(
-        "UPDATE nexus_query_history SET starred = $1 WHERE id = $2 AND user_id = $3",
-    )
-    .bind(starred)
-    .bind(id)
-    .bind(user_id)
-    .execute(&mut *tx)
-    .await
-    .map_err(internal)?;
+    let done =
+        sqlx::query("UPDATE nexus_query_history SET starred = $1 WHERE id = $2 AND user_id = $3")
+            .bind(starred)
+            .bind(id)
+            .bind(user_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(internal)?;
     tx.commit().await.map_err(internal)?;
     Ok(done.rows_affected() > 0)
 }

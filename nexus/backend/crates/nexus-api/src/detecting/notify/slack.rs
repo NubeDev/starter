@@ -21,8 +21,8 @@ struct SlackConfig {
 /// POST the notification to the Slack incoming webhook. A non-2xx or transport
 /// error is returned as a message for the event record and the retry layer.
 pub async fn deliver(config: &Value, notification: &Notification) -> Result<(), String> {
-    let cfg: SlackConfig = serde_json::from_value(config.clone())
-        .map_err(|e| format!("invalid slack config: {e}"))?;
+    let cfg: SlackConfig =
+        serde_json::from_value(config.clone()).map_err(|e| format!("invalid slack config: {e}"))?;
     let body = block_kit(notification);
     let resp = reqwest::Client::new()
         .post(&cfg.url)
@@ -75,8 +75,14 @@ mod tests {
 
     #[test]
     fn open_is_red_resolved_is_green() {
-        assert_eq!(block_kit(&note("opened"))["attachments"][0]["color"], "#cc0000");
-        assert_eq!(block_kit(&note("resolved"))["attachments"][0]["color"], "#2eb886");
+        assert_eq!(
+            block_kit(&note("opened"))["attachments"][0]["color"],
+            "#cc0000"
+        );
+        assert_eq!(
+            block_kit(&note("resolved"))["attachments"][0]["color"],
+            "#2eb886"
+        );
     }
 
     #[test]

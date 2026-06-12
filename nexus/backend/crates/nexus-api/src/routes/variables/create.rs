@@ -9,8 +9,8 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse as _;
 use axum::{Extension, Json};
 use nexus_spi::dto::variable::{CreateVariableRequest, VariableDetail};
-use nexus_store::variable::{self, NewVariable};
 use nexus_store::dashboard;
+use nexus_store::variable::{self, NewVariable};
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 

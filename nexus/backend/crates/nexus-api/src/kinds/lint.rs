@@ -185,7 +185,11 @@ mod tests {
 
     #[test]
     fn tenant_predicate_lint_requires_caller_tenant_id_for_tables() {
-        let k = kind("SELECT * FROM m WHERE site_id = $site_id", &["site_id"], &["m"]);
+        let k = kind(
+            "SELECT * FROM m WHERE site_id = $site_id",
+            &["site_id"],
+            &["m"],
+        );
         let err = check(&k).expect_err("a tenant-scoped table without the predicate must fail");
         assert!(matches!(err, KindError::Lint { .. }));
         assert!(err.to_string().contains("caller_tenant_id"));

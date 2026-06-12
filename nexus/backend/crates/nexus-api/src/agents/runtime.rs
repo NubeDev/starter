@@ -114,7 +114,10 @@ impl SessionRunner {
     /// Build with a knowledge root and the service-wide brevity default. The root
     /// is expected to contain `skills/` and `rules/` subdirs; a missing root just
     /// means every named skill resolves to "missing" and nothing is injected.
-    pub fn new(knowledge_root: impl Into<std::path::PathBuf>, brevity_default: BrevityMode) -> Self {
+    pub fn new(
+        knowledge_root: impl Into<std::path::PathBuf>,
+        brevity_default: BrevityMode,
+    ) -> Self {
         Self {
             client: Arc::new(Client::new()),
             knowledge: Arc::new(KnowledgeStore::new(knowledge_root)),
@@ -171,7 +174,8 @@ impl SessionRunner {
             // broadcast unified events onto `tx` and return the full reply.
             let outcome = match tier {
                 Backend::Cli => {
-                    run_agent_broadcast(&client, &backend, model, system.clone(), &prompt, &tx).await
+                    run_agent_broadcast(&client, &backend, model, system.clone(), &prompt, &tx)
+                        .await
                 }
                 Backend::Inference => {
                     let mut messages = Vec::new();
@@ -198,11 +202,14 @@ impl SessionRunner {
                 { "role": "assistant", "content": reply },
             ]);
             let _ = nexus_store::agent::set_session_transcript(
-                &metadata, &tenant, session_id, &transcript,
+                &metadata,
+                &tenant,
+                session_id,
+                &transcript,
             )
             .await;
-            let _ =
-                nexus_store::agent::set_session_status(&metadata, &tenant, session_id, status).await;
+            let _ = nexus_store::agent::set_session_status(&metadata, &tenant, session_id, status)
+                .await;
 
             channels
                 .lock()
@@ -237,7 +244,11 @@ impl SessionRunner {
                     isolate_worktree: false,
                 };
                 let agent = self.client.agent().map_err(|e| e.to_string())?;
-                agent.run(task).await.map(|o| o.text).map_err(|e| e.to_string())
+                agent
+                    .run(task)
+                    .await
+                    .map(|o| o.text)
+                    .map_err(|e| e.to_string())
             }
             Backend::Inference => {
                 let mut messages = Vec::new();

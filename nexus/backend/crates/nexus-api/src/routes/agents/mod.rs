@@ -37,8 +37,7 @@ pub fn router() -> Router<AppState> {
         )
         .route(
             "/api/v1/agents/{id}/sessions",
-            http_get(list_sessions::list_agent_sessions)
-                .post(create_session::create_agent_session),
+            http_get(list_sessions::list_agent_sessions).post(create_session::create_agent_session),
         )
         .route(
             "/api/v1/agents/sessions/{id}",

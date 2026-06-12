@@ -96,11 +96,7 @@ pub async fn query_flow_table(
     // Open a bounded read-only pool on the sink connection. A cache could live
     // here later (mirroring DatasourcePools); a preview is low-frequency, so a
     // small dedicated pool closed at end of request is fine for now.
-    let pool = match PgPoolOptions::new()
-        .max_connections(2)
-        .connect(&uri)
-        .await
-    {
+    let pool = match PgPoolOptions::new().max_connections(2).connect(&uri).await {
         Ok(p) => p,
         Err(e) => {
             return (
@@ -168,9 +164,7 @@ fn conn_to_uri(conn: &Value) -> Result<String, String> {
     let db = get("database").ok_or("conn missing database")?;
     let user = get("user").ok_or("conn missing user")?;
     let password = get("password").unwrap_or("");
-    Ok(format!(
-        "postgres://{user}:{password}@{host}:{port}/{db}"
-    ))
+    Ok(format!("postgres://{user}:{password}@{host}:{port}/{db}"))
 }
 
 /// The SQL to run: the caller's `sql` with `{table}` expanded, or a default
@@ -221,8 +215,14 @@ mod tests {
 
     #[test]
     fn default_preview_query_uses_quoted_table_and_limit() {
-        assert_eq!(resolve_sql(None, "telemetry", Some(20)), "SELECT * FROM \"telemetry\" LIMIT 20");
-        assert_eq!(resolve_sql(Some("  "), "t", None), "SELECT * FROM \"t\" LIMIT 50");
+        assert_eq!(
+            resolve_sql(None, "telemetry", Some(20)),
+            "SELECT * FROM \"telemetry\" LIMIT 20"
+        );
+        assert_eq!(
+            resolve_sql(Some("  "), "t", None),
+            "SELECT * FROM \"t\" LIMIT 50"
+        );
     }
 
     #[test]

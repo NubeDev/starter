@@ -1,0 +1,53 @@
+v: 1
+id: com.acme.sites
+version: 0.1.0
+display_name: "Acme Sites"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# A **process**-flavour extension that demonstrates the WS-18 **caller** side. Its
+# `register_site` tool:
+#   1. calls a PEER extension (`com.acme.geocode`) synchronously via
+#      `ctx.extension_call()` to resolve a site address to coordinates, then
+#   2. PUBLISHES the registered site on its own event-bus topic
+#      (`com.acme.sites.registered`) for any same-tenant subscriber to react to.
+#
+# Both peer channels are explicitly declared + granted below, so the operator
+# sees every edge at install and the host can triple-gate the call.
+runtime:
+  kind: process
+  bin: acme-sites-extension
+
+supervision:
+  restart: on_crash
+  max_restarts: 5
+  within_seconds: 60
+  backoff: { initial_ms: 200, max_ms: 30000, jitter: true }
+  health:  { interval_ms: 5000, timeout_ms: 2000 }
+  shutdown_grace_ms: 5000
+
+# WS-18 peer dependency: declare which peer + provided ids this extension will
+# call. The host fails the load fast if `com.acme.geocode` is absent/disabled or
+# does not `provide` `lookup`, so the edge is never a runtime surprise.
+requires_extensions:
+  - id: com.acme.geocode
+    provides: [com.acme.geocode.lookup]
+    version: "^0.1"
+
+capabilities:
+  # The peer-call grant: "<callee>:<provided_id>" targets this extension may
+  # call. Triple-checked against requires_extensions[] + the callee's provides[].
+  - kind: extension
+    targets: [com.acme.geocode:com.acme.geocode.lookup]
+  # The event-bus grant: this extension owns + publishes on
+  # `com.acme.sites.registered`. (No subscribe topics here — the publisher.)
+  - kind: event_bus
+    publish: [com.acme.sites.registered]
+    subscribe: []
+
+contributes:
+  tools:
+    - id: com.acme.sites.register_site
+      input_schema:  schemas/register_site_in.json
+      output_schema: schemas/register_site_out.json
+      description_file: docs/register_site.md

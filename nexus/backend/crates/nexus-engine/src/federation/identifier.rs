@@ -37,8 +37,21 @@ mod tests {
 
     #[test]
     fn rejects_injection_shapes() {
-        for bad in ["", "1col", "a b", "a;b", "a-b", "a.b", "\"a\"", "a)", "drop table x"] {
-            assert!(validate_identifier(bad).is_err(), "{bad:?} should be rejected");
+        for bad in [
+            "",
+            "1col",
+            "a b",
+            "a;b",
+            "a-b",
+            "a.b",
+            "\"a\"",
+            "a)",
+            "drop table x",
+        ] {
+            assert!(
+                validate_identifier(bad).is_err(),
+                "{bad:?} should be rejected"
+            );
         }
     }
 }

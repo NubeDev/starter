@@ -83,7 +83,8 @@ fn http_ingest() -> NodeDescriptor {
         kind: "http_ingest",
         category: NodeCategory::Input,
         label: "HTTP ingest (push)",
-        description: "Accept pushed JSON over POST /api/v1/ingest/{flow_id}; each push is one batch.",
+        description:
+            "Accept pushed JSON over POST /api/v1/ingest/{flow_id}; each push is one batch.",
         config_schema: json!({
             "type": "object",
             "properties": {
@@ -369,7 +370,10 @@ mod tests {
             "postgres",
             "datasource",
         ] {
-            assert!(kinds.contains(&expected), "missing descriptor for {expected}");
+            assert!(
+                kinds.contains(&expected),
+                "missing descriptor for {expected}"
+            );
         }
     }
 

@@ -50,5 +50,8 @@ fn datasource_sink_rejects_unknown_kind_at_first_write() {
         "datasource",
         &json!({ "type": "datasource", "kind": "nope", "table": "t" }),
     );
-    assert!(sink.is_ok(), "config parses; the kind is checked on first write");
+    assert!(
+        sink.is_ok(),
+        "config parses; the kind is checked on first write"
+    );
 }

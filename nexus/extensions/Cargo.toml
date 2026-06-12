@@ -12,6 +12,8 @@ resolver = "2"
 members = [
     "com.nexus.hello/process",
     "com.acme.devices/process",
+    "com.acme.geocode/process",
+    "com.acme.sites/process",
 ]
 
 [workspace.package]

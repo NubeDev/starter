@@ -81,7 +81,8 @@ pub async fn duplicate_dashboard(
     };
 
     // Copy panels in canvas order under the new dashboard id.
-    let panels = match dashboard::panel::list_for_dashboard(&state.metadata, &tenant, src.id).await {
+    let panels = match dashboard::panel::list_for_dashboard(&state.metadata, &tenant, src.id).await
+    {
         Ok(p) => p,
         Err(e) => return IntoResponse(e).into_response(),
     };

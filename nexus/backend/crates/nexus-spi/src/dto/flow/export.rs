@@ -50,13 +50,7 @@ fn is_false(b: &bool) -> bool {
 /// is case-insensitive on the exact key (not a substring) so an innocuous
 /// `secret_count` is not caught while `api_key`/`apiKey` is.
 const SECRET_KEYS: [&str; 7] = [
-    "uri",
-    "url",
-    "password",
-    "token",
-    "api_key",
-    "apikey",
-    "secret",
+    "uri", "url", "password", "token", "api_key", "apikey", "secret",
 ];
 
 /// Recursively blank the values of any [`SECRET_KEYS`] found in `value`,

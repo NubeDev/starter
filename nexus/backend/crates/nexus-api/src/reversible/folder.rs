@@ -131,9 +131,12 @@ impl Reversible for FolderReversible {
 
 /// Read the change's tenant, surfaced onto [`ResourceRef::tenant`] by the codec.
 fn tenant_of(ch: &Change) -> Result<&str> {
-    ch.resource.tenant.as_deref().ok_or_else(|| Error::Internal {
-        source: "folder change is missing its tenant binding".into(),
-    })
+    ch.resource
+        .tenant
+        .as_deref()
+        .ok_or_else(|| Error::Internal {
+            source: "folder change is missing its tenant binding".into(),
+        })
 }
 
 /// Parse the change's resource id as a folder [`Uuid`].

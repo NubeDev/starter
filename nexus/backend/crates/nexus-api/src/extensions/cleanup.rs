@@ -86,7 +86,9 @@ impl CleanupProvider for QueryKindCleanupProvider {
         // Idempotent — a second purge deletes zero rows and still returns Ok.
         let removed = extension_query_kind::delete_by_extension(&self.metadata, id.as_str())
             .await
-            .map_err(|e| CleanupError::new(format!("delete query-kinds for {}: {e}", id.as_str())))?;
+            .map_err(|e| {
+                CleanupError::new(format!("delete query-kinds for {}: {e}", id.as_str()))
+            })?;
         if removed > 0 {
             tracing::info!(
                 target: "nexus_api::extensions::cleanup",

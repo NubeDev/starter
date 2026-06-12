@@ -116,9 +116,10 @@ async fn main() -> Result<(), String> {
     // tenant was first seeded — e.g. `insights` on an established tenant — so
     // re-running seed-admin surfaces new built-in pages to admins. Idempotent:
     // only missing routes are created.
-    let seeded = nexus_store::nav_node::reconcile_default_routes(tenants.pool().sqlx(), &tenant_slug)
-        .await
-        .map_err(|e| format!("seed nav tree: {e}"))?;
+    let seeded =
+        nexus_store::nav_node::reconcile_default_routes(tenants.pool().sqlx(), &tenant_slug)
+            .await
+            .map_err(|e| format!("seed nav tree: {e}"))?;
     if seeded.is_empty() {
         println!("nav tree already complete");
     } else {

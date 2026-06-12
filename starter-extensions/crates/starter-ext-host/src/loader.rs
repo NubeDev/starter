@@ -99,10 +99,7 @@ impl Loader {
                 // A missing extensions root is a valid empty load — not an
                 // error. SCOPE explicitly treats the root as optional; a
                 // consumer that does not ship extensions still boots.
-                return Self {
-                    candidates,
-                    origin,
-                };
+                return Self { candidates, origin };
             }
         };
         for entry in entries.flatten() {
@@ -140,10 +137,7 @@ impl Loader {
                 parsed,
             });
         }
-        Self {
-            candidates,
-            origin,
-        }
+        Self { candidates, origin }
     }
 
     /// Consume the loader and run validation across every candidate.

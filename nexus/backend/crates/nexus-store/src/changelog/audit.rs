@@ -77,9 +77,11 @@ pub async fn record_audit(
     .map_err(|e| starter_spi::Error::Internal {
         source: Box::new(e),
     })?;
-    tx.commit().await.map_err(|e| starter_spi::Error::Internal {
-        source: Box::new(e),
-    })?;
+    tx.commit()
+        .await
+        .map_err(|e| starter_spi::Error::Internal {
+            source: Box::new(e),
+        })?;
 
     Ok(id)
 }

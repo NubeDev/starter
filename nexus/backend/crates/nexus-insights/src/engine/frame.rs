@@ -45,7 +45,11 @@ impl Frame {
 
     /// The frame's column names, in schema order.
     pub fn columns(&self) -> Vec<String> {
-        self.schema.fields().iter().map(|f| f.name().clone()).collect()
+        self.schema
+            .fields()
+            .iter()
+            .map(|f| f.name().clone())
+            .collect()
     }
 
     /// Reject a column name that is not in the schema, naming the offender so the

@@ -307,7 +307,10 @@ async fn handle_wedge(cfg: &Config) -> Result<()> {
         info!(pid, "server exited after SIGABRT");
     } else {
         // Step 3: SIGKILL — give up on graceful.
-        warn!(pid, "server still alive after SIGABRT grace — sending SIGKILL");
+        warn!(
+            pid,
+            "server still alive after SIGABRT grace — sending SIGKILL"
+        );
         if let Err(e) = send_signal(pid, libc::SIGKILL) {
             error!(pid, error = %e, "SIGKILL failed");
         }
@@ -404,6 +407,8 @@ async fn run_restart(cmd: &str) -> Result<()> {
         info!(cmd, "restart command exited 0");
         Ok(())
     } else {
-        Err(anyhow!("restart command exited with status {status}: {cmd}"))
+        Err(anyhow!(
+            "restart command exited with status {status}: {cmd}"
+        ))
     }
 }

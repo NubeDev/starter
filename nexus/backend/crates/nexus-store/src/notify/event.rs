@@ -10,11 +10,7 @@ use super::record::{NewNotifyEvent, NotifyEventRecord};
 use crate::tenant_tx;
 
 /// Append a notify event.
-pub async fn insert(
-    pool: &PgPool,
-    tenant_id: &str,
-    new: &NewNotifyEvent,
-) -> Result<(), Error> {
+pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewNotifyEvent) -> Result<(), Error> {
     let mut tx = tenant_tx::begin(pool, tenant_id).await?;
     sqlx::query(
         "INSERT INTO nexus_notify_events \

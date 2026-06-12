@@ -117,7 +117,9 @@ impl Frame {
 /// error, not a silently-empty window.
 fn require_positive(n: i64, what: &str) -> InsightResult<i64> {
     if n < 1 {
-        return Err(InsightError::Runtime(format!("{what} must be >= 1, got {n}")));
+        return Err(InsightError::Runtime(format!(
+            "{what} must be >= 1, got {n}"
+        )));
     }
     Ok(n)
 }

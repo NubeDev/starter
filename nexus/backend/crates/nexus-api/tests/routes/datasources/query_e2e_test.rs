@@ -36,7 +36,10 @@ fn test_state(pool: &sqlx::PgPool) -> AppState {
         },
         live: LiveRunner::new().expect("engine init"),
         flows: FlowManager::new().expect("flow manager init"),
-        sessions: nexus_api::agents::SessionRunner::new(std::env::temp_dir().join("nexus-knowledge-test"), nexus_skills::BrevityMode::Off),
+        sessions: nexus_api::agents::SessionRunner::new(
+            std::env::temp_dir().join("nexus-knowledge-test"),
+            nexus_skills::BrevityMode::Off,
+        ),
         stream_signer: StreamTokenSigner::new(*b"test-stream-key-0123456789abcdef"),
         stream_token_ttl: Duration::from_secs(60),
         engine: Arc::new(AllowAll),

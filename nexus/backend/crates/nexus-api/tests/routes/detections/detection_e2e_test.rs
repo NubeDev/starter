@@ -151,14 +151,22 @@ async fn detection_emits_per_meter_findings_dedups_and_auto_resolves() {
     assert!(meters.contains(&"m1") && meters.contains(&"m3"));
     let m1 = open.iter().find(|f| f["target"]["meter"] == "m1").unwrap();
     assert_eq!(m1["value"].as_f64(), Some(120.0));
-    assert_eq!(m1["context"]["value"].as_f64(), Some(120.0), "context carries the why");
+    assert_eq!(
+        m1["context"]["value"].as_f64(),
+        Some(120.0),
+        "context carries the why"
+    );
 
     // Pass 2 (still offending): dedup — the same two meters stay TWO open
     // findings, not four. Wait for the claim's advanced next_eval_at.
     tokio::time::sleep(Duration::from_millis(1100)).await;
     schedule::run_once(&state).await.expect("pass 2");
     let open = list_findings(&client, &app.base_url, "open").await;
-    assert_eq!(open.len(), 2, "consecutive flags dedup to one open finding each");
+    assert_eq!(
+        open.len(),
+        2,
+        "consecutive flags dedup to one open finding each"
+    );
 
     // m1 recovers; m3 still offends. Pass 3 auto-resolves m1, keeps m3 open.
     sqlx::query("UPDATE usage SET value = 10 WHERE meter = 'm1'")
@@ -284,14 +292,21 @@ async fn federated_detection_emits_findings() {
 
     // Run it off-schedule through the federation path, then assert findings.
     let ran = client
-        .post(format!("{}/api/v1/detections/{}/run", app.base_url, detection_id))
+        .post(format!(
+            "{}/api/v1/detections/{}/run",
+            app.base_url, detection_id
+        ))
         .send()
         .await
         .unwrap();
     assert_eq!(ran.status(), 200, "federated run should succeed");
 
     let open = list_findings(&client, &app.base_url, "open").await;
-    assert_eq!(open.len(), 2, "m1 (120) and m3 (200) over 100 → two findings");
+    assert_eq!(
+        open.len(),
+        2,
+        "m1 (120) and m3 (200) over 100 → two findings"
+    );
     let meters: Vec<&str> = open
         .iter()
         .map(|f| f["target"]["meter"].as_str().unwrap())

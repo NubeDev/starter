@@ -9,9 +9,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use starter_auth_users::routes::{
-    auth_router, tenant_users_router, tenants_router, AuthState,
-};
+use starter_auth_users::routes::{auth_router, tenant_users_router, tenants_router, AuthState};
 use starter_auth_users::store::{PgSessionStore, PgTenantStore, PgTokenStore, PgUserStore};
 use starter_auth_users::AuthAuthenticator;
 use starter_authz::instances::InstancesRegistry;
@@ -75,8 +73,10 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
     // gate runs inside the principal layer `serve::assemble` wraps this router in,
     // so the `Principal` it reads is present.
     let tenants_routes = with_role(
-        tenants_router::<AppState>(tenants.clone())
-            .merge(tenant_users_router::<AppState>(tenants.clone(), users.clone())),
+        tenants_router::<AppState>(tenants.clone()).merge(tenant_users_router::<AppState>(
+            tenants.clone(),
+            users.clone(),
+        )),
         Role::Admin,
     );
 

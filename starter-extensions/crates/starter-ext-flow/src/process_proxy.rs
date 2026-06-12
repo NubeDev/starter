@@ -184,7 +184,8 @@ impl NodeBehavior for ProcessNodeProxy {
         //    forward `ctx.cancel` trips without spawning a 'static
         //    task that outlives the borrowed `ctx.cancel`.
         // Box the selected future so both arms unify to one type for `select!`.
-        let call_fut: std::pin::Pin<Box<dyn std::future::Future<Output = _> + Send>> = match caller {
+        let call_fut: std::pin::Pin<Box<dyn std::future::Future<Output = _> + Send>> = match caller
+        {
             Some(c) => Box::pin(self.supervisor.call_as(
                 FLOW_NODE_INVOKE,
                 params_value,

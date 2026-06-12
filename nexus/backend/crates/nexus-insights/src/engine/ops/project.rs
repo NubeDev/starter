@@ -9,7 +9,9 @@ impl Frame {
     /// so a typo fails loudly rather than silently dropping data.
     pub fn select(&self, cols: &[String]) -> InsightResult<Frame> {
         if cols.is_empty() {
-            return Err(InsightError::Runtime("select needs at least one column".into()));
+            return Err(InsightError::Runtime(
+                "select needs at least one column".into(),
+            ));
         }
         let mut quoted = Vec::with_capacity(cols.len());
         for col in cols {
@@ -36,6 +38,10 @@ impl Frame {
                 }
             })
             .collect::<InsightResult<_>>()?;
-        self.query(&format!("SELECT {} {}", projection.join(", "), from_frame()))
+        self.query(&format!(
+            "SELECT {} {}",
+            projection.join(", "),
+            from_frame()
+        ))
     }
 }

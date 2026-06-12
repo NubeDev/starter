@@ -20,9 +20,7 @@ use starter_spi::auth::{Principal, Role};
 // The early-return error is an axum `Response`, intentionally larger than the
 // `String` success value — the established pattern in this crate, not a boxing case.
 #[allow(clippy::result_large_err)]
-pub fn require_audit_read(
-    principal: &Option<Extension<Principal>>,
-) -> Result<String, Response> {
+pub fn require_audit_read(principal: &Option<Extension<Principal>>) -> Result<String, Response> {
     let Some(Extension(p)) = principal else {
         return Err((StatusCode::UNAUTHORIZED, "unauthenticated").into_response());
     };
