@@ -30,11 +30,10 @@ themselves** when no engine is reachable, so they're safe in CI / offline.
   recreated in `beforeEach`, so tests never see each other's components and the
   rest of the engine is left untouched.
 - Correctness is read off the **value stream** (REST returns stored config, not
-  the live computed value). Inputs are seeded with `defaultValues` at creation —
-  overrides set the OVERRIDDEN status but not the value on this engine
-  (API_REQUESTS §3), so they can't drive a test.
+  the live computed value). Inputs are seeded with `defaultValues` at creation.
 - `dataflow.itest.ts` covers: `add` = in1+in2, `subtract` = in1−in2, a **chain of
-  5 adds (each input 1) summing to 5**, and edge-delete halting propagation.
+  5 adds (each input 1) summing to 5**, an **override** driving the live value
+  (set → 7, clear → 0), and edge-delete halting propagation.
 - Gotcha encoded in the helpers: the engine rejects 1-character component names.
 
 Run the suite after any change to `src/` — if a test goes red you've lost

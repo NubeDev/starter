@@ -72,6 +72,25 @@ describe.skipIf(!reachable)("CE dataflow (live engine + NubeIO math)", () => {
     expect(vals.get(finalOut)).toBe(N);
   });
 
+  it("an override sets the live value, and clearing returns it to engine control", async () => {
+    const a = await makeAdd(folder, "ovr", 0, 0); // both inputs 0 → out 0
+    const out = a.properties.out.uid;
+    const { patchOverrides } = await import("../lib/rest");
+
+    await patchOverrides(a.uid, {
+      setOverrides: [
+        { property: "in1", value: 4, duration: 60 },
+        { property: "in2", value: 3, duration: 60 },
+      ],
+    });
+    let vals = await readValues({ components: [a.uid], watch: [out], expect: { [out]: 7 } });
+    expect(vals.get(out)).toBe(7);
+
+    await patchOverrides(a.uid, { clearOverrides: ["in1", "in2"] });
+    vals = await readValues({ components: [a.uid], watch: [out], expect: { [out]: 0 } });
+    expect(vals.get(out)).toBe(0);
+  });
+
   it("a deleted edge stops propagating (last stage falls back to its own input)", async () => {
     // a(in1=1,in2=0)=1 → b.in2 ; b(in1=1) = 2. Remove the edge → b = in1 + 0 = 1.
     const a = await makeAdd(folder, "nodeA", 1, 0);

@@ -49,8 +49,7 @@ export async function deleteTestFolder(): Promise<void> {
   }
 }
 
-// Create a math::add seeded (via defaultValues — the only reliable runtime-value
-// injection; overrides set status but not value on this engine) with in1/in2.
+// Create a math::add with its inputs seeded at creation via defaultValues.
 export function makeAdd(folder: number, name: string, in1: number, in2 = 0) {
   return addNode({
     type: ADD,

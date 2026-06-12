@@ -116,17 +116,16 @@ prop exists). This item is just "make sure every component carries it."
 
 ---
 
-## 3. Override → value frame?  — **needs confirmation / likely fix**
+## 3. Override → value frame?  — ✅ **RESOLVED (works; was a server fault)**
 
-**Symptom:** after setting an override (`PATCH /overrides/nodes/uid/{uid}`), the UI
-shows the **OVR status flag** (status frame arrives) but the **value doesn't update
-to the overridden value**.
-
-**Question:** does setting an override push a **value frame** for the new (pinned)
-value, or only a status frame? The editor renders the value purely from the value
-stream, so if no value frame is emitted on override, the row keeps showing the old
-value (or `—`). Please confirm — and if it's status-only, also emit a value frame
-for the overridden property on set/clear.
+Originally reported as: after `PATCH /overrides/nodes/uid/{uid}` the UI showed the
+OVR status flag but the value didn't update. **Re-tested against a healthy engine
+and it works correctly** — setting `in1`/`in2` overrides streams the new values
+*and* recomputes the output, and clearing returns to engine control. The earlier
+symptom coincided with the engine restarting; no value frame was being emitted
+because the engine wasn't computing at all. Locked in by an integration test
+(`src/itest/dataflow.itest.ts` → "an override sets the live value…"): set in1=4,
+in2=3 → out streams 7; clear → out streams 0.
 
 ---
 
