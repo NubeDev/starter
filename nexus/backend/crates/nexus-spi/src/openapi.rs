@@ -28,7 +28,8 @@ use crate::dto::nav::{
 use crate::dto::datasource::{
     CreateDatasourceRequest, DatasourceDetail, DatasourceKind, DatasourceKindList,
     DatasourceKindSummary, DatasourceSchema, DatasourceSummary, RedactedConnection, SchemaColumn,
-    SchemaTable, TestConnectionRequest, TestDatasourceResponse, UpdateDatasourceRequest,
+    SchemaRelation, SchemaTable, TestConnectionRequest, TestDatasourceResponse,
+    UpdateDatasourceRequest,
 };
 use crate::dto::detection::{
     ChannelDetail, CreateChannelRequest, CreateDetectionRequest, CreateSilenceRequest,
@@ -91,6 +92,7 @@ use crate::Problem;
     DatasourceSchema,
     SchemaTable,
     SchemaColumn,
+    SchemaRelation,
     CreateStreamRequest,
     CreateStreamResponse,
     StreamEvent,

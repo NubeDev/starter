@@ -10,7 +10,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse as _;
 use axum::{Extension, Json};
-use nexus_spi::dto::datasource::{DatasourceSchema, SchemaColumn, SchemaTable};
+use nexus_spi::dto::datasource::DatasourceSchema;
 use nexus_store::datasource;
 use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
@@ -73,28 +73,7 @@ pub async fn datasource_schema(
         Err(e) => return IntoResponse(e).into_response(),
     };
     match nexus_store::introspect(&pool, state.guards).await {
-        Ok(tables) => Json(to_dto(tables)).into_response(),
+        Ok(info) => Json(crate::routes::schema_dto::to_dto(info)).into_response(),
         Err(e) => IntoResponse(e).into_response(),
-    }
-}
-
-/// Map the store's introspection result to the wire schema.
-fn to_dto(tables: Vec<nexus_store::TableInfo>) -> DatasourceSchema {
-    DatasourceSchema {
-        tables: tables
-            .into_iter()
-            .map(|t| SchemaTable {
-                schema: t.schema,
-                name: t.name,
-                columns: t
-                    .columns
-                    .into_iter()
-                    .map(|c| SchemaColumn {
-                        name: c.name,
-                        data_type: c.data_type,
-                    })
-                    .collect(),
-            })
-            .collect(),
     }
 }

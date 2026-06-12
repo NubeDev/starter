@@ -12,7 +12,9 @@ pub use bind::{
     bind, bind_with, BindCtx, BindError, BoundQuery, Dialect, HostTokens, ParamValue, Postgres,
     ScalarValue, SqlValue, TimeRange, VarValue,
 };
-pub use introspect::{introspect, ColumnInfo, TableInfo};
+pub use introspect::{
+    introspect, introspect_tenant_ro, ColumnInfo, RelationInfo, SchemaInfo, TableInfo,
+};
 pub use request::{run_kind_request, run_request, QueryIdentity};
 pub use row_json::{columns_of, row_to_object};
 pub use run::{run_bound_query, run_query, run_query_tenant_ro};

@@ -16,7 +16,7 @@
 //! `Arc`. Handlers take a `State<ExtensionAdmin>` and pull what they
 //! need.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
@@ -60,6 +60,15 @@ struct Inner {
     /// sealed registry — they surface on next boot. Surfaced as
     /// `restart_required` on the list projection so the UI can badge them.
     pending_restart: RwLock<HashMap<String, PendingInstall>>,
+    /// Ids purged (`DELETE …?purge=true`) during this process run. The
+    /// sealed registry still carries their record until the next boot, so
+    /// the row keeps reporting `validated/enabled` even though their
+    /// persisted state (kinds, enablement row, owned tables) is already
+    /// gone — which reads as "still installed" to an operator. Marking the
+    /// id here lets the list/detail projection report `uninstalled: true`
+    /// (+ `restart_required: true`) so the UI can show it as a dead/stale
+    /// row pending a restart to clear. Cleared if the id is re-enabled.
+    uninstalled: RwLock<HashSet<String>>,
     /// Per-extension counter registry. Shared with the transport adapters
     /// (they bump it) and read by `GET /extensions/<id>/metrics`. Defaults
     /// to a fresh empty registry so a `TestApp` that does not wire the
@@ -249,6 +258,37 @@ impl ExtensionAdmin {
             .read()
             .expect("pending_restart poisoned")
             .contains_key(id)
+    }
+
+    /// Mark an id as purged this run (`DELETE …?purge=true`). Its sealed
+    /// registry record lingers until the next boot, so the projection
+    /// reports it as `uninstalled` + `restart_required` until then.
+    pub(crate) fn mark_uninstalled(&self, id: &str) {
+        self.inner
+            .uninstalled
+            .write()
+            .expect("uninstalled poisoned")
+            .insert(id.to_owned());
+    }
+
+    /// Drop an id from the purged set (e.g. on re-enable, so a re-enabled
+    /// extension stops reporting as dead/stale).
+    pub(crate) fn clear_uninstalled(&self, id: &str) {
+        self.inner
+            .uninstalled
+            .write()
+            .expect("uninstalled poisoned")
+            .remove(id);
+    }
+
+    /// Was this id purged this run and is its (now-stale) record still in
+    /// the sealed registry, awaiting a restart to clear?
+    pub(crate) fn is_uninstalled(&self, id: &str) -> bool {
+        self.inner
+            .uninstalled
+            .read()
+            .expect("uninstalled poisoned")
+            .contains(id)
     }
 
     /// Snapshot of the pending-restart ids and their captured summaries —
@@ -456,6 +496,7 @@ impl ExtensionAdminBuilder {
                 etag_cache,
                 cleanup_providers,
                 pending_restart: RwLock::new(HashMap::new()),
+                uninstalled: RwLock::new(HashSet::new()),
                 metrics: self.metrics.unwrap_or_default(),
                 audit_sink: self
                     .audit_sink
@@ -465,5 +506,46 @@ impl ExtensionAdminBuilder {
                 post_install_hook: self.post_install_hook,
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_admin() -> ExtensionAdmin {
+        let mut reg = ExtensionRegistry::new();
+        reg.seal();
+        ExtensionAdmin::builder(Arc::new(reg)).build()
+    }
+
+    #[test]
+    fn uninstalled_mark_is_tracked_and_clearable() {
+        let admin = test_admin();
+        let id = "com.acme.purgeme";
+
+        // Default: nothing is marked uninstalled.
+        assert!(!admin.is_uninstalled(id));
+
+        // Purge marks it — the lingering sealed-registry record now reads
+        // as dead/stale to the list/detail projection.
+        admin.mark_uninstalled(id);
+        assert!(admin.is_uninstalled(id));
+
+        // Re-enable (or any explicit clear) drops the mark, so a brought-
+        // back extension stops reporting as uninstalled.
+        admin.clear_uninstalled(id);
+        assert!(!admin.is_uninstalled(id));
+    }
+
+    #[test]
+    fn uninstalled_set_is_independent_of_pending_restart() {
+        let admin = test_admin();
+        let id = "com.acme.purgeme";
+        // The two markers are orthogonal: a purge clears pending-restart and
+        // sets uninstalled, and neither bleeds into the other's predicate.
+        admin.mark_uninstalled(id);
+        assert!(admin.is_uninstalled(id));
+        assert!(!admin.is_pending_restart(id));
     }
 }

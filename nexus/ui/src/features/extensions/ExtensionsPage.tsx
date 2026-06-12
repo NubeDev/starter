@@ -202,6 +202,11 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
   const enabled = ext.enabled === "enabled";
   const toggling = enable.isPending || disable.isPending;
   const pills = contributePills(ext.contributes);
+  // Purged this run but still lingering in the sealed registry until the
+  // next boot: its persisted state is already gone, so it's a dead/stale
+  // row, not a healthy one. Lifecycle actions (toggle, restart, uninstall)
+  // are meaningless against it until a restart clears it.
+  const uninstalled = ext.uninstalled === true;
 
   function onToggle(next: boolean) {
     if (next) enable.mutate(ext.id);
@@ -214,7 +219,7 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
 
   return (
     <>
-    <TableRow>
+    <TableRow className={uninstalled ? "opacity-60" : undefined}>
       <TableCell>
         <div className="flex items-start gap-2">
           <button
@@ -231,7 +236,15 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
             )}
           </button>
           <div className="flex flex-col">
-            <span className="font-medium">{ext.display_name ?? ext.id}</span>
+            <span
+              className={
+                uninstalled
+                  ? "font-medium text-muted-foreground line-through"
+                  : "font-medium"
+              }
+            >
+              {ext.display_name ?? ext.id}
+            </span>
             <span className="font-mono text-xs text-muted-foreground">
               {ext.id}
             </span>
@@ -246,16 +259,25 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
       </TableCell>
       <TableCell>
         <div className="flex flex-wrap items-center gap-1">
-          <Badge variant={stateVariant(ext.state)}>{ext.state}</Badge>
-          {ext.restart_required ? (
-            <Badge variant="outline">restart required</Badge>
-          ) : null}
+          {uninstalled ? (
+            <>
+              <Badge variant="destructive">uninstalled</Badge>
+              <Badge variant="outline">restart to clear</Badge>
+            </>
+          ) : (
+            <>
+              <Badge variant={stateVariant(ext.state)}>{ext.state}</Badge>
+              {ext.restart_required ? (
+                <Badge variant="outline">restart required</Badge>
+              ) : null}
+            </>
+          )}
         </div>
       </TableCell>
       <TableCell>
         <Switch
-          checked={enabled}
-          disabled={toggling}
+          checked={enabled && !uninstalled}
+          disabled={toggling || uninstalled}
           onCheckedChange={onToggle}
           aria-label={`${enabled ? "Disable" : "Enable"} ${ext.id}`}
         />
@@ -284,26 +306,36 @@ function ExtensionRow({ ext }: { ext: ExtensionSummary }) {
         )}
       </TableCell>
       <TableCell className="text-right">
-        <div className="flex justify-end gap-2">
-          {ext.runtime_kind === "process" ? (
+        {uninstalled ? (
+          // Already purged: its persisted state is gone and the lingering
+          // record is read-only until a server restart drops it. No live
+          // action applies, so we say so plainly rather than offering
+          // toggles/restart/uninstall that would no-op or mislead.
+          <p className="text-xs text-muted-foreground">
+            Purged — restart the server to clear this row.
+          </p>
+        ) : (
+          <div className="flex justify-end gap-2">
+            {ext.runtime_kind === "process" ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={restart.isPending}
+                onClick={() => restart.mutate(ext.id)}
+              >
+                {restart.isPending ? "Restarting…" : "Restart"}
+              </Button>
+            ) : null}
             <Button
-              variant="outline"
+              variant="destructive"
               size="sm"
-              disabled={restart.isPending}
-              onClick={() => restart.mutate(ext.id)}
+              disabled={preview.isPending || purge.isPending}
+              onClick={onUninstall}
             >
-              {restart.isPending ? "Restarting…" : "Restart"}
+              {preview.isPending ? "Checking…" : "Uninstall"}
             </Button>
-          ) : null}
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={preview.isPending || purge.isPending}
-            onClick={onUninstall}
-          >
-            {preview.isPending ? "Checking…" : "Uninstall"}
-          </Button>
-        </div>
+          </div>
+        )}
         {preview.isError ? (
           <p role="alert" className="mt-1 text-xs text-destructive">
             Couldn't load the cleanup preview.

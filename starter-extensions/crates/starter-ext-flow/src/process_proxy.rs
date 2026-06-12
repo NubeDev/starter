@@ -34,7 +34,9 @@ use std::time::Duration;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use starter_ext_spi::jsonrpc::flow_node_error_codes;
-use starter_ext_spi::{Error as ExtError, StreamId, StreamNotification, FLOW_NODE_INVOKE};
+use starter_ext_spi::{
+    CallerIdentity, Error as ExtError, StreamId, StreamNotification, FLOW_NODE_INVOKE,
+};
 use starter_ext_supervisor::SupervisorHandle;
 use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue};
 
@@ -157,6 +159,18 @@ impl NodeBehavior for ProcessNodeProxy {
         });
 
         // 3. issue the host call.
+        //
+        // Derive the caller identity from the reserved trusted-identity slots
+        // the host seeds onto every node (`caller_*`, DOCS §9). A node body that
+        // calls a tenant-scoped host method (e.g. `warehouse.write`) needs a
+        // caller on the wire or the host hard-denies it ("requires a caller
+        // identity (none supplied)"). The setup engine carries identity as
+        // *slots*, not on `NodeCtx` (Q9 — server-seeded slots, no engine
+        // change), so the bridge reconstructs the `CallerIdentity` from those
+        // slots here and stamps it via `call_with_caller`. When the slots are
+        // absent (a flow that isn't a setup run) we fall back to the
+        // caller-less `call`, exactly as before.
+        let caller = caller_from_slots(&input);
         let params = InvokeParams {
             kind: self.kind.as_str().to_owned(),
             invocation_id: invocation_id.0.clone(),
@@ -169,9 +183,20 @@ impl NodeBehavior for ProcessNodeProxy {
         // 4. drive call + cancel forwarder in a select! so we can
         //    forward `ctx.cancel` trips without spawning a 'static
         //    task that outlives the borrowed `ctx.cancel`.
-        let call_fut = self
-            .supervisor
-            .call(FLOW_NODE_INVOKE, params_value, self.host_timeout);
+        // Box the selected future so both arms unify to one type for `select!`.
+        let call_fut: std::pin::Pin<Box<dyn std::future::Future<Output = _> + Send>> = match caller {
+            Some(c) => Box::pin(self.supervisor.call_as(
+                FLOW_NODE_INVOKE,
+                params_value,
+                c,
+                self.host_timeout,
+            )),
+            None => Box::pin(self.supervisor.call(
+                FLOW_NODE_INVOKE,
+                params_value,
+                self.host_timeout,
+            )),
+        };
         tokio::pin!(call_fut);
 
         let mut cancel_forwarded = false;
@@ -247,6 +272,36 @@ impl NodeBehavior for ProcessNodeProxy {
         };
         Ok(out)
     }
+}
+
+/// Reconstruct a [`CallerIdentity`] from the reserved trusted-identity slots
+/// the setup run service seeds onto every node (`caller_*`, DOCS §9). Returns
+/// `None` when no identity slot is present (a non-setup flow), so the proxy
+/// falls back to a caller-less invoke and host-internal frames keep working.
+///
+/// The reserved slot names are a stable cross-crate contract (defined in
+/// `starter-setup-spi::reserved`); they are inlined here as string literals so
+/// the generic flow bridge does not take a dependency on the setup domain crate.
+fn caller_from_slots(input: &SlotMap) -> Option<CallerIdentity> {
+    let str_slot = |name: &str| -> Option<String> {
+        match input.get(name) {
+            Some(SlotValue::String(s)) if !s.is_empty() => Some(s.clone()),
+            // tenant is seeded as a String, but tolerate a Json string too.
+            Some(SlotValue::Json(serde_json::Value::String(s))) if !s.is_empty() => Some(s.clone()),
+            _ => None,
+        }
+    };
+    let tenant_id = str_slot("caller_tenant_id");
+    let user_id = str_slot("caller_user_id");
+    // No identity slots at all → not a setup run; don't stamp a caller.
+    if tenant_id.is_none() && user_id.is_none() {
+        return None;
+    }
+    Some(CallerIdentity {
+        tenant_id,
+        user_id,
+        ..CallerIdentity::default()
+    })
 }
 
 fn parse_response_as_slotmap(value: serde_json::Value) -> Result<SlotMap, serde_json::Error> {

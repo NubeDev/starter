@@ -119,13 +119,26 @@ contributes:
       params_schema: kinds/devices_list_params.json
       sql_file: kinds/devices_list.sql
       tables: [devices]
+    # Single-device read pinned by `$device_id` — backs the per-user "My
+    # devices" dashboard panel, which is bound to ONE device. Tenant-scoped;
+    # page access is gated by the dashboard/nav grants. So the owner sees their
+    # device and an admin opening that page sees that same one device.
+    - name: com.acme.devices.device_detail
+      params_schema: kinds/device_detail_params.json
+      sql_file: kinds/device_detail.sql
+      tables: [devices]
     - name: com.acme.devices.site_checkout
       params_schema: kinds/site_checkout_params.json
       sql_file: kinds/site_checkout.sql
       tables: []
 
+  # `DevicesMain` is the single `main`-slot component; it routes the extension's
+  # own sub-pages off the URL tail the host forwards as `SlotContext.route`
+  # (`""`/`dashboard` → Devices dashboard, `provision` → Provision device). The
+  # nav contributes two sidebar links into those routes. (One `main` component
+  # per extension is the host contract — two would stack on the same URL.)
   ui:
     entry: ui/remoteEntry.js
     exposes:
-      - { name: DevicesPanel, module: "./Panel", slot: main }
+      - { name: DevicesMain, module: "./Main", slot: main }
       - { name: DevicesNav, module: "./Nav", slot: sidebar-nav }

@@ -35,6 +35,16 @@ pub async fn migrate_all(pool: &Pool) -> Result<(), String> {
         // feature and shipped as a namespaced source so its version numbers
         // never collide with the nexus source.
         .with_source(starter_store_postgres::setup::SETUP_MIGRATION_SOURCE)
+        // The setup engine persists each run to the durable flow run-store
+        // (`PgRunStore` → `runs` + `run_checkpoints`), which is what makes
+        // §8a/§8b crash-recovery + resume-from-cursor work. Without this source
+        // those tables are absent: every `run_store.start/finish/checkpoint`
+        // call fails ("relation \"runs\" does not exist"), the engine
+        // logs-and-continues, and a run is mis-projected as completed without
+        // its nodes ever executing (the side effects — e.g. the demo's
+        // `device_create` persist — silently never run). Pair the `PgRunStore`
+        // with its schema here, same namespaced-source pattern as `setup`.
+        .with_source(starter_store_postgres::flow::FLOW_MIGRATION_SOURCE)
         .run()
         .await
         .map_err(|e| format!("migrations: {e}"))

@@ -377,6 +377,24 @@ class StarterError extends Error {
   }
 }
 
+function readCookie(name) {
+  if (typeof document === "undefined") return void 0;
+  for (const part of document.cookie.split(";")) {
+    const [k, v] = part.trim().split("=");
+    if (k === name) return v;
+  }
+  return void 0;
+}
+function readCsrfHeader(cookieName = "starter_csrf") {
+  const csrf = readCookie(cookieName);
+  return csrf ? { "X-CSRF-Token": csrf } : {};
+}
+const MUTATING = /* @__PURE__ */ new Set(["POST", "PUT", "PATCH", "DELETE"]);
+function csrfHeaderForMethod(method, cookieName = "starter_csrf") {
+  const m = (method ?? "GET").toUpperCase();
+  return MUTATING.has(m) ? readCsrfHeader(cookieName) : {};
+}
+
 function isJsonContentType(value) {
   if (!value) return false;
   const semi = value.indexOf(";");
@@ -384,7 +402,11 @@ function isJsonContentType(value) {
   return main === "application/json" || main === "application/problem+json" || main.endsWith("+json");
 }
 async function fetchJson(client, path, init = {}) {
-  const headers = { ...client.headers, ...init.headers };
+  const headers = {
+    ...client.headers,
+    ...csrfHeaderForMethod(init.method),
+    ...init.headers
+  };
   const url = `${client.baseUrl}${path}`;
   const res = await client.fetch(url, {
     ...init,

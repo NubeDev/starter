@@ -1007,6 +1007,38 @@ export interface paths {
         patch: operations["update_nav"];
         trace?: never;
     };
+    "/api/v1/nexus-db/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["query_nexus_db"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/nexus-db/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["nexus_db_schema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/panels/{id}": {
         parameters: {
             query?: never;
@@ -1034,10 +1066,27 @@ export interface paths {
         put?: never;
         /**
          * Extract the request, bind its macros/variables, run it under the server
-         *     guards, return the rows. The dev single-datasource shortcut carries no
-         *     principal, so host tokens (`$caller_tenant_id`) are absent — a query needing
-         *     them errors, which is correct. The guards (read-only, timeout, caps) and the
-         *     binder live in the store; this handler only wires.
+         *     guards, return the rows.
+         * @description Two modes, distinguished by whether a verified `Principal` reached this route
+         *     (it sits behind the principal layer, so a logged-in session arrives as
+         *     `Some`):
+         *
+         *     - **Principal-bearing kind-mode** (`Some(principal)` + `req.kind`). Used by
+         *       product/extension UIs that read a contributed query-kind over an
+         *       **extension-owned table in the nexus metadata DB** (e.g.
+         *       `com.acme.devices.devices_list` over `com_acme_devices__devices`). We build
+         *       a `QueryIdentity` from the verified principal so the host tokens
+         *       `$caller_tenant_id` / `$caller_team_ids` bind (un-spoofable, server-bound),
+         *       and run against `state.metadata` where those tables live. This is the read
+         *       path WS-17's owned-table demo needs — without it the kind's host tokens
+         *       have nothing to bind and the request 400s.
+         *     - **Dev single-datasource shortcut** (no principal, or raw-SQL mode). Keeps
+         *       today's behaviour exactly: `QueryIdentity::default()` against
+         *       `state.datasource`. Host tokens are absent, so a query needing them errors,
+         *       which is correct for the unauthenticated ad-hoc path.
+         *
+         *     The guards (read-only, timeout, caps) and the binder live in the store; this
+         *     handler only wires identity + pool selection.
          */
         post: operations["run_query"];
         delete?: never;
@@ -1869,8 +1918,13 @@ export interface components {
              */
             test_mode: string;
         };
-        /** @description A datasource's introspected tables, for SQL autocomplete in the editor. */
+        /**
+         * @description A datasource's introspected tables and foreign-key relations, for SQL
+         *     autocomplete in the editor and the schema (ER) diagram. `relations` is
+         *     additive — a client that only needs the table list can ignore it.
+         */
         DatasourceSchema: {
+            relations?: components["schemas"]["SchemaRelation"][];
             tables: components["schemas"]["SchemaTable"][];
         };
         /**
@@ -2448,6 +2502,18 @@ export interface components {
             route: components["schemas"]["StaticRoute"];
         };
         /**
+         * @description The request body: just the SQL to run. No datasource id — the target is the
+         *     control-plane metadata pool, fixed server-side. No params/federation/insight;
+         *     this is a plain read-only inspector.
+         */
+        NexusDbQueryRequest: {
+            /**
+             * @description Raw read-only SQL. Writes and DDL are rejected by the read-only
+             *     transaction, and rows are RLS-filtered to the caller's tenant.
+             */
+            sql: string;
+        };
+        /**
          * @description Which palette group a node belongs to. The visual builder groups the palette
          *     by this and constrains edges (input → processor* → output).
          * @enum {string}
@@ -2827,8 +2893,14 @@ export interface components {
              * @description The SQL to run against the datasource. May carry macros (`$__timeFilter`)
              *     and variable references (`$region`) the binder expands into bound args.
              *     Pushed down to the source database so `WHERE`/`LIMIT` execute there.
+             *
+             *     Defaults to empty so a **kind-mode** request (`kind` set) may omit it —
+             *     the kind supplies its own SQL and `sql` is ignored. Raw-SQL mode still
+             *     requires a non-empty `sql` (enforced downstream), so this default only
+             *     relaxes the wire contract for kind-mode callers (e.g. an extension UI
+             *     posting `{ kind, params }`), it does not allow an empty raw query.
              */
-            sql: string;
+            sql?: string;
             time_range?: null | components["schemas"]["QueryTimeRange"];
             /**
              * @description Dashboard variable values, by name (without the leading `$`), expanded by
@@ -3033,6 +3105,19 @@ export interface components {
         SchemaColumn: {
             data_type: string;
             name: string;
+        };
+        /**
+         * @description One foreign-key edge: `from_column` on `from_schema.from_table` references
+         *     `to_column` on `to_schema.to_table`. Both ends are schema-qualified so the
+         *     diagram can resolve the exact tables even when a name repeats across schemas.
+         */
+        SchemaRelation: {
+            from_column: string;
+            from_schema: string;
+            from_table: string;
+            to_column: string;
+            to_schema: string;
+            to_table: string;
         };
         /** @description One table or view, schema-qualified, with its columns in declaration order. */
         SchemaTable: {
@@ -6373,6 +6458,71 @@ export interface operations {
             };
             /** @description Not found in this tenant */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    query_nexus_db: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NexusDbQueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Query result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponse"];
+                };
+            };
+            /** @description Malformed SQL or a rejected write */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not an admin */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    nexus_db_schema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tables, columns, and foreign keys */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DatasourceSchema"];
+                };
+            };
+            /** @description Caller is not an admin */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Columns3,
   Database,
+  Network,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
@@ -15,6 +16,7 @@ import { ScrollArea } from "@nube/starter-ui-kit/components/scroll-area";
 
 import type { SchemaColumn, SchemaTable } from "@/api/types";
 import { useDatasourceSchema } from "@/features/sql-editor";
+import { SchemaDiagramDialog } from "@/features/query-editor/SchemaDiagram/SchemaDiagramDialog";
 
 // A persistent left-hand schema browser for Explore — the DataGrip/TablePlus/
 // pgAdmin pattern. A real database (TimescaleDB, Citus, PostGIS, a partitioned
@@ -64,6 +66,9 @@ export function SchemaSidebar({
 }) {
   const { data: schema, isLoading, isError } = useDatasourceSchema(datasourceId);
   const [filter, setFilter] = useState("");
+  // The ER diagram opens in an overlay; it reads the same cached schema, so
+  // toggling it costs no extra request.
+  const [diagramOpen, setDiagramOpen] = useState(false);
   // Per-schema and per-table open state, keyed by name. Absent = use the
   // default (application schemas open, system schemas collapsed; tables closed).
   const [openSchemas, setOpenSchemas] = useState<Record<string, boolean>>({});
@@ -119,6 +124,7 @@ export function SchemaSidebar({
   }
 
   return (
+    <>
     <div className="glass flex h-full w-64 shrink-0 flex-col rounded-xl">
       <div className="flex items-center gap-1 border-b border-border/60 p-2">
         <div className="relative flex-1">
@@ -132,6 +138,18 @@ export function SchemaSidebar({
             disabled={!datasourceId}
           />
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0"
+          onClick={() => setDiagramOpen(true)}
+          disabled={!datasourceId}
+          title="Schema diagram"
+          aria-label="Schema diagram"
+        >
+          <Network className="size-4" />
+        </Button>
         <Button
           type="button"
           variant="ghost"
@@ -233,6 +251,12 @@ export function SchemaSidebar({
         )}
       </ScrollArea>
     </div>
+    <SchemaDiagramDialog
+      datasourceId={datasourceId}
+      open={diagramOpen}
+      onClose={() => setDiagramOpen(false)}
+    />
+    </>
   );
 }
 

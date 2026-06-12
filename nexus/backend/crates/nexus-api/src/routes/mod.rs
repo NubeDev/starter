@@ -15,8 +15,10 @@ pub mod insights;
 pub mod me;
 pub mod nav;
 pub mod nexus_db;
+pub mod onboard;
 pub mod query;
 pub mod query_kinds;
+pub mod schema_dto;
 pub mod streams;
 pub mod tags;
 pub mod undo;
@@ -46,6 +48,7 @@ pub fn product_router() -> Router<AppState> {
         .merge(insights::router())
         .merge(nav::router())
         .merge(nexus_db::router())
+        .merge(onboard::router())
         .merge(detections::router())
         .merge(tags::router())
         .merge(agents::router())

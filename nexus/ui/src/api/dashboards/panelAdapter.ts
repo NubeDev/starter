@@ -46,6 +46,15 @@ interface StashedDisplay {
   fieldConfig?: FieldConfig;
   options?: PanelOptions;
   transforms?: ReadonlyArray<Transform>;
+  // Kind-mode (WS-10): the wire panel has no `kind` column, so a panel that
+  // runs a declarative query-kind instead of raw SQL stashes the kind name +
+  // params in the opaque `layout` blob. `useWidgetQuery` reads them back onto
+  // the request so the query runs as `POST /api/v1/query { kind, params }` —
+  // the only read path that resolves host tokens (`$caller_tenant_id` /
+  // `$caller_team_ids`) for a non-admin against the control-plane DB. This is
+  // what lets a per-user "My devices" panel render an extension-owned table.
+  kind?: string;
+  kindParams?: Record<string, string | number | boolean>;
 }
 
 // Shape we write into the opaque `layout` slot: grid position + display.
@@ -74,6 +83,8 @@ function readLayout(layout: unknown): {
     fieldConfig: l.fieldConfig,
     options: l.options,
     transforms: l.transforms,
+    kind: l.kind,
+    kindParams: l.kindParams,
   };
   return { position, display };
 }
@@ -90,12 +101,15 @@ function stashLayout(widget: Widget): StashedLayout {
   if (c.fieldConfig !== undefined) stashed.fieldConfig = c.fieldConfig;
   if (c.options !== undefined) stashed.options = c.options;
   if (c.transforms !== undefined) stashed.transforms = c.transforms;
+  // Round-trip the kind-mode query through the opaque blob (see StashedDisplay).
+  if (c.query.kind !== undefined) stashed.kind = c.query.kind;
+  if (c.query.kindParams !== undefined) stashed.kindParams = c.query.kindParams;
   return stashed;
 }
 
 export function panelToWidget(panel: PanelDetail): Widget {
   const { position, display } = readLayout(panel.layout);
-  const { fields = { series: [] }, ...rest } = display;
+  const { fields = { series: [] }, kind, kindParams, ...rest } = display;
   return {
     id: panel.id,
     type: toWidgetType(panel.viz),
@@ -105,6 +119,9 @@ export function panelToWidget(panel: PanelDetail): Widget {
       query: {
         datasourceId: panel.datasource_id ?? "",
         sql: panel.sql,
+        // Kind-mode lifted out of the opaque layout blob (see StashedDisplay).
+        ...(kind ? { kind } : {}),
+        ...(kindParams ? { kindParams } : {}),
         // RW-06: an attached insight rides on the query as its own columns, not
         // inside the opaque layout blob. `?? undefined` so a missing/`null` id
         // becomes "no insight" rather than an empty string.

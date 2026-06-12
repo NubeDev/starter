@@ -3136,6 +3136,65 @@
         }
       }
     },
+    "/api/v1/nexus-db/query": {
+      "post": {
+        "tags": [
+          "nexus-db"
+        ],
+        "operationId": "query_nexus_db",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NexusDbQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed SQL or a rejected write"
+          },
+          "403": {
+            "description": "Caller is not an admin"
+          }
+        }
+      }
+    },
+    "/api/v1/nexus-db/schema": {
+      "get": {
+        "tags": [
+          "nexus-db"
+        ],
+        "operationId": "nexus_db_schema",
+        "responses": {
+          "200": {
+            "description": "Tables, columns, and foreign keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DatasourceSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not an admin"
+          }
+        }
+      }
+    },
     "/api/v1/panels/{id}": {
       "delete": {
         "tags": [
@@ -3212,7 +3271,8 @@
         "tags": [
           "query"
         ],
-        "summary": "Extract the request, bind its macros/variables, run it under the server\nguards, return the rows. The dev single-datasource shortcut carries no\nprincipal, so host tokens (`$caller_tenant_id`) are absent — a query needing\nthem errors, which is correct. The guards (read-only, timeout, caps) and the\nbinder live in the store; this handler only wires.",
+        "summary": "Extract the request, bind its macros/variables, run it under the server\nguards, return the rows.",
+        "description": "Two modes, distinguished by whether a verified `Principal` reached this route\n(it sits behind the principal layer, so a logged-in session arrives as\n`Some`):\n\n- **Principal-bearing kind-mode** (`Some(principal)` + `req.kind`). Used by\n  product/extension UIs that read a contributed query-kind over an\n  **extension-owned table in the nexus metadata DB** (e.g.\n  `com.acme.devices.devices_list` over `com_acme_devices__devices`). We build\n  a `QueryIdentity` from the verified principal so the host tokens\n  `$caller_tenant_id` / `$caller_team_ids` bind (un-spoofable, server-bound),\n  and run against `state.metadata` where those tables live. This is the read\n  path WS-17's owned-table demo needs — without it the kind's host tokens\n  have nothing to bind and the request 400s.\n- **Dev single-datasource shortcut** (no principal, or raw-SQL mode). Keeps\n  today's behaviour exactly: `QueryIdentity::default()` against\n  `state.datasource`. Host tokens are absent, so a query needing them errors,\n  which is correct for the unauthenticated ad-hoc path.\n\nThe guards (read-only, timeout, caps) and the binder live in the store; this\nhandler only wires identity + pool selection.",
         "operationId": "run_query",
         "requestBody": {
           "content": {
@@ -5063,11 +5123,17 @@
       },
       "DatasourceSchema": {
         "type": "object",
-        "description": "A datasource's introspected tables, for SQL autocomplete in the editor.",
+        "description": "A datasource's introspected tables and foreign-key relations, for SQL\nautocomplete in the editor and the schema (ER) diagram. `relations` is\nadditive — a client that only needs the table list can ignore it.",
         "required": [
           "tables"
         ],
         "properties": {
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchemaRelation"
+            }
+          },
           "tables": {
             "type": "array",
             "items": {
@@ -6146,6 +6212,19 @@
         ],
         "description": "What a nav node points at — exactly one of group / dashboard / route, an\ninternally-tagged union on `kind`. This is the wire shape of the stored\n`target` JSONB; the store persists it verbatim. A `group` is a non-clickable\nheader, a `dashboard` is a reusable page mount, a `route` is one of the app's\nbuilt-in static pages (a closed allow-list, not free-form)."
       },
+      "NexusDbQueryRequest": {
+        "type": "object",
+        "description": "The request body: just the SQL to run. No datasource id — the target is the\ncontrol-plane metadata pool, fixed server-side. No params/federation/insight;\nthis is a plain read-only inspector.",
+        "required": [
+          "sql"
+        ],
+        "properties": {
+          "sql": {
+            "type": "string",
+            "description": "Raw read-only SQL. Writes and DDL are rejected by the read-only\ntransaction, and rows are RLS-filtered to the caller's tenant."
+          }
+        }
+      },
       "NodeCategory": {
         "type": "string",
         "description": "Which palette group a node belongs to. The visual builder groups the palette\nby this and constrains edges (input → processor* → output).",
@@ -6892,9 +6971,6 @@
       "QueryRequest": {
         "type": "object",
         "description": "Body of a one-shot query. The caller supplies the SQL plus the optional\nmacro context (time range, variables) the server-side binder substitutes;\nevery safety bound (read-only role, statement timeout, forced `LIMIT`,\nrow/byte caps) is applied server-side and is deliberately *not* expressible\nhere — a client cannot raise its own limits, and every supplied value is\n*bound* into the prepared statement, never inlined.\n\nThis is the C7 contract: a single owner (WS-03) for an endpoint several\nworkstreams feed. WS-01 fills `time_range`, WS-02 fills `variables`; both\nflow through the same binder.",
-        "required": [
-          "sql"
-        ],
         "properties": {
           "insight": {
             "oneOf": [
@@ -6935,7 +7011,7 @@
           },
           "sql": {
             "type": "string",
-            "description": "The SQL to run against the datasource. May carry macros (`$__timeFilter`)\nand variable references (`$region`) the binder expands into bound args.\nPushed down to the source database so `WHERE`/`LIMIT` execute there."
+            "description": "The SQL to run against the datasource. May carry macros (`$__timeFilter`)\nand variable references (`$region`) the binder expands into bound args.\nPushed down to the source database so `WHERE`/`LIMIT` execute there.\n\nDefaults to empty so a **kind-mode** request (`kind` set) may omit it —\nthe kind supplies its own SQL and `sql` is ignored. Raw-SQL mode still\nrequires a non-empty `sql` (enforced downstream), so this default only\nrelaxes the wire contract for kind-mode callers (e.g. an extension UI\nposting `{ kind, params }`), it does not allow an empty raw query."
           },
           "time_range": {
             "oneOf": [
@@ -7235,6 +7311,38 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          }
+        }
+      },
+      "SchemaRelation": {
+        "type": "object",
+        "description": "One foreign-key edge: `from_column` on `from_schema.from_table` references\n`to_column` on `to_schema.to_table`. Both ends are schema-qualified so the\ndiagram can resolve the exact tables even when a name repeats across schemas.",
+        "required": [
+          "from_schema",
+          "from_table",
+          "from_column",
+          "to_schema",
+          "to_table",
+          "to_column"
+        ],
+        "properties": {
+          "from_column": {
+            "type": "string"
+          },
+          "from_schema": {
+            "type": "string"
+          },
+          "from_table": {
+            "type": "string"
+          },
+          "to_column": {
+            "type": "string"
+          },
+          "to_schema": {
+            "type": "string"
+          },
+          "to_table": {
             "type": "string"
           }
         }

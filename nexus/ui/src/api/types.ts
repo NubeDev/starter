@@ -21,6 +21,7 @@ export type DatasourceKindSummary = S["DatasourceKindSummary"];
 export type DatasourceSchema = S["DatasourceSchema"];
 export type SchemaTable = S["SchemaTable"];
 export type SchemaColumn = S["SchemaColumn"];
+export type SchemaRelation = S["SchemaRelation"];
 
 export type QueryRequest = S["QueryRequest"];
 export type QueryResponse = S["QueryResponse"];

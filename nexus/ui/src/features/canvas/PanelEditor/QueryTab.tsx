@@ -14,6 +14,7 @@ import {
 
 import type { QueryRequest, QueryResponse } from "@/api/types";
 import { queryDatasource } from "@/api/datasources/query";
+import { NEXUS_DB_DATASOURCE_ID, queryNexusDb } from "@/api/nexus-db/query";
 import { runQuery } from "@/api/query/run";
 import type { EditorDraft } from "@/features/canvas/PanelEditor/useEditorDraft";
 import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
@@ -36,6 +37,10 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
   const sql = widget.config.query.sql;
   const insightId = widget.config.query.insightId || undefined;
   const insights = useInsights();
+  // The Nexus control-plane DB is selected via a sentinel id, not a real
+  // datasource row. It takes only raw `{ sql }`, so time-range/variable/insight
+  // controls don't apply to a panel pointed at it (mirrors useWidgetQuery).
+  const isNexusDb = datasourceId === NEXUS_DB_DATASOURCE_ID;
 
   // The dashboard's live time range and resolved variables (WS-01/WS-02),
   // read from the same stores the real panel render uses. Test query must
@@ -51,6 +56,10 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
   const client = useStarterClient();
   const test = useMutation<QueryResponse, Error>({
     mutationFn: () => {
+      // Nexus-DB panels run raw SQL against the control-plane endpoint, which
+      // ignores time-range/variables/insight — match useWidgetQuery exactly so
+      // the test reflects what the canvas will actually render.
+      if (isNexusDb) return queryNexusDb(client, sql.trim());
       const resolved = resolveTimeRange(range, now);
       const req: QueryRequest = {
         sql: sql.trim(),
@@ -85,10 +94,17 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
         <Label>Datasource</Label>
         <DatasourcePicker
           value={datasourceId}
+          includeNexusDb
           onChange={(id) =>
             patchConfig({ query: { ...widget.config.query, datasourceId: id ?? "" } })
           }
         />
+        {isNexusDb ? (
+          <p className="text-xs text-muted-foreground">
+            Reads the control-plane DB (read-only, your tenant, admin-only).
+            Dashboard time range, variables, and insights don't apply.
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-1.5">
@@ -142,6 +158,7 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
         ) : null}
       </div>
 
+      {isNexusDb ? null : (
       <div className="space-y-1.5">
         <Label htmlFor="ed-insight">Insight (post-query transform)</Label>
         <Select
@@ -174,6 +191,7 @@ export function QueryTab({ draft }: { draft: EditorDraft }) {
           before it's drawn.
         </p>
       </div>
+      )}
     </div>
   );
 }

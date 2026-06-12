@@ -2,6 +2,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useStarterClient } from "@nube/starter-client-react";
 
 import { queryDatasource } from "@/api/datasources/query";
+import { NEXUS_DB_DATASOURCE_ID, queryNexusDb } from "@/api/nexus-db/query";
 import { runQuery } from "@/api/query/run";
 import { toWidgetData } from "@/api/query/toWidgetData";
 import type { QueryRequest } from "@/api/types";
@@ -30,6 +31,14 @@ export function useWidgetQuery(widget: Widget): WidgetState {
   const datasourceId = widget.config.query.datasourceId;
   const insightId = widget.config.query.insightId;
   const insightParams = widget.config.query.insightParams;
+  // Kind-mode (WS-10): a panel can run a declarative query-kind instead of raw
+  // SQL. The backend resolves the kind, validates `params`, and binds its SQL;
+  // crucially the principal-bearing `POST /api/v1/query` kind path runs against
+  // the control-plane DB with `$caller_tenant_id`/`$caller_team_ids` bound — the
+  // only read a non-admin has into an extension-owned table (e.g. a per-user
+  // "My devices" panel over `com.acme.devices.devices_list`).
+  const kind = widget.config.query.kind;
+  const kindParams = widget.config.query.kindParams;
 
   const range = useTimeStore((s) => s.range);
   const now = useTimeStore((s) => s.now);
@@ -52,6 +61,8 @@ export function useWidgetQuery(widget: Widget): WidgetState {
     time_range: { from: resolved.from.toISOString(), to: resolved.to.toISOString() },
     interval_secs: interval,
     ...(variables.length > 0 ? { variables } : {}),
+    // Kind-mode: when set the backend ignores `sql` and runs the named kind.
+    ...(kind ? { kind, ...(kindParams ? { params: kindParams } : {}) } : {}),
     // RW-06: a panel-attached insight runs server-side after the query and
     // before serialization. The panel owns the SQL/datasource; the insight is
     // the transform on top. Absent when no insight is attached, so the field is
@@ -77,6 +88,8 @@ export function useWidgetQuery(widget: Widget): WidgetState {
       "query",
       datasourceId,
       sql,
+      kind,
+      kindParams,
       tick,
       interval,
       varRevision,
@@ -84,12 +97,26 @@ export function useWidgetQuery(widget: Widget): WidgetState {
       insightParams,
     ],
     queryFn: () =>
-      (datasourceId
-        ? queryDatasource(client, datasourceId, request)
-        : runQuery(client, request)
+      // The Nexus control-plane DB isn't a registered datasource — it lives
+      // behind its own `POST /nexus-db/query` and takes only raw `{ sql }`.
+      // A panel selects it via the `NEXUS_DB_DATASOURCE_ID` sentinel; here we
+      // route to that endpoint, which means time-range/variable/insight macros
+      // in `request` are intentionally NOT applied (the endpoint ignores them).
+      // Admin-only + tenant-RLS server-side, so a non-admin viewer's panel
+      // surfaces a 403 as an error state.
+      //
+      // Kind-mode panels carry no datasource id (the kind names its own table),
+      // so they fall through to `runQuery` → `POST /api/v1/query`, which binds
+      // the caller's tenant/teams and resolves the kind against the metadata DB.
+      (datasourceId === NEXUS_DB_DATASOURCE_ID
+        ? queryNexusDb(client, sql)
+        : datasourceId
+          ? queryDatasource(client, datasourceId, request)
+          : runQuery(client, request)
       ).then(toWidgetData),
-    // A panel without SQL hasn't been authored yet — don't fire a query.
-    enabled: sql.trim().length > 0,
+    // Fire when the panel has either authored SQL or a kind to run. A kind-mode
+    // panel has empty `sql` but is fully authored.
+    enabled: sql.trim().length > 0 || (kind?.trim().length ?? 0) > 0,
     // The refresh tick changes the query key every interval (see above), so
     // without this React Query would treat each tick as a fresh query with no
     // cached data and drop the panel to its loading state — the whole grid

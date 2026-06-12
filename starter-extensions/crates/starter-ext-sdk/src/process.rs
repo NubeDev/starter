@@ -294,6 +294,74 @@ where
                     let _ = writer_tx_handler.send(resp);
                 });
             }
+            // FLOW-NODES slice B: the host bridges an extension's
+            // `contributes.nodes[]` to this child by a `ProcessNodeProxy` that
+            // forwards `NodeBehavior::invoke` over this wire method. A
+            // contributed node-kind id IS a tool id (the demo declares each kind
+            // both ways and the namespace validator requires the same
+            // reverse-DNS id), so a node invoke routes to the SAME
+            // `dispatch_tool` handler — the node body and the tool body are one
+            // and the same. Without this arm the child answered `flow.node.invoke`
+            // with "unknown method", the proxy mapped that to `NodeError::Backend`,
+            // and every setup-automation node failed before its side effect ran.
+            //
+            // Wire shape (see `starter_ext_flow::process_proxy::InvokeParams`):
+            //   params = { kind, invocation_id, deadline_ms, input: SlotMap }
+            // where SlotMap is `{ <slot>: { "type": .., "value": .. } }`. We
+            // unwrap each SlotValue to plain JSON so the tool handler reads
+            // `params.barcode` as it always has, then wrap the handler's JSON
+            // result back into a SlotMap under `{ "slots": { .. } }`, the shape
+            // `parse_response_as_slotmap` expects.
+            "flow.node.invoke" => {
+                let kind = params
+                    .get("kind")
+                    .and_then(|k| k.as_str())
+                    .unwrap_or_default()
+                    .to_string();
+                if kind.is_empty() {
+                    let err = Error::validation("flow.node.invoke: missing `kind`");
+                    let resp = json!({ "jsonrpc": JSONRPC_VERSION, "id": id, "error": err });
+                    if let Err(e) = send_frame(resp) {
+                        break Err(e);
+                    }
+                    continue;
+                }
+                // SlotMap input → plain JSON object the tool handler consumes.
+                let tool_params = slotmap_to_params(params.get("input"));
+                // Same caller-binding + blocking-dispatch discipline as `tools/`:
+                // the handler may issue blocking host RPCs (`warehouse.write`)
+                // that this read loop must keep demultiplexing.
+                let caller = value
+                    .get("_meta")
+                    .and_then(|m| serde_json::from_value::<FrameMeta>(m.clone()).ok())
+                    .and_then(|m| m.caller);
+                let per_call_ctx = wrap_ctx(ctx_inner.clone().with_caller(caller.clone()));
+                let instance_arc = std::sync::Arc::clone(&instance);
+                let writer_tx_handler = writer_tx.clone();
+                let id_for_task = id.clone();
+                tokio::task::spawn_blocking(move || {
+                    let dispatch =
+                        || instance_arc.dispatch_tool(&kind, &per_call_ctx, tool_params);
+                    let result = match caller {
+                        Some(c) => crate::caller_local::scope_sync(c, dispatch),
+                        None => dispatch(),
+                    };
+                    let resp = match result {
+                        // Wrap the handler's JSON output as a SlotMap response.
+                        Ok(v) => json!({
+                            "jsonrpc": JSONRPC_VERSION,
+                            "id": id_for_task,
+                            "result": { "slots": params_to_slotmap(&v) },
+                        }),
+                        Err(e) => json!({
+                            "jsonrpc": JSONRPC_VERSION,
+                            "id": id_for_task,
+                            "error": e,
+                        }),
+                    };
+                    let _ = writer_tx_handler.send(resp);
+                });
+            }
             other => {
                 let err = Error::validation(format!("unknown method {other:?}"));
                 let resp = json!({
@@ -314,6 +382,73 @@ where
     drop(writer_tx);
     let _ = writer_task.await;
     exit_reason
+}
+
+/// Unwrap a `flow.node.invoke` `input` SlotMap into the plain JSON object a
+/// tool handler reads. Each slot is a tagged `SlotValue`
+/// (`{ "type": "string", "value": "ACME-1" }`); the handler expects
+/// `{ "barcode": "ACME-1" }`, so we project each slot to its inner value. A
+/// missing/!object `input` yields an empty object (the node was seeded with no
+/// inputs). The `bytes` variant has no clean JSON scalar form, so its array is
+/// passed through under the value as-is.
+fn slotmap_to_params(input: Option<&serde_json::Value>) -> serde_json::Value {
+    let mut obj = serde_json::Map::new();
+    if let Some(map) = input.and_then(|v| v.as_object()) {
+        for (slot, sv) in map {
+            obj.insert(slot.clone(), slot_value_to_json(sv));
+        }
+    }
+    serde_json::Value::Object(obj)
+}
+
+/// Project one tagged `SlotValue` JSON onto its inner value. Unknown/un-tagged
+/// shapes pass through unchanged so a future `SlotValue` variant degrades to
+/// "hand the handler the raw JSON" rather than dropping the slot.
+fn slot_value_to_json(sv: &serde_json::Value) -> serde_json::Value {
+    match sv.get("type").and_then(|t| t.as_str()) {
+        Some("null") => serde_json::Value::Null,
+        Some(_) => sv
+            .get("value")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null),
+        None => sv.clone(),
+    }
+}
+
+/// Wrap a tool handler's plain JSON output back into a SlotMap for the
+/// `flow.node.invoke` response (`{ <field>: { "type": .., "value": .. } }`),
+/// the shape `ProcessNodeProxy::parse_response_as_slotmap` reads. The engine
+/// then exposes each field as an output slot (e.g. `device_id`) the next node's
+/// link can read. A non-object result is returned under a single `out` slot.
+fn params_to_slotmap(result: &serde_json::Value) -> serde_json::Value {
+    let mut out = serde_json::Map::new();
+    match result {
+        serde_json::Value::Object(map) => {
+            for (k, v) in map {
+                out.insert(k.clone(), json_to_slot_value(v));
+            }
+        }
+        other => {
+            out.insert("out".to_string(), json_to_slot_value(other));
+        }
+    }
+    serde_json::Value::Object(out)
+}
+
+/// Tag a plain JSON value as the matching `SlotValue`. Strings/bools/ints/floats
+/// map to their primitive variants; everything else (arrays, objects, null) uses
+/// the `json` escape-hatch variant so no information is lost.
+fn json_to_slot_value(v: &serde_json::Value) -> serde_json::Value {
+    match v {
+        serde_json::Value::Null => json!({ "type": "null" }),
+        serde_json::Value::Bool(b) => json!({ "type": "bool", "value": b }),
+        serde_json::Value::Number(n) if n.is_i64() => {
+            json!({ "type": "int", "value": n.as_i64() })
+        }
+        serde_json::Value::Number(n) => json!({ "type": "float", "value": n.as_f64() }),
+        serde_json::Value::String(s) => json!({ "type": "string", "value": s }),
+        other => json!({ "type": "json", "value": other }),
+    }
 }
 
 /// Read one frame or fail with a clear transport error. Wraps the

@@ -143,7 +143,11 @@ export function AddWidgetDialog({
           </div>
           <div className="space-y-2">
             <Label>Datasource</Label>
-            <DatasourcePicker value={datasourceId} onChange={setDatasourceId} />
+            <DatasourcePicker
+              value={datasourceId}
+              includeNexusDb
+              onChange={setDatasourceId}
+            />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">

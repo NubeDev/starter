@@ -105,9 +105,55 @@ Things to confirm:
   (RLS isolation).
 - `DELETE` / `UPDATE` / `CREATE TABLE` all return 400, not 200.
 
+## UI (added)
+Two admin-only surfaces now reach this endpoint via `ui/src/api/nexus-db/query.ts`
+(`queryNexusDb`):
+
+- **Explore → "Nexus DB" tab** (`ui/src/features/query-editor/Explore.tsx`,
+  `mode === "nexusdb"`). Raw SQL editor + result grid; no datasource picker,
+  federation, kind, or insight (none apply). Tab only shown when `useCan("admin")`.
+- **Dashboard panels** can select "Nexus DB" in the panel editor's datasource
+  picker (`DatasourcePicker` with `includeNexusDb`). It is a **sentinel id**
+  (`NEXUS_DB_DATASOURCE_ID = "nexus-db"`), *not* a registered datasource row —
+  `useWidgetQuery` and the panel editor's Test query special-case it and call
+  `queryNexusDb` instead of `/datasources/:id/query`. Because the endpoint takes
+  only `{ sql }`, **dashboard time range, variables, and insights do not apply**
+  to such a panel (the editor states this inline). Admin-only + tenant-RLS, so a
+  non-admin viewer's panel surfaces the 403 as an error state.
+
+## Schema diagram (ER) — added
+
+Both the datasource Explore and the Nexus-DB tab now have a **schema (ER)
+diagram**: tables as cards (columns listed, FK columns key-marked), real
+foreign keys as edges. Opened from the schema sidebar's diagram button
+(`Network` icon); renders in an overlay via React Flow (`@xyflow/react`, already
+a dep). Built on `ui/src/features/query-editor/SchemaDiagram/*`.
+
+Foreign keys are **real**, introspected from `information_schema`
+(`table_constraints`/`key_column_usage`/`constraint_column_usage`), not guessed
+from naming. A datasource with no FKs (typical for telemetry/sim sources) shows
+tables with no edges — accurate, not a failure.
+
+New backend surface:
+
+| Layer | Path |
+|-------|------|
+| Datasource schema (now FK-aware) | `GET /api/v1/datasources/:id/schema` → `DatasourceSchema { tables, relations }` |
+| Nexus-DB schema (new) | `GET /api/v1/nexus-db/schema` (admin, tenant-RLS, read-only) — `routes/nexus_db/schema.rs` |
+| Store | `nexus_store::introspect` / `introspect_tenant_ro` → `SchemaInfo { tables, relations }` (`query/introspect.rs`) |
+| DTO | `SchemaRelation` added to `DatasourceSchema` (`nexus-spi`); `relations` is `#[serde(default)]` so it's additive |
+| Shared mapper | `routes/schema_dto::to_dto` (`SchemaInfo → DatasourceSchema`), used by both schema handlers |
+
+The Nexus-DB schema reuses the same `NEXUS_DB_DATASOURCE_ID = "nexus-db"`
+sentinel: `useDatasourceSchema` routes it to `GET /nexus-db/schema`, so the
+sidebar, autocomplete, and diagram all browse the control-plane DB exactly like
+a datasource.
+
 ## Known gaps / to add
-- **No UI yet** — backend endpoint only. A "Nexus DB" tab in Explore pointed at
-  this route is the obvious follow-up.
+- Diagram layout is a deterministic grid (`gridPositions`), not a true ER
+  auto-layout — fine for tens of tables; a dagre/elk pass would help very large
+  schemas. No persisted node positions.
+- No e2e test asserting `GET /nexus-db/schema` returns 403 for a non-admin.
 - **Tenant-scoped only.** It deliberately cannot read across tenants: the
   `nexus_runtime` role is `FORCE ROW LEVEL SECURITY`, so a true cross-tenant
   inspector would need a different DB role, not just a GUC change.

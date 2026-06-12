@@ -23,6 +23,13 @@ pub struct QueryRequest {
     /// The SQL to run against the datasource. May carry macros (`$__timeFilter`)
     /// and variable references (`$region`) the binder expands into bound args.
     /// Pushed down to the source database so `WHERE`/`LIMIT` execute there.
+    ///
+    /// Defaults to empty so a **kind-mode** request (`kind` set) may omit it —
+    /// the kind supplies its own SQL and `sql` is ignored. Raw-SQL mode still
+    /// requires a non-empty `sql` (enforced downstream), so this default only
+    /// relaxes the wire contract for kind-mode callers (e.g. an extension UI
+    /// posting `{ kind, params }`), it does not allow an empty raw query.
+    #[serde(default)]
     pub sql: String,
     /// The resolved absolute time window for `$__timeFilter`/`$__timeFrom`/
     /// `$__timeTo`. Relative ranges (`now-6h`) are resolved client-side to

@@ -33,9 +33,46 @@ access:
 
 # Nodes are ACTIONS (verbs). The two custom kinds are domain side-effects this
 # extension contributes; they are idempotent on their natural keys (DOCS §8c).
+#
+# `triggers:` declares which input slot WAKES each node. A `ProcessNodeProxy`
+# (the host's generic bridge to a process-flavour extension child) advertises no
+# trigger slots of its own — `NodeBehavior::trigger_slots()` defaults to empty —
+# so without this additive override the propagator's wake-gate
+# (`triggers_node`, propagator.rs) never fires the node body: the seeded
+# `barcode`/`location` slots fan out along the link but wake nothing, the run
+# reaches quiescence with zero invocations, and is mis-projected as
+# `completed 2/2` while the side effects (the `device_create` warehouse.write)
+# never run. Declaring the triggers here is the documented compatibility path
+# the resolver honours (it unions YAML `triggers` with the behavior's set). The
+# durable fix is for the proxy to source its trigger slots from the manifest's
+# `contributes.nodes[]` — tracked separately; this unblocks the automation now.
+#   - create-device wakes on `barcode` (the input-bound scan).
+#   - register-sensor wakes on `device_id` (fanned in from the link below).
+#
+# The `caller_*` entries are the reserved trusted-identity slots the run service
+# seeds from the verified principal (DOCS §9). They're listed as triggers so the
+# propagator INCLUDES them in the input SlotMap handed to the node — the
+# `ProcessNodeProxy` reads them to stamp the caller on its `warehouse.write`
+# host call (a tenant-scoped host method hard-denies a caller-less frame). They
+# arrive seeded before the run starts, so they don't cause an extra wake; the
+# scan/`device_id` is what actually fires each node. (The node bodies stay
+# idempotent regardless — DOCS §8c.)
 flow:
   nodes:
-    - { id: com.acme.create-device,   kind: com.acme.devices.device_create }
-    - { id: com.acme.register-sensor, kind: com.acme.devices.sensor_register }
+    - id: com.acme.create-device
+      kind: com.acme.devices.device_create
+      triggers: [barcode, location, caller_user_id, caller_tenant_id, caller_team_ids]
+    # register-sensor fires ONLY on `device_id` (fanned in from the link). It is
+    # deliberately NOT triggered by the `caller_*` identity slots: the propagator
+    # fires a node on *each* trigger-slot write (not once all are present), and
+    # the identity slots are seeded at run start — so triggering on them would
+    # fire register-sensor BEFORE create-device produced `device_id`, failing its
+    # `require device_id` and halting the run. register-sensor performs no
+    # tenant-scoped host write, so it needs no caller identity. (create-device
+    # does — it keeps the identity slots, and is idempotent so its extra
+    # seed-driven wakes upsert harmlessly until `barcode` lands.)
+    - id: com.acme.register-sensor
+      kind: com.acme.devices.sensor_register
+      triggers: [device_id]
   links:
     - { from: com.acme.create-device.device_id, to: com.acme.register-sensor.device_id }

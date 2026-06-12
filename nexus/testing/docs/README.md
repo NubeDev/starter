@@ -66,7 +66,9 @@ Key facts that shape all testing (verified 2026-06-10, see
 | [DASHBOARDS.md](features/DASHBOARDS.md) | Create pages, queries, variables/context, assign to nav | scaffold |
 | [NAV_USERS_TEAMS.md](features/NAV_USERS_TEAMS.md) | User/team CRUD, nav tree, per-node access grants | scaffold |
 | [INSIGHTS_ALERTS.md](features/INSIGHTS_ALERTS.md) | Insight transforms + alert rules on the MQTT/PG data | scaffold |
+| [EXTENSIONS_LIFECYCLE_AND_API.md](features/EXTENSIONS_LIFECYCLE_AND_API.md) | Extension lifecycle state machine, the full `/api/v1/extensions/*` admin API, install/enable/disable/restart/purge semantics, WS-17 data-access host methods | verified |
 
+> **verified** = run live against a stack and the commands/outputs confirmed.
 > **scaffold** = structure + acceptance criteria written; commands to be filled
 > in as we knock off each feature one at a time. Each scaffold lists exactly what
 > "done" looks like so the next session knows when to stop.

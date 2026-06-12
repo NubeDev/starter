@@ -128,13 +128,14 @@ async fn ground_schema(
         )
         .await
         .map_err(|e| IntoResponse(e).into_response())?;
-    let tables = nexus_store::introspect(&pool, state.guards)
+    let schema = nexus_store::introspect(&pool, state.guards)
         .await
         .map_err(|e| IntoResponse(e).into_response())?;
 
-    // Render a token-frugal schema: one line per table, columns inline.
+    // Render a token-frugal schema: one line per table, columns inline. The AI
+    // assist prompt only needs table/column names, so FK relations are ignored.
     let mut out = String::new();
-    for t in &tables {
+    for t in &schema.tables {
         let cols = t
             .columns
             .iter()

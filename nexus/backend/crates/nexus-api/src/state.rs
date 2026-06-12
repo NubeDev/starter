@@ -58,6 +58,18 @@ pub struct AppState {
     /// through the API is visible to the next handler check; tests can swap in
     /// `AllowAll`/`DenyAll` to assert a route is gated.
     pub engine: Arc<dyn PolicyEngine>,
+    /// Identity handles for the **self-service onboarding** route
+    /// (`POST /api/v1/onboard`). A freshly signed-up consumer is a non-admin and
+    /// cannot call the admin-gated `/v1/tenants/*` + `/v1/authz/*` endpoints, so
+    /// onboarding composes the per-user team + membership + grants in-process
+    /// with these handles. `policy` is the **concrete** `DbPolicyEngine` (not the
+    /// `dyn` upcast in `engine`) because writing a grant requires its
+    /// `store()` + `reload()`, which the trait `PolicyEngine` does not expose.
+    /// All three are the same instances the identity routers use, so a grant
+    /// written here is visible to the next `engine.check()`.
+    pub tenants: Arc<dyn starter_auth_users::store::TenantStore>,
+    pub users: Arc<dyn starter_auth_users::store::UserStore>,
+    pub policy: Arc<starter_authz::DbPolicyEngine>,
     /// Registered declarative query-kinds (WS-10), loaded from the built-in pack
     /// at boot. A kind-mode query resolves its name here, validates params, and
     /// binds the kind's SQL through the shared binder. Shared read-only across

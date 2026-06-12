@@ -42,6 +42,12 @@ pub struct Identity {
     /// hold this to check grants; a grant written through the router reloads
     /// this very engine, so checks see fresh grants without a second handle.
     pub engine: Arc<DbPolicyEngine>,
+    /// Store handles the self-service onboarding route composes in-process
+    /// (`POST /api/v1/onboard`): the same instances the `/v1/tenants/*` router
+    /// and the authenticator use, so a team/membership written here is visible
+    /// everywhere immediately.
+    pub tenant_store: Arc<dyn starter_auth_users::store::TenantStore>,
+    pub user_store: Arc<dyn starter_auth_users::store::UserStore>,
 }
 
 /// Build the identity surface from a metadata pool. The same pool backs the
@@ -74,7 +80,21 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
         Role::Admin,
     );
 
-    let auth_state = AuthState::new(users, sessions, tokens).with_tenants(tenants);
+    // Keep store handles for the onboarding route before they are moved into the
+    // auth state below. These are the same `Arc`s the routers + authenticator
+    // use, so onboarding's in-process writes need no second connection.
+    let tenant_store: Arc<dyn starter_auth_users::store::TenantStore> = tenants.clone();
+    let user_store: Arc<dyn starter_auth_users::store::UserStore> = users.clone();
+
+    // Self-service signup is enabled so the consumer-app flow (buy a device →
+    // sign up → onboard) can create its own accounts. New accounts default to
+    // `reader` and are bound to no tenant; onboarding (`POST /api/v1/onboard`)
+    // is what makes them a tenant member, creates their per-user team, and
+    // scopes their access. (This route is the demo's front door — turn it off in
+    // a deployment by removing this `with_signup_open` if open signup is unwanted.)
+    let auth_state = AuthState::new(users, sessions, tokens)
+        .with_tenants(tenants)
+        .with_signup_open(Role::Reader);
     let auth = auth_router::<AppState>(auth_state);
 
     // Build the concrete registry so both the nexus resource kinds and the
@@ -131,5 +151,7 @@ pub async fn build(pool: Pool) -> Result<Identity, String> {
         tenants: tenants_routes,
         authenticator,
         engine,
+        tenant_store,
+        user_store,
     })
 }

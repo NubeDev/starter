@@ -33,6 +33,11 @@ export interface ExtensionSummary {
   capability_violations: number;
   enabled: "enabled" | "disabled";
   restart_required: boolean;
+  /** `true` once purged this run but still lingering in the sealed registry
+   * until the next boot — its persisted state (kinds, enablement row, owned
+   * tables) is already gone, so the row is dead/stale, not healthy. The UI
+   * renders these distinctly and disables their lifecycle actions. */
+  uninstalled?: boolean;
   contributes?: ContributesSummary;
 }
 

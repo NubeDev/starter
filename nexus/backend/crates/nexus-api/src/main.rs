@@ -113,6 +113,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         stream_signer: StreamTokenSigner::new(cfg.stream_key.into_bytes()),
         stream_token_ttl: Duration::from_secs(60),
         engine: identity.engine.clone() as std::sync::Arc<dyn starter_spi::authz::PolicyEngine>,
+        // Onboarding handles (self-service signup → workspace): the concrete
+        // policy engine for grant writes + reload, plus the identity stores.
+        tenants: identity.tenant_store.clone(),
+        users: identity.user_store.clone(),
+        policy: identity.engine.clone(),
         kinds: std::sync::Arc::new(kinds),
         extension_kinds: extension_kinds.clone(),
         extensions: extension_registry,

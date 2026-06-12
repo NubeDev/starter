@@ -58,7 +58,13 @@ BUILT_BIN        := $(CARGO_TARGET_DIR)/release/$(BIN_NAME)
 INSTALLED_BIN    := $(BUNDLE_DIR)/$(BIN_NAME)
 
 .PHONY: all build bin-build ui-build ui-dev pack login install load unload uninstall \
-        test status cleanup-preview help
+        test status cleanup-preview demo help
+
+# Demo user the `demo` walkthrough provisions a device AS. Distinct from the
+# admin so the team-scoped read (`$caller_team_ids`) is proven on a real,
+# non-admin principal, not just the seed admin.
+DEMO_EMAIL    ?= tech@nexus.local
+DEMO_PASSWORD ?= change-me-tech
 
 all: ui-build pack install
 
@@ -71,6 +77,7 @@ help:
 	@echo "  make unload           disable (POST .../disable)"
 	@echo "  make uninstall        DELETE .../$(EXT_ID)?purge=true"
 	@echo "  make test             e2e probe (list, detail, ui bytes, run kinds)"
+	@echo "  make demo             team + user + assign access + provision + view on dashboard"
 	@echo "  make status           one-line state summary"
 	@echo "  make cleanup-preview  dry-run cleanup manifest"
 
@@ -174,22 +181,22 @@ test: login
 	      $(API_BASE)/api/v1/extensions/$(EXT_ID)/ui/remoteEntry.js); \
 	  test "$$code" = "304" || { echo "FAIL: revalidation gave $$code, want 304"; exit 1; }; \
 	  echo "    revalidation: 304"
-	@echo "==> site-checkout query-kind registered (scoped by \$$caller_team_ids)"
+	@echo "==> site-checkout query-kind runs principal-scoped (\$$caller_team_ids)"
 	@# The kind selects the host-bound `$$caller_tenant_id` / `$$caller_team_ids`
-	@# tokens, which only bind on a principal-bearing query path. The ad-hoc
-	@# `POST /api/v1/query` route runs with `QueryIdentity::default()` (no
-	@# principal) BY DESIGN, so it returns 400 "needs host token" there — proof
-	@# the host-token guard is enforced, not a failure. We assert the kind is
-	@# *known* (a bogus kind says "not a known kind"; this one gets past name
-	@# resolution to host-token binding). Running it with real team scope is the
-	@# `/setup` verify-page's job, exercised against a datasource in product use.
+	@# tokens. `POST /api/v1/query` now binds the verified principal for a
+	@# kind-mode request (running against the metadata DB where extension-owned
+	@# tables live), so a cookie session resolves those tokens and the kind RUNS.
+	@# We assert it both (a) resolves by name (a bogus kind says "not a known
+	@# kind") and (b) returns a row frame with the expected columns — proof the
+	@# host tokens bound, not a guard error. (A principal-LESS call still 400s
+	@# "needs host token" — exercised separately by the dev-shortcut path.)
 	@body=$$(curl -s -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
-	    -d '{"sql":"","kind":"$(EXT_ID).site_checkout"}' $(API_BASE)/api/v1/query); \
+	    -d '{"kind":"$(EXT_ID).site_checkout","params":{}}' $(API_BASE)/api/v1/query); \
 	  echo "$$body" | grep -q 'not a known kind' \
 	    && { echo "FAIL: site_checkout kind not registered"; exit 1; }; \
-	  echo "$$body" | grep -qi 'host token' \
+	  echo "$$body" | grep -q '"owner_tenant"' \
 	    || { echo "FAIL: unexpected query response: $$body"; exit 1; }; \
-	  echo "    registered (host-token guard enforced on the principal-less path)"
+	  echo "    runs principal-scoped (host tokens bound from the session)"
 	@echo "==> ensure caller is in an allowed team (template allows: hvac-ops)"
 	@uid=$$(curl -fsS -b $(COOKIE_JAR) $(API_BASE)/api/v1/me | jq -r '.subject'); \
 	  team_id=$$(curl -fsS -b $(COOKIE_JAR) $(API_BASE)/v1/tenants/nexus/teams \
@@ -232,3 +239,96 @@ status: login
 
 cleanup-preview: login
 	@curl -fsS -b $(COOKIE_JAR) $(API_BASE)/api/v1/extensions/$(EXT_ID)/cleanup | jq .
+
+# ----- demo: nav + team + user + assigned access + view the device ------
+#
+# The full story the dashboard demo tells, against the live stack:
+#   1. (as admin) create the `hvac-ops` TEAM the add-device template allows.
+#   2. (as admin) create a dedicated `tech` USER (writer role).
+#   3. (as admin) ASSIGN access by adding tech to hvac-ops — that team membership
+#      is what gets tech past the template's `allowed_teams` gate AND what scopes
+#      the `devices_list` read to their team ($caller_team_ids).
+#   4. (as tech) provision a device — the run is tagged with tech's trusted
+#      identity (owner/team/tenant) seeded server-side, never from the form.
+#   5. (as tech) read the persisted device back via the `devices_list` kind — the
+#      exact rows the Devices dashboard page renders, scoped to tech's team.
+#
+# Idempotent: re-running reuses the existing team/user/membership.
+DEMO_JAR  ?= /tmp/$(EXT_ID).demo.cookies
+DEMO_CSRF ?= /tmp/$(EXT_ID).demo.csrf
+DEMO_HDR   = -H "X-CSRF-Token: $$(cat $(DEMO_CSRF))"
+
+demo: login
+	@echo "==> [admin] ensure team hvac-ops"
+	@team_id=$$(curl -fsS -b $(COOKIE_JAR) $(API_BASE)/v1/tenants/nexus/teams \
+	    | jq -r '.[] | select(.slug=="hvac-ops") | .id'); \
+	  if [ -z "$$team_id" ]; then \
+	    team_id=$$(curl -fsS -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
+	      -d '{"slug":"hvac-ops","display_name":"HVAC Ops"}' \
+	      $(API_BASE)/v1/tenants/nexus/teams | jq -r '.id'); \
+	    echo "    created team hvac-ops ($$team_id)"; \
+	  else echo "    team hvac-ops exists ($$team_id)"; fi; \
+	  echo "==> [admin] ensure user $(DEMO_EMAIL) (writer)"; \
+	  uid=$$(curl -s -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
+	    -d '{"email":"$(DEMO_EMAIL)","password":"$(DEMO_PASSWORD)","role":"writer"}' \
+	    $(API_BASE)/v1/tenants/nexus/users | jq -r '.user_id // empty'); \
+	  if [ -z "$$uid" ]; then \
+	    echo "    (already exists — logging in to resolve its id)"; \
+	    curl -fsS -c $(DEMO_JAR) -H 'content-type: application/json' \
+	      -d '{"email":"$(DEMO_EMAIL)","password":"$(DEMO_PASSWORD)"}' \
+	      $(API_BASE)/auth/login >/dev/null; \
+	    uid=$$(curl -fsS -b $(DEMO_JAR) $(API_BASE)/api/v1/me | jq -r '.subject'); \
+	  fi; \
+	  echo "    user id: $$uid"; \
+	  echo "==> [admin] assign access: add $(DEMO_EMAIL) to hvac-ops"; \
+	  curl -s -b $(COOKIE_JAR) $(CSRF_HDR) -H 'content-type: application/json' \
+	    -d "{\"user_id\":\"$$uid\"}" \
+	    $(API_BASE)/v1/tenants/nexus/teams/$$team_id/members >/dev/null; \
+	  echo "    $$uid is in hvac-ops"
+	@echo "==> [tech] log in (session principal now carries the team)"
+	@curl -fsS -c $(DEMO_JAR) -H 'content-type: application/json' \
+	    -d '{"email":"$(DEMO_EMAIL)","password":"$(DEMO_PASSWORD)"}' \
+	    $(API_BASE)/auth/login | jq -r '.csrf_token' > $(DEMO_CSRF)
+	@curl -fsS -b $(DEMO_JAR) $(API_BASE)/api/v1/me | jq -c '{subject, role, teams}'
+	@echo "==> [tech] provision a device (gated by allowed_teams: hvac-ops)"
+	@run_id=$$(curl -fsS -b $(DEMO_JAR) $(DEMO_HDR) -H 'content-type: application/json' \
+	    -d '{"barcode":"ACME-DEMO-0001","location":"Roof AHU-7"}' \
+	    $(API_BASE)/api/v1/setup/templates/com.acme.add-device/run | jq -r '.run_id'); \
+	  test -n "$$run_id" || { echo "FAIL: no run_id (is tech in hvac-ops?)"; exit 1; }; \
+	  echo "    run_id: $$run_id"; sleep 2; \
+	  snap=$$(curl -fsS -b $(DEMO_JAR) $(API_BASE)/api/v1/setup/runs/$$run_id); \
+	  echo "$$snap" | jq -c '{status, progress, owner, team, tenant_id}'; \
+	  echo "$$snap" | jq -e '.status=="completed"' >/dev/null \
+	    || { echo "FAIL: run did not complete"; exit 1; }
+	@echo "==> verify the device PERSISTED to the extension-owned nexus table"
+	@# Ground truth: the row the automation wrote via the tenant-stamped
+	@# `warehouse.write` host method into `com_acme_devices__devices`. We assert
+	@# it landed with tech's trusted identity (tenant=nexus, owner=tech,
+	@# team=hvac-ops) — seeded server-side, never from the form. This is what the
+	@# Devices dashboard renders.
+	@#
+	@# NOTE on the read path: the dashboard UI reads the row back via the
+	@# `devices_list` query-kind, which uses the host-bound `$$caller_tenant_id` /
+	@# `$$caller_team_ids` tokens. Those only resolve on a PRINCIPAL-BEARING query
+	@# route; the ad-hoc `POST /api/v1/query` runs with no principal (by design),
+	@# so it returns 400 "needs host token" there. The persisted row below is the
+	@# authoritative proof; wiring a principal-bearing read for extension-owned
+	@# tables is the remaining UI-read gap (see this session's notes).
+	@PGPASSWORD=$${DB_PASS:-nexus} docker exec $${DB_CONTAINER:-nexus-dev-pg} \
+	    psql -U $${DB_USER:-nexus} -d $${DB_NAME:-nexus} -tAc \
+	    "SELECT tenant_id||'|'||owner||'|'||coalesce(team,'')||'|'||barcode \
+	     FROM com_acme_devices__devices WHERE barcode='ACME-DEMO-0001';" \
+	    | tee /tmp/$(EXT_ID).demo.row; \
+	  grep -q '^nexus|.*|hvac-ops|ACME-DEMO-0001$$' /tmp/$(EXT_ID).demo.row \
+	    || { echo "FAIL: device did not persist with tech's trusted identity"; exit 1; }
+	@echo "==> [tech] view the device on the dashboard (devices_list, team-scoped)"
+	@# The Devices dashboard reads the persisted rows back through the
+	@# `devices_list` query-kind. `POST /api/v1/query` binds tech's verified
+	@# principal for this kind-mode read, so `$$caller_tenant_id`/`$$caller_team_ids`
+	@# resolve and tech sees their team's devices — exactly what the page renders.
+	@rows=$$(curl -fsS -b $(DEMO_JAR) $(DEMO_HDR) -H 'content-type: application/json' \
+	    -d '{"kind":"$(EXT_ID).devices_list","params":{}}' $(API_BASE)/api/v1/query); \
+	  echo "$$rows" | jq -c '.rows[] | {device_id, barcode, location, team}'; \
+	  echo "$$rows" | jq -e '[.rows[] | select(.barcode=="ACME-DEMO-0001")] | length >= 1' >/dev/null \
+	    || { echo "FAIL: provisioned device not visible to tech via devices_list"; exit 1; }
+	@echo "PASS: $(EXT_ID) demo — team + user + assigned access + device PERSISTED and VISIBLE on the dashboard"

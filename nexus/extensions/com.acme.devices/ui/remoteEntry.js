@@ -1,7 +1,7 @@
 (function () {
 	'use strict';
 
-	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.acme.devices\"] :before, [data-ext-id=\"com.acme.devices\"]:before, [data-ext-id=\"com.acme.devices\"] :after, [data-ext-id=\"com.acme.devices\"]:after, [data-ext-id=\"com.acme.devices\"] ::backdrop, [data-ext-id=\"com.acme.devices\"]::backdrop {\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-outline-style: solid;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .relative, [data-ext-id=\"com.acme.devices\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.acme.devices\"] .mx-auto, [data-ext-id=\"com.acme.devices\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .mt-0\\.5, [data-ext-id=\"com.acme.devices\"].mt-0\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex, [data-ext-id=\"com.acme.devices\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid, [data-ext-id=\"com.acme.devices\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.acme.devices\"] .inline-flex, [data-ext-id=\"com.acme.devices\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .table, [data-ext-id=\"com.acme.devices\"].table {\n  display: table;\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-3\\.5, [data-ext-id=\"com.acme.devices\"].size-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-4, [data-ext-id=\"com.acme.devices\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-5, [data-ext-id=\"com.acme.devices\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-6, [data-ext-id=\"com.acme.devices\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-9, [data-ext-id=\"com.acme.devices\"].size-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-2, [data-ext-id=\"com.acme.devices\"].h-2 {\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-8, [data-ext-id=\"com.acme.devices\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-9, [data-ext-id=\"com.acme.devices\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-10, [data-ext-id=\"com.acme.devices\"].h-10 {\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-full, [data-ext-id=\"com.acme.devices\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-px, [data-ext-id=\"com.acme.devices\"].h-px {\n  height: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-fit, [data-ext-id=\"com.acme.devices\"].w-fit {\n  width: fit-content;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-full, [data-ext-id=\"com.acme.devices\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-px, [data-ext-id=\"com.acme.devices\"].w-px {\n  width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .max-w-3xl, [data-ext-id=\"com.acme.devices\"].max-w-3xl {\n  max-width: var(--container-3xl, 48rem);\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-1, [data-ext-id=\"com.acme.devices\"].flex-1 {\n  flex: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .shrink-0, [data-ext-id=\"com.acme.devices\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-collapse, [data-ext-id=\"com.acme.devices\"].border-collapse {\n  border-collapse: collapse;\n}\n\n[data-ext-id=\"com.acme.devices\"] .animate-spin, [data-ext-id=\"com.acme.devices\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-1, [data-ext-id=\"com.acme.devices\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-\\[7rem_1fr\\], [data-ext-id=\"com.acme.devices\"].grid-cols-\\[7rem_1fr\\] {\n  grid-template-columns: 7rem 1fr;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-col, [data-ext-id=\"com.acme.devices\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-wrap, [data-ext-id=\"com.acme.devices\"].flex-wrap {\n  flex-wrap: wrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .place-items-center, [data-ext-id=\"com.acme.devices\"].place-items-center {\n  place-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-center, [data-ext-id=\"com.acme.devices\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-start, [data-ext-id=\"com.acme.devices\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-between, [data-ext-id=\"com.acme.devices\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-center, [data-ext-id=\"com.acme.devices\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1, [data-ext-id=\"com.acme.devices\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1\\.5, [data-ext-id=\"com.acme.devices\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-2, [data-ext-id=\"com.acme.devices\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-3, [data-ext-id=\"com.acme.devices\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-4, [data-ext-id=\"com.acme.devices\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-5, [data-ext-id=\"com.acme.devices\"].gap-5 {\n  gap: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-6, [data-ext-id=\"com.acme.devices\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-x-4, [data-ext-id=\"com.acme.devices\"].gap-x-4 {\n  column-gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-y-1, [data-ext-id=\"com.acme.devices\"].gap-y-1 {\n  row-gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .truncate, [data-ext-id=\"com.acme.devices\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .overflow-hidden, [data-ext-id=\"com.acme.devices\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .overflow-x-auto, [data-ext-id=\"com.acme.devices\"].overflow-x-auto {\n  overflow-x: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded, [data-ext-id=\"com.acme.devices\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded-full, [data-ext-id=\"com.acme.devices\"].rounded-full {\n  border-radius: 3.40282e38px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border, [data-ext-id=\"com.acme.devices\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-t, [data-ext-id=\"com.acme.devices\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-b, [data-ext-id=\"com.acme.devices\"].border-b {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-dashed, [data-ext-id=\"com.acme.devices\"].border-dashed {\n  --tw-border-style: dashed;\n  border-style: dashed;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-emerald-600\\/30, [data-ext-id=\"com.acme.devices\"].border-emerald-600\\/30 {\n  border-color: #0097674d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.acme.devices\"] .border-emerald-600\\/30, [data-ext-id=\"com.acme.devices\"].border-emerald-600\\/30 {\n    border-color: color-mix(in oklab, var(--color-emerald-600, oklch(59.6% .145 163.225)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-transparent, [data-ext-id=\"com.acme.devices\"].border-transparent {\n  border-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-emerald-600\\/10, [data-ext-id=\"com.acme.devices\"].bg-emerald-600\\/10 {\n  background-color: #0097671a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.acme.devices\"] .bg-emerald-600\\/10, [data-ext-id=\"com.acme.devices\"].bg-emerald-600\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-600, oklch(59.6% .145 163.225)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-transparent, [data-ext-id=\"com.acme.devices\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-1, [data-ext-id=\"com.acme.devices\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-2, [data-ext-id=\"com.acme.devices\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-3, [data-ext-id=\"com.acme.devices\"].p-3 {\n  padding: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-4, [data-ext-id=\"com.acme.devices\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-2, [data-ext-id=\"com.acme.devices\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-3, [data-ext-id=\"com.acme.devices\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-4, [data-ext-id=\"com.acme.devices\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-6, [data-ext-id=\"com.acme.devices\"].px-6 {\n  padding-inline: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-0\\.5, [data-ext-id=\"com.acme.devices\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-2, [data-ext-id=\"com.acme.devices\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-6, [data-ext-id=\"com.acme.devices\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pt-4, [data-ext-id=\"com.acme.devices\"].pt-4 {\n  padding-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pt-6, [data-ext-id=\"com.acme.devices\"].pt-6 {\n  padding-top: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pr-4, [data-ext-id=\"com.acme.devices\"].pr-4 {\n  padding-right: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-center, [data-ext-id=\"com.acme.devices\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-left, [data-ext-id=\"com.acme.devices\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-2xl, [data-ext-id=\"com.acme.devices\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-base, [data-ext-id=\"com.acme.devices\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-sm, [data-ext-id=\"com.acme.devices\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-xs, [data-ext-id=\"com.acme.devices\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .leading-none, [data-ext-id=\"com.acme.devices\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-medium, [data-ext-id=\"com.acme.devices\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-normal, [data-ext-id=\"com.acme.devices\"].font-normal {\n  --tw-font-weight: var(--font-weight-normal, 400);\n  font-weight: var(--font-weight-normal, 400);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-semibold, [data-ext-id=\"com.acme.devices\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.acme.devices\"] .tracking-tight, [data-ext-id=\"com.acme.devices\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.acme.devices\"] .whitespace-nowrap, [data-ext-id=\"com.acme.devices\"].whitespace-nowrap {\n  white-space: nowrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-600, [data-ext-id=\"com.acme.devices\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-700, [data-ext-id=\"com.acme.devices\"].text-emerald-700 {\n  color: var(--color-emerald-700, oklch(50.8% .118 165.612));\n}\n\n[data-ext-id=\"com.acme.devices\"] .tabular-nums, [data-ext-id=\"com.acme.devices\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.acme.devices\"] .shadow-sm, [data-ext-id=\"com.acme.devices\"].shadow-sm {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline, [data-ext-id=\"com.acme.devices\"].outline {\n  outline-style: var(--tw-outline-style);\n  outline-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-\\[width\\], [data-ext-id=\"com.acme.devices\"].transition-\\[width\\] {\n  transition-property: width;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-colors, [data-ext-id=\"com.acme.devices\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .duration-500, [data-ext-id=\"com.acme.devices\"].duration-500 {\n  --tw-duration: .5s;\n  transition-duration: .5s;\n}\n\n[data-ext-id=\"com.acme.devices\"] .ease-out, [data-ext-id=\"com.acme.devices\"].ease-out {\n  --tw-ease: var(--ease-out, cubic-bezier(0, 0, .2, 1));\n  transition-timing-function: var(--ease-out, cubic-bezier(0, 0, .2, 1));\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline-none, [data-ext-id=\"com.acme.devices\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .last\\:border-0:last-child, [data-ext-id=\"com.acme.devices\"].last\\:border-0:last-child {\n  border-style: var(--tw-border-style);\n  border-width: 0;\n}\n\n[data-ext-id=\"com.acme.devices\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.acme.devices\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-60:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-60:disabled {\n  opacity: .6;\n}\n\n@media (prefers-color-scheme: dark) {\n  [data-ext-id=\"com.acme.devices\"] .dark\\:text-emerald-400, [data-ext-id=\"com.acme.devices\"].dark\\:text-emerald-400 {\n    color: var(--color-emerald-400, oklch(76.5% .177 163.223));\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:pointer-events-none svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:pointer-events-none svg {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-3 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-3 svg {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-4 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-4 svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:shrink-0 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:shrink-0 svg {\n  flex-shrink: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-outline-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
+	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.acme.devices\"] :before, [data-ext-id=\"com.acme.devices\"]:before, [data-ext-id=\"com.acme.devices\"] :after, [data-ext-id=\"com.acme.devices\"]:after, [data-ext-id=\"com.acme.devices\"] ::backdrop, [data-ext-id=\"com.acme.devices\"]::backdrop {\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-outline-style: solid;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .relative, [data-ext-id=\"com.acme.devices\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.acme.devices\"] .mx-auto, [data-ext-id=\"com.acme.devices\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .mt-0\\.5, [data-ext-id=\"com.acme.devices\"].mt-0\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .ml-auto, [data-ext-id=\"com.acme.devices\"].ml-auto {\n  margin-left: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex, [data-ext-id=\"com.acme.devices\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid, [data-ext-id=\"com.acme.devices\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.acme.devices\"] .inline-flex, [data-ext-id=\"com.acme.devices\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.acme.devices\"] .table, [data-ext-id=\"com.acme.devices\"].table {\n  display: table;\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-3\\.5, [data-ext-id=\"com.acme.devices\"].size-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-4, [data-ext-id=\"com.acme.devices\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-5, [data-ext-id=\"com.acme.devices\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-6, [data-ext-id=\"com.acme.devices\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-8, [data-ext-id=\"com.acme.devices\"].size-8 {\n  width: calc(var(--spacing, .25rem) * 8);\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-9, [data-ext-id=\"com.acme.devices\"].size-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .size-12, [data-ext-id=\"com.acme.devices\"].size-12 {\n  width: calc(var(--spacing, .25rem) * 12);\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-1\\.5, [data-ext-id=\"com.acme.devices\"].h-1\\.5 {\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-2, [data-ext-id=\"com.acme.devices\"].h-2 {\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-8, [data-ext-id=\"com.acme.devices\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-9, [data-ext-id=\"com.acme.devices\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-10, [data-ext-id=\"com.acme.devices\"].h-10 {\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-full, [data-ext-id=\"com.acme.devices\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .h-px, [data-ext-id=\"com.acme.devices\"].h-px {\n  height: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-1\\.5, [data-ext-id=\"com.acme.devices\"].w-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-4, [data-ext-id=\"com.acme.devices\"].w-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-fit, [data-ext-id=\"com.acme.devices\"].w-fit {\n  width: fit-content;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-full, [data-ext-id=\"com.acme.devices\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.acme.devices\"] .w-px, [data-ext-id=\"com.acme.devices\"].w-px {\n  width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .max-w-3xl, [data-ext-id=\"com.acme.devices\"].max-w-3xl {\n  max-width: var(--container-3xl, 48rem);\n}\n\n[data-ext-id=\"com.acme.devices\"] .max-w-5xl, [data-ext-id=\"com.acme.devices\"].max-w-5xl {\n  max-width: var(--container-5xl, 64rem);\n}\n\n[data-ext-id=\"com.acme.devices\"] .max-w-md, [data-ext-id=\"com.acme.devices\"].max-w-md {\n  max-width: var(--container-md, 28rem);\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-1, [data-ext-id=\"com.acme.devices\"].flex-1 {\n  flex: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .shrink-0, [data-ext-id=\"com.acme.devices\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-collapse, [data-ext-id=\"com.acme.devices\"].border-collapse {\n  border-collapse: collapse;\n}\n\n[data-ext-id=\"com.acme.devices\"] .animate-spin, [data-ext-id=\"com.acme.devices\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-1, [data-ext-id=\"com.acme.devices\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-\\[6rem_1fr\\], [data-ext-id=\"com.acme.devices\"].grid-cols-\\[6rem_1fr\\] {\n  grid-template-columns: 6rem 1fr;\n}\n\n[data-ext-id=\"com.acme.devices\"] .grid-cols-\\[7rem_1fr\\], [data-ext-id=\"com.acme.devices\"].grid-cols-\\[7rem_1fr\\] {\n  grid-template-columns: 7rem 1fr;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-col, [data-ext-id=\"com.acme.devices\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.acme.devices\"] .flex-wrap, [data-ext-id=\"com.acme.devices\"].flex-wrap {\n  flex-wrap: wrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .place-items-center, [data-ext-id=\"com.acme.devices\"].place-items-center {\n  place-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-center, [data-ext-id=\"com.acme.devices\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .items-start, [data-ext-id=\"com.acme.devices\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-between, [data-ext-id=\"com.acme.devices\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.acme.devices\"] .justify-center, [data-ext-id=\"com.acme.devices\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-0\\.5, [data-ext-id=\"com.acme.devices\"].gap-0\\.5 {\n  gap: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1, [data-ext-id=\"com.acme.devices\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-1\\.5, [data-ext-id=\"com.acme.devices\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-2, [data-ext-id=\"com.acme.devices\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-3, [data-ext-id=\"com.acme.devices\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-4, [data-ext-id=\"com.acme.devices\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-5, [data-ext-id=\"com.acme.devices\"].gap-5 {\n  gap: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-6, [data-ext-id=\"com.acme.devices\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-x-3, [data-ext-id=\"com.acme.devices\"].gap-x-3 {\n  column-gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-x-4, [data-ext-id=\"com.acme.devices\"].gap-x-4 {\n  column-gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-y-1, [data-ext-id=\"com.acme.devices\"].gap-y-1 {\n  row-gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .gap-y-1\\.5, [data-ext-id=\"com.acme.devices\"].gap-y-1\\.5 {\n  row-gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .truncate, [data-ext-id=\"com.acme.devices\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .overflow-hidden, [data-ext-id=\"com.acme.devices\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.acme.devices\"] .overflow-x-auto, [data-ext-id=\"com.acme.devices\"].overflow-x-auto {\n  overflow-x: auto;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded, [data-ext-id=\"com.acme.devices\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.acme.devices\"] .rounded-full, [data-ext-id=\"com.acme.devices\"].rounded-full {\n  border-radius: 3.40282e38px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border, [data-ext-id=\"com.acme.devices\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-t, [data-ext-id=\"com.acme.devices\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-b, [data-ext-id=\"com.acme.devices\"].border-b {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-dashed, [data-ext-id=\"com.acme.devices\"].border-dashed {\n  --tw-border-style: dashed;\n  border-style: dashed;\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-emerald-600\\/30, [data-ext-id=\"com.acme.devices\"].border-emerald-600\\/30 {\n  border-color: #0097674d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.acme.devices\"] .border-emerald-600\\/30, [data-ext-id=\"com.acme.devices\"].border-emerald-600\\/30 {\n    border-color: color-mix(in oklab, var(--color-emerald-600, oklch(59.6% .145 163.225)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .border-transparent, [data-ext-id=\"com.acme.devices\"].border-transparent {\n  border-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-emerald-600\\/10, [data-ext-id=\"com.acme.devices\"].bg-emerald-600\\/10 {\n  background-color: #0097671a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.acme.devices\"] .bg-emerald-600\\/10, [data-ext-id=\"com.acme.devices\"].bg-emerald-600\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-600, oklch(59.6% .145 163.225)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .bg-transparent, [data-ext-id=\"com.acme.devices\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-1, [data-ext-id=\"com.acme.devices\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-2, [data-ext-id=\"com.acme.devices\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-3, [data-ext-id=\"com.acme.devices\"].p-3 {\n  padding: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .p-4, [data-ext-id=\"com.acme.devices\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-1, [data-ext-id=\"com.acme.devices\"].px-1 {\n  padding-inline: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-2, [data-ext-id=\"com.acme.devices\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-3, [data-ext-id=\"com.acme.devices\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-4, [data-ext-id=\"com.acme.devices\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .px-6, [data-ext-id=\"com.acme.devices\"].px-6 {\n  padding-inline: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-0\\.5, [data-ext-id=\"com.acme.devices\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-2, [data-ext-id=\"com.acme.devices\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-6, [data-ext-id=\"com.acme.devices\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .py-8, [data-ext-id=\"com.acme.devices\"].py-8 {\n  padding-block: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pt-4, [data-ext-id=\"com.acme.devices\"].pt-4 {\n  padding-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pt-6, [data-ext-id=\"com.acme.devices\"].pt-6 {\n  padding-top: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pr-4, [data-ext-id=\"com.acme.devices\"].pr-4 {\n  padding-right: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .pb-2, [data-ext-id=\"com.acme.devices\"].pb-2 {\n  padding-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-center, [data-ext-id=\"com.acme.devices\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-left, [data-ext-id=\"com.acme.devices\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-2xl, [data-ext-id=\"com.acme.devices\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-3xl, [data-ext-id=\"com.acme.devices\"].text-3xl {\n  font-size: var(--text-3xl, 1.875rem);\n  line-height: var(--tw-leading, var(--text-3xl--line-height, calc(2.25 / 1.875)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-base, [data-ext-id=\"com.acme.devices\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-sm, [data-ext-id=\"com.acme.devices\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-xs, [data-ext-id=\"com.acme.devices\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-\\[11px\\], [data-ext-id=\"com.acme.devices\"].text-\\[11px\\] {\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .leading-none, [data-ext-id=\"com.acme.devices\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.acme.devices\"] .leading-relaxed, [data-ext-id=\"com.acme.devices\"].leading-relaxed {\n  --tw-leading: var(--leading-relaxed, 1.625);\n  line-height: var(--leading-relaxed, 1.625);\n}\n\n[data-ext-id=\"com.acme.devices\"] .leading-tight, [data-ext-id=\"com.acme.devices\"].leading-tight {\n  --tw-leading: var(--leading-tight, 1.25);\n  line-height: var(--leading-tight, 1.25);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-medium, [data-ext-id=\"com.acme.devices\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-normal, [data-ext-id=\"com.acme.devices\"].font-normal {\n  --tw-font-weight: var(--font-weight-normal, 400);\n  font-weight: var(--font-weight-normal, 400);\n}\n\n[data-ext-id=\"com.acme.devices\"] .font-semibold, [data-ext-id=\"com.acme.devices\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.acme.devices\"] .tracking-tight, [data-ext-id=\"com.acme.devices\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.acme.devices\"] .whitespace-nowrap, [data-ext-id=\"com.acme.devices\"].whitespace-nowrap {\n  white-space: nowrap;\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-600, [data-ext-id=\"com.acme.devices\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.acme.devices\"] .text-emerald-700, [data-ext-id=\"com.acme.devices\"].text-emerald-700 {\n  color: var(--color-emerald-700, oklch(50.8% .118 165.612));\n}\n\n[data-ext-id=\"com.acme.devices\"] .tabular-nums, [data-ext-id=\"com.acme.devices\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.acme.devices\"] .shadow-sm, [data-ext-id=\"com.acme.devices\"].shadow-sm {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline, [data-ext-id=\"com.acme.devices\"].outline {\n  outline-style: var(--tw-outline-style);\n  outline-width: 1px;\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-\\[width\\], [data-ext-id=\"com.acme.devices\"].transition-\\[width\\] {\n  transition-property: width;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-all, [data-ext-id=\"com.acme.devices\"].transition-all {\n  transition-property: all;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .transition-colors, [data-ext-id=\"com.acme.devices\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.acme.devices\"] .duration-500, [data-ext-id=\"com.acme.devices\"].duration-500 {\n  --tw-duration: .5s;\n  transition-duration: .5s;\n}\n\n[data-ext-id=\"com.acme.devices\"] .ease-out, [data-ext-id=\"com.acme.devices\"].ease-out {\n  --tw-ease: var(--ease-out, cubic-bezier(0, 0, .2, 1));\n  transition-timing-function: var(--ease-out, cubic-bezier(0, 0, .2, 1));\n}\n\n[data-ext-id=\"com.acme.devices\"] .outline-none, [data-ext-id=\"com.acme.devices\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .last\\:border-0:last-child, [data-ext-id=\"com.acme.devices\"].last\\:border-0:last-child {\n  border-style: var(--tw-border-style);\n  border-width: 0;\n}\n\n[data-ext-id=\"com.acme.devices\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.acme.devices\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.acme.devices\"] .disabled\\:opacity-60:disabled, [data-ext-id=\"com.acme.devices\"].disabled\\:opacity-60:disabled {\n  opacity: .6;\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.acme.devices\"] .sm\\:grid-cols-3, [data-ext-id=\"com.acme.devices\"].sm\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  [data-ext-id=\"com.acme.devices\"] .dark\\:text-emerald-400, [data-ext-id=\"com.acme.devices\"].dark\\:text-emerald-400 {\n    color: var(--color-emerald-400, oklch(76.5% .177 163.223));\n  }\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:pointer-events-none svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:pointer-events-none svg {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-3 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-3 svg {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:size-4 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:size-4 svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.acme.devices\"] .\\[\\&_svg\\]\\:shrink-0 svg, [data-ext-id=\"com.acme.devices\"].\\[\\&_svg\\]\\:shrink-0 svg {\n  flex-shrink: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-outline-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
 
 })();
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
@@ -237,9 +237,102 @@ const createLucideIcon = (iconName, iconNode) => {
  */
 
 
+const ArrowRight = createLucideIcon("ArrowRight", [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const BadgeCheck = createLucideIcon("BadgeCheck", [
+  [
+    "path",
+    {
+      d: "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z",
+      key: "3c2336"
+    }
+  ],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Ban = createLucideIcon("Ban", [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "m4.9 4.9 14.2 14.2", key: "1m5liu" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Box = createLucideIcon("Box", [
+  [
+    "path",
+    {
+      d: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z",
+      key: "hh9hay"
+    }
+  ],
+  ["path", { d: "m3.3 7 8.7 5 8.7-5", key: "g66t2b" }],
+  ["path", { d: "M12 22V12", key: "d0xqtd" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Boxes = createLucideIcon("Boxes", [
+  [
+    "path",
+    {
+      d: "M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z",
+      key: "lc1i9w"
+    }
+  ],
+  ["path", { d: "m7 16.5-4.74-2.85", key: "1o9zyk" }],
+  ["path", { d: "m7 16.5 5-3", key: "va8pkn" }],
+  ["path", { d: "M7 16.5v5.17", key: "jnp8gn" }],
+  [
+    "path",
+    {
+      d: "M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z",
+      key: "8zsnat"
+    }
+  ],
+  ["path", { d: "m17 16.5-5-3", key: "8arw3v" }],
+  ["path", { d: "m17 16.5 4.74-2.85", key: "8rfmw" }],
+  ["path", { d: "M17 16.5v5.17", key: "k6z78m" }],
+  [
+    "path",
+    {
+      d: "M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z",
+      key: "1xygjf"
+    }
+  ],
+  ["path", { d: "M12 8 7.26 5.15", key: "1vbdud" }],
+  ["path", { d: "m12 8 4.74-2.85", key: "3rx089" }],
+  ["path", { d: "M12 13.5V8", key: "1io7kd" }]
 ]);
 
 /**
@@ -353,8 +446,96 @@ const Info = createLucideIcon("Info", [
  */
 
 
+const KeyRound = createLucideIcon("KeyRound", [
+  [
+    "path",
+    {
+      d: "M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z",
+      key: "1s6t7t"
+    }
+  ],
+  ["circle", { cx: "16.5", cy: "7.5", r: ".5", fill: "currentColor", key: "w0ekpg" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const LayoutDashboard = createLucideIcon("LayoutDashboard", [
+  ["rect", { width: "7", height: "9", x: "3", y: "3", rx: "1", key: "10lvy0" }],
+  ["rect", { width: "7", height: "5", x: "14", y: "3", rx: "1", key: "16une8" }],
+  ["rect", { width: "7", height: "9", x: "14", y: "12", rx: "1", key: "1hutg5" }],
+  ["rect", { width: "7", height: "5", x: "3", y: "16", rx: "1", key: "ldoo1y" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const LoaderCircle = createLucideIcon("LoaderCircle", [
   ["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const MapPin = createLucideIcon("MapPin", [
+  [
+    "path",
+    {
+      d: "M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0",
+      key: "1r0f0z"
+    }
+  ],
+  ["circle", { cx: "12", cy: "10", r: "3", key: "ilqhr7" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const PartyPopper = createLucideIcon("PartyPopper", [
+  ["path", { d: "M5.8 11.3 2 22l10.7-3.79", key: "gwxi1d" }],
+  ["path", { d: "M4 3h.01", key: "1vcuye" }],
+  ["path", { d: "M22 8h.01", key: "1mrtc2" }],
+  ["path", { d: "M15 2h.01", key: "1cjtqr" }],
+  ["path", { d: "M22 20h.01", key: "1mrys2" }],
+  [
+    "path",
+    {
+      d: "m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10",
+      key: "hbicv8"
+    }
+  ],
+  [
+    "path",
+    { d: "m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17", key: "1i94pl" }
+  ],
+  ["path", { d: "m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7", key: "1cofks" }],
+  [
+    "path",
+    {
+      d: "M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z",
+      key: "4kbmks"
+    }
+  ]
 ]);
 
 /**
@@ -444,6 +625,28 @@ const ShieldCheck = createLucideIcon("ShieldCheck", [
  */
 
 
+const Sparkles = createLucideIcon("Sparkles", [
+  [
+    "path",
+    {
+      d: "M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z",
+      key: "4pj2yx"
+    }
+  ],
+  ["path", { d: "M20 3v4", key: "1olli1" }],
+  ["path", { d: "M22 5h-4", key: "1gvqau" }],
+  ["path", { d: "M4 17v2", key: "vumght" }],
+  ["path", { d: "M5 18H3", key: "zchphs" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Table2 = createLucideIcon("Table2", [
   [
     "path",
@@ -452,6 +655,21 @@ const Table2 = createLucideIcon("Table2", [
       key: "gugj83"
     }
   ]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Users = createLucideIcon("Users", [
+  ["path", { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", key: "1yyitq" }],
+  ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }],
+  ["path", { d: "M22 21v-2a4 4 0 0 0-3-3.87", key: "kshegd" }],
+  ["path", { d: "M16 3.13a4 4 0 0 1 0 7.75", key: "1da9ce" }]
 ]);
 
 class StarterError extends Error {
@@ -3244,6 +3462,465 @@ function Separator({
   );
 }
 
+const EXTENSION_ID$3 = "com.acme.devices";
+function sampleBarcode() {
+  const part = () => Math.random().toString(36).slice(2, 6).toUpperCase().padEnd(4, "0");
+  return `ACME-${part()}-${part()}`;
+}
+function ConsumerOnboard() {
+  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID$3,
+      className: "mx-auto flex max-w-md flex-col gap-5 p-1",
+      children: /* @__PURE__ */ jsx(Wizard, {})
+    }
+  ) });
+}
+function Wizard() {
+  const client = useHostClient();
+  const [step, setStep] = React.useState("buy");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [barcode, setBarcode] = React.useState(() => sampleBarcode());
+  const [location, setLocation] = React.useState("Living Room");
+  const [result, setResult] = React.useState(null);
+  const signup = React.useCallback(() => {
+    setError(null);
+    setBusy(true);
+    fetchJson(client, `/auth/signup`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase(), password })
+    }).then(() => setStep("addDevice")).catch((e) => setError(friendly(e))).finally(() => setBusy(false));
+  }, [client, email, password]);
+  const addDevice = React.useCallback(() => {
+    setError(null);
+    setBusy(true);
+    fetchJson(client, `${client.apiPrefix}/onboard`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        barcode: barcode.trim(),
+        location
+      })
+    }).then((r) => {
+      setResult(r);
+      setStep("ready");
+    }).catch((e) => setError(friendly(e))).finally(() => setBusy(false));
+  }, [client, email, barcode, location]);
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx("span", { className: "grid size-8 place-items-center rounded-xl bg-primary/15 text-primary", children: /* @__PURE__ */ jsx(Box, { className: "size-4" }) }),
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-col leading-tight", children: [
+          /* @__PURE__ */ jsx("span", { className: "text-sm font-semibold", children: "Acme Home" }),
+          /* @__PURE__ */ jsx("span", { className: "text-xs text-muted-foreground", children: "device companion app" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx(StepDots, { step })
+    ] }),
+    error ? /* @__PURE__ */ jsx("div", { className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    step === "buy" ? /* @__PURE__ */ jsx(BuyCard, { onNext: () => setStep("signup") }) : step === "signup" ? /* @__PURE__ */ jsx(
+      SignupCard,
+      {
+        email,
+        password,
+        busy,
+        onEmail: setEmail,
+        onPassword: setPassword,
+        onBack: () => setStep("buy"),
+        onNext: signup
+      }
+    ) : step === "addDevice" ? /* @__PURE__ */ jsx(
+      AddDeviceCard,
+      {
+        barcode,
+        location,
+        busy,
+        onBarcode: setBarcode,
+        onLocation: setLocation,
+        onShuffle: () => setBarcode(sampleBarcode()),
+        onNext: addDevice
+      }
+    ) : /* @__PURE__ */ jsx(
+      ReadyCard,
+      {
+        result,
+        email,
+        location,
+        baseUrl: client.baseUrl
+      }
+    ),
+    /* @__PURE__ */ jsx("p", { className: "px-1 text-center text-[11px] leading-relaxed text-muted-foreground", children: "A real end-to-end flow: self-service signup, then a privileged backend step provisions your device and a private dashboard scoped to you. Log in as the new user afterwards and you'll see only your device." })
+  ] });
+}
+function BuyCard({ onNext }) {
+  return /* @__PURE__ */ jsxs(Card, { children: [
+    /* @__PURE__ */ jsxs(CardHeader, { children: [
+      /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx(Sparkles, { className: "size-5" }),
+        " You bought an Acme Sensor"
+      ] }),
+      /* @__PURE__ */ jsx(CardDescription, { children: "Set it up in two minutes. Create your account, scan the box barcode, and your dashboard is ready." })
+    ] }),
+    /* @__PURE__ */ jsx(CardContent, { className: "flex flex-col gap-3", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 rounded-lg border bg-muted/30 p-3", children: [
+      /* @__PURE__ */ jsx("span", { className: "grid size-12 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary", children: /* @__PURE__ */ jsx(Cpu, { className: "size-6" }) }),
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-sm font-medium", children: "Acme Sensor — Model S1" }),
+        /* @__PURE__ */ jsx("span", { className: "text-xs text-muted-foreground", children: "Temperature · humidity · air quality" })
+      ] }),
+      /* @__PURE__ */ jsx(Badge, { variant: "secondary", className: "ml-auto", children: "In the box" })
+    ] }) }),
+    /* @__PURE__ */ jsx(CardFooter, { children: /* @__PURE__ */ jsxs(Button, { onClick: onNext, className: "w-full", children: [
+      "I bought this — set it up ",
+      /* @__PURE__ */ jsx(ArrowRight, {})
+    ] }) })
+  ] });
+}
+function SignupCard({
+  email,
+  password,
+  busy,
+  onEmail,
+  onPassword,
+  onBack,
+  onNext
+}) {
+  const canSubmit = email.includes("@") && password.length >= 8 && !busy;
+  return /* @__PURE__ */ jsxs(Card, { children: [
+    /* @__PURE__ */ jsxs(CardHeader, { children: [
+      /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx(KeyRound, { className: "size-5" }),
+        " Create your account"
+      ] }),
+      /* @__PURE__ */ jsx(CardDescription, { children: "Self-service signup — this creates a real user (default role: reader)." })
+    ] }),
+    /* @__PURE__ */ jsxs(CardContent, { className: "flex flex-col gap-3", children: [
+      /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5 text-sm", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Email" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            type: "email",
+            value: email,
+            onChange: (e) => onEmail(e.target.value),
+            placeholder: "you@home.example",
+            disabled: busy,
+            className: "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none ring-ring focus-visible:ring-2 disabled:opacity-60"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5 text-sm", children: [
+        /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground", children: [
+          "Password ",
+          /* @__PURE__ */ jsx("span", { className: "text-muted-foreground/70", children: "(min 8 chars)" })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            type: "password",
+            value: password,
+            onChange: (e) => onPassword(e.target.value),
+            placeholder: "••••••••",
+            disabled: busy,
+            className: "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none ring-ring focus-visible:ring-2 disabled:opacity-60"
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs(CardFooter, { className: "gap-2", children: [
+      /* @__PURE__ */ jsx(Button, { variant: "ghost", onClick: onBack, disabled: busy, children: "Back" }),
+      /* @__PURE__ */ jsxs(Button, { onClick: onNext, disabled: !canSubmit, className: "ml-auto", children: [
+        busy ? /* @__PURE__ */ jsx(LoaderCircle, { className: "animate-spin" }) : /* @__PURE__ */ jsx(ArrowRight, {}),
+        busy ? "Creating…" : "Create account"
+      ] })
+    ] })
+  ] });
+}
+function AddDeviceCard({
+  barcode,
+  location,
+  busy,
+  onBarcode,
+  onLocation,
+  onShuffle,
+  onNext
+}) {
+  return /* @__PURE__ */ jsxs(Card, { children: [
+    /* @__PURE__ */ jsxs(CardHeader, { children: [
+      /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx(ScanLine, { className: "size-5" }),
+        " Add your device"
+      ] }),
+      /* @__PURE__ */ jsx(CardDescription, { children: "Scan the barcode on the box. (No scanner here — use the sample, or shuffle a new one.)" })
+    ] }),
+    /* @__PURE__ */ jsxs(CardContent, { className: "flex flex-col gap-3", children: [
+      /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5 text-sm", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Device barcode" }),
+        /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              value: barcode,
+              onChange: (e) => onBarcode(e.target.value),
+              disabled: busy,
+              className: "h-9 flex-1 rounded-md border border-input bg-transparent px-3 font-mono text-sm outline-none ring-ring focus-visible:ring-2 disabled:opacity-60"
+            }
+          ),
+          /* @__PURE__ */ jsx(Button, { type: "button", size: "sm", variant: "outline", onClick: onShuffle, disabled: busy, children: "Shuffle" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5 text-sm", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Where is it?" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            value: location,
+            onChange: (e) => onLocation(e.target.value),
+            disabled: busy,
+            className: "h-9 rounded-md border border-input bg-transparent px-3 text-sm outline-none ring-ring focus-visible:ring-2 disabled:opacity-60"
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx(CardFooter, { children: /* @__PURE__ */ jsxs(Button, { onClick: onNext, disabled: busy || !barcode.trim(), className: "w-full", children: [
+      busy ? /* @__PURE__ */ jsx(LoaderCircle, { className: "animate-spin" }) : /* @__PURE__ */ jsx(ScanLine, {}),
+      busy ? "Setting up your workspace…" : "Register device"
+    ] }) })
+  ] });
+}
+function ReadyCard({
+  result,
+  email,
+  location,
+  baseUrl
+}) {
+  const dashUrl = result ? `${baseUrl}/dashboards/${result.dashboard_slug}` : "#";
+  return /* @__PURE__ */ jsxs(Card, { children: [
+    /* @__PURE__ */ jsxs(CardHeader, { children: [
+      /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2 text-emerald-700 dark:text-emerald-400", children: [
+        /* @__PURE__ */ jsx(PartyPopper, { className: "size-5" }),
+        " You're all set"
+      ] }),
+      /* @__PURE__ */ jsx(CardDescription, { children: "Your device is registered and your private dashboard is ready." })
+    ] }),
+    /* @__PURE__ */ jsxs(CardContent, { className: "flex flex-col gap-3 text-sm", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 rounded-lg border border-emerald-600/30 bg-emerald-600/10 p-3", children: [
+        /* @__PURE__ */ jsx(BadgeCheck, { className: "size-5 text-emerald-600 dark:text-emerald-400" }),
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-col", children: [
+          /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Device provisioned" }),
+          /* @__PURE__ */ jsxs("span", { className: "font-mono text-xs text-muted-foreground", children: [
+            result?.device_id ?? "—",
+            " · ",
+            location
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-[6rem_1fr] gap-x-3 gap-y-1.5 text-xs", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Account" }),
+        /* @__PURE__ */ jsx("span", { className: "font-mono", children: email }),
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Your space" }),
+        /* @__PURE__ */ jsx("span", { className: "flex items-center gap-1.5", children: /* @__PURE__ */ jsx(Badge, { variant: "secondary", children: result?.team_slug ?? "—" }) }),
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "Dashboard" }),
+        /* @__PURE__ */ jsx("span", { className: "font-mono", children: result?.dashboard_slug ?? "—" })
+      ] }),
+      /* @__PURE__ */ jsx(Separator, {}),
+      /* @__PURE__ */ jsxs("p", { className: "flex items-start gap-2 text-xs text-muted-foreground", children: [
+        /* @__PURE__ */ jsx(ShieldCheck, { className: "mt-0.5 size-3.5 shrink-0" }),
+        "Access is scoped to you: log in as",
+        " ",
+        /* @__PURE__ */ jsx("span", { className: "font-mono text-foreground", children: email }),
+        " and your sidebar shows only “My devices” — just this one device, nothing else in the tenant."
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx(CardFooter, { children: /* @__PURE__ */ jsx("a", { href: dashUrl, className: "w-full", children: /* @__PURE__ */ jsxs(Button, { className: "w-full", children: [
+      "Open my dashboard ",
+      /* @__PURE__ */ jsx(ArrowRight, {})
+    ] }) }) })
+  ] });
+}
+function StepDots({ step }) {
+  const order = ["buy", "signup", "addDevice", "ready"];
+  const idx = order.indexOf(step);
+  return /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1", children: order.map((s, i) => /* @__PURE__ */ jsx(
+    "span",
+    {
+      className: `h-1.5 rounded-full transition-all ${i <= idx ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30"}`
+    },
+    s
+  )) });
+}
+function friendly(e) {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/409|conflict|already/i.test(msg)) {
+    return "That email is already registered. Try logging in, or use a different email.";
+  }
+  if (/password/i.test(msg) && /short|length|8/i.test(msg)) {
+    return "Password must be at least 8 characters.";
+  }
+  return msg;
+}
+
+const EXTENSION_ID$2 = "com.acme.devices";
+function DevicesDashboard() {
+  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID$2,
+      className: "mx-auto flex max-w-5xl flex-col gap-5 p-1",
+      children: /* @__PURE__ */ jsx(DashboardInner, {})
+    }
+  ) });
+}
+function DashboardInner() {
+  const client = useHostClient();
+  const [rows, setRows] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [err, setErr] = React.useState(null);
+  const load = React.useCallback(() => {
+    setLoading(true);
+    setErr(null);
+    fetchJson(client, `${client.apiPrefix}/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "com.acme.devices.devices_list", params: {} })
+    }).then((r) => setRows(Array.isArray(r.rows) ? r.rows : [])).catch((e) => setErr(friendlyError$1(e))).finally(() => setLoading(false));
+  }, [client]);
+  React.useEffect(() => {
+    load();
+  }, [load]);
+  const stats = React.useMemo(() => summarize(rows), [rows]);
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between gap-4", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1.5", children: [
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Acme Devices · Fleet overview" }),
+        /* @__PURE__ */ jsxs("h1", { className: "flex items-center gap-2 text-2xl font-semibold tracking-tight", children: [
+          /* @__PURE__ */ jsx(LayoutDashboard, { className: "size-6" }),
+          " Devices dashboard"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        Button,
+        {
+          type: "button",
+          size: "sm",
+          variant: "outline",
+          onClick: load,
+          disabled: loading,
+          title: "Reload from the server",
+          children: [
+            /* @__PURE__ */ jsx(RefreshCw, { className: loading ? "animate-spin" : "" }),
+            " Refresh"
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-4 sm:grid-cols-3", children: [
+      /* @__PURE__ */ jsx(
+        StatCard,
+        {
+          icon: /* @__PURE__ */ jsx(Boxes, { className: "size-4" }),
+          label: "Devices",
+          value: String(stats.total),
+          hint: "Persisted in the nexus DB"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        StatCard,
+        {
+          icon: /* @__PURE__ */ jsx(Users, { className: "size-4" }),
+          label: "Teams",
+          value: String(stats.teams.length),
+          hint: stats.teams.length ? stats.teams.join(", ") : "tenant-wide only"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        StatCard,
+        {
+          icon: /* @__PURE__ */ jsx(MapPin, { className: "size-4" }),
+          label: "Locations",
+          value: String(stats.locations.length),
+          hint: stats.locations.length ? `${stats.locations.length} distinct` : "none recorded"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs(Card, { children: [
+      /* @__PURE__ */ jsxs(CardHeader, { children: [
+        /* @__PURE__ */ jsxs(CardTitle, { className: "flex items-center gap-2 text-base", children: [
+          /* @__PURE__ */ jsx(Table2, { className: "size-4" }),
+          " All devices"
+        ] }),
+        /* @__PURE__ */ jsxs(CardDescription, { children: [
+          "Read from the extension's own nexus table (",
+          /* @__PURE__ */ jsx("code", { className: "font-mono", children: "com_acme_devices__devices" }),
+          ") via the",
+          " ",
+          /* @__PURE__ */ jsx("code", { className: "font-mono", children: "devices_list" }),
+          " kind — scoped to your tenant & team by the host's un-spoofable identity tokens."
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx(CardContent, { children: err ? /* @__PURE__ */ jsx("div", { className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: err }) : rows.length === 0 ? /* @__PURE__ */ jsx("p", { className: "py-8 text-center text-sm text-muted-foreground", children: loading ? "Loading…" : "No devices yet — provision one on the “Provision device” page." }) : /* @__PURE__ */ jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxs("table", { className: "w-full border-collapse text-sm", children: [
+        /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "border-b text-left text-xs text-muted-foreground", children: [
+          /* @__PURE__ */ jsx("th", { className: "py-2 pr-4 font-medium", children: "device_id" }),
+          /* @__PURE__ */ jsx("th", { className: "py-2 pr-4 font-medium", children: "barcode" }),
+          /* @__PURE__ */ jsx("th", { className: "py-2 pr-4 font-medium", children: "location" }),
+          /* @__PURE__ */ jsx("th", { className: "py-2 pr-4 font-medium", children: "owner" }),
+          /* @__PURE__ */ jsx("th", { className: "py-2 pr-4 font-medium", children: "team" })
+        ] }) }),
+        /* @__PURE__ */ jsx("tbody", { children: rows.map((d, i) => /* @__PURE__ */ jsxs("tr", { className: "border-b last:border-0", children: [
+          /* @__PURE__ */ jsx("td", { className: "py-2 pr-4 font-mono text-xs", children: d.device_id ?? "—" }),
+          /* @__PURE__ */ jsx("td", { className: "py-2 pr-4 font-mono text-xs", children: d.barcode ?? "—" }),
+          /* @__PURE__ */ jsx("td", { className: "py-2 pr-4", children: d.location || "—" }),
+          /* @__PURE__ */ jsx("td", { className: "py-2 pr-4 font-mono text-xs", children: d.owner ? `${d.owner.slice(0, 8)}…` : "—" }),
+          /* @__PURE__ */ jsx("td", { className: "py-2 pr-4", children: d.team ? /* @__PURE__ */ jsx(Badge, { variant: "secondary", children: d.team }) : /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: "tenant-wide" }) })
+        ] }, d.device_id ?? i)) })
+      ] }) }) })
+    ] })
+  ] });
+}
+function StatCard({
+  icon,
+  label,
+  value,
+  hint
+}) {
+  return /* @__PURE__ */ jsxs(Card, { children: [
+    /* @__PURE__ */ jsxs(CardHeader, { className: "pb-2", children: [
+      /* @__PURE__ */ jsxs(CardDescription, { className: "flex items-center gap-1.5", children: [
+        icon,
+        " ",
+        label
+      ] }),
+      /* @__PURE__ */ jsx(CardTitle, { className: "text-3xl tabular-nums", children: value })
+    ] }),
+    /* @__PURE__ */ jsx(CardContent, { children: /* @__PURE__ */ jsx("p", { className: "truncate text-xs text-muted-foreground", title: hint, children: hint }) })
+  ] });
+}
+function summarize(rows) {
+  const teams = /* @__PURE__ */ new Set();
+  const locations = /* @__PURE__ */ new Set();
+  for (const r of rows) {
+    if (r.team) teams.add(r.team);
+    if (r.location) locations.add(r.location);
+  }
+  return {
+    total: rows.length,
+    teams: [...teams].sort(),
+    locations: [...locations].sort()
+  };
+}
+function friendlyError$1(e) {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/403|forbidden|csrf/i.test(msg)) {
+    return `${msg} — if this is a CSRF error, reload to refresh your session token.`;
+  }
+  return msg;
+}
+
 function Progress({
   value = 0,
   className
@@ -3815,14 +4492,33 @@ function friendlyError(e) {
   return msg;
 }
 
+function Main() {
+  const { route } = useSlotContext();
+  const head = (route ?? "").replace(/^\/+/, "").split("/")[0];
+  switch (head) {
+    case "provision":
+      return /* @__PURE__ */ jsx(DevicesPanel, {});
+    case "dashboard":
+      return /* @__PURE__ */ jsx(DevicesDashboard, {});
+    case "":
+    case "app":
+    default:
+      return /* @__PURE__ */ jsx(ConsumerOnboard, {});
+  }
+}
+
 const EXTENSION_ID = "com.acme.devices";
-const HREF = `/x/${EXTENSION_ID}`;
+const BASE = `/x/${EXTENSION_ID}`;
+const ITEMS = [
+  { href: `${BASE}/app`, icon: "📱", label: "Get started (app)" },
+  { href: `${BASE}/dashboard`, icon: "📊", label: "Devices dashboard" },
+  { href: `${BASE}/provision`, icon: "🔧", label: "Provision device" }
+];
 function DevicesNav() {
-  return /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ jsx("div", { "data-ext-id": EXTENSION_ID, className: "flex flex-col gap-0.5", children: ITEMS.map((it) => /* @__PURE__ */ jsxs(
     "a",
     {
-      "data-ext-id": EXTENSION_ID,
-      href: HREF,
+      href: it.href,
       className: "flex h-8 items-center gap-2 rounded-md px-2 text-sm text-sidebar-foreground/80 outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2",
       children: [
         /* @__PURE__ */ jsx(
@@ -3830,13 +4526,14 @@ function DevicesNav() {
           {
             "aria-hidden": true,
             className: "grid size-5 shrink-0 place-items-center rounded bg-primary/15 text-primary",
-            children: "🔧"
+            children: it.icon
           }
         ),
-        /* @__PURE__ */ jsx("span", { className: "truncate", children: "Provision device" })
+        /* @__PURE__ */ jsx("span", { className: "truncate", children: it.label })
       ]
-    }
-  );
+    },
+    it.href
+  )) });
 }
 
 const factory = {
@@ -3845,7 +4542,7 @@ const factory = {
   },
   init(handle) {
     registerExtensionContributions(handle, {
-      components: { DevicesPanel, DevicesNav }
+      components: { DevicesMain: Main, DevicesNav }
     });
   }
 };

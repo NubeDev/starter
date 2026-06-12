@@ -438,6 +438,12 @@ pub(crate) async fn uninstall(
         None => Vec::new(),
     };
 
+    // The sealed registry still carries this record until the next boot,
+    // so its list/detail row keeps reporting `validated/enabled`. Mark it
+    // purged so the projection reports `uninstalled` + `restart_required`
+    // — the operator sees a dead/stale row instead of a healthy one.
+    admin.mark_uninstalled(&id);
+
     (
         StatusCode::OK,
         Json(CleanupResponse {

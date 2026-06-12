@@ -51,6 +51,9 @@ pub(crate) struct ExtensionOverviewRow {
     pub runtime_kind: Option<RuntimeKind>,
     pub enabled: EnablementState,
     pub restart_required: bool,
+    /// Purged this run but still in the sealed registry until next boot —
+    /// see `ExtensionSummary::uninstalled`. Renders as dead/stale.
+    pub uninstalled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub contributes: Option<ContributesSummary>,
 
@@ -88,6 +91,7 @@ pub(crate) async fn overview(State(admin): State<ExtensionAdmin>) -> impl IntoRe
             runtime_kind: p.runtime_kind,
             enabled: EnablementState::Enabled,
             restart_required: true,
+            uninstalled: false,
             contributes: None,
             metrics: ExtensionMetrics {
                 process: None,
@@ -172,7 +176,8 @@ async fn build_row(admin: &ExtensionAdmin, rec: &ExtensionRecord) -> ExtensionOv
         display_name: rec.manifest.as_ref().map(|m| m.display_name.clone()),
         runtime_kind: rec.manifest.as_ref().map(|m| m.runtime.kind),
         enabled,
-        restart_required: admin.is_pending_restart(&id_str),
+        restart_required: admin.is_pending_restart(&id_str) || admin.is_uninstalled(&id_str),
+        uninstalled: admin.is_uninstalled(&id_str),
         contributes: rec.manifest.as_ref().map(ContributesSummary::from_manifest),
         metrics,
     }

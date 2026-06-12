@@ -21,6 +21,7 @@ use utoipa::OpenApi;
         crate::routes::me::settings::set_me_settings,
         crate::routes::query::run::run_query,
         crate::routes::nexus_db::query::query_nexus_db,
+        crate::routes::nexus_db::schema::nexus_db_schema,
         crate::routes::query::kinds::list_query_kinds,
         crate::routes::query_kinds::list::list_query_kinds_admin,
         crate::routes::query_kinds::create::create_query_kind,

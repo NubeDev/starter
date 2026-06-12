@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeviceDetailParams",
+  "type": "object",
+  "description": "Pins the panel to one device. `device_id` is the barcode-derived id of the device this dashboard belongs to; it binds as $device_id, validated and bound (never inlined). Tenant scope still comes from the $caller_tenant_id host token.",
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "The device id to show (e.g. dev-<hash>)."
+    }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

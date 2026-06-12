@@ -4,8 +4,10 @@ import { Layers, Play, Save } from "lucide-react";
 import { useStarterClient } from "@nube/starter-client-react";
 import { Button } from "@nube/starter-ui-kit/components/button";
 
+import { useCan } from "@/auth/useCan";
 import { AiSqlAssist } from "@/features/ai/AiSqlAssist";
 import { queryDatasource } from "@/api/datasources/query";
+import { NEXUS_DB_DATASOURCE_ID, queryNexusDb } from "@/api/nexus-db/query";
 import { runQuery } from "@/api/query/run";
 import type {
   FederatedSourceRef,
@@ -39,10 +41,16 @@ import { Loading } from "@/features/state/Loading";
 // so we own this against the Nexus contract).
 // Whether the explorer authors raw SQL or invokes a declarative query-kind
 // (WS-10). Kind-mode runs a named, server-validated query — no SQL to type.
-type Mode = "sql" | "kind";
+// `nexusdb` runs raw SQL against the control-plane DB (`POST /nexus-db/query`):
+// admin-only, read-only, tenant-RLS-scoped, and — unlike datasource SQL — it
+// takes no datasource, federation, insight, or kind/variable macros.
+type Mode = "sql" | "kind" | "nexusdb";
 
 export function Explore() {
   const client = useStarterClient();
+  // The Nexus-DB inspector is admin-only server-side (403 otherwise), so the
+  // tab is only offered to admins rather than dangling a dead-end for everyone.
+  const isAdmin = useCan("admin");
   const refreshHistory = useRefreshQueryHistory();
   const [datasourceId, setDatasourceId] = useState<string | undefined>();
   const [sql, setSql] = useState("");
@@ -137,18 +145,37 @@ export function Explore() {
     onSettled: () => refreshHistory(),
   });
 
+  // Nexus-DB run: raw SQL against the control-plane DB. Deliberately bypasses
+  // `withExtras` — the endpoint takes only `{ sql }` (no federation/insight),
+  // and it has its own dedicated route rather than a datasource id. Not
+  // recorded in the datasource query history, so no refresh on settle.
+  const runNexusDb = useMutation<QueryResponse, Error, string>({
+    mutationFn: (toRun) => queryNexusDb(client, toRun),
+  });
+
   // Insert a query into the editor and run it in one go — the discovery path.
   const runSql = (toRun: string) => {
     setSql(toRun);
     run.mutate(toRun);
   };
 
-  const active = mode === "sql" ? run : runKind;
-  // SQL-mode needs a datasource + SQL; kind-mode needs a selected kind.
+  // Same discovery path for the Nexus-DB tab: a table peek from the sidebar
+  // runs against the control-plane endpoint rather than a datasource.
+  const peekNexusDb = (toRun: string) => {
+    setSql(toRun);
+    runNexusDb.mutate(toRun);
+  };
+
+  const active =
+    mode === "sql" ? run : mode === "kind" ? runKind : runNexusDb;
+  // SQL-mode needs a datasource + SQL; kind-mode needs a selected kind;
+  // nexus-DB mode needs only SQL (the database is fixed server-side).
   const canRun =
     mode === "sql"
       ? sql.trim().length > 0 && !!datasourceId && !run.isPending
-      : !!kind && !runKind.isPending;
+      : mode === "kind"
+        ? !!kind && !runKind.isPending
+        : sql.trim().length > 0 && !runNexusDb.isPending;
   const onRun = () => {
     // Validate the params JSON up front so a parse error gates the run and
     // is shown inline rather than throwing inside the mutation.
@@ -165,6 +192,8 @@ export function Explore() {
     setParamsError(null);
     if (mode === "sql") {
       run.mutate(sql);
+    } else if (mode === "nexusdb") {
+      runNexusDb.mutate(sql);
     } else if (kind) {
       runKind.mutate(kind);
     }
@@ -172,13 +201,17 @@ export function Explore() {
 
   return (
     <div className="flex h-full min-h-0 gap-4">
-      {/* Persistent schema browser (SQL mode only): a grouped, searchable tree
-          that scales to any database size. Kind-mode has no datasource to
-          browse, so it's hidden then. */}
-      {mode === "sql" ? (
+      {/* Persistent schema browser + ER diagram. Shown for raw-SQL modes that
+          have tables to browse: a real datasource (SQL mode) or the Nexus DB
+          (which uses the `NEXUS_DB_DATASOURCE_ID` sentinel). Kind-mode has no
+          datasource to browse, so it's hidden then. A table peek runs through
+          the same endpoint as the active mode. */}
+      {mode === "sql" || mode === "nexusdb" ? (
         <SchemaSidebar
-          datasourceId={datasourceId}
-          onPeek={runSql}
+          datasourceId={
+            mode === "nexusdb" ? NEXUS_DB_DATASOURCE_ID : datasourceId
+          }
+          onPeek={mode === "nexusdb" ? peekNexusDb : runSql}
           collapsed={sidebarCollapsed}
           onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
         />
@@ -201,11 +234,24 @@ export function Explore() {
             >
               Kind
             </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                className={`px-3 py-1.5 text-sm ${mode === "nexusdb" ? "bg-accent" : ""}`}
+                onClick={() => setMode("nexusdb")}
+              >
+                Nexus DB
+              </button>
+            ) : null}
           </div>
           {mode === "sql" ? (
             <DatasourcePicker value={datasourceId} onChange={setDatasourceId} />
-          ) : (
+          ) : mode === "kind" ? (
             <KindPicker value={kind} onChange={setKind} />
+          ) : (
+            <span className="text-sm text-muted-foreground">
+              Control-plane DB · read-only · your tenant
+            </span>
           )}
           {mode === "sql" ? (
             <div className="ms-auto flex items-center gap-2">
@@ -275,12 +321,28 @@ export function Explore() {
               </div>
             ) : null}
           </>
+        ) : mode === "nexusdb" ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Raw read-only SQL against the Nexus control-plane DB (users,
+              datasources, dashboards, flows, agents). Admin-only and filtered
+              to your tenant; writes/DDL are rejected. Datasource macros,
+              federation, kinds, and insights don't apply here.
+            </p>
+            <SqlEditor
+              value={sql}
+              onChange={setSql}
+              minHeight="8rem"
+              ariaLabel="Nexus DB SQL query"
+            />
+          </>
         ) : (
           <p className="text-xs text-muted-foreground">
             Runs a declarative query-kind by name. The query and its tenant
             isolation are defined server-side; pick a kind and run.
           </p>
         )}
+        {mode === "nexusdb" ? null : (
         <InsightPicker
           mode={insightMode}
           onModeChange={(m) => {
@@ -298,6 +360,7 @@ export function Explore() {
           }}
           paramsError={paramsError}
         />
+        )}
         {active.data?.stats ? (
           <p className="text-xs text-muted-foreground">
             {active.data.stats.row_count} rows · {active.data.stats.elapsed_ms} ms
