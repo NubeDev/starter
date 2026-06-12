@@ -528,7 +528,7 @@ function PropertyContextMenu({
                 ctx.openDetails?.(componentUid);
                 onClose();
               }}
-              label="Details…"
+              label="Configure…"
             />
           )}
           {exposed && ctx?.unexposeProp && portOwner != null && (

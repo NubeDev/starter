@@ -15,6 +15,10 @@ export default defineConfig({
   },
   server: {
     port: 5185,
+    // Allow tailnet (.ts.net) Host headers so a Tailscale funnel/serve can
+    // reach this dev server (Vite's host-check otherwise 403s the forwarded
+    // funnel request).
+    allowedHosts: ['.ts.net'],
     // Proxy REST + OpenAPI to the local rubix-agent so the SPA can use
     // same-origin paths in dev. The agent listens on 127.0.0.1:8088 by
     // default; override the upstream by exporting `VITE_RUBIX_BASE_URL`

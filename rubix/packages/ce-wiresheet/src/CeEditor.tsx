@@ -210,11 +210,13 @@ function Inner({ base }: { base: string }) {
   // Lets onConnect target the real child (not the folder the port is drawn on)
   // when wiring to an exposed port. Populated in reload.
   const exposedRemapRef = useRef<Map<number, number>>(new Map());
-  // Monotonic reload generation. A reload that started earlier but whose fetch
-  // resolves later must NOT clobber a newer one (e.g. during Group, a topology-
-  // triggered reload that fetched before the facet write was applied). Each
-  // reload checks it's still the latest before applying.
+  // Concurrent-reload guard. A reload applies UNLESS a strictly NEWER reload has
+  // ALREADY applied (so a stale topology-triggered reload — e.g. one that fetched
+  // before a Group's facet write — can't clobber a fresher one). Keyed on
+  // "already applied", NOT "already started", so a burst of reloads never starves
+  // (the highest-gen one always applies; only superseded ones drop).
   const reloadGen = useRef(0);
+  const lastAppliedReloadGen = useRef(0);
 
   // Our WS session id; used to distinguish own echo (instant snap) from remote
   // topology changes (animate). Set from the schema callback below.
@@ -781,9 +783,9 @@ function Inner({ base }: { base: string }) {
           withEdges: true,
         });
       }
-      // A newer reload started while we were fetching — its result is fresher,
-      // so drop ours rather than clobber it with stale data.
-      if (gen !== reloadGen.current) return;
+      // Drop only if a strictly newer reload already applied (stale clobber).
+      if (gen < lastAppliedReloadGen.current) return;
+      lastAppliedReloadGen.current = gen;
       const parent = resp.nodes[0];
       const children = parent?.children ?? [];
       const scopedEdges: Edge[] = resp.edges ?? [];
@@ -1037,41 +1039,62 @@ function Inner({ base }: { base: string }) {
       // (we kept the source centroid at copy time, but recompute from the
       // clones to be robust to any engine repositioning).
       const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
-      const xs = clones.map((c) => c.metadata?.position?.x ?? 0);
-      const ys = clones.map((c) => c.metadata?.position?.y ?? 0);
-      const dx = cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2;
-      const dy = cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2;
-      const updates = clones.map((c) => ({
-        uid: c.uid,
-        position: {
-          x: Math.round((c.metadata?.position?.x ?? 0) + dx),
-          y: Math.round((c.metadata?.position?.y ?? 0) + dy),
-        },
-      }));
-      await bulkUpdate(updates);
-      // Remap uid references inside the copied __facets (exposed-port c/f + record
-      // keys) — the engine copies the facet value verbatim, so it still points at
-      // the ORIGINAL uids. Needs the copy's uidMap (no-op until the engine returns
-      // it; see API_REQUESTS §0a). Walk nested children too.
+      // /copy/nodes may return the whole copied SUBTREE (a folder + its
+      // descendants). Flatten it, then treat only the components placed directly
+      // under the dest as "top-level" — those are the ones in THIS view, the ones
+      // to reposition + select. Descendants are off-canvas (inside the folder), so
+      // they must NOT be in the paste-selection (the effect waits for ALL uids to
+      // appear and would wait forever on an off-canvas child).
+      const allClones: Component[] = [];
+      const flatten = (c: Component) => {
+        allClones.push(c);
+        c.children?.forEach(flatten);
+      };
+      clones.forEach(flatten);
+      const topLevel = allClones.filter((c) => c.parent === currentParentUid);
+      const xs = topLevel.map((c) => c.metadata?.position?.x ?? 0);
+      const ys = topLevel.map((c) => c.metadata?.position?.y ?? 0);
+      const dx = topLevel.length ? cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
+      const dy = topLevel.length ? cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
+      // ONE bulkUpdate: reposition the TOP-LEVEL clones and remap uid references in
+      // any copied __facets (exposed-port c/f + record keys — the engine copies the
+      // facet value verbatim, so it still points at the ORIGINAL uids). Uses the
+      // copy's uidMap (no-op until present; API §0a). Single call (a separate one
+      // races the paste-selection) and NON-FATAL (a rejected facet must not abort
+      // the paste → clones left unselected + view un-reloaded).
       const map = res.uidMap;
-      if (map) {
-        const compMap = map.components ?? {};
-        const propMap = map.properties ?? {};
-        const facetUpdates: { uid: number; properties: Record<string, { value: string }> }[] = [];
-        const walk = (c: Component) => {
+      const compMap = map?.components ?? {};
+      const propMap = map?.properties ?? {};
+      const topSet = new Set(topLevel.map((c) => c.uid));
+      type PasteUpdate = {
+        uid: number;
+        position?: { x: number; y: number };
+        properties?: Record<string, { value: string }>;
+      };
+      const updates: PasteUpdate[] = [];
+      for (const c of allClones) {
+        const entry: PasteUpdate = { uid: c.uid };
+        if (topSet.has(c.uid)) {
+          entry.position = {
+            x: Math.round((c.metadata?.position?.x ?? 0) + dx),
+            y: Math.round((c.metadata?.position?.y ?? 0) + dy),
+          };
+        }
+        if (map) {
           const raw = rawFacet(c.properties);
           if (raw) {
             const remapped = remapFacetUids(raw, compMap, propMap);
-            if (remapped !== raw) {
-              facetUpdates.push({ uid: c.uid, properties: { [FACET_PROP]: { value: remapped } } });
-            }
+            if (remapped !== raw) entry.properties = { [FACET_PROP]: { value: remapped } };
           }
-          c.children?.forEach(walk);
-        };
-        clones.forEach(walk);
-        if (facetUpdates.length > 0) await bulkUpdate(facetUpdates);
+        }
+        if (entry.position || entry.properties) updates.push(entry);
       }
-      const newUids = clones.map((c) => c.uid);
+      try {
+        if (updates.length > 0) await bulkUpdate(updates);
+      } catch (e) {
+        console.error("paste: reposition/facet-remap failed:", (e as Error).message);
+      }
+      const newUids = topLevel.map((c) => c.uid);
       setPendingPasteSelection(newUids);
       // Undo: soft-delete the clones (their edges cascade). pushUndo is a
       // stable useCallback declared below; referenced at call time, so it's
@@ -2049,7 +2072,17 @@ function Inner({ base }: { base: string }) {
         // onConnect only fires for a drag between two VISIBLE handles, so both
         // endpoints are on-canvas — the edge is in-folder, no ghost needed. The
         // WS topologyAdded echo is skipped because the store already has it.
-        useStructural.getState().upsertEdge(created);
+        // Force the prop/component uids onto the stored edge: the POST response
+        // doesn't reliably echo sourcePropertyUid/targetPropertyUid, but we KNOW
+        // them (they're the drag handles), and downstream consumers (grouping
+        // boundary detection, exposed-port routing) rely on them being present.
+        useStructural.getState().upsertEdge({
+          ...created,
+          sourceUid: srcUid,
+          sourcePropertyUid: Number(c.sourceHandle),
+          targetUid: tgtUid,
+          targetPropertyUid: Number(c.targetHandle),
+        });
         const isLoop = created.loopBack === true;
         const rfEdge: RfEdge = {
           id: String(created.uid),
@@ -2272,7 +2305,15 @@ function Inner({ base }: { base: string }) {
     }) => {
       const created = await restAddEdge(payload);
       if (created?.uid == null) return;
-      useStructural.getState().upsertEdge(created);
+      // Force the known prop/component uids (the POST response may omit them) so
+      // grouping / exposed-port routing can rely on them. See onConnect.
+      useStructural.getState().upsertEdge({
+        ...created,
+        sourceUid: payload.sourceUid,
+        sourcePropertyUid: payload.sourcePropUid,
+        targetUid: payload.targetUid,
+        targetPropertyUid: payload.targetPropUid,
+      });
       const st = useStructural.getState();
       const inView = st.components.has(payload.sourceUid) && st.components.has(payload.targetUid);
       if (inView) {
@@ -2379,35 +2420,50 @@ function Inner({ base }: { base: string }) {
         const srcIn = group.has(e.sourceUid);
         const dstIn = group.has(e.targetUid);
         if (srcIn === dstIn) continue; // internal or fully-external
-        if (srcIn && e.sourcePropertyUid != null) {
-          boundary.set(e.sourcePropertyUid, {
-            childComponent: e.sourceUid,
-            side: "output",
-            label: e.sourceProperty,
-            facetProp: comps.get(e.sourceUid)?.properties[FACET_PROP]?.uid,
-          });
-        } else if (dstIn && e.targetPropertyUid != null) {
-          boundary.set(e.targetPropertyUid, {
-            childComponent: e.targetUid,
-            side: "input",
-            label: e.targetProperty,
-            facetProp: comps.get(e.targetUid)?.properties[FACET_PROP]?.uid,
-          });
+        // Resolve the in-group prop uid, falling back to a name lookup if the
+        // stored edge lacks the *PropertyUid (some POST responses omit it). A
+        // missing uid would otherwise silently drop the boundary → the edge
+        // renders as a ghost instead of an exposed port.
+        if (srcIn) {
+          const child = comps.get(e.sourceUid);
+          const propUid = e.sourcePropertyUid ?? child?.properties[e.sourceProperty]?.uid;
+          if (propUid != null) {
+            boundary.set(propUid, {
+              childComponent: e.sourceUid,
+              side: "output",
+              label: e.sourceProperty,
+              facetProp: child?.properties[FACET_PROP]?.uid,
+            });
+          }
+        } else if (dstIn) {
+          const child = comps.get(e.targetUid);
+          const propUid = e.targetPropertyUid ?? child?.properties[e.targetProperty]?.uid;
+          if (propUid != null) {
+            boundary.set(propUid, {
+              childComponent: e.targetUid,
+              side: "input",
+              label: e.targetProperty,
+              facetProp: child?.properties[FACET_PROP]?.uid,
+            });
+          }
         }
       }
-      // Folder position = centroid of the members.
-      let cx = 0;
-      let cy = 0;
-      let n = 0;
-      for (const uid of uids) {
-        const p = comps.get(uid)?.metadata?.position;
-        if (p) {
-          cx += p.x;
-          cy += p.y;
-          n += 1;
+      // Folder position = bounding-box CENTER of the members, read from the LIVE
+      // RF positions (the store positions can be stale if they were just dragged).
+      const xs: number[] = [];
+      const ys: number[] = [];
+      for (const node of rf.getNodes()) {
+        if (group.has(Number(node.id))) {
+          xs.push(node.position.x);
+          ys.push(node.position.y);
         }
       }
-      const position = n ? { x: Math.round(cx / n), y: Math.round(cy / n) } : { x: 0, y: 0 };
+      const position = xs.length
+        ? {
+            x: Math.round((Math.min(...xs) + Math.max(...xs)) / 2),
+            y: Math.round((Math.min(...ys) + Math.max(...ys)) / 2),
+          }
+        : { x: 0, y: 0 };
       // Unique folder name under the current parent.
       const siblings = new Set(
         Array.from(comps.values())
@@ -2448,7 +2504,7 @@ function Inner({ base }: { base: string }) {
         reportError(e);
       }
     },
-    [currentParentUid, reload, reportError],
+    [currentParentUid, reload, reportError, rf],
   );
 
   const openDetails = useCallback(async (componentUid: number) => {
@@ -2718,8 +2774,11 @@ function Inner({ base }: { base: string }) {
         />
       )}
       {detailsUid != null && (
-        <DetailsPanel
+        <ConfigurePanel
           componentUid={detailsUid}
+          currentParentUid={currentParentUid}
+          exposeProp={exposeProp}
+          unexposeProp={unexposeProp}
           onSave={async (facetString) => {
             try {
               await updateNode(detailsUid, {
@@ -2925,30 +2984,58 @@ const detailsField: CSSProperties = {
   minWidth: 0,
 };
 
-// Details panel — author the per-prop __facet (labels, units, decimals,
-// aliases, hidden). Read-modify-write: starts from the current facet and
-// preserves fields it doesn't edit (action/min/max/order), serialises, and
-// hands the string to the caller to PATCH + reload.
-function DetailsPanel({
+// Configure panel — author the per-prop __facet (labels, units, decimals,
+// aliases, hidden) AND manage which props are exposed as ports. Read-modify-
+// write: clones the current facet and overlays the edited cosmetic fields so
+// fields it doesn't touch (action/min/max/order, plus exposed-port
+// expose/childComponent/facetProp) survive. Cosmetic edits apply on Save/Enter;
+// expose toggles are structural and apply immediately (own props expose onto the
+// parent folder; a folder's existing port rows un-expose in place).
+function ConfigurePanel({
   componentUid,
+  currentParentUid,
+  exposeProp,
+  unexposeProp,
   onSave,
   onClose,
 }: {
   componentUid: number;
+  currentParentUid: number;
+  exposeProp: (
+    childPropUid: number,
+    childComponentUid: number,
+    side: "input" | "output",
+    defaultLabel: string,
+  ) => Promise<void> | void;
+  unexposeProp: (folderUid: number, childPropUid: number) => Promise<void> | void;
   onSave: (facetString: string) => void;
   onClose: () => void;
 }) {
   const comp = useStructural((s) => s.components.get(componentUid));
   const props = useMemo(() => {
-    if (!comp) return [] as { uid: number; name: string }[];
+    if (!comp) return [] as { uid: number; name: string; category: number }[];
     return Object.entries(comp.properties)
       .filter(([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL)
-      .map(([name, p]) => ({ uid: p.uid, name }));
+      .map(([name, p]) => ({ uid: p.uid, name, category: p.category }));
   }, [comp]);
   const initial = useMemo(
     () => facetFor(componentUid, rawFacet(comp?.properties)),
     [comp, componentUid],
   );
+  // Exposed-port projections this component carries (facet records with `expose`
+  // keyed by a CHILD prop uid — not one of our own props). Folders show these so
+  // the port can be configured here instead of via a separate right-click.
+  const portRows = useMemo(() => {
+    const own = new Set(props.map((p) => p.uid));
+    const out: { uid: number; name: string; side: "input" | "output" }[] = [];
+    for (const [uid, f] of initial) {
+      if (f.expose && !own.has(uid)) {
+        out.push({ uid, name: f.label ?? `port ${uid}`, side: f.expose });
+      }
+    }
+    return out;
+  }, [initial, props]);
+
   type Draft = {
     label: string;
     unit: string;
@@ -2956,23 +3043,109 @@ function DetailsPanel({
     hidden: boolean;
     aliases: string;
   };
+  const empty: Draft = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
+  const seed = (uid: number): Draft => {
+    const f = initial.get(uid);
+    return {
+      label: f?.label ?? "",
+      unit: f?.unit ?? "",
+      decimals: f?.decimals != null ? String(f.decimals) : "",
+      hidden: f?.hidden ?? false,
+      aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? "",
+    };
+  };
   const [draft, setDraft] = useState<Record<number, Draft>>(() => {
     const d: Record<number, Draft> = {};
-    for (const p of props) {
-      const f = initial.get(p.uid);
-      d[p.uid] = {
-        label: f?.label ?? "",
-        unit: f?.unit ?? "",
-        decimals: f?.decimals != null ? String(f.decimals) : "",
-        hidden: f?.hidden ?? false,
-        aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? "",
-      };
-    }
+    for (const p of props) d[p.uid] = seed(p.uid);
+    for (const pr of portRows) d[pr.uid] = seed(pr.uid);
     return d;
   });
-  const empty: Draft = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
   const set = (uid: number, patch: Partial<Draft>) =>
     setDraft((d) => ({ ...d, [uid]: { ...(d[uid] ?? empty), ...patch } }));
+
+  // Which of our props are already exposed on the parent folder. The parent is
+  // off-canvas (one level up), so fetch its facet once; toggles update locally.
+  const canExposeHere =
+    comp != null && comp.parent === currentParentUid && currentParentUid !== ROOT_UID;
+  const [exposedOnParent, setExposedOnParent] = useState<Set<number>>(() => new Set());
+  useEffect(() => {
+    if (!canExposeHere) return;
+    let cancelled = false;
+    void getNodeByUid(currentParentUid, { depth: 0 })
+      .then((resp) => {
+        if (cancelled) return;
+        const pf = parseFacet(rawFacet(resp.nodes[0]?.properties) ?? "");
+        const s = new Set<number>();
+        for (const [uid, f] of pf) if (f.expose != null) s.add(uid);
+        setExposedOnParent(s);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [canExposeHere, currentParentUid, componentUid]);
+
+  const toggleExpose = (p: { uid: number; name: string; category: number }) => {
+    const side: "input" | "output" = p.category === CATEGORY_INPUT ? "input" : "output";
+    const next = new Set(exposedOnParent);
+    if (next.has(p.uid)) {
+      next.delete(p.uid);
+      setExposedOnParent(next);
+      void unexposeProp(currentParentUid, p.uid);
+    } else {
+      next.add(p.uid);
+      setExposedOnParent(next);
+      void exposeProp(p.uid, componentUid, side, draft[p.uid]?.label || p.name);
+    }
+  };
+
+  const applyCosmetic = (f: PropFacet, d: Draft) => {
+    if (d.label.trim()) f.label = d.label.trim();
+    else delete f.label;
+    if (d.unit.trim()) f.unit = d.unit.trim();
+    else delete f.unit;
+    const dec = Number(d.decimals);
+    if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
+    else delete f.decimals;
+    if (d.hidden) f.hidden = true;
+    else delete f.hidden;
+    const aliases = parseAliasInput(d.aliases);
+    if (aliases.length) f.aliases = aliases;
+    else delete f.aliases;
+  };
+
+  const save = () => {
+    // Clone every existing record (preserves exposed-port records + fields this
+    // panel doesn't edit), then overlay the cosmetic edits for each visible row.
+    const facet: ComponentFacet = new Map();
+    for (const [uid, f] of initial) facet.set(uid, { ...f });
+    for (const p of props) {
+      const f: PropFacet = { ...(facet.get(p.uid) ?? {}) };
+      applyCosmetic(f, draft[p.uid] ?? empty);
+      if (Object.keys(f).length > 0) facet.set(p.uid, f);
+      else facet.delete(p.uid);
+    }
+    for (const pr of portRows) {
+      const f: PropFacet = { ...(facet.get(pr.uid) ?? {}) };
+      applyCosmetic(f, draft[pr.uid] ?? empty);
+      facet.set(pr.uid, f); // keeps expose/childComponent/facetProp
+    }
+    onSave(serializeFacet(facet));
+    onClose();
+  };
+
+  // Enter anywhere in a field confirms+closes; Esc cancels. Always stop
+  // propagation so canvas keyboard shortcuts don't fire while typing.
+  const onFieldKey = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    }
+  };
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
@@ -2982,28 +3155,58 @@ function DetailsPanel({
     return () => document.removeEventListener("keydown", onEsc);
   }, [onClose]);
 
-  const save = () => {
-    const facet: ComponentFacet = new Map();
-    for (const p of props) {
-      const d = draft[p.uid] ?? empty;
-      const f: PropFacet = {};
-      if (d.label.trim()) f.label = d.label.trim();
-      if (d.unit.trim()) f.unit = d.unit.trim();
-      const dec = Number(d.decimals);
-      if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
-      if (d.hidden) f.hidden = true;
-      const aliases = parseAliasInput(d.aliases);
-      if (aliases.length) f.aliases = aliases;
-      // Preserve fields this panel doesn't edit (engine / action set).
-      const init = initial.get(p.uid);
-      if (init?.action) f.action = init.action;
-      if (init?.min != null) f.min = init.min;
-      if (init?.max != null) f.max = init.max;
-      if (init?.order != null) f.order = init.order;
-      if (Object.keys(f).length > 0) facet.set(p.uid, f);
-    }
-    onSave(serializeFacet(facet));
-    onClose();
+  // The label/unit/decimals/hide/aliases editor shared by own-prop and port rows.
+  const cosmeticFields = (uid: number) => {
+    const d = draft[uid] ?? empty;
+    return (
+      <>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 64px 46px auto",
+            gap: 6,
+            alignItems: "center",
+          }}
+        >
+          <input
+            placeholder="label"
+            value={d.label}
+            onChange={(e) => set(uid, { label: e.target.value })}
+            onKeyDown={onFieldKey}
+            style={detailsField}
+          />
+          <input
+            placeholder="unit"
+            value={d.unit}
+            onChange={(e) => set(uid, { unit: e.target.value })}
+            onKeyDown={onFieldKey}
+            style={detailsField}
+          />
+          <input
+            placeholder="dec"
+            value={d.decimals}
+            onChange={(e) => set(uid, { decimals: e.target.value })}
+            onKeyDown={onFieldKey}
+            style={detailsField}
+          />
+          <label style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }}>
+            <input
+              type="checkbox"
+              checked={d.hidden}
+              onChange={(e) => set(uid, { hidden: e.target.checked })}
+            />
+            hide
+          </label>
+        </div>
+        <input
+          placeholder="aliases   e.g.  0=off, 1=auto, 2=manual"
+          value={d.aliases}
+          onChange={(e) => set(uid, { aliases: e.target.value })}
+          onKeyDown={onFieldKey}
+          style={{ ...detailsField, width: "100%", marginTop: 6 }}
+        />
+      </>
+    );
   };
 
   return (
@@ -3046,78 +3249,101 @@ function DetailsPanel({
           }}
         >
           <span style={{ fontWeight: 600 }}>
-            Details — <span style={{ color: "#9ecbff" }}>{comp?.name ?? componentUid}</span>
+            Configure — <span style={{ color: "#9ecbff" }}>{comp?.name ?? componentUid}</span>
           </span>
           <span style={{ color: "#5a6172", fontSize: 10 }}>label · unit · decimals · aliases</span>
         </div>
         <div style={{ overflowY: "auto" }}>
-          {props.length === 0 ? (
+          {props.length === 0 && portRows.length === 0 ? (
             <div style={{ padding: "12px", color: "#5a6172" }}>no editable properties</div>
           ) : (
             props.map((p) => {
-              const d = draft[p.uid] ?? empty;
+              const canExpose = canExposeHere && p.category !== CATEGORY_CONFIG;
               return (
                 <div key={p.uid} style={{ borderBottom: "1px solid #232733", padding: "8px 12px" }}>
                   <div
                     style={{
-                      color: "#9ecbff",
-                      marginBottom: 5,
-                      fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                    }}
-                  >
-                    {p.name}
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 64px 46px auto",
-                      gap: 6,
+                      display: "flex",
                       alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 5,
                     }}
                   >
-                    <input
-                      placeholder="label"
-                      value={d.label}
-                      onChange={(e) => set(p.uid, { label: e.target.value })}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      style={detailsField}
-                    />
-                    <input
-                      placeholder="unit"
-                      value={d.unit}
-                      onChange={(e) => set(p.uid, { unit: e.target.value })}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      style={detailsField}
-                    />
-                    <input
-                      placeholder="dec"
-                      value={d.decimals}
-                      onChange={(e) => set(p.uid, { decimals: e.target.value })}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      style={detailsField}
-                    />
-                    <label
-                      style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }}
+                    <span
+                      style={{
+                        color: "#9ecbff",
+                        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                      }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={d.hidden}
-                        onChange={(e) => set(p.uid, { hidden: e.target.checked })}
-                      />
-                      hide
-                    </label>
+                      {p.name}
+                    </span>
+                    {canExpose && (
+                      <label
+                        title={`Expose this ${p.category === CATEGORY_INPUT ? "input" : "output"} as a port on the parent folder`}
+                        style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={exposedOnParent.has(p.uid)}
+                          onChange={() => toggleExpose(p)}
+                        />
+                        expose
+                      </label>
+                    )}
                   </div>
-                  <input
-                    placeholder="aliases   e.g.  0=off, 1=auto, 2=manual"
-                    value={d.aliases}
-                    onChange={(e) => set(p.uid, { aliases: e.target.value })}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    style={{ ...detailsField, width: "100%", marginTop: 6 }}
-                  />
+                  {cosmeticFields(p.uid)}
                 </div>
               );
             })
           )}
+          {portRows.length > 0 && (
+            <div
+              style={{
+                padding: "6px 12px",
+                color: "#5a6172",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                borderBottom: "1px solid #232733",
+                background: "#15181e",
+              }}
+            >
+              exposed ports
+            </div>
+          )}
+          {portRows.map((pr) => (
+            <div key={pr.uid} style={{ borderBottom: "1px solid #232733", padding: "8px 12px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 5,
+                }}
+              >
+                <span
+                  style={{
+                    color: "#9ecbff",
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                  }}
+                >
+                  ↪ {pr.name} <span style={{ color: "#5a6172" }}>({pr.side})</span>
+                </span>
+                <label
+                  title="Un-expose this port"
+                  style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked
+                    onChange={() => void unexposeProp(componentUid, pr.uid)}
+                  />
+                  exposed
+                </label>
+              </div>
+              {cosmeticFields(pr.uid)}
+            </div>
+          ))}
         </div>
         <div
           style={{
@@ -3442,7 +3668,7 @@ function NodeContextMenu({
         </div>
       </div>
       {canRename && <EdgeMenuItem label="Rename…" onClick={onRename} />}
-      {canRename && <EdgeMenuItem label="Details…" onClick={onDetails} />}
+      {canRename && <EdgeMenuItem label="Configure…" onClick={onDetails} />}
       {count >= 2 && <EdgeMenuItem label={`Group ${count} into folder`} onClick={onGroup} />}
       <EdgeMenuItem label="Move into…" onClick={onMoveInto} />
       {hasActions && <EdgeMenuItem label="Action…" onClick={onAction} />}

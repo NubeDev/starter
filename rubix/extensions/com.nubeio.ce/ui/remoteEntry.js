@@ -14697,7 +14697,7 @@ function PropertyContextMenu({
                   ctx.openDetails?.(componentUid);
                   onClose();
                 },
-                label: "Details…"
+                label: "Configure…"
               }
             ),
             exposed && ctx?.unexposeProp && portOwner != null && /* @__PURE__ */ jsx(
@@ -16887,6 +16887,7 @@ function Inner({ base }) {
   const [pendingEdges, setPendingEdges] = useState(null);
   const exposedRemapRef = useRef(/* @__PURE__ */ new Map());
   const reloadGen = useRef(0);
+  const lastAppliedReloadGen = useRef(0);
   const sessionIdRef = useRef(null);
   const POS_SETTLE_PX = 0.5;
   const posAnims = useRef(
@@ -17275,7 +17276,8 @@ function Inner({ base }) {
           withEdges: true
         });
       }
-      if (gen !== reloadGen.current) return;
+      if (gen < lastAppliedReloadGen.current) return;
+      lastAppliedReloadGen.current = gen;
       const parent = resp.nodes[0];
       const children = parent?.children ?? [];
       const scopedEdges = resp.edges ?? [];
@@ -17451,37 +17453,45 @@ function Inner({ base }) {
         return;
       }
       const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
-      const xs = clones.map((c) => c.metadata?.position?.x ?? 0);
-      const ys = clones.map((c) => c.metadata?.position?.y ?? 0);
-      const dx = cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2;
-      const dy = cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2;
-      const updates = clones.map((c) => ({
-        uid: c.uid,
-        position: {
-          x: Math.round((c.metadata?.position?.x ?? 0) + dx),
-          y: Math.round((c.metadata?.position?.y ?? 0) + dy)
-        }
-      }));
-      await bulkUpdate(updates);
+      const allClones = [];
+      const flatten = (c) => {
+        allClones.push(c);
+        c.children?.forEach(flatten);
+      };
+      clones.forEach(flatten);
+      const topLevel = allClones.filter((c) => c.parent === currentParentUid);
+      const xs = topLevel.map((c) => c.metadata?.position?.x ?? 0);
+      const ys = topLevel.map((c) => c.metadata?.position?.y ?? 0);
+      const dx = topLevel.length ? cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
+      const dy = topLevel.length ? cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
       const map = res.uidMap;
-      if (map) {
-        const compMap = map.components ?? {};
-        const propMap = map.properties ?? {};
-        const facetUpdates = [];
-        const walk = (c) => {
+      const compMap = map?.components ?? {};
+      const propMap = map?.properties ?? {};
+      const topSet = new Set(topLevel.map((c) => c.uid));
+      const updates = [];
+      for (const c of allClones) {
+        const entry = { uid: c.uid };
+        if (topSet.has(c.uid)) {
+          entry.position = {
+            x: Math.round((c.metadata?.position?.x ?? 0) + dx),
+            y: Math.round((c.metadata?.position?.y ?? 0) + dy)
+          };
+        }
+        if (map) {
           const raw = rawFacet(c.properties);
           if (raw) {
             const remapped = remapFacetUids(raw, compMap, propMap);
-            if (remapped !== raw) {
-              facetUpdates.push({ uid: c.uid, properties: { [FACET_PROP]: { value: remapped } } });
-            }
+            if (remapped !== raw) entry.properties = { [FACET_PROP]: { value: remapped } };
           }
-          c.children?.forEach(walk);
-        };
-        clones.forEach(walk);
-        if (facetUpdates.length > 0) await bulkUpdate(facetUpdates);
+        }
+        if (entry.position || entry.properties) updates.push(entry);
       }
-      const newUids = clones.map((c) => c.uid);
+      try {
+        if (updates.length > 0) await bulkUpdate(updates);
+      } catch (e) {
+        console.error("paste: reposition/facet-remap failed:", e.message);
+      }
+      const newUids = topLevel.map((c) => c.uid);
       setPendingPasteSelection(newUids);
       pushUndo({ kind: "delete", componentUids: newUids });
       await reload();
@@ -18106,7 +18116,13 @@ function Inner({ base }) {
         targetPropUid: Number(c.targetHandle)
       });
       if (created?.uid != null) {
-        useStructural.getState().upsertEdge(created);
+        useStructural.getState().upsertEdge({
+          ...created,
+          sourceUid: srcUid,
+          sourcePropertyUid: Number(c.sourceHandle),
+          targetUid: tgtUid,
+          targetPropertyUid: Number(c.targetHandle)
+        });
         const isLoop = created.loopBack === true;
         const rfEdge = {
           id: String(created.uid),
@@ -18272,7 +18288,13 @@ function Inner({ base }) {
     async (payload) => {
       const created = await addEdge(payload);
       if (created?.uid == null) return;
-      useStructural.getState().upsertEdge(created);
+      useStructural.getState().upsertEdge({
+        ...created,
+        sourceUid: payload.sourceUid,
+        sourcePropertyUid: payload.sourcePropUid,
+        targetUid: payload.targetUid,
+        targetPropertyUid: payload.targetPropUid
+      });
       const st = useStructural.getState();
       const inView = st.components.has(payload.sourceUid) && st.components.has(payload.targetUid);
       if (inView) {
@@ -18350,34 +18372,42 @@ function Inner({ base }) {
         const srcIn = group.has(e.sourceUid);
         const dstIn = group.has(e.targetUid);
         if (srcIn === dstIn) continue;
-        if (srcIn && e.sourcePropertyUid != null) {
-          boundary.set(e.sourcePropertyUid, {
-            childComponent: e.sourceUid,
-            side: "output",
-            label: e.sourceProperty,
-            facetProp: comps.get(e.sourceUid)?.properties[FACET_PROP]?.uid
-          });
-        } else if (dstIn && e.targetPropertyUid != null) {
-          boundary.set(e.targetPropertyUid, {
-            childComponent: e.targetUid,
-            side: "input",
-            label: e.targetProperty,
-            facetProp: comps.get(e.targetUid)?.properties[FACET_PROP]?.uid
-          });
+        if (srcIn) {
+          const child = comps.get(e.sourceUid);
+          const propUid = e.sourcePropertyUid ?? child?.properties[e.sourceProperty]?.uid;
+          if (propUid != null) {
+            boundary.set(propUid, {
+              childComponent: e.sourceUid,
+              side: "output",
+              label: e.sourceProperty,
+              facetProp: child?.properties[FACET_PROP]?.uid
+            });
+          }
+        } else if (dstIn) {
+          const child = comps.get(e.targetUid);
+          const propUid = e.targetPropertyUid ?? child?.properties[e.targetProperty]?.uid;
+          if (propUid != null) {
+            boundary.set(propUid, {
+              childComponent: e.targetUid,
+              side: "input",
+              label: e.targetProperty,
+              facetProp: child?.properties[FACET_PROP]?.uid
+            });
+          }
         }
       }
-      let cx = 0;
-      let cy = 0;
-      let n = 0;
-      for (const uid of uids) {
-        const p = comps.get(uid)?.metadata?.position;
-        if (p) {
-          cx += p.x;
-          cy += p.y;
-          n += 1;
+      const xs = [];
+      const ys = [];
+      for (const node of rf.getNodes()) {
+        if (group.has(Number(node.id))) {
+          xs.push(node.position.x);
+          ys.push(node.position.y);
         }
       }
-      const position = n ? { x: Math.round(cx / n), y: Math.round(cy / n) } : { x: 0, y: 0 };
+      const position = xs.length ? {
+        x: Math.round((Math.min(...xs) + Math.max(...xs)) / 2),
+        y: Math.round((Math.min(...ys) + Math.max(...ys)) / 2)
+      } : { x: 0, y: 0 };
       const siblings = new Set(
         Array.from(comps.values()).filter((c) => c.parent === currentParentUid).map((c) => c.name)
       );
@@ -18415,7 +18445,7 @@ function Inner({ base }) {
         reportError(e);
       }
     },
-    [currentParentUid, reload, reportError]
+    [currentParentUid, reload, reportError, rf]
   );
   const openDetails = useCallback(async (componentUid) => {
     if (!useStructural.getState().components.has(componentUid)) {
@@ -18653,9 +18683,12 @@ function Inner({ base }) {
       }
     ),
     detailsUid != null && /* @__PURE__ */ jsx(
-      DetailsPanel,
+      ConfigurePanel,
       {
         componentUid: detailsUid,
+        currentParentUid,
+        exposeProp,
+        unexposeProp,
         onSave: async (facetString) => {
           try {
             await updateNode(detailsUid, {
@@ -18829,36 +18862,122 @@ const detailsField = {
   outline: "none",
   minWidth: 0
 };
-function DetailsPanel({
+function ConfigurePanel({
   componentUid,
+  currentParentUid,
+  exposeProp,
+  unexposeProp,
   onSave,
   onClose
 }) {
   const comp = useStructural((s) => s.components.get(componentUid));
   const props = useMemo(() => {
     if (!comp) return [];
-    return Object.entries(comp.properties).filter(([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL).map(([name, p]) => ({ uid: p.uid, name }));
+    return Object.entries(comp.properties).filter(([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL).map(([name, p]) => ({ uid: p.uid, name, category: p.category }));
   }, [comp]);
   const initial = useMemo(
     () => facetFor(componentUid, rawFacet(comp?.properties)),
     [comp, componentUid]
   );
+  const portRows = useMemo(() => {
+    const own = new Set(props.map((p) => p.uid));
+    const out = [];
+    for (const [uid, f] of initial) {
+      if (f.expose && !own.has(uid)) {
+        out.push({ uid, name: f.label ?? `port ${uid}`, side: f.expose });
+      }
+    }
+    return out;
+  }, [initial, props]);
+  const empty = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
+  const seed = (uid) => {
+    const f = initial.get(uid);
+    return {
+      label: f?.label ?? "",
+      unit: f?.unit ?? "",
+      decimals: f?.decimals != null ? String(f.decimals) : "",
+      hidden: f?.hidden ?? false,
+      aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? ""
+    };
+  };
   const [draft, setDraft] = useState(() => {
     const d = {};
-    for (const p of props) {
-      const f = initial.get(p.uid);
-      d[p.uid] = {
-        label: f?.label ?? "",
-        unit: f?.unit ?? "",
-        decimals: f?.decimals != null ? String(f.decimals) : "",
-        hidden: f?.hidden ?? false,
-        aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? ""
-      };
-    }
+    for (const p of props) d[p.uid] = seed(p.uid);
+    for (const pr of portRows) d[pr.uid] = seed(pr.uid);
     return d;
   });
-  const empty = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
   const set = (uid, patch) => setDraft((d) => ({ ...d, [uid]: { ...d[uid] ?? empty, ...patch } }));
+  const canExposeHere = comp != null && comp.parent === currentParentUid && currentParentUid !== ROOT_UID;
+  const [exposedOnParent, setExposedOnParent] = useState(() => /* @__PURE__ */ new Set());
+  useEffect(() => {
+    if (!canExposeHere) return;
+    let cancelled = false;
+    void getNodeByUid(currentParentUid, { depth: 0 }).then((resp) => {
+      if (cancelled) return;
+      const pf = parseFacet(rawFacet(resp.nodes[0]?.properties) ?? "");
+      const s = /* @__PURE__ */ new Set();
+      for (const [uid, f] of pf) if (f.expose != null) s.add(uid);
+      setExposedOnParent(s);
+    }).catch(() => {
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [canExposeHere, currentParentUid, componentUid]);
+  const toggleExpose = (p) => {
+    const side = p.category === CATEGORY_INPUT ? "input" : "output";
+    const next = new Set(exposedOnParent);
+    if (next.has(p.uid)) {
+      next.delete(p.uid);
+      setExposedOnParent(next);
+      void unexposeProp(currentParentUid, p.uid);
+    } else {
+      next.add(p.uid);
+      setExposedOnParent(next);
+      void exposeProp(p.uid, componentUid, side, draft[p.uid]?.label || p.name);
+    }
+  };
+  const applyCosmetic = (f, d) => {
+    if (d.label.trim()) f.label = d.label.trim();
+    else delete f.label;
+    if (d.unit.trim()) f.unit = d.unit.trim();
+    else delete f.unit;
+    const dec = Number(d.decimals);
+    if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
+    else delete f.decimals;
+    if (d.hidden) f.hidden = true;
+    else delete f.hidden;
+    const aliases = parseAliasInput(d.aliases);
+    if (aliases.length) f.aliases = aliases;
+    else delete f.aliases;
+  };
+  const save = () => {
+    const facet = /* @__PURE__ */ new Map();
+    for (const [uid, f] of initial) facet.set(uid, { ...f });
+    for (const p of props) {
+      const f = { ...facet.get(p.uid) ?? {} };
+      applyCosmetic(f, draft[p.uid] ?? empty);
+      if (Object.keys(f).length > 0) facet.set(p.uid, f);
+      else facet.delete(p.uid);
+    }
+    for (const pr of portRows) {
+      const f = { ...facet.get(pr.uid) ?? {} };
+      applyCosmetic(f, draft[pr.uid] ?? empty);
+      facet.set(pr.uid, f);
+    }
+    onSave(serializeFacet(facet));
+    onClose();
+  };
+  const onFieldKey = (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      save();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    }
+  };
   useEffect(() => {
     const onEsc = (e) => {
       if (e.key === "Escape") onClose();
@@ -18866,27 +18985,74 @@ function DetailsPanel({
     document.addEventListener("keydown", onEsc);
     return () => document.removeEventListener("keydown", onEsc);
   }, [onClose]);
-  const save = () => {
-    const facet = /* @__PURE__ */ new Map();
-    for (const p of props) {
-      const d = draft[p.uid] ?? empty;
-      const f = {};
-      if (d.label.trim()) f.label = d.label.trim();
-      if (d.unit.trim()) f.unit = d.unit.trim();
-      const dec = Number(d.decimals);
-      if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
-      if (d.hidden) f.hidden = true;
-      const aliases = parseAliasInput(d.aliases);
-      if (aliases.length) f.aliases = aliases;
-      const init = initial.get(p.uid);
-      if (init?.action) f.action = init.action;
-      if (init?.min != null) f.min = init.min;
-      if (init?.max != null) f.max = init.max;
-      if (init?.order != null) f.order = init.order;
-      if (Object.keys(f).length > 0) facet.set(p.uid, f);
-    }
-    onSave(serializeFacet(facet));
-    onClose();
+  const cosmeticFields = (uid) => {
+    const d = draft[uid] ?? empty;
+    return /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsxs(
+        "div",
+        {
+          style: {
+            display: "grid",
+            gridTemplateColumns: "1fr 64px 46px auto",
+            gap: 6,
+            alignItems: "center"
+          },
+          children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                placeholder: "label",
+                value: d.label,
+                onChange: (e) => set(uid, { label: e.target.value }),
+                onKeyDown: onFieldKey,
+                style: detailsField
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                placeholder: "unit",
+                value: d.unit,
+                onChange: (e) => set(uid, { unit: e.target.value }),
+                onKeyDown: onFieldKey,
+                style: detailsField
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                placeholder: "dec",
+                value: d.decimals,
+                onChange: (e) => set(uid, { decimals: e.target.value }),
+                onKeyDown: onFieldKey,
+                style: detailsField
+              }
+            ),
+            /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }, children: [
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: d.hidden,
+                  onChange: (e) => set(uid, { hidden: e.target.checked })
+                }
+              ),
+              "hide"
+            ] })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          placeholder: "aliases   e.g.  0=off, 1=auto, 2=manual",
+          value: d.aliases,
+          onChange: (e) => set(uid, { aliases: e.target.value }),
+          onKeyDown: onFieldKey,
+          style: { ...detailsField, width: "100%", marginTop: 6 }
+        }
+      )
+    ] });
   };
   return /* @__PURE__ */ jsx(
     "div",
@@ -18932,99 +19098,130 @@ function DetailsPanel({
                 },
                 children: [
                   /* @__PURE__ */ jsxs("span", { style: { fontWeight: 600 }, children: [
-                    "Details — ",
+                    "Configure — ",
                     /* @__PURE__ */ jsx("span", { style: { color: "#9ecbff" }, children: comp?.name ?? componentUid })
                   ] }),
                   /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 10 }, children: "label · unit · decimals · aliases" })
                 ]
               }
             ),
-            /* @__PURE__ */ jsx("div", { style: { overflowY: "auto" }, children: props.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "12px", color: "#5a6172" }, children: "no editable properties" }) : props.map((p) => {
-              const d = draft[p.uid] ?? empty;
-              return /* @__PURE__ */ jsxs("div", { style: { borderBottom: "1px solid #232733", padding: "8px 12px" }, children: [
-                /* @__PURE__ */ jsx(
-                  "div",
-                  {
-                    style: {
-                      color: "#9ecbff",
-                      marginBottom: 5,
-                      fontFamily: "ui-monospace, SFMono-Regular, monospace"
-                    },
-                    children: p.name
-                  }
-                ),
+            /* @__PURE__ */ jsxs("div", { style: { overflowY: "auto" }, children: [
+              props.length === 0 && portRows.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: "12px", color: "#5a6172" }, children: "no editable properties" }) : props.map((p) => {
+                const canExpose = canExposeHere && p.category !== CATEGORY_CONFIG;
+                return /* @__PURE__ */ jsxs("div", { style: { borderBottom: "1px solid #232733", padding: "8px 12px" }, children: [
+                  /* @__PURE__ */ jsxs(
+                    "div",
+                    {
+                      style: {
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginBottom: 5
+                      },
+                      children: [
+                        /* @__PURE__ */ jsx(
+                          "span",
+                          {
+                            style: {
+                              color: "#9ecbff",
+                              fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                            },
+                            children: p.name
+                          }
+                        ),
+                        canExpose && /* @__PURE__ */ jsxs(
+                          "label",
+                          {
+                            title: `Expose this ${p.category === CATEGORY_INPUT ? "input" : "output"} as a port on the parent folder`,
+                            style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
+                            children: [
+                              /* @__PURE__ */ jsx(
+                                "input",
+                                {
+                                  type: "checkbox",
+                                  checked: exposedOnParent.has(p.uid),
+                                  onChange: () => toggleExpose(p)
+                                }
+                              ),
+                              "expose"
+                            ]
+                          }
+                        )
+                      ]
+                    }
+                  ),
+                  cosmeticFields(p.uid)
+                ] }, p.uid);
+              }),
+              portRows.length > 0 && /* @__PURE__ */ jsx(
+                "div",
+                {
+                  style: {
+                    padding: "6px 12px",
+                    color: "#5a6172",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    borderBottom: "1px solid #232733",
+                    background: "#15181e"
+                  },
+                  children: "exposed ports"
+                }
+              ),
+              portRows.map((pr) => /* @__PURE__ */ jsxs("div", { style: { borderBottom: "1px solid #232733", padding: "8px 12px" }, children: [
                 /* @__PURE__ */ jsxs(
                   "div",
                   {
                     style: {
-                      display: "grid",
-                      gridTemplateColumns: "1fr 64px 46px auto",
-                      gap: 6,
-                      alignItems: "center"
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 5
                     },
                     children: [
-                      /* @__PURE__ */ jsx(
-                        "input",
+                      /* @__PURE__ */ jsxs(
+                        "span",
                         {
-                          placeholder: "label",
-                          value: d.label,
-                          onChange: (e) => set(p.uid, { label: e.target.value }),
-                          onKeyDown: (e) => e.stopPropagation(),
-                          style: detailsField
-                        }
-                      ),
-                      /* @__PURE__ */ jsx(
-                        "input",
-                        {
-                          placeholder: "unit",
-                          value: d.unit,
-                          onChange: (e) => set(p.uid, { unit: e.target.value }),
-                          onKeyDown: (e) => e.stopPropagation(),
-                          style: detailsField
-                        }
-                      ),
-                      /* @__PURE__ */ jsx(
-                        "input",
-                        {
-                          placeholder: "dec",
-                          value: d.decimals,
-                          onChange: (e) => set(p.uid, { decimals: e.target.value }),
-                          onKeyDown: (e) => e.stopPropagation(),
-                          style: detailsField
+                          style: {
+                            color: "#9ecbff",
+                            fontFamily: "ui-monospace, SFMono-Regular, monospace"
+                          },
+                          children: [
+                            "↪ ",
+                            pr.name,
+                            " ",
+                            /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
+                              "(",
+                              pr.side,
+                              ")"
+                            ] })
+                          ]
                         }
                       ),
                       /* @__PURE__ */ jsxs(
                         "label",
                         {
+                          title: "Un-expose this port",
                           style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
                           children: [
                             /* @__PURE__ */ jsx(
                               "input",
                               {
                                 type: "checkbox",
-                                checked: d.hidden,
-                                onChange: (e) => set(p.uid, { hidden: e.target.checked })
+                                checked: true,
+                                onChange: () => void unexposeProp(componentUid, pr.uid)
                               }
                             ),
-                            "hide"
+                            "exposed"
                           ]
                         }
                       )
                     ]
                   }
                 ),
-                /* @__PURE__ */ jsx(
-                  "input",
-                  {
-                    placeholder: "aliases   e.g.  0=off, 1=auto, 2=manual",
-                    value: d.aliases,
-                    onChange: (e) => set(p.uid, { aliases: e.target.value }),
-                    onKeyDown: (e) => e.stopPropagation(),
-                    style: { ...detailsField, width: "100%", marginTop: 6 }
-                  }
-                )
-              ] }, p.uid);
-            }) }),
+                cosmeticFields(pr.uid)
+              ] }, pr.uid))
+            ] }),
             /* @__PURE__ */ jsxs(
               "div",
               {
@@ -19329,7 +19526,7 @@ function NodeContextMenu({
           }
         ),
         canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Rename…", onClick: onRename }),
-        canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Details…", onClick: onDetails }),
+        canRename && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Configure…", onClick: onDetails }),
         count >= 2 && /* @__PURE__ */ jsx(EdgeMenuItem, { label: `Group ${count} into folder`, onClick: onGroup }),
         /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Move into…", onClick: onMoveInto }),
         hasActions && /* @__PURE__ */ jsx(EdgeMenuItem, { label: "Action…", onClick: onAction })
@@ -20299,7 +20496,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-11T23:00:23.051Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T00:52:58.055Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
