@@ -96,7 +96,6 @@ import {
   parseAliasInput,
   rawFacet,
   serializeFacet,
-  exposedPorts,
   remapFacetUids,
   FACET_PROP,
   type ComponentFacet,
@@ -106,6 +105,7 @@ import { sanitizeName, uniqueName } from "./lib/naming";
 import { layoutPositions } from "./lib/layout";
 import { groupBoundary } from "./lib/grouping";
 import { buildSearchIndex, rankSearchHits, type SearchHit } from "./lib/search";
+import { partitionEdges, exposedPortIndex, classifyCrossEdge } from "./lib/routing";
 
 const nodeTypes = { fb: FunctionBlock, ghost: GhostNode };
 
@@ -795,20 +795,10 @@ function Inner({ base }: { base: string }) {
       const scopedEdges: Edge[] = resp.edges ?? [];
       const childUids = new Set(children.map((c) => c.uid));
       const childByUid = new Map(children.map((c) => [c.uid, c]));
-      // Partition edges:
-      //   - inEdges:    both endpoints visible → drawn normally.
-      //   - crossEdges: one endpoint visible, the other off-canvas → drawn
-      //                 against a ghost sub-node placed at the row Y of the
-      //                 visible endpoint.
-      const inEdges: Edge[] = [];
-      const crossEdges: Edge[] = [];
-      for (const e of scopedEdges) {
-        const src = childUids.has(e.sourceUid);
-        const dst = childUids.has(e.targetUid);
-        if (src && dst) inEdges.push(e);
-        else if (src !== dst) crossEdges.push(e);
-        // Both off-canvas: skip — neither endpoint is in this view at all.
-      }
+      // Partition edges (lib/routing, tested): inEdges (both ends visible) draw
+      // normally; crossEdges (one end off-canvas) become a ghost or exposed-port
+      // edge below; both-off-canvas edges are dropped.
+      const { inEdges, crossEdges } = partitionEdges(scopedEdges, childUids);
       useStructural.getState().setNodes(children, inEdges);
 
       // Build ghost nodes + their cross-folder edges. Cross-folder edges that
@@ -827,21 +817,11 @@ function Inner({ base }: { base: string }) {
         visibleY: number;
       }
       // Reverse index of exposed ports in THIS view: a child-prop uid → the
-      // visible component (e.g. a folder) that projects it as a port. A
-      // cross-folder edge whose off-canvas end is one of these attaches to that
-      // component's port handle (handle id = the child prop uid) and renders as a
-      // normal edge, instead of a ghost. (FACET_DESIGN.md §9.)
-      const exposedIndex = new Map<number, { parentUid: number }>();
-      const exposedRemap = new Map<number, number>();
-      const subProps = new Set<number>();
-      for (const child of children) {
-        for (const ep of exposedPorts(facetFor(child.uid, rawFacet(child.properties)))) {
-          exposedIndex.set(ep.childUid, { parentUid: child.uid });
-          if (ep.facet.childComponent != null) exposedRemap.set(ep.childUid, ep.facet.childComponent);
-          subProps.add(ep.childUid); // the port's live value
-          if (ep.facet.facetProp != null) subProps.add(ep.facet.facetProp); // child's live __facets
-        }
-      }
+      // visible component (e.g. a folder) that projects it as a port, plus the
+      // child→component remap and the prop-subscription set. (lib/routing, tested.)
+      // A cross-folder edge whose off-canvas end is one of these attaches to that
+      // component's port handle instead of a ghost. (FACET_DESIGN.md §9.)
+      const { index: exposedIndex, remap: exposedRemap, subProps } = exposedPortIndex(children);
       exposedRemapRef.current = exposedRemap;
       // Subscribe the exposed (off-canvas) child props AND their child's __facets
       // prop at PROPERTY level so both the value and the presentation metadata
@@ -851,64 +831,52 @@ function Inner({ base }: { base: string }) {
 
       const ghostGroups = new Map<string, GhostGroup>();
       for (const e of crossEdges) {
-        const externalIsTarget = childUids.has(e.sourceUid);
-        // If the off-canvas end is an exposed port, draw a normal edge to the
-        // exposing component's port handle and skip the ghost.
-        const externalPropUid = externalIsTarget ? e.targetPropertyUid : e.sourcePropertyUid;
-        const exposed = externalPropUid != null ? exposedIndex.get(externalPropUid) : undefined;
-        if (exposed) {
-          const vUid = externalIsTarget ? e.sourceUid : e.targetUid;
-          const vPropUid = externalIsTarget ? e.sourcePropertyUid : e.targetPropertyUid;
-          if (vPropUid != null) {
-            const style =
-              e.loopBack === true
-                ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" }
-                : { stroke: "#4a9eff", strokeWidth: 1.5 };
-            portEdges.push(
-              externalIsTarget
-                ? {
-                    id: String(e.uid),
-                    source: String(vUid),
-                    sourceHandle: String(vPropUid),
-                    target: String(exposed.parentUid),
-                    targetHandle: String(externalPropUid),
-                    style,
-                    animated: false,
-                  }
-                : {
-                    id: String(e.uid),
-                    source: String(exposed.parentUid),
-                    sourceHandle: String(externalPropUid),
-                    target: String(vUid),
-                    targetHandle: String(vPropUid),
-                    style,
-                    animated: false,
-                  },
-            );
-            continue;
-          }
+        const route = classifyCrossEdge(e, childUids, exposedIndex);
+        const style =
+          route.loopBack
+            ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" }
+            : { stroke: "#4a9eff", strokeWidth: 1.5 };
+        // Exposed-port end: draw a normal edge to the folder's port handle.
+        if (route.kind === "port") {
+          portEdges.push(
+            route.externalIsTarget
+              ? {
+                  id: String(route.edgeUid),
+                  source: String(route.visibleUid),
+                  sourceHandle: String(route.visiblePropUid),
+                  target: String(route.portParentUid),
+                  targetHandle: String(route.portHandle),
+                  style,
+                  animated: false,
+                }
+              : {
+                  id: String(route.edgeUid),
+                  source: String(route.portParentUid),
+                  sourceHandle: String(route.portHandle),
+                  target: String(route.visibleUid),
+                  targetHandle: String(route.visiblePropUid),
+                  style,
+                  animated: false,
+                },
+          );
+          continue;
         }
-        const visibleUid = externalIsTarget ? e.sourceUid : e.targetUid;
-        const externalUid = externalIsTarget ? e.targetUid : e.sourceUid;
-        const visibleComp = childByUid.get(visibleUid);
+        // Ghost end: resolve the visible side's prop/row (needs the component) and
+        // merge into the per-(component,prop) ghost group.
+        const visibleComp = childByUid.get(route.visibleUid);
         if (!visibleComp) continue;
-        const propName = externalIsTarget ? e.sourceProperty : e.targetProperty;
-        const visibleProp = visibleComp.properties[propName];
+        const visibleProp = visibleComp.properties[route.visiblePropName];
         if (!visibleProp) continue;
-        const rowIdx = userFacingRowIndex(visibleComp, propName);
+        const rowIdx = userFacingRowIndex(visibleComp, route.visiblePropName);
         if (rowIdx < 0) continue;
-        const externalPropName = externalIsTarget ? e.targetProperty : e.sourceProperty;
-        const externalPath = externalIsTarget ? e.targetPath ?? "" : e.sourcePath ?? "";
-        // Group key: visible side identifies the ghost. Multiple edges that
-        // share this side merge into one ghost.
-        const key = `${visibleUid}:${visibleProp.uid}`;
+        const key = `${route.visibleUid}:${visibleProp.uid}`;
         let group = ghostGroups.get(key);
         if (!group) {
           group = {
-            visibleUid,
+            visibleUid: route.visibleUid,
             visiblePropUid: visibleProp.uid,
             rowIdx,
-            side: externalIsTarget ? "input" : "output",
+            side: route.side,
             connections: [],
             edgeUids: [],
             visibleX: visibleComp.metadata?.position?.x ?? 0,
@@ -917,12 +885,12 @@ function Inner({ base }: { base: string }) {
           ghostGroups.set(key, group);
         }
         group.connections.push({
-          externalComponentUid: externalUid,
-          externalPath,
-          externalPropName,
-          edgeUid: e.uid,
+          externalComponentUid: route.externalUid,
+          externalPath: route.externalPath,
+          externalPropName: route.externalPropName,
+          edgeUid: route.edgeUid,
         });
-        group.edgeUids.push(e.uid);
+        group.edgeUids.push(route.edgeUid);
       }
 
       const ghostNodes: RfNode<GhostNodeData>[] = [];

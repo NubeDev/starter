@@ -17017,6 +17017,65 @@ function rankSearchHits(all, query) {
   ).slice(0, 80).map((x) => x.h);
 }
 
+function partitionEdges(edges, childUids) {
+  const inEdges = [];
+  const crossEdges = [];
+  for (const e of edges) {
+    const src = childUids.has(e.sourceUid);
+    const dst = childUids.has(e.targetUid);
+    if (src && dst) inEdges.push(e);
+    else if (src !== dst) crossEdges.push(e);
+  }
+  return { inEdges, crossEdges };
+}
+function exposedPortIndex(children) {
+  const index = /* @__PURE__ */ new Map();
+  const remap = /* @__PURE__ */ new Map();
+  const subProps = /* @__PURE__ */ new Set();
+  for (const child of children) {
+    for (const ep of exposedPorts(facetFor(child.uid, rawFacet(child.properties)))) {
+      index.set(ep.childUid, { parentUid: child.uid });
+      if (ep.facet.childComponent != null) remap.set(ep.childUid, ep.facet.childComponent);
+      subProps.add(ep.childUid);
+      if (ep.facet.facetProp != null) subProps.add(ep.facet.facetProp);
+    }
+  }
+  return { index, remap, subProps };
+}
+function classifyCrossEdge(e, childUids, index) {
+  const externalIsTarget = childUids.has(e.sourceUid);
+  const externalPropUid = externalIsTarget ? e.targetPropertyUid : e.sourcePropertyUid;
+  const exposed = externalPropUid != null ? index.get(externalPropUid) : void 0;
+  if (exposed) {
+    const visibleUid = externalIsTarget ? e.sourceUid : e.targetUid;
+    const visiblePropUid = externalIsTarget ? e.sourcePropertyUid : e.targetPropertyUid;
+    if (visiblePropUid != null) {
+      return {
+        kind: "port",
+        edgeUid: e.uid,
+        loopBack: e.loopBack === true,
+        externalIsTarget,
+        visibleUid,
+        visiblePropUid,
+        portParentUid: exposed.parentUid,
+        portHandle: externalPropUid
+      };
+    }
+  }
+  return {
+    kind: "ghost",
+    edgeUid: e.uid,
+    loopBack: e.loopBack === true,
+    externalIsTarget,
+    side: externalIsTarget ? "input" : "output",
+    visibleUid: externalIsTarget ? e.sourceUid : e.targetUid,
+    visiblePropName: externalIsTarget ? e.sourceProperty : e.targetProperty,
+    externalUid: externalIsTarget ? e.targetUid : e.sourceUid,
+    externalPropName: externalIsTarget ? e.targetProperty : e.sourceProperty,
+    externalPath: (externalIsTarget ? e.targetPath : e.sourcePath) ?? ""
+  };
+}
+
 const EDGE_SELECTED_CSS = `
   .react-flow__edge.selected .react-flow__edge-path {
     stroke: #ffd166 !important;
@@ -17439,80 +17498,52 @@ function Inner({ base }) {
       const scopedEdges = resp.edges ?? [];
       const childUids = new Set(children.map((c) => c.uid));
       const childByUid = new Map(children.map((c) => [c.uid, c]));
-      const inEdges = [];
-      const crossEdges = [];
-      for (const e of scopedEdges) {
-        const src = childUids.has(e.sourceUid);
-        const dst = childUids.has(e.targetUid);
-        if (src && dst) inEdges.push(e);
-        else if (src !== dst) crossEdges.push(e);
-      }
+      const { inEdges, crossEdges } = partitionEdges(scopedEdges, childUids);
       useStructural.getState().setNodes(children, inEdges);
-      const exposedIndex = /* @__PURE__ */ new Map();
-      const exposedRemap = /* @__PURE__ */ new Map();
-      const subProps = /* @__PURE__ */ new Set();
-      for (const child of children) {
-        for (const ep of exposedPorts(facetFor(child.uid, rawFacet(child.properties)))) {
-          exposedIndex.set(ep.childUid, { parentUid: child.uid });
-          if (ep.facet.childComponent != null) exposedRemap.set(ep.childUid, ep.facet.childComponent);
-          subProps.add(ep.childUid);
-          if (ep.facet.facetProp != null) subProps.add(ep.facet.facetProp);
-        }
-      }
+      const { index: exposedIndex, remap: exposedRemap, subProps } = exposedPortIndex(children);
       exposedRemapRef.current = exposedRemap;
       wsClient?.setDesiredPropSubscription(subProps);
       const portEdges = [];
       const ghostGroups = /* @__PURE__ */ new Map();
       for (const e of crossEdges) {
-        const externalIsTarget = childUids.has(e.sourceUid);
-        const externalPropUid = externalIsTarget ? e.targetPropertyUid : e.sourcePropertyUid;
-        const exposed = externalPropUid != null ? exposedIndex.get(externalPropUid) : void 0;
-        if (exposed) {
-          const vUid = externalIsTarget ? e.sourceUid : e.targetUid;
-          const vPropUid = externalIsTarget ? e.sourcePropertyUid : e.targetPropertyUid;
-          if (vPropUid != null) {
-            const style = e.loopBack === true ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 };
-            portEdges.push(
-              externalIsTarget ? {
-                id: String(e.uid),
-                source: String(vUid),
-                sourceHandle: String(vPropUid),
-                target: String(exposed.parentUid),
-                targetHandle: String(externalPropUid),
-                style,
-                animated: false
-              } : {
-                id: String(e.uid),
-                source: String(exposed.parentUid),
-                sourceHandle: String(externalPropUid),
-                target: String(vUid),
-                targetHandle: String(vPropUid),
-                style,
-                animated: false
-              }
-            );
-            continue;
-          }
+        const route = classifyCrossEdge(e, childUids, exposedIndex);
+        const style = route.loopBack ? { stroke: "#7a8a9f", strokeWidth: 1.5, strokeDasharray: "6 4" } : { stroke: "#4a9eff", strokeWidth: 1.5 };
+        if (route.kind === "port") {
+          portEdges.push(
+            route.externalIsTarget ? {
+              id: String(route.edgeUid),
+              source: String(route.visibleUid),
+              sourceHandle: String(route.visiblePropUid),
+              target: String(route.portParentUid),
+              targetHandle: String(route.portHandle),
+              style,
+              animated: false
+            } : {
+              id: String(route.edgeUid),
+              source: String(route.portParentUid),
+              sourceHandle: String(route.portHandle),
+              target: String(route.visibleUid),
+              targetHandle: String(route.visiblePropUid),
+              style,
+              animated: false
+            }
+          );
+          continue;
         }
-        const visibleUid = externalIsTarget ? e.sourceUid : e.targetUid;
-        const externalUid = externalIsTarget ? e.targetUid : e.sourceUid;
-        const visibleComp = childByUid.get(visibleUid);
+        const visibleComp = childByUid.get(route.visibleUid);
         if (!visibleComp) continue;
-        const propName = externalIsTarget ? e.sourceProperty : e.targetProperty;
-        const visibleProp = visibleComp.properties[propName];
+        const visibleProp = visibleComp.properties[route.visiblePropName];
         if (!visibleProp) continue;
-        const rowIdx = userFacingRowIndex(visibleComp, propName);
+        const rowIdx = userFacingRowIndex(visibleComp, route.visiblePropName);
         if (rowIdx < 0) continue;
-        const externalPropName = externalIsTarget ? e.targetProperty : e.sourceProperty;
-        const externalPath = externalIsTarget ? e.targetPath ?? "" : e.sourcePath ?? "";
-        const key = `${visibleUid}:${visibleProp.uid}`;
+        const key = `${route.visibleUid}:${visibleProp.uid}`;
         let group = ghostGroups.get(key);
         if (!group) {
           group = {
-            visibleUid,
+            visibleUid: route.visibleUid,
             visiblePropUid: visibleProp.uid,
             rowIdx,
-            side: externalIsTarget ? "input" : "output",
+            side: route.side,
             connections: [],
             edgeUids: [],
             visibleX: visibleComp.metadata?.position?.x ?? 0,
@@ -17521,12 +17552,12 @@ function Inner({ base }) {
           ghostGroups.set(key, group);
         }
         group.connections.push({
-          externalComponentUid: externalUid,
-          externalPath,
-          externalPropName,
-          edgeUid: e.uid
+          externalComponentUid: route.externalUid,
+          externalPath: route.externalPath,
+          externalPropName: route.externalPropName,
+          edgeUid: route.edgeUid
         });
-        group.edgeUids.push(e.uid);
+        group.edgeUids.push(route.edgeUid);
       }
       const ghostNodes = [];
       const ghostEdges = [];
@@ -20801,7 +20832,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T05:43:20.105Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T09:36:26.013Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

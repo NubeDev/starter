@@ -23,7 +23,7 @@ behaviour something pinned. Adding a feature? Add a test for it in the same PR.
 - **`vitest.config.ts`** — picks up `src/**/*.test.{ts,tsx}`, jsdom environment.
 - Tests sit beside their target: `src/lib/facet.ts` → `src/lib/facet.test.ts`.
 
-## Current coverage (50 tests, 8 files)
+## Current coverage (56 tests, 9 files)
 
 Pure logic backing the editor's features, extracted into `lib/` so each is
 directly testable:
@@ -33,6 +33,8 @@ directly testable:
 - `wire.ts` — binary frame decode for every typeTag (bool/u32/i32/f32/f64/u64/
   i64/str), 64-bit alignment, multi-section + STATUS routing.
 - `store.ts` — structural reducers: prop→component index, edge-cascade on delete.
+- `routing.ts` — cross-folder edge routing: in/cross partition, exposed-port
+  index (+ subscription set), and the per-edge port-vs-ghost classification.
 - `grouping.ts` — Group boundary detection (+ the name-fallback ghost-bug guard).
 - `layout.ts` — grid fallback + duplicate-position de-stacking.
 - `search.ts` — search index build + query ranking (names, labels, aliases).
@@ -40,7 +42,9 @@ directly testable:
 - `rest.ts` — `RestError.debug` dump formatting.
 
 The editor (`CeEditor.tsx`, `FunctionBlock.tsx`) now *calls* these, so a feature's
-core logic is covered even though the React glue around it isn't.
+core logic is covered even though the React glue around it isn't. Still inline
+(candidates for the next extraction): paste flatten+remap, connect-to / move-to
+picker tiering, and the WS subscription diff.
 
 ## What to test next (in priority order)
 
