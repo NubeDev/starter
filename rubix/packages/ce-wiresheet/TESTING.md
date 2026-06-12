@@ -7,13 +7,35 @@ Tests live next to the code as `*.test.ts` / `*.test.tsx`.
 ## Running
 
 ```bash
-# this package only (the usual loop)
+# unit tests — hermetic, no engine needed (the usual loop)
 pnpm --filter @nube/ce-wiresheet test          # run once (CI / pre-commit)
 pnpm --filter @nube/ce-wiresheet test:watch    # re-run on save while developing
 
-# every package in the workspace (what CI runs)
+# integration tests — drive a LIVE Control Engine (REST + binary WS)
+pnpm --filter @nube/ce-wiresheet test:integration
+CE_BASE=http://<ip>:<port> pnpm --filter @nube/ce-wiresheet test:integration
+
+# every package in the workspace (what CI runs) — unit only
 pnpm -r run test
 ```
+
+## Integration tests (live engine)
+
+`src/itest/*.itest.ts` exercise the **whole path** — REST mutate → engine compute
+→ binary-WS stream → real `decodeBinaryFrame` — against a running CE with the
+NubeIO math extension (`CE_BASE`, default `http://127.0.0.1:7878`). They **skip
+themselves** when no engine is reachable, so they're safe in CI / offline.
+
+- Each test gets a **clean slate**: a dedicated `__ce_itest__` folder is deleted +
+  recreated in `beforeEach`, so tests never see each other's components and the
+  rest of the engine is left untouched.
+- Correctness is read off the **value stream** (REST returns stored config, not
+  the live computed value). Inputs are seeded with `defaultValues` at creation —
+  overrides set the OVERRIDDEN status but not the value on this engine
+  (API_REQUESTS §3), so they can't drive a test.
+- `dataflow.itest.ts` covers: `add` = in1+in2, `subtract` = in1−in2, a **chain of
+  5 adds (each input 1) summing to 5**, and edge-delete halting propagation.
+- Gotcha encoded in the helpers: the engine rejects 1-character component names.
 
 Run the suite after any change to `src/` — if a test goes red you've lost
 behaviour something pinned. Adding a feature? Add a test for it in the same PR.
