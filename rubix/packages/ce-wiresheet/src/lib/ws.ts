@@ -5,6 +5,7 @@ import {
   type TopologyMsg,
 } from "./engine-types";
 import { decodeBinaryFrame, type DecodedFrame } from "./wire";
+import { diffSets } from "./subscriptions";
 import {
   metrics,
   recordEvent,
@@ -359,14 +360,8 @@ export class CeRestWs {
 
   private flushSubscriptions() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    const added: number[] = [];
-    const removed: number[] = [];
-    for (const uid of this.desiredSubscribed) {
-      if (!this.subscribedComponents.has(uid)) added.push(uid);
-    }
-    for (const uid of this.subscribedComponents) {
-      if (!this.desiredSubscribed.has(uid)) removed.push(uid);
-    }
+    // Component-level deltas. Diff in lib/subscriptions (tested).
+    const { added, removed } = diffSets(this.subscribedComponents, this.desiredSubscribed);
     if (added.length > 0) {
       this.ws.send(JSON.stringify({ type: "subscribe", components: added }));
       for (const u of added) this.subscribedComponents.add(u);
@@ -378,14 +373,10 @@ export class CeRestWs {
       recordEvent("unsubscribe", `-[${removed.join(",")}]`);
     }
     // Property-level deltas (for exposed ports).
-    const addedP: number[] = [];
-    const removedP: number[] = [];
-    for (const uid of this.desiredSubscribedProps) {
-      if (!this.subscribedProps.has(uid)) addedP.push(uid);
-    }
-    for (const uid of this.subscribedProps) {
-      if (!this.desiredSubscribedProps.has(uid)) removedP.push(uid);
-    }
+    const { added: addedP, removed: removedP } = diffSets(
+      this.subscribedProps,
+      this.desiredSubscribedProps,
+    );
     if (addedP.length > 0) {
       this.ws.send(JSON.stringify({ type: "subscribe", properties: addedP }));
       for (const u of addedP) this.subscribedProps.add(u);

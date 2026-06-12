@@ -14361,6 +14361,69 @@ function aliasLabel(aliases, value) {
   return aliases.find((a) => a.code === code)?.label;
 }
 
+function takenInputUids(edges) {
+  const taken = /* @__PURE__ */ new Set();
+  for (const e of edges) if (e.targetPropertyUid != null) taken.add(e.targetPropertyUid);
+  return taken;
+}
+const connectTier = (g) => g.isParent ? 0 : g.sibling ? 1 : g.isChild ? 2 : 3;
+function buildConnectGroups(components, opts) {
+  const { sourceComponentUid, sourceParent, wantCategory, taken } = opts;
+  const groups = [];
+  for (const c of components) {
+    if (c.uid === sourceComponentUid) continue;
+    const props = [];
+    for (const [name, p] of Object.entries(c.properties)) {
+      if (p.category !== wantCategory) continue;
+      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
+      if (taken.has(p.uid)) continue;
+      props.push({ propUid: p.uid, propName: name });
+    }
+    if (props.length === 0) continue;
+    props.sort((a, b) => a.propName.localeCompare(b.propName));
+    groups.push({
+      componentUid: c.uid,
+      componentName: c.name || c.type,
+      path: c.path,
+      sibling: sourceParent !== void 0 && c.parent === sourceParent,
+      isParent: sourceParent !== void 0 && c.uid === sourceParent,
+      isChild: c.parent === sourceComponentUid,
+      props
+    });
+  }
+  groups.sort((a, b) => {
+    const ta = connectTier(a);
+    const tb = connectTier(b);
+    if (ta !== tb) return ta - tb;
+    return ta === 3 ? a.path.localeCompare(b.path) : a.componentName.localeCompare(b.componentName);
+  });
+  return groups;
+}
+function filterConnectGroups(groups, filter) {
+  const f = filter.trim().toLowerCase();
+  if (!f) return groups;
+  const slash = f.lastIndexOf("/");
+  const pathScope = slash >= 0 ? f.slice(0, slash) : "";
+  const term = slash >= 0 ? f.slice(slash + 1) : f;
+  const out = [];
+  for (const g of groups) {
+    const path = g.path.toLowerCase();
+    if (pathScope && !path.includes(pathScope)) continue;
+    if (!term) {
+      out.push(g);
+      continue;
+    }
+    const tail = pathScope ? path.slice(path.indexOf(pathScope) + pathScope.length) : path;
+    if (g.componentName.toLowerCase().includes(term) || tail.includes(term)) {
+      out.push(g);
+      continue;
+    }
+    const props = g.props.filter((p) => p.propName.toLowerCase().includes(term));
+    if (props.length > 0) out.push({ ...g, props });
+  }
+  return out;
+}
+
 const CeWiresheetContext = createContext(null);
 const COLOR_NUMBER = "#4a9eff";
 const COLOR_BOOL = "#4ade80";
@@ -14813,60 +14876,19 @@ function ConnectPicker({
       cancelled = true;
     };
   }, []);
-  const takenInputUids = /* @__PURE__ */ new Set();
-  if (sourceCategory === "output" && allEdges) {
-    for (const e of allEdges) {
-      if (e.targetPropertyUid != null) takenInputUids.add(e.targetPropertyUid);
-    }
-  }
+  const taken = sourceCategory === "output" && allEdges ? takenInputUids(allEdges) : /* @__PURE__ */ new Set();
   const sourceComp = useStructural.getState().components.get(sourceComponentUid);
   const sourceParent = sourceComp?.parent;
   const sourceName = sourceComp?.name || "component";
-  const groups = [];
   const componentList = allComponents ?? [];
-  for (const c of componentList) {
-    if (c.uid === sourceComponentUid) continue;
-    const isParent = sourceParent !== void 0 && c.uid === sourceParent;
-    const isChild = c.parent === sourceComponentUid;
-    const props = [];
-    for (const [name, p] of Object.entries(c.properties)) {
-      if (p.category !== wantCategory) continue;
-      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
-      if (takenInputUids.has(p.uid)) continue;
-      props.push({ propUid: p.uid, propName: name });
-    }
-    if (props.length === 0) continue;
-    props.sort((a, b) => a.propName.localeCompare(b.propName));
-    groups.push({
-      componentUid: c.uid,
-      componentName: c.name || c.type,
-      path: c.path,
-      sibling: sourceParent !== void 0 && c.parent === sourceParent,
-      isParent,
-      isChild,
-      props
-    });
-  }
-  const tierOf = (g) => g.isParent ? 0 : g.sibling ? 1 : g.isChild ? 2 : 3;
-  groups.sort((a, b) => {
-    const ta = tierOf(a);
-    const tb = tierOf(b);
-    if (ta !== tb) return ta - tb;
-    return ta === 3 ? a.path.localeCompare(b.path) : a.componentName.localeCompare(b.componentName);
+  const groups = buildConnectGroups(componentList, {
+    sourceComponentUid,
+    sourceParent,
+    wantCategory,
+    taken
   });
-  const f = filter.trim().toLowerCase();
-  const slash = f.lastIndexOf("/");
-  const pathScope = slash >= 0 ? f.slice(0, slash) : "";
-  const term = slash >= 0 ? f.slice(slash + 1) : f;
-  const filteredGroups = !f ? groups : groups.map((g) => {
-    const path = g.path.toLowerCase();
-    if (pathScope && !path.includes(pathScope)) return null;
-    if (!term) return g;
-    const tail = pathScope ? path.slice(path.indexOf(pathScope) + pathScope.length) : path;
-    if (g.componentName.toLowerCase().includes(term) || tail.includes(term)) return g;
-    const props = g.props.filter((p) => p.propName.toLowerCase().includes(term));
-    return props.length > 0 ? { ...g, props } : null;
-  }).filter((g) => g !== null);
+  const filteredGroups = filterConnectGroups(groups, filter);
+  const f = filter.trim();
   const create = async (target) => {
     const payload = sourceCategory === "output" ? {
       sourceUid: sourceComponentUid,
@@ -15141,8 +15163,8 @@ function ConnectPicker({
             const containsHl = highlight >= base && highlight < base + g.props.length;
             const isOpen = f ? true : expanded === g.componentUid || containsHl;
             const prev = idx > 0 ? filteredGroups[idx - 1] : null;
-            const tier = tierOf(g);
-            const showSection = tier !== (prev ? tierOf(prev) : -1);
+            const tier = connectTier(g);
+            const showSection = tier !== (prev ? connectTier(prev) : -1);
             const sectionLabel = tier === 0 ? "parent" : tier === 1 ? "same level" : tier === 2 ? `inside ${sourceName}` : "other folders";
             const folderPath = g.path.replace(/\/[^/]*$/, "").replace(/^root/, "");
             const showPath = tier === 3 && folderPath !== "";
@@ -16502,6 +16524,14 @@ function decodeBinaryFrame(buf) {
   return { msgType, timestampMs, sections };
 }
 
+function diffSets(current, desired) {
+  const added = [];
+  const removed = [];
+  for (const uid of desired) if (!current.has(uid)) added.push(uid);
+  for (const uid of current) if (!desired.has(uid)) removed.push(uid);
+  return { added, removed };
+}
+
 const SESSION_STORAGE_KEY = "ce-ui.sessionId";
 const TICKHZ_STORAGE_KEY = "ce-ui.tickHz";
 const RECONNECT_MS = 500;
@@ -16722,14 +16752,7 @@ class CeRestWs {
   }
   flushSubscriptions() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    const added = [];
-    const removed = [];
-    for (const uid of this.desiredSubscribed) {
-      if (!this.subscribedComponents.has(uid)) added.push(uid);
-    }
-    for (const uid of this.subscribedComponents) {
-      if (!this.desiredSubscribed.has(uid)) removed.push(uid);
-    }
+    const { added, removed } = diffSets(this.subscribedComponents, this.desiredSubscribed);
     if (added.length > 0) {
       this.ws.send(JSON.stringify({ type: "subscribe", components: added }));
       for (const u of added) this.subscribedComponents.add(u);
@@ -16740,14 +16763,10 @@ class CeRestWs {
       for (const u of removed) this.subscribedComponents.delete(u);
       recordEvent("unsubscribe", `-[${removed.join(",")}]`);
     }
-    const addedP = [];
-    const removedP = [];
-    for (const uid of this.desiredSubscribedProps) {
-      if (!this.subscribedProps.has(uid)) addedP.push(uid);
-    }
-    for (const uid of this.subscribedProps) {
-      if (!this.desiredSubscribedProps.has(uid)) removedP.push(uid);
-    }
+    const { added: addedP, removed: removedP } = diffSets(
+      this.subscribedProps,
+      this.desiredSubscribedProps
+    );
     if (addedP.length > 0) {
       this.ws.send(JSON.stringify({ type: "subscribe", properties: addedP }));
       for (const u of addedP) this.subscribedProps.add(u);
@@ -17074,6 +17093,74 @@ function classifyCrossEdge(e, childUids, index) {
     externalPropName: externalIsTarget ? e.targetProperty : e.sourceProperty,
     externalPath: (externalIsTarget ? e.targetPath : e.sourcePath) ?? ""
   };
+}
+
+function planPaste(clones, destParentUid, cursor, uidMap) {
+  const all = [];
+  const flatten = (c) => {
+    all.push(c);
+    c.children?.forEach(flatten);
+  };
+  clones.forEach(flatten);
+  const topLevel = all.filter((c) => c.parent === destParentUid);
+  const xs = topLevel.map((c) => c.metadata?.position?.x ?? 0);
+  const ys = topLevel.map((c) => c.metadata?.position?.y ?? 0);
+  const dx = topLevel.length ? cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
+  const dy = topLevel.length ? cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
+  const compMap = uidMap?.components ?? {};
+  const propMap = uidMap?.properties ?? {};
+  const topSet = new Set(topLevel.map((c) => c.uid));
+  const updates = [];
+  for (const c of all) {
+    const entry = { uid: c.uid };
+    if (topSet.has(c.uid)) {
+      entry.position = {
+        x: Math.round((c.metadata?.position?.x ?? 0) + dx),
+        y: Math.round((c.metadata?.position?.y ?? 0) + dy)
+      };
+    }
+    if (uidMap) {
+      const raw = rawFacet(c.properties);
+      if (raw) {
+        const remapped = remapFacetUids(raw, compMap, propMap);
+        if (remapped !== raw) entry.properties = { [FACET_PROP]: { value: remapped } };
+      }
+    }
+    if (entry.position || entry.properties) updates.push(entry);
+  }
+  return { updates, newUids: topLevel.map((c) => c.uid) };
+}
+
+function moveCandidates(allComponents, movingUids) {
+  const movingSet = new Set(movingUids);
+  const movingPaths = allComponents.filter((c) => movingSet.has(c.uid)).map((c) => c.path);
+  const isMovingOrDescendant = (path) => movingPaths.some((mp) => path === mp || path.startsWith(mp + "/"));
+  const movingComp = allComponents.find((c) => movingSet.has(c.uid));
+  const curFolderUid = movingComp?.parent;
+  const curFolder = allComponents.find((c) => c.uid === curFolderUid);
+  const upUid = curFolder?.parent;
+  const curFolderPath = curFolder?.path;
+  const tierOf = (c) => {
+    if (upUid !== void 0 && c.uid === upUid) return 0;
+    if (curFolderUid !== void 0 && c.parent === curFolderUid) return 1;
+    if (curFolderPath && c.path.startsWith(curFolderPath + "/")) return 2;
+    return 3;
+  };
+  const candidates = [];
+  for (const c of allComponents) {
+    if (movingSet.has(c.uid)) continue;
+    if (isMovingOrDescendant(c.path)) continue;
+    candidates.push({ uid: c.uid, name: c.name || c.type, kind: c.type, path: c.path, tier: tierOf(c) });
+  }
+  candidates.sort((a, b) => a.tier !== b.tier ? a.tier - b.tier : a.path.localeCompare(b.path));
+  return candidates;
+}
+function filterMoveCandidates(candidates, filter) {
+  const f = filter.trim().toLowerCase();
+  if (!f) return candidates;
+  return candidates.filter(
+    (c) => c.name.toLowerCase().includes(f) || c.kind.toLowerCase().includes(f) || c.path.toLowerCase().includes(f)
+  );
 }
 
 const EDGE_SELECTED_CSS = `
@@ -17640,45 +17727,12 @@ function Inner({ base }) {
         return;
       }
       const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
-      const allClones = [];
-      const flatten = (c) => {
-        allClones.push(c);
-        c.children?.forEach(flatten);
-      };
-      clones.forEach(flatten);
-      const topLevel = allClones.filter((c) => c.parent === currentParentUid);
-      const xs = topLevel.map((c) => c.metadata?.position?.x ?? 0);
-      const ys = topLevel.map((c) => c.metadata?.position?.y ?? 0);
-      const dx = topLevel.length ? cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
-      const dy = topLevel.length ? cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
-      const map = res.uidMap;
-      const compMap = map?.components ?? {};
-      const propMap = map?.properties ?? {};
-      const topSet = new Set(topLevel.map((c) => c.uid));
-      const updates = [];
-      for (const c of allClones) {
-        const entry = { uid: c.uid };
-        if (topSet.has(c.uid)) {
-          entry.position = {
-            x: Math.round((c.metadata?.position?.x ?? 0) + dx),
-            y: Math.round((c.metadata?.position?.y ?? 0) + dy)
-          };
-        }
-        if (map) {
-          const raw = rawFacet(c.properties);
-          if (raw) {
-            const remapped = remapFacetUids(raw, compMap, propMap);
-            if (remapped !== raw) entry.properties = { [FACET_PROP]: { value: remapped } };
-          }
-        }
-        if (entry.position || entry.properties) updates.push(entry);
-      }
+      const { updates, newUids } = planPaste(clones, currentParentUid, cursor, res.uidMap);
       try {
         if (updates.length > 0) await bulkUpdate(updates);
       } catch (e) {
         console.error("paste: reposition/facet-remap failed:", e.message);
       }
-      const newUids = topLevel.map((c) => c.uid);
       setPendingPasteSelection(newUids);
       pushUndo({ kind: "delete", componentUids: newUids });
       await reload();
@@ -19750,41 +19804,8 @@ function MoveIntoPicker({
       cancelled = true;
     };
   }, []);
-  const movingPaths = (allComponents ?? []).filter((c) => movingSet.has(c.uid)).map((c) => c.path);
-  const isMovingOrDescendant = (path) => {
-    for (const mp of movingPaths) {
-      if (path === mp || path.startsWith(mp + "/")) return true;
-    }
-    return false;
-  };
-  const movingComp = (allComponents ?? []).find((c) => movingSet.has(c.uid));
-  const curFolderUid = movingComp?.parent;
-  const curFolder = (allComponents ?? []).find((c) => c.uid === curFolderUid);
-  const upUid = curFolder?.parent;
-  const curFolderPath = curFolder?.path;
-  const tierOf = (c) => {
-    if (upUid !== void 0 && c.uid === upUid) return 0;
-    if (curFolderUid !== void 0 && c.parent === curFolderUid) return 1;
-    if (curFolderPath && c.path.startsWith(curFolderPath + "/")) return 2;
-    return 3;
-  };
-  const candidates = [];
-  for (const c of allComponents ?? []) {
-    if (movingSet.has(c.uid)) continue;
-    if (isMovingOrDescendant(c.path)) continue;
-    candidates.push({
-      uid: c.uid,
-      name: c.name || c.type,
-      kind: c.type,
-      path: c.path,
-      tier: tierOf(c)
-    });
-  }
-  candidates.sort((a, b) => a.tier !== b.tier ? a.tier - b.tier : a.path.localeCompare(b.path));
-  const f = filter.trim().toLowerCase();
-  const visible = f ? candidates.filter(
-    (c) => c.name.toLowerCase().includes(f) || c.kind.toLowerCase().includes(f) || c.path.toLowerCase().includes(f)
-  ) : candidates;
+  const candidates = moveCandidates(allComponents ?? [], movingSet);
+  const visible = filterMoveCandidates(candidates, filter);
   useEffect(() => {
     const dismiss = (e) => {
       const el = e.target;
@@ -20832,7 +20853,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T09:36:26.013Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T09:53:53.478Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

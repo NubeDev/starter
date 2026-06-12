@@ -23,7 +23,7 @@ behaviour something pinned. Adding a feature? Add a test for it in the same PR.
 - **`vitest.config.ts`** — picks up `src/**/*.test.{ts,tsx}`, jsdom environment.
 - Tests sit beside their target: `src/lib/facet.ts` → `src/lib/facet.test.ts`.
 
-## Current coverage (56 tests, 9 files)
+## Current coverage (77 tests, 13 files)
 
 Pure logic backing the editor's features, extracted into `lib/` so each is
 directly testable:
@@ -38,13 +38,18 @@ directly testable:
 - `grouping.ts` — Group boundary detection (+ the name-fallback ghost-bug guard).
 - `layout.ts` — grid fallback + duplicate-position de-stacking.
 - `search.ts` — search index build + query ranking (names, labels, aliases).
+- `paste.ts` — paste planning: flatten, top-level reposition, facet uid-remap.
+- `connect.ts` — "Connect to…" candidate grouping, tiering, path-scope filter.
+- `movepicker.ts` — "Move into…" destinations: cycle-exclusion + tiering.
+- `subscriptions.ts` — WS subscribe/unsubscribe set diff.
 - `naming.ts` — `sanitizeName`, `uniqueName`.
 - `rest.ts` — `RestError.debug` dump formatting.
 
-The editor (`CeEditor.tsx`, `FunctionBlock.tsx`) now *calls* these, so a feature's
-core logic is covered even though the React glue around it isn't. Still inline
-(candidates for the next extraction): paste flatten+remap, connect-to / move-to
-picker tiering, and the WS subscription diff.
+The editor (`CeEditor.tsx`, `FunctionBlock.tsx`) and the WS client now *call*
+these, so a feature's core logic is covered even though the React/WS glue around
+it isn't. What remains untested is genuinely UI/IO: rendering, drag, menu
+plumbing, the optimistic-append paths, and the socket lifecycle — component /
+integration territory.
 
 ## What to test next (in priority order)
 

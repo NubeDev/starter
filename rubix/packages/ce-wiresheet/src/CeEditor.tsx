@@ -96,7 +96,6 @@ import {
   parseAliasInput,
   rawFacet,
   serializeFacet,
-  remapFacetUids,
   FACET_PROP,
   type ComponentFacet,
   type PropFacet,
@@ -106,6 +105,8 @@ import { layoutPositions } from "./lib/layout";
 import { groupBoundary } from "./lib/grouping";
 import { buildSearchIndex, rankSearchHits, type SearchHit } from "./lib/search";
 import { partitionEdges, exposedPortIndex, classifyCrossEdge } from "./lib/routing";
+import { planPaste } from "./lib/paste";
+import { moveCandidates, filterMoveCandidates } from "./lib/movepicker";
 
 const nodeTypes = { fb: FunctionBlock, ghost: GhostNode };
 
@@ -1006,67 +1007,18 @@ function Inner({ base }: { base: string }) {
         setError({ message: "paste: nothing cloned (sources may have been deleted)" });
         return;
       }
-      // Translate the clones so their centroid lands at the cursor. The clones
-      // come back at the SOURCE positions; offset = cursor − source centroid
-      // (we kept the source centroid at copy time, but recompute from the
-      // clones to be robust to any engine repositioning).
+      // Plan the paste: flatten the cloned subtree, translate the TOP-LEVEL
+      // clones so their bounding-box centre lands at the cursor, and remap uid
+      // references in any copied __facets (lib/paste, tested). The single
+      // bulkUpdate is NON-FATAL — a rejected facet must not abort the paste
+      // (else clones are left unselected + the view un-reloaded).
       const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
-      // /copy/nodes may return the whole copied SUBTREE (a folder + its
-      // descendants). Flatten it, then treat only the components placed directly
-      // under the dest as "top-level" — those are the ones in THIS view, the ones
-      // to reposition + select. Descendants are off-canvas (inside the folder), so
-      // they must NOT be in the paste-selection (the effect waits for ALL uids to
-      // appear and would wait forever on an off-canvas child).
-      const allClones: Component[] = [];
-      const flatten = (c: Component) => {
-        allClones.push(c);
-        c.children?.forEach(flatten);
-      };
-      clones.forEach(flatten);
-      const topLevel = allClones.filter((c) => c.parent === currentParentUid);
-      const xs = topLevel.map((c) => c.metadata?.position?.x ?? 0);
-      const ys = topLevel.map((c) => c.metadata?.position?.y ?? 0);
-      const dx = topLevel.length ? cursor.x - (Math.min(...xs) + Math.max(...xs)) / 2 : 0;
-      const dy = topLevel.length ? cursor.y - (Math.min(...ys) + Math.max(...ys)) / 2 : 0;
-      // ONE bulkUpdate: reposition the TOP-LEVEL clones and remap uid references in
-      // any copied __facets (exposed-port c/f + record keys — the engine copies the
-      // facet value verbatim, so it still points at the ORIGINAL uids). Uses the
-      // copy's uidMap (no-op until present; API §0a). Single call (a separate one
-      // races the paste-selection) and NON-FATAL (a rejected facet must not abort
-      // the paste → clones left unselected + view un-reloaded).
-      const map = res.uidMap;
-      const compMap = map?.components ?? {};
-      const propMap = map?.properties ?? {};
-      const topSet = new Set(topLevel.map((c) => c.uid));
-      type PasteUpdate = {
-        uid: number;
-        position?: { x: number; y: number };
-        properties?: Record<string, { value: string }>;
-      };
-      const updates: PasteUpdate[] = [];
-      for (const c of allClones) {
-        const entry: PasteUpdate = { uid: c.uid };
-        if (topSet.has(c.uid)) {
-          entry.position = {
-            x: Math.round((c.metadata?.position?.x ?? 0) + dx),
-            y: Math.round((c.metadata?.position?.y ?? 0) + dy),
-          };
-        }
-        if (map) {
-          const raw = rawFacet(c.properties);
-          if (raw) {
-            const remapped = remapFacetUids(raw, compMap, propMap);
-            if (remapped !== raw) entry.properties = { [FACET_PROP]: { value: remapped } };
-          }
-        }
-        if (entry.position || entry.properties) updates.push(entry);
-      }
+      const { updates, newUids } = planPaste(clones, currentParentUid, cursor, res.uidMap);
       try {
         if (updates.length > 0) await bulkUpdate(updates);
       } catch (e) {
         console.error("paste: reposition/facet-remap failed:", (e as Error).message);
       }
-      const newUids = topLevel.map((c) => c.uid);
       setPendingPasteSelection(newUids);
       // Undo: soft-delete the clones (their edges cascade). pushUndo is a
       // stable useCallback declared below; referenced at call time, so it's
@@ -3697,64 +3649,10 @@ function MoveIntoPicker({
     };
   }, []);
 
-  // A component can't be reparented into itself or into one of its own
-  // descendants (cycle). Path-based detection: a descendant's path starts
-  // with the moving component's path + "/".
-  const movingPaths: string[] = (allComponents ?? [])
-    .filter((c) => movingSet.has(c.uid))
-    .map((c) => c.path);
-  const isMovingOrDescendant = (path: string): boolean => {
-    for (const mp of movingPaths) {
-      if (path === mp || path.startsWith(mp + "/")) return true;
-    }
-    return false;
-  };
-
-  interface Candidate {
-    uid: number;
-    name: string;
-    kind: string;
-    path: string;
-    tier: number;
-  }
-  // Order destinations by relationship to the folder the moving component is in:
-  // up one level (its folder's parent) → same level (its siblings) → children
-  // (deeper inside the current folder) → everything else.
-  const movingComp = (allComponents ?? []).find((c) => movingSet.has(c.uid));
-  const curFolderUid = movingComp?.parent; // the folder we're moving FROM
-  const curFolder = (allComponents ?? []).find((c) => c.uid === curFolderUid);
-  const upUid = curFolder?.parent; // one level up
-  const curFolderPath = curFolder?.path;
-  const tierOf = (c: Component): number => {
-    if (upUid !== undefined && c.uid === upUid) return 0; // up one level
-    if (curFolderUid !== undefined && c.parent === curFolderUid) return 1; // same level
-    if (curFolderPath && c.path.startsWith(curFolderPath + "/")) return 2; // children
-    return 3; // everything else
-  };
-  const candidates: Candidate[] = [];
-  for (const c of allComponents ?? []) {
-    if (movingSet.has(c.uid)) continue;
-    if (isMovingOrDescendant(c.path)) continue;
-    candidates.push({
-      uid: c.uid,
-      name: c.name || c.type,
-      kind: c.type,
-      path: c.path,
-      tier: tierOf(c),
-    });
-  }
-  // Tier first (preference order), then path so each tier stays clustered.
-  candidates.sort((a, b) => (a.tier !== b.tier ? a.tier - b.tier : a.path.localeCompare(b.path)));
-
-  const f = filter.trim().toLowerCase();
-  const visible = f
-    ? candidates.filter(
-        (c) =>
-          c.name.toLowerCase().includes(f) ||
-          c.kind.toLowerCase().includes(f) ||
-          c.path.toLowerCase().includes(f),
-      )
-    : candidates;
+  // Candidate destinations (self/descendant exclusion + tiering) live in
+  // lib/movepicker (tested): up one level → same level → children → elsewhere.
+  const candidates = moveCandidates(allComponents ?? [], movingSet);
+  const visible = filterMoveCandidates(candidates, filter);
 
   useEffect(() => {
     const dismiss = (e: MouseEvent) => {

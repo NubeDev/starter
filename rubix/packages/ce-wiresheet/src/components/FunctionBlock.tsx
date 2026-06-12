@@ -37,6 +37,12 @@ import {
   FACET_PROP,
   type PropFacet,
 } from "../lib/facet";
+import {
+  buildConnectGroups,
+  filterConnectGroups,
+  takenInputUids,
+  connectTier,
+} from "../lib/connect";
 
 // Editor-level capabilities the ConnectPicker needs for its "New" flow — the
 // creatable component types and a "create one in the current folder" action.
@@ -694,26 +700,8 @@ function ConnectPicker({
   // Match by the target property's UID (the engine provides
   // `targetPropertyUid` on every edge) — an integer compare, no property-name
   // string matching. A set of all currently-targeted input prop uids.
-  const takenInputUids = new Set<number>();
-  if (sourceCategory === "output" && allEdges) {
-    for (const e of allEdges) {
-      if (e.targetPropertyUid != null) takenInputUids.add(e.targetPropertyUid);
-    }
-  }
-
-  interface Candidate {
-    propUid: number;
-    propName: string;
-  }
-  interface CompGroup {
-    componentUid: number;
-    componentName: string;
-    path: string;
-    sibling: boolean; // true when this component shares the source's parent
-    isParent: boolean; // the source's own container (feed-through target)
-    isChild: boolean; // nested inside the source component
-    props: Candidate[];
-  }
+  const taken =
+    sourceCategory === "output" && allEdges ? takenInputUids(allEdges) : new Set<number>();
 
   // Look up the source component's parent so we can flag siblings. Use the
   // current view's structural cache — the source is always in scope there.
@@ -721,72 +709,17 @@ function ConnectPicker({
   const sourceParent = sourceComp?.parent;
   const sourceName = sourceComp?.name || "component";
 
-  const groups: CompGroup[] = [];
+  // Candidate grouping + tiering and the path-scope filter are pure (lib/connect,
+  // tested). Parent (feed-through) → same level → children → elsewhere.
   const componentList = allComponents ?? [];
-  for (const c of componentList) {
-    if (c.uid === sourceComponentUid) continue;
-    // Parent / children are grouped + labelled distinctly, but they connect like
-    // any other target: a normal opposite-category edge (the engine supports
-    // cross-folder edges). Feed-through (same-category) edges aren't used.
-    const isParent = sourceParent !== undefined && c.uid === sourceParent;
-    const isChild = c.parent === sourceComponentUid;
-    const props: Candidate[] = [];
-    for (const [name, p] of Object.entries(c.properties)) {
-      if (p.category !== wantCategory) continue;
-      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
-      if (takenInputUids.has(p.uid)) continue;
-      props.push({ propUid: p.uid, propName: name });
-    }
-    if (props.length === 0) continue;
-    props.sort((a, b) => a.propName.localeCompare(b.propName));
-    groups.push({
-      componentUid: c.uid,
-      componentName: c.name || c.type,
-      path: c.path,
-      sibling: sourceParent !== undefined && c.parent === sourceParent,
-      isParent,
-      isChild,
-      props,
-    });
-  }
-  // Parent (feed-through) first, then siblings (alphabetical by name), then
-  // everything else (alphabetical by path). Puts the most likely targets at the
-  // top while still surfacing cross-folder options without scrolling past them.
-  // Tier order: parent (0) → same level (1) → children (2) → everything else (3).
-  const tierOf = (g: CompGroup) => (g.isParent ? 0 : g.sibling ? 1 : g.isChild ? 2 : 3);
-  groups.sort((a, b) => {
-    const ta = tierOf(a);
-    const tb = tierOf(b);
-    if (ta !== tb) return ta - tb;
-    // Within "other" sort by path; otherwise by name.
-    return ta === 3
-      ? a.path.localeCompare(b.path)
-      : a.componentName.localeCompare(b.componentName);
+  const groups = buildConnectGroups(componentList, {
+    sourceComponentUid,
+    sourceParent,
+    wantCategory,
+    taken,
   });
-
-  const f = filter.trim().toLowerCase();
-  // A path-style filter ("add1/add2/ad") splits at the LAST slash into a folder
-  // SCOPE ("add1/add2") that the component's path must contain, and a TERM
-  // ("ad") matched against the component name or the path tail BELOW that scope.
-  // So it finds matches in that folder AND deeper — not just direct children —
-  // and the term doesn't accidentally match folder names in the scope itself.
-  const slash = f.lastIndexOf("/");
-  const pathScope = slash >= 0 ? f.slice(0, slash) : "";
-  const term = slash >= 0 ? f.slice(slash + 1) : f;
-
-  const filteredGroups: CompGroup[] = !f
-    ? groups
-    : groups
-        .map((g) => {
-          const path = g.path.toLowerCase();
-          if (pathScope && !path.includes(pathScope)) return null;
-          if (!term) return g; // pure folder scope → whole group qualifies
-          const tail = pathScope ? path.slice(path.indexOf(pathScope) + pathScope.length) : path;
-          if (g.componentName.toLowerCase().includes(term) || tail.includes(term)) return g;
-          const props = g.props.filter((p) => p.propName.toLowerCase().includes(term));
-          return props.length > 0 ? { ...g, props } : null;
-        })
-        .filter((g): g is CompGroup => g !== null);
+  const filteredGroups = filterConnectGroups(groups, filter);
+  const f = filter.trim(); // truthy = a filter is active (drives auto-expand)
 
   const create = async (target: { componentUid: number; propUid: number }) => {
     // Engine convention: source = output side, target = input side. Flip based
@@ -1126,8 +1059,8 @@ function ConnectPicker({
             // Section header whenever the tier changes (parent / same level /
             // inside <source> / other folders).
             const prev = idx > 0 ? filteredGroups[idx - 1] : null;
-            const tier = tierOf(g);
-            const showSection = tier !== (prev ? tierOf(prev) : -1);
+            const tier = connectTier(g);
+            const showSection = tier !== (prev ? connectTier(prev) : -1);
             const sectionLabel =
               tier === 0
                 ? "parent"
