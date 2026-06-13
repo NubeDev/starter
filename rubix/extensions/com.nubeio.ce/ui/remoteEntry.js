@@ -18453,6 +18453,8 @@ function Inner({ base }) {
     setCrumbs((cur) => [...cur, { uid: c.uid, name: c.name || c.type }]);
   }, []);
   const [focusAfterLoad, setFocusAfterLoad] = useState(null);
+  const prevParentRef = useRef(currentParentUid);
+  const [navAfterLoad, setNavAfterLoad] = useState(null);
   const [findOpen, setFindOpen] = useState(false);
   const [clickDebugOpen, setClickDebugOpen] = useState(() => {
     try {
@@ -18832,6 +18834,25 @@ function Inner({ base }) {
     );
     setFocusAfterLoad(null);
   }, [nodes, focusAfterLoad, rf]);
+  useEffect(() => {
+    if (prevParentRef.current === currentParentUid) return;
+    const from = prevParentRef.current;
+    prevParentRef.current = currentParentUid;
+    if (focusAfterLoad == null) setNavAfterLoad({ from });
+  }, [currentParentUid, focusAfterLoad]);
+  useEffect(() => {
+    if (!navAfterLoad) return;
+    const comps = useStructural.getState().components;
+    const real = nodes.filter((n) => n.type === "fb");
+    const loaded = real.length === 0 ? comps.size === 0 : real.every((n) => comps.get(Number(n.id))?.parent === currentParentUid);
+    if (!loaded) return;
+    if (real.some((n) => n.id === String(navAfterLoad.from))) {
+      setFocusAfterLoad(navAfterLoad.from);
+    } else if (real.length > 0) {
+      void rf.fitView({ nodes: real.map((n) => ({ id: n.id })), padding: 0.25, duration: 400 });
+    }
+    setNavAfterLoad(null);
+  }, [nodes, navAfterLoad, currentParentUid, rf]);
   useEffect(() => {
     if (pendingPasteSelection == null) return;
     const wantedIds = new Set(pendingPasteSelection.map(String));
@@ -22118,7 +22139,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:46:39.803Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:58:56.392Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

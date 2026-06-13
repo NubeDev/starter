@@ -595,6 +595,11 @@ function Inner({ base }: { base: string }) {
   // post-reload effect below knows which node to center + select once the
   // new view's nodes are mounted.
   const [focusAfterLoad, setFocusAfterLoad] = useState<number | null>(null);
+  // On a folder change (drill in / up / breadcrumb), once the new level's nodes
+  // load: if the folder we just left is now a visible node (we went UP), center
+  // on it; otherwise (we went DOWN / elsewhere) fit the whole level into view.
+  const prevParentRef = useRef(currentParentUid);
+  const [navAfterLoad, setNavAfterLoad] = useState<{ from: number } | null>(null);
 
   // Component finder (Cmd/Ctrl+F). Searches the whole tree, jumps to a pick.
   const [findOpen, setFindOpen] = useState(false);
@@ -1164,6 +1169,35 @@ function Inner({ base }: { base: string }) {
     );
     setFocusAfterLoad(null);
   }, [nodes, focusAfterLoad, rf]);
+
+  // Detect a folder change. A goToComponent jump sets focusAfterLoad itself, so
+  // skip those — this is for plain drill-in / up / breadcrumb navigation.
+  useEffect(() => {
+    if (prevParentRef.current === currentParentUid) return;
+    const from = prevParentRef.current;
+    prevParentRef.current = currentParentUid;
+    if (focusAfterLoad == null) setNavAfterLoad({ from });
+  }, [currentParentUid, focusAfterLoad]);
+
+  // Apply once the new level's nodes have loaded (all belong to currentParentUid).
+  useEffect(() => {
+    if (!navAfterLoad) return;
+    const comps = useStructural.getState().components;
+    const real = nodes.filter((n) => n.type === "fb");
+    const loaded =
+      real.length === 0
+        ? comps.size === 0
+        : real.every((n) => comps.get(Number(n.id))?.parent === currentParentUid);
+    if (!loaded) return; // still showing the old level — wait for the reload
+    // Went UP: the folder we left is now a visible node → center + select it.
+    if (real.some((n) => n.id === String(navAfterLoad.from))) {
+      setFocusAfterLoad(navAfterLoad.from);
+    } else if (real.length > 0) {
+      // Went DOWN / elsewhere → fit the whole level into view.
+      void rf.fitView({ nodes: real.map((n) => ({ id: n.id })), padding: 0.25, duration: 400 });
+    }
+    setNavAfterLoad(null);
+  }, [nodes, navAfterLoad, currentParentUid, rf]);
 
   // Post-paste selection: once the reload after a paste has populated the
   // new uids into nodes, mark exactly those nodes selected and clear
