@@ -1,4 +1,5 @@
 import { createContext, memo, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { Zap, EyeOff, Layers, CornerDownRight, ChevronRight, ChevronDown } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Handle, Position, useStore as useRfStore } from "@xyflow/react";
 import { useShallow } from "zustand/react/shallow";
@@ -1112,8 +1113,15 @@ function ConnectPicker({
                   onMouseEnter={(e) => (e.currentTarget.style.background = "#232733")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
-                  <span style={{ color: "#8892a0", width: 8, flexShrink: 0 }}>
-                    {isOpen ? "▾" : "▸"}
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "#8892a0",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                   </span>
                   <span
                     style={{
@@ -1972,18 +1980,20 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         >
           {/* left: actions marker + hidden-props indicator */}
           <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              title={data.hasActions ? "This component has actions" : undefined}
-              style={{ fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` }}
-            >
-              {data.hasActions ? "⚡" : ""}
-            </span>
+            {data.hasActions && (
+              <span
+                title="This component has actions"
+                style={{ display: "flex", alignItems: "center", color: "#ffd166" }}
+              >
+                <Zap size={12} strokeWidth={2} />
+              </span>
+            )}
             {hiddenCount > 0 && (
               <span
                 title={`${hiddenCount} hidden propert${hiddenCount === 1 ? "y" : "ies"}`}
-                style={{ fontSize: 11, color: "#5a6172", lineHeight: `${ROW_H}px` }}
+                style={{ display: "flex", alignItems: "center", color: "#5a6172" }}
               >
-                ⊘
+                <EyeOff size={12} strokeWidth={2} />
               </span>
             )}
           </span>
@@ -1994,13 +2004,15 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
                 data.childCount === 1 ? "" : "ren"
               } — double-click to enter`}
               style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
                 fontSize: 11,
                 color: "#9ecbff",
-                lineHeight: `${ROW_H}px`,
                 fontFamily: "ui-monospace, SFMono-Regular, monospace",
               }}
             >
-              ⧉ {data.childCount ?? ""}
+              <Layers size={12} strokeWidth={2} /> {data.childCount ?? ""}
             </span>
           )}
         </div>
@@ -2076,8 +2088,11 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
               }}
             >
               {p.exposed && (
-                <span style={{ color: "#7a8a9f" }} title="exposed from a child">
-                  ↪
+                <span
+                  style={{ display: "flex", alignItems: "center", color: "#7a8a9f" }}
+                  title="exposed from a child"
+                >
+                  <CornerDownRight size={11} strokeWidth={2} />
                 </span>
               )}
               <span title={rowFacet?.label ? p.name : undefined}>{rowFacet?.label ?? p.name}</span>

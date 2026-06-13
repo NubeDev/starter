@@ -1462,6 +1462,9 @@ importers:
       '@xyflow/react':
         specifier: ^12.3.0
         version: 12.10.2(@types/react@19.2.14)(immer@11.1.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      lucide-react:
+        specifier: ^0.469.0
+        version: 0.469.0(react@19.2.7)
       react:
         specifier: '>=18'
         version: 19.2.7

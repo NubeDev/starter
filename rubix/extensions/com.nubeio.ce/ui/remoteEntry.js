@@ -169,8 +169,8 @@ function Page({
  * See the LICENSE file in the root directory of this source tree.
  */
 
-const toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-const mergeClasses = (...classes) => classes.filter((className, index, array) => {
+const toKebabCase$1 = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+const mergeClasses$1 = (...classes) => classes.filter((className, index, array) => {
   return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
 }).join(" ").trim();
 
@@ -181,7 +181,7 @@ const mergeClasses = (...classes) => classes.filter((className, index, array) =>
  * See the LICENSE file in the root directory of this source tree.
  */
 
-var defaultAttributes = {
+var defaultAttributes$1 = {
   xmlns: "http://www.w3.org/2000/svg",
   width: 24,
   height: 24,
@@ -201,7 +201,7 @@ var defaultAttributes = {
  */
 
 
-const Icon = forwardRef(
+const Icon$1 = forwardRef(
   ({
     color = "currentColor",
     size = 24,
@@ -216,12 +216,12 @@ const Icon = forwardRef(
       "svg",
       {
         ref,
-        ...defaultAttributes,
+        ...defaultAttributes$1,
         width: size,
         height: size,
         stroke: color,
         strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
-        className: mergeClasses("lucide", className),
+        className: mergeClasses$1("lucide", className),
         ...rest
       },
       [
@@ -240,12 +240,12 @@ const Icon = forwardRef(
  */
 
 
-const createLucideIcon = (iconName, iconNode) => {
+const createLucideIcon$1 = (iconName, iconNode) => {
   const Component = forwardRef(
-    ({ className, ...props }, ref) => createElement(Icon, {
+    ({ className, ...props }, ref) => createElement(Icon$1, {
       ref,
       iconNode,
-      className: mergeClasses(`lucide-${toKebabCase(iconName)}`, className),
+      className: mergeClasses$1(`lucide-${toKebabCase$1(iconName)}`, className),
       ...props
     })
   );
@@ -261,7 +261,7 @@ const createLucideIcon = (iconName, iconNode) => {
  */
 
 
-const Cpu = createLucideIcon("Cpu", [
+const Cpu = createLucideIcon$1("Cpu", [
   ["rect", { width: "16", height: "16", x: "4", y: "4", rx: "2", key: "14l7u7" }],
   ["rect", { width: "6", height: "6", x: "9", y: "9", rx: "1", key: "5aljv4" }],
   ["path", { d: "M15 2v2", key: "13l42r" }],
@@ -282,7 +282,7 @@ const Cpu = createLucideIcon("Cpu", [
  */
 
 
-const ExternalLink = createLucideIcon("ExternalLink", [
+const ExternalLink = createLucideIcon$1("ExternalLink", [
   ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
   ["path", { d: "M10 14 21 3", key: "gplh6r" }],
   ["path", { d: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6", key: "a6xqqp" }]
@@ -296,7 +296,7 @@ const ExternalLink = createLucideIcon("ExternalLink", [
  */
 
 
-const LayoutGrid = createLucideIcon("LayoutGrid", [
+const LayoutGrid = createLucideIcon$1("LayoutGrid", [
   ["rect", { width: "7", height: "7", x: "3", y: "3", rx: "1", key: "1g98yp" }],
   ["rect", { width: "7", height: "7", x: "14", y: "3", rx: "1", key: "6d4xhi" }],
   ["rect", { width: "7", height: "7", x: "14", y: "14", rx: "1", key: "nxv5o0" }],
@@ -311,7 +311,7 @@ const LayoutGrid = createLucideIcon("LayoutGrid", [
  */
 
 
-const Pencil = createLucideIcon("Pencil", [
+const Pencil = createLucideIcon$1("Pencil", [
   [
     "path",
     {
@@ -330,7 +330,7 @@ const Pencil = createLucideIcon("Pencil", [
  */
 
 
-const Plus = createLucideIcon("Plus", [
+const Plus = createLucideIcon$1("Plus", [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "M12 5v14", key: "s699le" }]
 ]);
@@ -343,7 +343,7 @@ const Plus = createLucideIcon("Plus", [
  */
 
 
-const Trash2 = createLucideIcon("Trash2", [
+const Trash2 = createLucideIcon$1("Trash2", [
   ["path", { d: "M3 6h18", key: "d0wm0j" }],
   ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
   ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
@@ -12119,6 +12119,223 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
  */
 memo(ResizeControl);
 
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+const toKebabCase = (string) => string.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+const mergeClasses = (...classes) => classes.filter((className, index, array) => {
+  return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index;
+}).join(" ").trim();
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+var defaultAttributes = {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: 24,
+  height: 24,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round"
+};
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Icon = forwardRef(
+  ({
+    color = "currentColor",
+    size = 24,
+    strokeWidth = 2,
+    absoluteStrokeWidth,
+    className = "",
+    children,
+    iconNode,
+    ...rest
+  }, ref) => {
+    return createElement(
+      "svg",
+      {
+        ref,
+        ...defaultAttributes,
+        width: size,
+        height: size,
+        stroke: color,
+        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+        className: mergeClasses("lucide", className),
+        ...rest
+      },
+      [
+        ...iconNode.map(([tag, attrs]) => createElement(tag, attrs)),
+        ...Array.isArray(children) ? children : [children]
+      ]
+    );
+  }
+);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const createLucideIcon = (iconName, iconNode) => {
+  const Component = forwardRef(
+    ({ className, ...props }, ref) => createElement(Icon, {
+      ref,
+      iconNode,
+      className: mergeClasses(`lucide-${toKebabCase(iconName)}`, className),
+      ...props
+    })
+  );
+  Component.displayName = `${iconName}`;
+  return Component;
+};
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ChevronDown = createLucideIcon("ChevronDown", [
+  ["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ChevronLeft = createLucideIcon("ChevronLeft", [
+  ["path", { d: "m15 18-6-6 6-6", key: "1wnfg3" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ChevronRight = createLucideIcon("ChevronRight", [
+  ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const CornerDownRight = createLucideIcon("CornerDownRight", [
+  ["polyline", { points: "15 10 20 15 15 20", key: "1q7qjw" }],
+  ["path", { d: "M4 4v7a4 4 0 0 0 4 4h12", key: "z08zvw" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const EyeOff = createLucideIcon("EyeOff", [
+  [
+    "path",
+    {
+      d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+      key: "ct8e1f"
+    }
+  ],
+  ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+  [
+    "path",
+    {
+      d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+      key: "13bj9a"
+    }
+  ],
+  ["path", { d: "m2 2 20 20", key: "1ooewy" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Layers = createLucideIcon("Layers", [
+  [
+    "path",
+    {
+      d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+      key: "zw3jo"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+      key: "1wduqc"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+      key: "kqbvx6"
+    }
+  ]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Zap = createLucideIcon("Zap", [
+  [
+    "path",
+    {
+      d: "M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z",
+      key: "1xq2db"
+    }
+  ]
+]);
+
 const createStoreImpl = (createState) => {
   let state;
   const listeners = /* @__PURE__ */ new Set();
@@ -15205,7 +15422,18 @@ function ConnectPicker({
                   onMouseEnter: (e) => e.currentTarget.style.background = "#232733",
                   onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
                   children: [
-                    /* @__PURE__ */ jsx("span", { style: { color: "#8892a0", width: 8, flexShrink: 0 }, children: isOpen ? "▾" : "▸" }),
+                    /* @__PURE__ */ jsx(
+                      "span",
+                      {
+                        style: {
+                          display: "flex",
+                          alignItems: "center",
+                          color: "#8892a0",
+                          flexShrink: 0
+                        },
+                        children: isOpen ? /* @__PURE__ */ jsx(ChevronDown, { size: 13 }) : /* @__PURE__ */ jsx(ChevronRight, { size: 13 })
+                      }
+                    ),
                     /* @__PURE__ */ jsxs(
                       "span",
                       {
@@ -15896,20 +16124,20 @@ function FunctionBlockInner({ data, selected }) {
             },
             children: [
               /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 6 }, children: [
-                /* @__PURE__ */ jsx(
+                data.hasActions && /* @__PURE__ */ jsx(
                   "span",
                   {
-                    title: data.hasActions ? "This component has actions" : void 0,
-                    style: { fontSize: 11, color: "#ffd166", lineHeight: `${ROW_H}px` },
-                    children: data.hasActions ? "⚡" : ""
+                    title: "This component has actions",
+                    style: { display: "flex", alignItems: "center", color: "#ffd166" },
+                    children: /* @__PURE__ */ jsx(Zap, { size: 12, strokeWidth: 2 })
                   }
                 ),
                 hiddenCount > 0 && /* @__PURE__ */ jsx(
                   "span",
                   {
                     title: `${hiddenCount} hidden propert${hiddenCount === 1 ? "y" : "ies"}`,
-                    style: { fontSize: 11, color: "#5a6172", lineHeight: `${ROW_H}px` },
-                    children: "⊘"
+                    style: { display: "flex", alignItems: "center", color: "#5a6172" },
+                    children: /* @__PURE__ */ jsx(EyeOff, { size: 12, strokeWidth: 2 })
                   }
                 )
               ] }),
@@ -15918,13 +16146,16 @@ function FunctionBlockInner({ data, selected }) {
                 {
                   title: `Has ${data.childCount ?? ""} child${data.childCount === 1 ? "" : "ren"} — double-click to enter`,
                   style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
                     fontSize: 11,
                     color: "#9ecbff",
-                    lineHeight: `${ROW_H}px`,
                     fontFamily: "ui-monospace, SFMono-Regular, monospace"
                   },
                   children: [
-                    "⧉ ",
+                    /* @__PURE__ */ jsx(Layers, { size: 12, strokeWidth: 2 }),
+                    " ",
                     data.childCount ?? ""
                   ]
                 }
@@ -15978,7 +16209,14 @@ function FunctionBlockInner({ data, selected }) {
                       gap: 4
                     },
                     children: [
-                      p.exposed && /* @__PURE__ */ jsx("span", { style: { color: "#7a8a9f" }, title: "exposed from a child", children: "↪" }),
+                      p.exposed && /* @__PURE__ */ jsx(
+                        "span",
+                        {
+                          style: { display: "flex", alignItems: "center", color: "#7a8a9f" },
+                          title: "exposed from a child",
+                          children: /* @__PURE__ */ jsx(CornerDownRight, { size: 11, strokeWidth: 2 })
+                        }
+                      ),
                       /* @__PURE__ */ jsx("span", { title: rowFacet?.label ? p.name : void 0, children: rowFacet?.label ?? p.name }),
                       p.category === CATEGORY_CONFIG ? " (cfg)" : "",
                       overridden && /* @__PURE__ */ jsx(
@@ -19421,11 +19659,14 @@ function ConfigurePanel({
                           "span",
                           {
                             style: {
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 4,
                               color: "#9ecbff",
                               fontFamily: "ui-monospace, SFMono-Regular, monospace"
                             },
                             children: [
-                              "↪ ",
+                              /* @__PURE__ */ jsx(CornerDownRight, { size: 12, strokeWidth: 2 }),
                               info ? `${info.comp} · ${info.prop}` : pr.name,
                               " ",
                               /* @__PURE__ */ jsxs("span", { style: { color: "#5a6172" }, children: [
@@ -20432,7 +20673,7 @@ function LeftDock({
           alignItems: "center",
           justifyContent: "center"
         },
-        children: "▸"
+        children: /* @__PURE__ */ jsx(ChevronRight, { size: 16 })
       }
     );
   }
@@ -20484,16 +20725,17 @@ function LeftDock({
               onClick: () => setCollapsed(true),
               title: "Hide panel",
               style: {
+                display: "flex",
+                alignItems: "center",
                 background: "transparent",
                 border: "none",
                 borderLeft: "1px solid #2c313c",
                 color: "#8892a0",
                 cursor: "pointer",
                 fontFamily: "inherit",
-                fontSize: 14,
                 padding: "0 10px"
               },
-              children: "◂"
+              children: /* @__PURE__ */ jsx(ChevronLeft, { size: 16 })
             }
           )
         ] }),
@@ -20854,7 +21096,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T07:08:26.465Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T08:44:46.148Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

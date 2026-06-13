@@ -17,6 +17,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { ChevronRight, ChevronLeft, CornerDownRight } from "lucide-react";
 
 // Selected-edge highlight. RF adds .selected to .react-flow__edge when the
 // edge's `selected` flag is true; the default stylesheet's selected color is
@@ -3246,11 +3247,15 @@ function ConfigurePanel({
               >
                 <span
                   style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
                     color: "#9ecbff",
                     fontFamily: "ui-monospace, SFMono-Regular, monospace",
                   }}
                 >
-                  ↪ {info ? `${info.comp} · ${info.prop}` : pr.name}{" "}
+                  <CornerDownRight size={12} strokeWidth={2} />
+                  {info ? `${info.comp} · ${info.prop}` : pr.name}{" "}
                   <span style={{ color: "#5a6172" }}>({pr.side})</span>
                 </span>
                 <label
@@ -4408,7 +4413,7 @@ function LeftDock({
           justifyContent: "center",
         }}
       >
-        ▸
+        <ChevronRight size={16} />
       </button>
     );
   }
@@ -4459,17 +4464,18 @@ function LeftDock({
           onClick={() => setCollapsed(true)}
           title="Hide panel"
           style={{
+            display: "flex",
+            alignItems: "center",
             background: "transparent",
             border: "none",
             borderLeft: "1px solid #2c313c",
             color: "#8892a0",
             cursor: "pointer",
             fontFamily: "inherit",
-            fontSize: 14,
             padding: "0 10px",
           }}
         >
-          ◂
+          <ChevronLeft size={16} />
         </button>
       </div>
       <div style={{ padding: "8px 10px", borderBottom: "1px solid #2c313c" }}>
