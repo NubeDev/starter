@@ -51,6 +51,7 @@ export function ComponentTable({
   onDrillIn,
   onRowsChange,
   onSetOverride,
+  onSetDefault,
   onClearOverride,
   canGoUp,
   onUp,
@@ -60,7 +61,8 @@ export function ComponentTable({
   onSelectRow: (uid: number, additive: boolean) => void;
   onDrillIn: (uid: number) => void;
   onRowsChange: (uids: number[]) => void;
-  onSetOverride: (componentUid: number, property: string, value: FlexValue) => void;
+  onSetOverride: (componentUid: number, property: string, value: FlexValue, duration: number) => void;
+  onSetDefault: (componentUid: number, property: string, value: FlexValue) => void;
   onClearOverride: (componentUid: number, property: string) => void;
   canGoUp: boolean;
   onUp: () => void;
@@ -68,7 +70,7 @@ export function ComponentTable({
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState<1 | -1>(1);
-  const [editing, setEditing] = useState<{ comp: number; uid: number } | null>(null);
+  const [editing, setEditing] = useState<{ comp: number; cell: Cell; rect: DOMRect } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const components = useStructural((s) => s.components);
@@ -171,9 +173,7 @@ export function ComponentTable({
   const totalCols = 1 + maxIn + maxOut + maxCfg;
 
   const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean) => {
-    const editable = cell != null && cell.category === CATEGORY_INPUT;
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
-    const isEditing = cell != null && editing?.comp === c.uid && editing.uid === cell.uid;
     return (
       <td
         key={`${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`}
@@ -191,41 +191,25 @@ export function ComponentTable({
           fontFamily: "ui-monospace, SFMono-Regular, monospace",
         }}
       >
-        {cell &&
-          (isEditing ? (
-            <Editor
-              initial={values[cell.uid]}
-              dataType={propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER}
-              facet={facets.get(c.uid)?.get(cell.uid)}
-              onCommit={(v) => {
-                onSetOverride(c.uid, cell.name, v);
-                setEditing(null);
+        {cell && (
+          <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
+            <span style={{ color: "#5a6172" }}>{cell.label}</span>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditing({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
               }}
-              onCancel={() => setEditing(null)}
-            />
-          ) : (
-            <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
-              <span style={{ color: "#5a6172" }}>{cell.label}</span>
-              <span
-                onClick={
-                  editable
-                    ? (e) => {
-                        e.stopPropagation();
-                        setEditing({ comp: c.uid, uid: cell.uid });
-                      }
-                    : undefined
-                }
-                title={overridden ? "overridden — right-click to clear" : editable ? "click to set" : undefined}
-                style={{
-                  color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
-                  cursor: editable ? "text" : "default",
-                  borderBottom: editable ? "1px dotted #3b4350" : undefined,
-                }}
-              >
-                {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
-              </span>
+              title={overridden ? "overridden — right-click to clear · click to edit" : "click to edit"}
+              style={{
+                color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
+                cursor: "pointer",
+                borderBottom: "1px dotted #3b4350",
+              }}
+            >
+              {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
             </span>
-          ))}
+          </span>
+        )}
       </td>
     );
   };
@@ -389,26 +373,62 @@ export function ComponentTable({
           </table>
         )}
       </div>
+
+      {editing && (
+        <ValueEditor
+          rect={editing.rect}
+          cell={editing.cell}
+          initial={values[editing.cell.uid]}
+          dataType={propertyDataType.get(editing.cell.uid) ?? DATATYPE_NUMBER}
+          facet={facets.get(editing.comp)?.get(editing.cell.uid)}
+          overridden={(flags[editing.cell.uid] & STATUS_OVERRIDDEN) !== 0}
+          onOverride={(v, duration) => {
+            onSetOverride(editing.comp, editing.cell.name, v, duration);
+            setEditing(null);
+          }}
+          onDefault={(v) => {
+            onSetDefault(editing.comp, editing.cell.name, v);
+            setEditing(null);
+          }}
+          onClear={() => {
+            onClearOverride(editing.comp, editing.cell.name);
+            setEditing(null);
+          }}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
 
-// Inline value editor — a dropdown for aliased / boolean props, else a text
-// input. Enter or blur commits, Esc cancels.
-function Editor({
+// Popover value editor. Inputs/config can be applied as an OVERRIDE (with a
+// duration) or written as the stored DEFAULT; outputs are override-only. Aliased
+// / boolean props edit as a dropdown, else a text/number field.
+function ValueEditor({
+  rect,
+  cell,
   initial,
   dataType,
   facet,
-  onCommit,
-  onCancel,
+  overridden,
+  onOverride,
+  onDefault,
+  onClear,
+  onClose,
 }: {
+  rect: DOMRect;
+  cell: Cell;
   initial: DecodedValue | undefined;
   dataType: number;
   facet: PropFacet | undefined;
-  onCommit: (v: FlexValue) => void;
-  onCancel: () => void;
+  overridden: boolean;
+  onOverride: (v: FlexValue, duration: number) => void;
+  onDefault: (v: FlexValue) => void;
+  onClear: () => void;
+  onClose: () => void;
 }) {
   const aliases = facet?.aliases;
+  const isOutput = cell.category === CATEGORY_OUTPUT;
   const codeOf = (v: DecodedValue | undefined) =>
     v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
   const initStr =
@@ -418,11 +438,22 @@ function Editor({
         ? ""
         : String(initial);
   const [text, setText] = useState(initStr);
+  const [mode, setMode] = useState<"override" | "default">("override");
+  const [duration, setDuration] = useState("0");
   const ref = useRef<HTMLInputElement | HTMLSelectElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     ref.current?.focus();
     if (ref.current instanceof HTMLInputElement) ref.current.select();
   }, []);
+  useEffect(() => {
+    const dismiss = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    return () => document.removeEventListener("pointerdown", dismiss, true);
+  }, [onClose]);
 
   const coerce = (raw: string): FlexValue => {
     if (aliases?.length) {
@@ -433,59 +464,145 @@ function Editor({
     if (dataType === DATATYPE_NUMBER) return Number(raw);
     return raw;
   };
+  const apply = () => {
+    const v = coerce(text);
+    if (mode === "default" && !isOutput) onDefault(v);
+    else onOverride(v, Number(duration) || 0);
+  };
 
-  const fieldStyle = {
+  const field = {
     background: "#0f1115",
     color: "#e6e8eb",
-    border: "1px solid #3b5388",
-    borderRadius: 2,
-    padding: "1px 4px",
+    border: "1px solid #2c313c",
+    borderRadius: 3,
+    padding: "3px 6px",
     fontSize: 12,
     fontFamily: "ui-monospace, SFMono-Regular, monospace",
     outline: "none",
-    width: 70,
   } as const;
+  const segBtn = (active: boolean) =>
+    ({
+      flex: 1,
+      background: active ? "#2c3a55" : "transparent",
+      color: active ? "#cfe0ff" : "#8892a0",
+      border: "1px solid #2c313c",
+      borderRadius: 3,
+      padding: "3px 6px",
+      cursor: "pointer",
+      fontSize: 11,
+    }) as const;
 
-  const onKey = (e: React.KeyboardEvent) => {
-    e.stopPropagation();
-    if (e.key === "Enter") onCommit(coerce(text));
-    else if (e.key === "Escape") onCancel();
-  };
+  const left = Math.min(rect.left, window.innerWidth - 220);
+  const top = Math.min(rect.bottom + 4, window.innerHeight - 160);
 
-  if (aliases?.length || dataType === DATATYPE_BOOL) {
-    const opts = aliases?.length
-      ? aliases.map((a) => ({ v: String(a.code), label: a.label }))
-      : [
-          { v: "0", label: "false" },
-          { v: "1", label: "true" },
-        ];
-    return (
-      <select
-        ref={ref as React.RefObject<HTMLSelectElement>}
-        value={text}
-        onChange={(e) => onCommit(coerce(e.target.value))}
-        onKeyDown={onKey}
-        onBlur={onCancel}
-        style={{ ...fieldStyle, width: "auto" }}
-      >
-        {opts.map((o) => (
-          <option key={o.v} value={o.v}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    );
-  }
   return (
-    <input
-      ref={ref as React.RefObject<HTMLInputElement>}
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      onKeyDown={onKey}
-      onBlur={() => onCommit(coerce(text))}
-      inputMode={dataType === DATATYPE_NUMBER ? "decimal" : "text"}
-      style={fieldStyle}
-    />
+    <div
+      ref={rootRef}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === "Escape") onClose();
+        else if (e.key === "Enter" && !(e.target instanceof HTMLSelectElement)) apply();
+      }}
+      style={{
+        position: "fixed",
+        left,
+        top,
+        zIndex: 200,
+        width: 200,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+        padding: 8,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        fontSize: 12,
+      }}
+    >
+      <div style={{ color: "#9ecbff", fontFamily: "ui-monospace, monospace", fontSize: 11 }}>
+        {cell.label}
+      </div>
+
+      {aliases?.length || dataType === DATATYPE_BOOL ? (
+        <select
+          ref={ref as React.RefObject<HTMLSelectElement>}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          style={field}
+        >
+          {(aliases?.length
+            ? aliases.map((a) => ({ v: String(a.code), label: a.label }))
+            : [
+                { v: "0", label: "false" },
+                { v: "1", label: "true" },
+              ]
+          ).map((o) => (
+            <option key={o.v} value={o.v}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          ref={ref as React.RefObject<HTMLInputElement>}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          inputMode={dataType === DATATYPE_NUMBER ? "decimal" : "text"}
+          placeholder={facet?.unit}
+          style={field}
+        />
+      )}
+
+      {!isOutput && (
+        <div style={{ display: "flex", gap: 4 }}>
+          <button onClick={() => setMode("override")} style={segBtn(mode === "override")}>
+            Override
+          </button>
+          <button onClick={() => setMode("default")} style={segBtn(mode === "default")}>
+            Default
+          </button>
+        </div>
+      )}
+
+      {(isOutput || mode === "override") && (
+        <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }}>
+          duration
+          <input
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            inputMode="numeric"
+            title="seconds (0 = permanent)"
+            style={{ ...field, width: 56 }}
+          />
+          <span style={{ color: "#5a6172" }}>s</span>
+        </label>
+      )}
+
+      <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
+        {overridden && (
+          <button
+            onClick={onClear}
+            style={{ ...segBtn(false), flex: "0 0 auto", color: "#c98a8a" }}
+            title="Clear override"
+          >
+            clear
+          </button>
+        )}
+        <button onClick={onClose} style={{ ...segBtn(false), marginLeft: "auto", flex: "0 0 auto" }}>
+          cancel
+        </button>
+        <button
+          onClick={apply}
+          style={{ ...segBtn(true), flex: "0 0 auto", borderColor: "#3b5388" }}
+        >
+          set
+        </button>
+      </div>
+    </div>
   );
 }
 

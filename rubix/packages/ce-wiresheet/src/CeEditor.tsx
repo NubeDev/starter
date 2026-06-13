@@ -2541,11 +2541,21 @@ function Inner({ base }: { base: string }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [focusSelection, rf]);
-  // Table inline-edit → override (set / clear) on the live engine.
+  // Table inline-edit → override (with duration) / set default / clear.
   const onTableSetOverride = useCallback(
+    async (componentUid: number, property: string, value: FlexValue, duration: number) => {
+      try {
+        await patchOverrides(componentUid, { setOverrides: [{ property, value, duration }] });
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [],
+  );
+  const onTableSetDefault = useCallback(
     async (componentUid: number, property: string, value: FlexValue) => {
       try {
-        await patchOverrides(componentUid, { setOverrides: [{ property, value, duration: 0 }] });
+        await updateNode(componentUid, { properties: { [property]: { value } } });
       } catch (e) {
         reportError(e);
       }
@@ -2960,6 +2970,7 @@ function Inner({ base }: { base: string }) {
               onDrillIn={enter}
               onRowsChange={onTableRows}
               onSetOverride={onTableSetOverride}
+              onSetDefault={onTableSetDefault}
               onClearOverride={onTableClearOverride}
               canGoUp={crumbs.length > 1}
               onUp={() => goToCrumb(crumbs.length - 2)}

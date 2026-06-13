@@ -12855,6 +12855,7 @@ function ComponentTable({
   onDrillIn,
   onRowsChange,
   onSetOverride,
+  onSetDefault,
   onClearOverride,
   canGoUp,
   onUp
@@ -12947,9 +12948,7 @@ function ComponentTable({
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   const totalCols = 1 + maxIn + maxOut + maxCfg;
   const valueCell = (cell, c, groupStart) => {
-    const editable = cell != null && cell.category === CATEGORY_INPUT;
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
-    const isEditing = cell != null && editing?.comp === c.uid && editing.uid === cell.uid;
     return /* @__PURE__ */ jsx(
       "td",
       {
@@ -12966,37 +12965,25 @@ function ComponentTable({
           borderLeft: groupStart ? "1px solid #2c313c" : void 0,
           fontFamily: "ui-monospace, SFMono-Regular, monospace"
         },
-        children: cell && (isEditing ? /* @__PURE__ */ jsx(
-          Editor,
-          {
-            initial: values[cell.uid],
-            dataType: propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER,
-            facet: facets.get(c.uid)?.get(cell.uid),
-            onCommit: (v) => {
-              onSetOverride(c.uid, cell.name, v);
-              setEditing(null);
-            },
-            onCancel: () => setEditing(null)
-          }
-        ) : /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
+        children: cell && /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
           /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: cell.label }),
           /* @__PURE__ */ jsx(
             "span",
             {
-              onClick: editable ? (e) => {
+              onClick: (e) => {
                 e.stopPropagation();
-                setEditing({ comp: c.uid, uid: cell.uid });
-              } : void 0,
-              title: overridden ? "overridden — right-click to clear" : editable ? "click to set" : void 0,
+                setEditing({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
+              },
+              title: overridden ? "overridden — right-click to clear · click to edit" : "click to edit",
               style: {
                 color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
-                cursor: editable ? "text" : "default",
-                borderBottom: editable ? "1px dotted #3b4350" : void 0
+                cursor: "pointer",
+                borderBottom: "1px dotted #3b4350"
               },
               children: fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))
             }
           )
-        ] }))
+        ] })
       },
       `${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`
     );
@@ -13161,27 +13148,67 @@ function ComponentTable({
               orphans.map(renderRow)
             ] })
           ] })
-        ] }) })
+        ] }) }),
+        editing && /* @__PURE__ */ jsx(
+          ValueEditor,
+          {
+            rect: editing.rect,
+            cell: editing.cell,
+            initial: values[editing.cell.uid],
+            dataType: propertyDataType.get(editing.cell.uid) ?? DATATYPE_NUMBER,
+            facet: facets.get(editing.comp)?.get(editing.cell.uid),
+            overridden: (flags[editing.cell.uid] & STATUS_OVERRIDDEN) !== 0,
+            onOverride: (v, duration) => {
+              onSetOverride(editing.comp, editing.cell.name, v, duration);
+              setEditing(null);
+            },
+            onDefault: (v) => {
+              onSetDefault(editing.comp, editing.cell.name, v);
+              setEditing(null);
+            },
+            onClear: () => {
+              onClearOverride(editing.comp, editing.cell.name);
+              setEditing(null);
+            },
+            onClose: () => setEditing(null)
+          }
+        )
       ]
     }
   );
 }
-function Editor({
+function ValueEditor({
+  rect,
+  cell,
   initial,
   dataType,
   facet,
-  onCommit,
-  onCancel
+  overridden,
+  onOverride,
+  onDefault,
+  onClear,
+  onClose
 }) {
   const aliases = facet?.aliases;
+  const isOutput = cell.category === CATEGORY_OUTPUT;
   const codeOf = (v) => v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
   const initStr = aliases?.length || dataType === DATATYPE_BOOL ? String(codeOf(initial)) : initial == null ? "" : String(initial);
   const [text, setText] = useState(initStr);
+  const [mode, setMode] = useState("override");
+  const [duration, setDuration] = useState("0");
   const ref = useRef(null);
+  const rootRef = useRef(null);
   useEffect(() => {
     ref.current?.focus();
     if (ref.current instanceof HTMLInputElement) ref.current.select();
   }, []);
+  useEffect(() => {
+    const dismiss = (e) => {
+      if (!rootRef.current?.contains(e.target)) onClose();
+    };
+    document.addEventListener("pointerdown", dismiss, true);
+    return () => document.removeEventListener("pointerdown", dismiss, true);
+  }, [onClose]);
   const coerce = (raw) => {
     if (aliases?.length) {
       const code = Number(raw);
@@ -13191,50 +13218,125 @@ function Editor({
     if (dataType === DATATYPE_NUMBER) return Number(raw);
     return raw;
   };
-  const fieldStyle = {
+  const apply = () => {
+    const v = coerce(text);
+    if (mode === "default" && !isOutput) onDefault(v);
+    else onOverride(v, Number(duration) || 0);
+  };
+  const field = {
     background: "#0f1115",
     color: "#e6e8eb",
-    border: "1px solid #3b5388",
-    borderRadius: 2,
-    padding: "1px 4px",
+    border: "1px solid #2c313c",
+    borderRadius: 3,
+    padding: "3px 6px",
     fontSize: 12,
     fontFamily: "ui-monospace, SFMono-Regular, monospace",
-    outline: "none",
-    width: 70
+    outline: "none"
   };
-  const onKey = (e) => {
-    e.stopPropagation();
-    if (e.key === "Enter") onCommit(coerce(text));
-    else if (e.key === "Escape") onCancel();
-  };
-  if (aliases?.length || dataType === DATATYPE_BOOL) {
-    const opts = aliases?.length ? aliases.map((a) => ({ v: String(a.code), label: a.label })) : [
-      { v: "0", label: "false" },
-      { v: "1", label: "true" }
-    ];
-    return /* @__PURE__ */ jsx(
-      "select",
-      {
-        ref,
-        value: text,
-        onChange: (e) => onCommit(coerce(e.target.value)),
-        onKeyDown: onKey,
-        onBlur: onCancel,
-        style: { ...fieldStyle, width: "auto" },
-        children: opts.map((o) => /* @__PURE__ */ jsx("option", { value: o.v, children: o.label }, o.v))
-      }
-    );
-  }
-  return /* @__PURE__ */ jsx(
-    "input",
+  const segBtn = (active) => ({
+    flex: 1,
+    background: active ? "#2c3a55" : "transparent",
+    color: active ? "#cfe0ff" : "#8892a0",
+    border: "1px solid #2c313c",
+    borderRadius: 3,
+    padding: "3px 6px",
+    cursor: "pointer",
+    fontSize: 11
+  });
+  const left = Math.min(rect.left, window.innerWidth - 220);
+  const top = Math.min(rect.bottom + 4, window.innerHeight - 160);
+  return /* @__PURE__ */ jsxs(
+    "div",
     {
-      ref,
-      value: text,
-      onChange: (e) => setText(e.target.value),
-      onKeyDown: onKey,
-      onBlur: () => onCommit(coerce(text)),
-      inputMode: dataType === DATATYPE_NUMBER ? "decimal" : "text",
-      style: fieldStyle
+      ref: rootRef,
+      onClick: (e) => e.stopPropagation(),
+      onKeyDown: (e) => {
+        e.stopPropagation();
+        if (e.key === "Escape") onClose();
+        else if (e.key === "Enter" && !(e.target instanceof HTMLSelectElement)) apply();
+      },
+      style: {
+        position: "fixed",
+        left,
+        top,
+        zIndex: 200,
+        width: 200,
+        background: "#1a1d24",
+        border: "1px solid #2c313c",
+        borderRadius: 6,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+        padding: 8,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        fontSize: 12
+      },
+      children: [
+        /* @__PURE__ */ jsx("div", { style: { color: "#9ecbff", fontFamily: "ui-monospace, monospace", fontSize: 11 }, children: cell.label }),
+        aliases?.length || dataType === DATATYPE_BOOL ? /* @__PURE__ */ jsx(
+          "select",
+          {
+            ref,
+            value: text,
+            onChange: (e) => setText(e.target.value),
+            style: field,
+            children: (aliases?.length ? aliases.map((a) => ({ v: String(a.code), label: a.label })) : [
+              { v: "0", label: "false" },
+              { v: "1", label: "true" }
+            ]).map((o) => /* @__PURE__ */ jsx("option", { value: o.v, children: o.label }, o.v))
+          }
+        ) : /* @__PURE__ */ jsx(
+          "input",
+          {
+            ref,
+            value: text,
+            onChange: (e) => setText(e.target.value),
+            inputMode: dataType === DATATYPE_NUMBER ? "decimal" : "text",
+            placeholder: facet?.unit,
+            style: field
+          }
+        ),
+        !isOutput && /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 4 }, children: [
+          /* @__PURE__ */ jsx("button", { onClick: () => setMode("override"), style: segBtn(mode === "override"), children: "Override" }),
+          /* @__PURE__ */ jsx("button", { onClick: () => setMode("default"), style: segBtn(mode === "default"), children: "Default" })
+        ] }),
+        (isOutput || mode === "override") && /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }, children: [
+          "duration",
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              value: duration,
+              onChange: (e) => setDuration(e.target.value),
+              inputMode: "numeric",
+              title: "seconds (0 = permanent)",
+              style: { ...field, width: 56 }
+            }
+          ),
+          /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: "s" })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6, marginTop: 2 }, children: [
+          overridden && /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: onClear,
+              style: { ...segBtn(false), flex: "0 0 auto", color: "#c98a8a" },
+              title: "Clear override",
+              children: "clear"
+            }
+          ),
+          /* @__PURE__ */ jsx("button", { onClick: onClose, style: { ...segBtn(false), marginLeft: "auto", flex: "0 0 auto" }, children: "cancel" }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: apply,
+              style: { ...segBtn(true), flex: "0 0 auto", borderColor: "#3b5388" },
+              children: "set"
+            }
+          )
+        ] })
+      ]
     }
   );
 }
@@ -19547,9 +19649,19 @@ function Inner({ base }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [focusSelection, rf]);
   const onTableSetOverride = useCallback(
+    async (componentUid, property, value, duration) => {
+      try {
+        await patchOverrides(componentUid, { setOverrides: [{ property, value, duration }] });
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    []
+  );
+  const onTableSetDefault = useCallback(
     async (componentUid, property, value) => {
       try {
-        await patchOverrides(componentUid, { setOverrides: [{ property, value, duration: 0 }] });
+        await updateNode(componentUid, { properties: { [property]: { value } } });
       } catch (e) {
         reportError(e);
       }
@@ -19939,6 +20051,7 @@ function Inner({ base }) {
                   onDrillIn: enter,
                   onRowsChange: onTableRows,
                   onSetOverride: onTableSetOverride,
+                  onSetDefault: onTableSetDefault,
                   onClearOverride: onTableClearOverride,
                   canGoUp: crumbs.length > 1,
                   onUp: () => goToCrumb(crumbs.length - 2)
@@ -21846,7 +21959,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:47:57.098Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:51:11.363Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
