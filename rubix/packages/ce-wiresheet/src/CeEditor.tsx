@@ -2484,12 +2484,14 @@ function Inner({ base }: { base: string }) {
   const [splitPct, setSplitPct] = useState(55); // graph pane width %
   const splitRestore = useRef(55);
   const tableMaxed = splitPct <= 12;
-  const onTableSelect = useCallback((uid: number, additive: boolean) => {
+  // Replace the graph selection with exactly the given component uids (the table
+  // computes the set, including shift-range / ctrl-toggle).
+  const onTableSelect = useCallback((uids: number[]) => {
+    const want = new Set(uids.map(String));
     setNodes((ns) =>
       ns.map((n) => {
-        if (n.id === String(uid)) return n.selected ? n : { ...n, selected: true };
-        if (additive) return n;
-        return n.selected ? { ...n, selected: false } : n;
+        const s = want.has(n.id);
+        return n.selected === s ? n : { ...n, selected: s };
       }),
     );
   }, []);
@@ -2966,7 +2968,7 @@ function Inner({ base }: { base: string }) {
             <ComponentTable
               currentParentUid={currentParentUid}
               selectedUids={tableSelected}
-              onSelectRow={onTableSelect}
+              onSelect={onTableSelect}
               onDrillIn={enter}
               onRowsChange={onTableRows}
               onSetOverride={onTableSetOverride}

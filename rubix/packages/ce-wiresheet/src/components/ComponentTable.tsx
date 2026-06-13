@@ -47,7 +47,7 @@ interface RowCells {
 export function ComponentTable({
   currentParentUid,
   selectedUids,
-  onSelectRow,
+  onSelect,
   onDrillIn,
   onRowsChange,
   onSetOverride,
@@ -58,7 +58,7 @@ export function ComponentTable({
 }: {
   currentParentUid: number;
   selectedUids: number[];
-  onSelectRow: (uid: number, additive: boolean) => void;
+  onSelect: (uids: number[]) => void; // replaces the selection with these uids
   onDrillIn: (uid: number) => void;
   onRowsChange: (uids: number[]) => void;
   onSetOverride: (componentUid: number, property: string, value: FlexValue, duration: number) => void;
@@ -71,6 +71,7 @@ export function ComponentTable({
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState<1 | -1>(1);
   const [editing, setEditing] = useState<{ comp: number; cell: Cell; rect: DOMRect } | null>(null);
+  const [anchor, setAnchor] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const components = useStructural((s) => s.components);
@@ -172,6 +173,33 @@ export function ComponentTable({
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   const totalCols = 1 + maxIn + maxOut + maxCfg;
 
+  // Displayed row order (incl. pinned orphans) — used for shift-range selection.
+  const orderedUids = useMemo(() => [...rows, ...orphans].map((c) => c.uid), [rows, orphans]);
+
+  // Selection gestures: plain = single; ctrl/cmd = toggle; shift = range from the
+  // anchor (last plain/toggle click) to the clicked row, inclusive.
+  const handleRowClick = (uid: number, e: React.MouseEvent) => {
+    if (e.shiftKey && anchor != null) {
+      const a = orderedUids.indexOf(anchor);
+      const b = orderedUids.indexOf(uid);
+      if (a >= 0 && b >= 0) {
+        const [lo, hi] = a <= b ? [a, b] : [b, a];
+        onSelect(orderedUids.slice(lo, hi + 1));
+        return;
+      }
+    }
+    if (e.metaKey || e.ctrlKey) {
+      const next = new Set(selectedUids);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      onSelect([...next]);
+      setAnchor(uid);
+      return;
+    }
+    onSelect([uid]);
+    setAnchor(uid);
+  };
+
   const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
     return (
@@ -221,12 +249,11 @@ export function ComponentTable({
       <tr
         key={c.uid}
         data-uid={c.uid}
-        // Plain click = select; Ctrl/Cmd/Shift-click = add to selection;
-        // double-click = go inside (works even for childless components).
-        // Spacebar focuses the canvas on the selection (handled at editor level).
-        onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
+        // Plain = select; Ctrl/Cmd = toggle; Shift = range from the anchor;
+        // double-click = go inside; Space (editor level) focuses the canvas.
+        onClick={(e) => handleRowClick(c.uid, e)}
         onDoubleClick={() => onDrillIn(c.uid)}
-        title="double-click to go inside · ctrl/shift-click to multi-select · space to focus on canvas"
+        title="double-click to go inside · ctrl-click to toggle · shift-click to range-select · space to focus on canvas"
         style={{
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",

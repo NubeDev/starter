@@ -12851,7 +12851,7 @@ const fmtCell = (v, facet) => {
 function ComponentTable({
   currentParentUid,
   selectedUids,
-  onSelectRow,
+  onSelect,
   onDrillIn,
   onRowsChange,
   onSetOverride,
@@ -12864,6 +12864,7 @@ function ComponentTable({
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState(1);
   const [editing, setEditing] = useState(null);
+  const [anchor, setAnchor] = useState(null);
   const scrollRef = useRef(null);
   const components = useStructural((s) => s.components);
   const allRows = useMemo(
@@ -12947,6 +12948,28 @@ function ComponentTable({
   const sel = new Set(selectedUids);
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   const totalCols = 1 + maxIn + maxOut + maxCfg;
+  const orderedUids = useMemo(() => [...rows, ...orphans].map((c) => c.uid), [rows, orphans]);
+  const handleRowClick = (uid, e) => {
+    if (e.shiftKey && anchor != null) {
+      const a = orderedUids.indexOf(anchor);
+      const b = orderedUids.indexOf(uid);
+      if (a >= 0 && b >= 0) {
+        const [lo, hi] = a <= b ? [a, b] : [b, a];
+        onSelect(orderedUids.slice(lo, hi + 1));
+        return;
+      }
+    }
+    if (e.metaKey || e.ctrlKey) {
+      const next = new Set(selectedUids);
+      if (next.has(uid)) next.delete(uid);
+      else next.add(uid);
+      onSelect([...next]);
+      setAnchor(uid);
+      return;
+    }
+    onSelect([uid]);
+    setAnchor(uid);
+  };
   const valueCell = (cell, c, groupStart) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
     return /* @__PURE__ */ jsx(
@@ -12995,9 +13018,9 @@ function ComponentTable({
       "tr",
       {
         "data-uid": c.uid,
-        onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
+        onClick: (e) => handleRowClick(c.uid, e),
         onDoubleClick: () => onDrillIn(c.uid),
-        title: "double-click to go inside · ctrl/shift-click to multi-select · space to focus on canvas",
+        title: "double-click to go inside · ctrl-click to toggle · shift-click to range-select · space to focus on canvas",
         style: {
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",
@@ -19598,12 +19621,12 @@ function Inner({ base }) {
   const [splitPct, setSplitPct] = useState(55);
   const splitRestore = useRef(55);
   const tableMaxed = splitPct <= 12;
-  const onTableSelect = useCallback((uid, additive) => {
+  const onTableSelect = useCallback((uids) => {
+    const want = new Set(uids.map(String));
     setNodes(
       (ns) => ns.map((n) => {
-        if (n.id === String(uid)) return n.selected ? n : { ...n, selected: true };
-        if (additive) return n;
-        return n.selected ? { ...n, selected: false } : n;
+        const s = want.has(n.id);
+        return n.selected === s ? n : { ...n, selected: s };
       })
     );
   }, []);
@@ -20047,7 +20070,7 @@ function Inner({ base }) {
                 {
                   currentParentUid,
                   selectedUids: tableSelected,
-                  onSelectRow: onTableSelect,
+                  onSelect: onTableSelect,
                   onDrillIn: enter,
                   onRowsChange: onTableRows,
                   onSetOverride: onTableSetOverride,
@@ -21959,7 +21982,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:51:11.363Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:54:56.976Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
