@@ -12853,7 +12853,6 @@ function ComponentTable({
   selectedUids,
   onSelectRow,
   onDrillIn,
-  onCenter,
   onRowsChange,
   onSetOverride,
   onClearOverride,
@@ -13009,12 +13008,9 @@ function ComponentTable({
       "tr",
       {
         "data-uid": c.uid,
-        onClick: (e) => {
-          if (e.metaKey || e.ctrlKey) onCenter(c.uid);
-          else onSelectRow(c.uid, e.shiftKey);
-        },
+        onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
         onDoubleClick: () => onDrillIn(c.uid),
-        title: "double-click to go inside · ctrl-click to focus on canvas",
+        title: "double-click to go inside · ctrl/shift-click to multi-select · space to focus on canvas",
         style: {
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",
@@ -19522,23 +19518,34 @@ function Inner({ base }) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   }, []);
-  const centerOnComponent = useCallback(
-    (uid) => {
-      const node = rf.getNode(String(uid));
-      if (!node) {
-        void goToComponent(uid);
-        return;
-      }
-      const w = node.width ?? NODE_W;
-      const h = node.height ?? 80;
-      rf.setCenter(node.position.x + w / 2, node.position.y + h / 2, {
+  const focusSelection = useCallback(() => {
+    const selNodes = rf.getNodes().filter((n) => n.selected && n.type === "fb");
+    if (selNodes.length === 0) return;
+    if (selNodes.length === 1) {
+      const n = selNodes[0];
+      const w = n.width ?? NODE_W;
+      const h = n.height ?? 80;
+      rf.setCenter(n.position.x + w / 2, n.position.y + h / 2, {
         zoom: rf.getViewport().zoom,
         duration: 350
       });
-      setNodes((ns) => ns.map((n) => n.selected === (n.id === String(uid)) ? n : { ...n, selected: n.id === String(uid) }));
-    },
-    [rf, goToComponent]
-  );
+    } else {
+      void rf.fitView({ nodes: selNodes.map((n) => ({ id: n.id })), padding: 0.25, duration: 350 });
+    }
+  }, [rf]);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== " " && e.code !== "Space") return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable))
+        return;
+      if (!rf.getNodes().some((n) => n.selected && n.type === "fb")) return;
+      e.preventDefault();
+      focusSelection();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [focusSelection, rf]);
   const onTableSetOverride = useCallback(
     async (componentUid, property, value) => {
       try {
@@ -19930,7 +19937,6 @@ function Inner({ base }) {
                   selectedUids: tableSelected,
                   onSelectRow: onTableSelect,
                   onDrillIn: enter,
-                  onCenter: centerOnComponent,
                   onRowsChange: onTableRows,
                   onSetOverride: onTableSetOverride,
                   onClearOverride: onTableClearOverride,
@@ -21840,7 +21846,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:45:26.675Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:47:57.098Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

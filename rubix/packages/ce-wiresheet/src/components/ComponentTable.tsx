@@ -49,7 +49,6 @@ export function ComponentTable({
   selectedUids,
   onSelectRow,
   onDrillIn,
-  onCenter,
   onRowsChange,
   onSetOverride,
   onClearOverride,
@@ -60,7 +59,6 @@ export function ComponentTable({
   selectedUids: number[];
   onSelectRow: (uid: number, additive: boolean) => void;
   onDrillIn: (uid: number) => void;
-  onCenter: (uid: number) => void;
   onRowsChange: (uids: number[]) => void;
   onSetOverride: (componentUid: number, property: string, value: FlexValue) => void;
   onClearOverride: (componentUid: number, property: string) => void;
@@ -239,15 +237,12 @@ export function ComponentTable({
       <tr
         key={c.uid}
         data-uid={c.uid}
-        // Plain click = select; Ctrl/Cmd-click = focus the graph on it;
-        // Shift-click = add to selection; double-click = go inside (works even
-        // for childless components — drills to an empty level).
-        onClick={(e) => {
-          if (e.metaKey || e.ctrlKey) onCenter(c.uid);
-          else onSelectRow(c.uid, e.shiftKey);
-        }}
+        // Plain click = select; Ctrl/Cmd/Shift-click = add to selection;
+        // double-click = go inside (works even for childless components).
+        // Spacebar focuses the canvas on the selection (handled at editor level).
+        onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
         onDoubleClick={() => onDrillIn(c.uid)}
-        title="double-click to go inside · ctrl-click to focus on canvas"
+        title="double-click to go inside · ctrl/shift-click to multi-select · space to focus on canvas"
         style={{
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",

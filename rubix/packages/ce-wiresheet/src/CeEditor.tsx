@@ -2506,26 +2506,41 @@ function Inner({ base }: { base: string }) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   }, []);
-  // Ctrl-click a table row → pan the canvas to that component and select it.
-  // The table only lists the current folder, so the node is in view; fall back to
-  // a full navigation if it somehow isn't.
-  const centerOnComponent = useCallback(
-    (uid: number) => {
-      const node = rf.getNode(String(uid));
-      if (!node) {
-        void goToComponent(uid);
-        return;
-      }
-      const w = node.width ?? NODE_W;
-      const h = node.height ?? 80;
-      rf.setCenter(node.position.x + w / 2, node.position.y + h / 2, {
+  // Spacebar focuses the canvas on the current selection: one node → pan to
+  // center it; multiple → zoom to fit them all.
+  const focusSelection = useCallback(() => {
+    const selNodes = rf.getNodes().filter((n) => n.selected && n.type === "fb");
+    if (selNodes.length === 0) return;
+    if (selNodes.length === 1) {
+      const n = selNodes[0];
+      const w = n.width ?? NODE_W;
+      const h = n.height ?? 80;
+      rf.setCenter(n.position.x + w / 2, n.position.y + h / 2, {
         zoom: rf.getViewport().zoom,
         duration: 350,
       });
-      setNodes((ns) => ns.map((n) => (n.selected === (n.id === String(uid)) ? n : { ...n, selected: n.id === String(uid) })));
-    },
-    [rf, goToComponent],
-  );
+    } else {
+      void rf.fitView({ nodes: selNodes.map((n) => ({ id: n.id })), padding: 0.25, duration: 350 });
+    }
+  }, [rf]);
+  // Global spacebar → focus the selection (works whether the selection was made
+  // in the graph or the table). Ignored while typing in a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== " " && e.code !== "Space") return;
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable)
+      )
+        return;
+      if (!rf.getNodes().some((n) => n.selected && n.type === "fb")) return;
+      e.preventDefault();
+      focusSelection();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [focusSelection, rf]);
   // Table inline-edit → override (set / clear) on the live engine.
   const onTableSetOverride = useCallback(
     async (componentUid: number, property: string, value: FlexValue) => {
@@ -2943,7 +2958,6 @@ function Inner({ base }: { base: string }) {
               selectedUids={tableSelected}
               onSelectRow={onTableSelect}
               onDrillIn={enter}
-              onCenter={centerOnComponent}
               onRowsChange={onTableRows}
               onSetOverride={onTableSetOverride}
               onClearOverride={onTableClearOverride}
