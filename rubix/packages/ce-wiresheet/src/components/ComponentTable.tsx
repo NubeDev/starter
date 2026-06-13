@@ -5,13 +5,14 @@ import { ROLE_NORMAL, ROLE_STATUS, CATEGORY_INPUT, CATEGORY_OUTPUT } from "../li
 import type { Component } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
 import { facetFor, rawFacet, aliasLabel, type PropFacet, type ComponentFacet } from "../lib/facet";
-import { ChevronRight, ChevronDown, Layers, ArrowUp, ArrowDown } from "lucide-react";
+import { Layers, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 
-// Tabular view of the CURRENT folder's components, GROUPED BY TYPE. Each type is
-// its own section + mini-table with only that type's columns — so a folder of
-// 100 mixed components reads as tidy per-type tables instead of one giant sparse
-// grid. Live values, search, per-column sort; a selected component that the
-// search filters out still appears in a pinned section at the bottom.
+// Flat list view of the CURRENT folder's components. Each component is one
+// self-labelling line — name followed by `<label> <value>` pairs (the inline
+// name resolves to the facet label, fallback to the raw prop name). No column
+// headers, no per-type grids: each row carries its own props, so a folder of 100
+// mixed components reads cleanly. Live values, search, name sort; a selected
+// component the search filters out is pinned at the bottom.
 
 const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): string => {
   if (v === undefined || v === null) return "—";
@@ -24,16 +25,11 @@ const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): str
 };
 
 const catRank = (c: number) => (c === CATEGORY_INPUT ? 0 : c === CATEGORY_OUTPUT ? 1 : 2);
-const shortType = (t: string) => t.split("::").pop() || t;
 
-interface Sort {
-  col: string; // "name" or a prop name
-  dir: 1 | -1;
-}
-interface Group {
-  type: string;
-  members: Component[];
-  columns: { name: string; category: number }[];
+interface PropCell {
+  uid: number;
+  label: string;
+  category: number;
 }
 
 export function ComponentTable({
@@ -51,63 +47,62 @@ export function ComponentTable({
 }) {
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<Sort>({ col: "name", dir: 1 });
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [dir, setDir] = useState<1 | -1>(1);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const components = useStructural((s) => s.components);
-  const rows = useMemo(
+  const allRows = useMemo(
     () => Array.from(components.values()).filter((c) => c.parent === currentParentUid),
     [components, currentParentUid],
   );
 
   const facets = useMemo(
-    () => new Map<number, ComponentFacet>(rows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
-    [rows],
+    () =>
+      new Map<number, ComponentFacet>(allRows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
+    [allRows],
   );
 
-  const visibleProps = (c: Component) =>
-    Object.entries(c.properties).filter(([, p]) => {
-      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) return false;
-      if (showHidden) return true;
-      return !facets.get(c.uid)?.get(p.uid)?.hidden;
-    });
+  // The visible prop cells for a component: user-facing (+ not hidden unless the
+  // toggle is on), ordered input→output→config then by facet order then name.
+  const cellsFor = (c: Component): PropCell[] => {
+    const facet = facets.get(c.uid);
+    const out: (PropCell & { name: string })[] = [];
+    for (const [name, p] of Object.entries(c.properties)) {
+      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
+      const f = facet?.get(p.uid);
+      if (!showHidden && f?.hidden) continue;
+      out.push({ uid: p.uid, label: f?.label || name, category: p.category, name });
+    }
+    out.sort(
+      (a, b) =>
+        catRank(a.category) - catRank(b.category) ||
+        (facets.get(c.uid)?.get(a.uid)?.order ?? 1e9) - (facets.get(c.uid)?.get(b.uid)?.order ?? 1e9) ||
+        a.name.localeCompare(b.name),
+    );
+    return out;
+  };
 
   const q = query.trim().toLowerCase();
   const matches = (c: Component) =>
     !q || (c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q);
 
-  // Group matching rows by type; build each group's columns (homogeneous, so they
-  // align). Structural only (no live values) → stable, recomputed on edits.
-  const groups = useMemo(() => {
-    const byType = new Map<string, Component[]>();
-    for (const c of rows) {
-      if (!matches(c)) continue;
-      const arr = byType.get(c.type);
-      if (arr) arr.push(c);
-      else byType.set(c.type, [c]);
-    }
-    const out: Group[] = [];
-    for (const [type, members] of byType) {
-      const colMap = new Map<string, number>();
-      for (const c of members) for (const [name, p] of visibleProps(c)) if (!colMap.has(name)) colMap.set(name, p.category);
-      const columns = [...colMap.entries()]
-        .map(([name, category]) => ({ name, category }))
-        .sort((a, b) => catRank(a.category) - catRank(b.category) || a.name.localeCompare(b.name));
-      out.push({ type, members, columns });
-    }
-    return out.sort((a, b) => shortType(a.type).localeCompare(shortType(b.type)));
+  const rows = useMemo(
+    () =>
+      allRows
+        .filter(matches)
+        .sort((a, b) => (a.name || a.type).localeCompare(b.name || b.type) * dir),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, q, showHidden, facets]);
+    [allRows, q, dir],
+  );
 
   // Live values for every cell + status, in one shallow read.
   const watchUids = useMemo(() => {
     const set = new Set<number>();
-    for (const c of rows)
+    for (const c of allRows)
       for (const p of Object.values(c.properties))
         if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
     return [...set];
-  }, [rows]);
+  }, [allRows]);
   const values = useValues(
     useShallow((s) => {
       const out: Record<number, DecodedValue | undefined> = {};
@@ -117,49 +112,58 @@ export function ComponentTable({
   );
 
   useEffect(() => {
-    onRowsChange(rows.map((c) => c.uid));
+    onRowsChange(allRows.map((c) => c.uid));
     return () => onRowsChange([]);
-  }, [rows, onRowsChange]);
+  }, [allRows, onRowsChange]);
 
-  // Scroll the (first) selected row into view when the selection changes.
   const firstSel = selectedUids[0];
   useEffect(() => {
     if (firstSel == null) return;
     scrollRef.current
       ?.querySelector<HTMLElement>(`[data-uid="${firstSel}"]`)
       ?.scrollIntoView({ block: "nearest" });
-  }, [firstSel, groups]);
+  }, [firstSel, rows]);
 
   const sel = new Set(selectedUids);
+  // Selected components the search filtered out — pinned at the bottom.
+  const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
 
-  // Sort a group's members by the active column (live value for prop columns).
-  const sortKey = (c: Component): string | number | undefined => {
-    if (sort.col === "name") return (c.name || c.type).toLowerCase();
-    const p = c.properties[sort.col];
-    return p ? (values[p.uid] as string | number | undefined) : undefined;
+  const renderRow = (c: Component) => {
+    const isFolder = (c.childrenCount ?? 0) > 0;
+    return (
+      <div
+        key={c.uid}
+        data-uid={c.uid}
+        onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
+        onDoubleClick={() => isFolder && onDrillIn(c.uid)}
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          flexWrap: "wrap",
+          gap: "2px 14px",
+          padding: "5px 10px",
+          cursor: "pointer",
+          background: sel.has(c.uid) ? "#2c3a55" : "transparent",
+          borderBottom: "1px solid #1f232b",
+          fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 120, fontWeight: 600 }}>
+          {isFolder && <Layers size={12} color="#9ecbff" />}
+          <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>
+          {isFolder && <ChevronRight size={12} color="#5a6172" />}
+        </span>
+        {cellsFor(c).map((p) => (
+          <span key={p.uid} style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
+            <span style={{ color: "#5a6172" }}>{p.label}</span>
+            <span style={{ color: p.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb" }}>
+              {fmtCell(values[p.uid], facets.get(c.uid)?.get(p.uid))}
+            </span>
+          </span>
+        ))}
+      </div>
+    );
   };
-  const sortMembers = (members: Component[]) => {
-    const arr = [...members];
-    arr.sort((a, b) => {
-      const ka = sortKey(a);
-      const kb = sortKey(b);
-      if (ka === undefined && kb === undefined) return 0;
-      if (ka === undefined) return 1; // undefined always last
-      if (kb === undefined) return -1;
-      const c =
-        typeof ka === "number" && typeof kb === "number"
-          ? ka - kb
-          : String(ka).localeCompare(String(kb));
-      return c * sort.dir;
-    });
-    return arr;
-  };
-  const onSort = (col: string) =>
-    setSort((s) => (s.col === col ? { col, dir: s.dir === 1 ? -1 : 1 } : { col, dir: 1 }));
-
-  // Selected components the search filtered out — pinned at the bottom so the
-  // selection is never lost behind a filter.
-  const orphans = q ? rows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
 
   return (
     <div
@@ -202,6 +206,25 @@ export function ComponentTable({
             outline: "none",
           }}
         />
+        <button
+          onClick={() => setDir((d) => (d === 1 ? -1 : 1))}
+          title={`Sort by name ${dir === 1 ? "ascending" : "descending"}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 3,
+            background: "transparent",
+            border: "1px solid #2c313c",
+            borderRadius: 3,
+            color: "#8892a0",
+            cursor: "pointer",
+            padding: "3px 6px",
+            fontSize: 11,
+            flexShrink: 0,
+          }}
+        >
+          name {dir === 1 ? <ArrowUp size={11} /> : <ArrowDown size={11} />}
+        </button>
         <label style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0", flexShrink: 0 }}>
           <input type="checkbox" checked={showHidden} onChange={(e) => setShowHidden(e.target.checked)} />
           hidden
@@ -209,114 +232,16 @@ export function ComponentTable({
       </div>
 
       <div ref={scrollRef} style={{ overflow: "auto", flex: 1 }}>
-        {groups.length === 0 && orphans.length === 0 ? (
+        {rows.length === 0 && orphans.length === 0 ? (
           <div style={{ padding: 12, color: "#5a6172" }}>
-            {rows.length === 0 ? "no components in this folder" : "no matches"}
+            {allRows.length === 0 ? "no components in this folder" : "no matches"}
           </div>
         ) : (
-          groups.map((g) => {
-            const isCollapsed = collapsed.has(g.type);
-            return (
-              <div key={g.type}>
-                <button
-                  onClick={() =>
-                    setCollapsed((cur) => {
-                      const next = new Set(cur);
-                      if (next.has(g.type)) next.delete(g.type);
-                      else next.add(g.type);
-                      return next;
-                    })
-                  }
-                  title={g.type}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    width: "100%",
-                    textAlign: "left",
-                    background: "#1a1d24",
-                    border: "none",
-                    borderBottom: "1px solid #2c313c",
-                    color: "#cbd3e0",
-                    cursor: "pointer",
-                    padding: "5px 10px",
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                    fontSize: 11,
-                  }}
-                >
-                  {isCollapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                  <span style={{ fontWeight: 600 }}>{shortType(g.type)}</span>
-                  <span style={{ color: "#5a6172" }}>{g.members.length}</span>
-                </button>
-                {!isCollapsed && (
-                  <table style={{ borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }}>
-                    <thead>
-                      <tr>
-                        <Th sortable active={sort.col === "name"} dir={sort.dir} onClick={() => onSort("name")}>
-                          name
-                        </Th>
-                        {g.columns.map((col) => (
-                          <Th
-                            key={col.name}
-                            numeric
-                            sortable
-                            active={sort.col === col.name}
-                            dir={sort.dir}
-                            onClick={() => onSort(col.name)}
-                          >
-                            {col.name}
-                          </Th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortMembers(g.members).map((c) => {
-                        const facet = facets.get(c.uid);
-                        const isFolder = (c.childrenCount ?? 0) > 0;
-                        return (
-                          <tr
-                            key={c.uid}
-                            data-uid={c.uid}
-                            onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
-                            onDoubleClick={() => isFolder && onDrillIn(c.uid)}
-                            style={{
-                              cursor: "pointer",
-                              background: sel.has(c.uid) ? "#2c3a55" : "transparent",
-                              borderBottom: "1px solid #232733",
-                            }}
-                          >
-                            <Td>
-                              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                {isFolder && <Layers size={12} color="#9ecbff" />}
-                                <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>
-                                {isFolder && <ChevronRight size={12} color="#5a6172" />}
-                              </span>
-                            </Td>
-                            {g.columns.map((col) => {
-                              const p = c.properties[col.name];
-                              if (!p) return <Td key={col.name} numeric muted />;
-                              return (
-                                <Td key={col.name} numeric input={p.category === CATEGORY_INPUT}>
-                                  {fmtCell(values[p.uid], facet?.get(p.uid))}
-                                </Td>
-                              );
-                            })}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            );
-          })
+          rows.map(renderRow)
         )}
 
         {orphans.length > 0 && (
-          <div>
+          <>
             <div
               style={{
                 padding: "5px 10px",
@@ -331,99 +256,10 @@ export function ComponentTable({
             >
               selected · filtered out ({orphans.length})
             </div>
-            <table style={{ borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }}>
-              <tbody>
-                {orphans.map((c) => (
-                  <tr
-                    key={c.uid}
-                    data-uid={c.uid}
-                    onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
-                    style={{
-                      cursor: "pointer",
-                      background: "#2c3a55",
-                      borderBottom: "1px solid #232733",
-                    }}
-                  >
-                    <Td>{c.name || c.type}</Td>
-                    <Td muted>{shortType(c.type)}</Td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            {orphans.map(renderRow)}
+          </>
         )}
       </div>
     </div>
-  );
-}
-
-function Th({
-  children,
-  numeric,
-  sortable,
-  active,
-  dir,
-  onClick,
-}: {
-  children?: React.ReactNode;
-  numeric?: boolean;
-  sortable?: boolean;
-  active?: boolean;
-  dir?: 1 | -1;
-  onClick?: () => void;
-}) {
-  return (
-    <th
-      onClick={onClick}
-      style={{
-        textAlign: numeric ? "right" : "left",
-        padding: "4px 10px",
-        borderBottom: "1px solid #2c313c",
-        color: active ? "#cbd3e0" : "#8892a0",
-        fontWeight: 600,
-        fontSize: 11,
-        fontFamily: "ui-monospace, SFMono-Regular, monospace",
-        cursor: sortable ? "pointer" : "default",
-        userSelect: "none",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 2,
-          flexDirection: numeric ? "row-reverse" : "row",
-        }}
-      >
-        {children}
-        {active && (dir === 1 ? <ArrowUp size={11} /> : <ArrowDown size={11} />)}
-      </span>
-    </th>
-  );
-}
-
-function Td({
-  children,
-  numeric,
-  muted,
-  input,
-}: {
-  children?: React.ReactNode;
-  numeric?: boolean;
-  muted?: boolean;
-  input?: boolean;
-}) {
-  return (
-    <td
-      style={{
-        textAlign: numeric ? "right" : "left",
-        padding: "4px 10px",
-        color: muted ? "#5a6172" : input ? "#cbd3e0" : "#e6e8eb",
-        fontFamily: "ui-monospace, SFMono-Regular, monospace",
-      }}
-    >
-      {children}
-    </td>
   );
 }

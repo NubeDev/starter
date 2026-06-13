@@ -530,22 +530,22 @@ function DevicesPanel() {
     ) }),
     /* @__PURE__ */ jsx("div", { className: "ext-card overflow-hidden", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
       /* @__PURE__ */ jsx("thead", { className: "bg-muted/40 text-muted-foreground", children: /* @__PURE__ */ jsxs("tr", { children: [
-        /* @__PURE__ */ jsx(Th$1, { children: "Name" }),
-        /* @__PURE__ */ jsx(Th$1, { children: "Kind" }),
-        /* @__PURE__ */ jsx(Th$1, { children: "Address" }),
-        /* @__PURE__ */ jsx(Th$1, { children: "Status" }),
-        /* @__PURE__ */ jsx(Th$1, { children: "" })
+        /* @__PURE__ */ jsx(Th, { children: "Name" }),
+        /* @__PURE__ */ jsx(Th, { children: "Kind" }),
+        /* @__PURE__ */ jsx(Th, { children: "Address" }),
+        /* @__PURE__ */ jsx(Th, { children: "Status" }),
+        /* @__PURE__ */ jsx(Th, { children: "" })
       ] }) }),
       /* @__PURE__ */ jsx("tbody", { children: rows.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 5, className: "px-3 py-6 text-center text-muted-foreground", children: "No engines registered yet." }) }) : rows.map((d) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border", children: [
-        /* @__PURE__ */ jsx(Td$1, { children: d.name ?? d.device_id }),
-        /* @__PURE__ */ jsx(Td$1, { children: d.engine_kind ?? "—" }),
-        /* @__PURE__ */ jsxs(Td$1, { children: [
+        /* @__PURE__ */ jsx(Td, { children: d.name ?? d.device_id }),
+        /* @__PURE__ */ jsx(Td, { children: d.engine_kind ?? "—" }),
+        /* @__PURE__ */ jsxs(Td, { children: [
           d.ip,
           ":",
           d.port
         ] }),
-        /* @__PURE__ */ jsx(Td$1, { children: d.status ?? "unknown" }),
-        /* @__PURE__ */ jsx(Td$1, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
+        /* @__PURE__ */ jsx(Td, { children: d.status ?? "unknown" }),
+        /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
           /* @__PURE__ */ jsxs(
             "a",
             {
@@ -583,10 +583,10 @@ function DevicesPanel() {
     ] }) })
   ] });
 }
-function Th$1({ children }) {
+function Th({ children }) {
   return /* @__PURE__ */ jsx("th", { className: "px-3 py-2 text-left font-medium", children });
 }
-function Td$1({ children }) {
+function Td({ children }) {
   return /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children });
 }
 
@@ -12829,7 +12829,6 @@ const fmtCell = (v, facet) => {
   return facet?.unit ? `${s} ${facet.unit}` : s;
 };
 const catRank = (c) => c === CATEGORY_INPUT ? 0 : c === CATEGORY_OUTPUT ? 1 : 2;
-const shortType = (t) => t.split("::").pop() || t;
 function ComponentTable({
   currentParentUid,
   selectedUids,
@@ -12839,49 +12838,45 @@ function ComponentTable({
 }) {
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState({ col: "name", dir: 1 });
-  const [collapsed, setCollapsed] = useState(/* @__PURE__ */ new Set());
+  const [dir, setDir] = useState(1);
   const scrollRef = useRef(null);
   const components = useStructural((s) => s.components);
-  const rows = useMemo(
+  const allRows = useMemo(
     () => Array.from(components.values()).filter((c) => c.parent === currentParentUid),
     [components, currentParentUid]
   );
   const facets = useMemo(
-    () => new Map(rows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
-    [rows]
+    () => new Map(allRows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
+    [allRows]
   );
-  const visibleProps = (c) => Object.entries(c.properties).filter(([, p]) => {
-    if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) return false;
-    if (showHidden) return true;
-    return !facets.get(c.uid)?.get(p.uid)?.hidden;
-  });
+  const cellsFor = (c) => {
+    const facet = facets.get(c.uid);
+    const out = [];
+    for (const [name, p] of Object.entries(c.properties)) {
+      if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
+      const f = facet?.get(p.uid);
+      if (!showHidden && f?.hidden) continue;
+      out.push({ uid: p.uid, label: f?.label || name, category: p.category, name });
+    }
+    out.sort(
+      (a, b) => catRank(a.category) - catRank(b.category) || (facets.get(c.uid)?.get(a.uid)?.order ?? 1e9) - (facets.get(c.uid)?.get(b.uid)?.order ?? 1e9) || a.name.localeCompare(b.name)
+    );
+    return out;
+  };
   const q = query.trim().toLowerCase();
   const matches = (c) => !q || (c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q);
-  const groups = useMemo(() => {
-    const byType = /* @__PURE__ */ new Map();
-    for (const c of rows) {
-      if (!matches(c)) continue;
-      const arr = byType.get(c.type);
-      if (arr) arr.push(c);
-      else byType.set(c.type, [c]);
-    }
-    const out = [];
-    for (const [type, members] of byType) {
-      const colMap = /* @__PURE__ */ new Map();
-      for (const c of members) for (const [name, p] of visibleProps(c)) if (!colMap.has(name)) colMap.set(name, p.category);
-      const columns = [...colMap.entries()].map(([name, category]) => ({ name, category })).sort((a, b) => catRank(a.category) - catRank(b.category) || a.name.localeCompare(b.name));
-      out.push({ type, members, columns });
-    }
-    return out.sort((a, b) => shortType(a.type).localeCompare(shortType(b.type)));
-  }, [rows, q, showHidden, facets]);
+  const rows = useMemo(
+    () => allRows.filter(matches).sort((a, b) => (a.name || a.type).localeCompare(b.name || b.type) * dir),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allRows, q, dir]
+  );
   const watchUids = useMemo(() => {
     const set = /* @__PURE__ */ new Set();
-    for (const c of rows)
+    for (const c of allRows)
       for (const p of Object.values(c.properties))
         if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
     return [...set];
-  }, [rows]);
+  }, [allRows]);
   const values = useValues(
     useShallow((s) => {
       const out = {};
@@ -12890,35 +12885,50 @@ function ComponentTable({
     })
   );
   useEffect(() => {
-    onRowsChange(rows.map((c) => c.uid));
+    onRowsChange(allRows.map((c) => c.uid));
     return () => onRowsChange([]);
-  }, [rows, onRowsChange]);
+  }, [allRows, onRowsChange]);
   const firstSel = selectedUids[0];
   useEffect(() => {
     if (firstSel == null) return;
     scrollRef.current?.querySelector(`[data-uid="${firstSel}"]`)?.scrollIntoView({ block: "nearest" });
-  }, [firstSel, groups]);
+  }, [firstSel, rows]);
   const sel = new Set(selectedUids);
-  const sortKey = (c) => {
-    if (sort.col === "name") return (c.name || c.type).toLowerCase();
-    const p = c.properties[sort.col];
-    return p ? values[p.uid] : void 0;
+  const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
+  const renderRow = (c) => {
+    const isFolder = (c.childrenCount ?? 0) > 0;
+    return /* @__PURE__ */ jsxs(
+      "div",
+      {
+        "data-uid": c.uid,
+        onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
+        onDoubleClick: () => isFolder && onDrillIn(c.uid),
+        style: {
+          display: "flex",
+          alignItems: "baseline",
+          flexWrap: "wrap",
+          gap: "2px 14px",
+          padding: "5px 10px",
+          cursor: "pointer",
+          background: sel.has(c.uid) ? "#2c3a55" : "transparent",
+          borderBottom: "1px solid #1f232b",
+          fontFamily: "ui-monospace, SFMono-Regular, monospace"
+        },
+        children: [
+          /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4, minWidth: 120, fontWeight: 600 }, children: [
+            isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
+            /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
+            isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172" })
+          ] }),
+          cellsFor(c).map((p) => /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
+            /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: p.label }),
+            /* @__PURE__ */ jsx("span", { style: { color: p.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb" }, children: fmtCell(values[p.uid], facets.get(c.uid)?.get(p.uid)) })
+          ] }, p.uid))
+        ]
+      },
+      c.uid
+    );
   };
-  const sortMembers = (members) => {
-    const arr = [...members];
-    arr.sort((a, b) => {
-      const ka = sortKey(a);
-      const kb = sortKey(b);
-      if (ka === void 0 && kb === void 0) return 0;
-      if (ka === void 0) return 1;
-      if (kb === void 0) return -1;
-      const c = typeof ka === "number" && typeof kb === "number" ? ka - kb : String(ka).localeCompare(String(kb));
-      return c * sort.dir;
-    });
-    return arr;
-  };
-  const onSort = (col) => setSort((s) => s.col === col ? { col, dir: s.dir === 1 ? -1 : 1 } : { col, dir: 1 });
-  const orphans = q ? rows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   return /* @__PURE__ */ jsxs(
     "div",
     {
@@ -12966,6 +12976,30 @@ function ComponentTable({
                   }
                 }
               ),
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: () => setDir((d) => d === 1 ? -1 : 1),
+                  title: `Sort by name ${dir === 1 ? "ascending" : "descending"}`,
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                    background: "transparent",
+                    border: "1px solid #2c313c",
+                    borderRadius: 3,
+                    color: "#8892a0",
+                    cursor: "pointer",
+                    padding: "3px 6px",
+                    fontSize: 11,
+                    flexShrink: 0
+                  },
+                  children: [
+                    "name ",
+                    dir === 1 ? /* @__PURE__ */ jsx(ArrowUp, { size: 11 }) : /* @__PURE__ */ jsx(ArrowDown, { size: 11 })
+                  ]
+                }
+              ),
               /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0", flexShrink: 0 }, children: [
                 /* @__PURE__ */ jsx("input", { type: "checkbox", checked: showHidden, onChange: (e) => setShowHidden(e.target.checked) }),
                 "hidden"
@@ -12974,94 +13008,8 @@ function ComponentTable({
           }
         ),
         /* @__PURE__ */ jsxs("div", { ref: scrollRef, style: { overflow: "auto", flex: 1 }, children: [
-          groups.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: rows.length === 0 ? "no components in this folder" : "no matches" }) : groups.map((g) => {
-            const isCollapsed = collapsed.has(g.type);
-            return /* @__PURE__ */ jsxs("div", { children: [
-              /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  onClick: () => setCollapsed((cur) => {
-                    const next = new Set(cur);
-                    if (next.has(g.type)) next.delete(g.type);
-                    else next.add(g.type);
-                    return next;
-                  }),
-                  title: g.type,
-                  style: {
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    width: "100%",
-                    textAlign: "left",
-                    background: "#1a1d24",
-                    border: "none",
-                    borderBottom: "1px solid #2c313c",
-                    color: "#cbd3e0",
-                    cursor: "pointer",
-                    padding: "5px 10px",
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                    fontSize: 11
-                  },
-                  children: [
-                    isCollapsed ? /* @__PURE__ */ jsx(ChevronRight, { size: 13 }) : /* @__PURE__ */ jsx(ChevronDown, { size: 13 }),
-                    /* @__PURE__ */ jsx("span", { style: { fontWeight: 600 }, children: shortType(g.type) }),
-                    /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: g.members.length })
-                  ]
-                }
-              ),
-              !isCollapsed && /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: [
-                /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
-                  /* @__PURE__ */ jsx(Th, { sortable: true, active: sort.col === "name", dir: sort.dir, onClick: () => onSort("name"), children: "name" }),
-                  g.columns.map((col) => /* @__PURE__ */ jsx(
-                    Th,
-                    {
-                      numeric: true,
-                      sortable: true,
-                      active: sort.col === col.name,
-                      dir: sort.dir,
-                      onClick: () => onSort(col.name),
-                      children: col.name
-                    },
-                    col.name
-                  ))
-                ] }) }),
-                /* @__PURE__ */ jsx("tbody", { children: sortMembers(g.members).map((c) => {
-                  const facet = facets.get(c.uid);
-                  const isFolder = (c.childrenCount ?? 0) > 0;
-                  return /* @__PURE__ */ jsxs(
-                    "tr",
-                    {
-                      "data-uid": c.uid,
-                      onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
-                      onDoubleClick: () => isFolder && onDrillIn(c.uid),
-                      style: {
-                        cursor: "pointer",
-                        background: sel.has(c.uid) ? "#2c3a55" : "transparent",
-                        borderBottom: "1px solid #232733"
-                      },
-                      children: [
-                        /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4 }, children: [
-                          isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
-                          /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
-                          isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172" })
-                        ] }) }),
-                        g.columns.map((col) => {
-                          const p = c.properties[col.name];
-                          if (!p) return /* @__PURE__ */ jsx(Td, { numeric: true, muted: true }, col.name);
-                          return /* @__PURE__ */ jsx(Td, { numeric: true, input: p.category === CATEGORY_INPUT, children: fmtCell(values[p.uid], facet?.get(p.uid)) }, col.name);
-                        })
-                      ]
-                    },
-                    c.uid
-                  );
-                }) })
-              ] })
-            ] }, g.type);
-          }),
-          orphans.length > 0 && /* @__PURE__ */ jsxs("div", { children: [
+          rows.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: allRows.length === 0 ? "no components in this folder" : "no matches" }) : rows.map(renderRow),
+          orphans.length > 0 && /* @__PURE__ */ jsxs(Fragment, { children: [
             /* @__PURE__ */ jsxs(
               "div",
               {
@@ -13082,87 +13030,10 @@ function ComponentTable({
                 ]
               }
             ),
-            /* @__PURE__ */ jsx("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: /* @__PURE__ */ jsx("tbody", { children: orphans.map((c) => /* @__PURE__ */ jsxs(
-              "tr",
-              {
-                "data-uid": c.uid,
-                onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
-                style: {
-                  cursor: "pointer",
-                  background: "#2c3a55",
-                  borderBottom: "1px solid #232733"
-                },
-                children: [
-                  /* @__PURE__ */ jsx(Td, { children: c.name || c.type }),
-                  /* @__PURE__ */ jsx(Td, { muted: true, children: shortType(c.type) })
-                ]
-              },
-              c.uid
-            )) }) })
+            orphans.map(renderRow)
           ] })
         ] })
       ]
-    }
-  );
-}
-function Th({
-  children,
-  numeric,
-  sortable,
-  active,
-  dir,
-  onClick
-}) {
-  return /* @__PURE__ */ jsx(
-    "th",
-    {
-      onClick,
-      style: {
-        textAlign: numeric ? "right" : "left",
-        padding: "4px 10px",
-        borderBottom: "1px solid #2c313c",
-        color: active ? "#cbd3e0" : "#8892a0",
-        fontWeight: 600,
-        fontSize: 11,
-        fontFamily: "ui-monospace, SFMono-Regular, monospace",
-        cursor: sortable ? "pointer" : "default",
-        userSelect: "none",
-        whiteSpace: "nowrap"
-      },
-      children: /* @__PURE__ */ jsxs(
-        "span",
-        {
-          style: {
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 2,
-            flexDirection: numeric ? "row-reverse" : "row"
-          },
-          children: [
-            children,
-            active && (dir === 1 ? /* @__PURE__ */ jsx(ArrowUp, { size: 11 }) : /* @__PURE__ */ jsx(ArrowDown, { size: 11 }))
-          ]
-        }
-      )
-    }
-  );
-}
-function Td({
-  children,
-  numeric,
-  muted,
-  input
-}) {
-  return /* @__PURE__ */ jsx(
-    "td",
-    {
-      style: {
-        textAlign: numeric ? "right" : "left",
-        padding: "4px 10px",
-        color: muted ? "#5a6172" : input ? "#cbd3e0" : "#e6e8eb",
-        fontFamily: "ui-monospace, SFMono-Regular, monospace"
-      },
-      children
     }
   );
 }
@@ -21701,7 +21572,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T10:08:16.444Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:22:57.996Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
