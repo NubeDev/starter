@@ -229,13 +229,14 @@ export function ComponentTable({
               }}
               title={overridden ? "overridden — right-click to clear · click to edit" : "click to edit"}
               style={{
-                color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
+                color: cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
                 cursor: "pointer",
                 borderBottom: "1px dotted #3b4350",
               }}
             >
               {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
             </span>
+            {overridden && <OvrBadge />}
           </span>
         )}
       </td>
@@ -466,7 +467,9 @@ function ValueEditor({
         : String(initial);
   const [text, setText] = useState(initStr);
   const [mode, setMode] = useState<"override" | "default">("override");
-  const [duration, setDuration] = useState("0");
+  // Default 60s — matching the standard override menu. (duration 0 / "permanent"
+  // does not actually hold on this engine, so it can't be the default.)
+  const [duration, setDuration] = useState("60");
   const ref = useRef<HTMLInputElement | HTMLSelectElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -598,14 +601,21 @@ function ValueEditor({
       {(isOutput || mode === "override") && (
         <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }}>
           duration
-          <input
+          <select
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
-            inputMode="numeric"
-            title="seconds (0 = permanent)"
-            style={{ ...field, width: 56 }}
-          />
-          <span style={{ color: "#5a6172" }}>s</span>
+            style={{ ...field, flex: 1 }}
+          >
+            <option value="10">10 sec</option>
+            <option value="30">30 sec</option>
+            <option value="60">1 min</option>
+            <option value="300">5 min</option>
+            <option value="1200">20 min</option>
+            <option value="3600">1 hr</option>
+            <option value="7200">2 hr</option>
+            <option value="86400">24 hr</option>
+            <option value="0">permanent</option>
+          </select>
         </label>
       )}
 
@@ -630,6 +640,26 @@ function ValueEditor({
         </button>
       </div>
     </div>
+  );
+}
+
+// Same OVR badge the wiresheet node rows use.
+function OvrBadge() {
+  return (
+    <span
+      title="overridden"
+      style={{
+        fontSize: 9,
+        padding: "0 4px",
+        background: "#f59e0b",
+        color: "#0f1115",
+        borderRadius: 2,
+        fontWeight: 600,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+      }}
+    >
+      OVR
+    </span>
   );
 }
 

@@ -12999,13 +12999,14 @@ function ComponentTable({
               },
               title: overridden ? "overridden — right-click to clear · click to edit" : "click to edit",
               style: {
-                color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
+                color: cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
                 cursor: "pointer",
                 borderBottom: "1px dotted #3b4350"
               },
               children: fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))
             }
-          )
+          ),
+          overridden && /* @__PURE__ */ jsx(OvrBadge, {})
         ] })
       },
       `${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`
@@ -13218,7 +13219,7 @@ function ValueEditor({
   const initStr = aliases?.length || dataType === DATATYPE_BOOL ? String(codeOf(initial)) : initial == null ? "" : String(initial);
   const [text, setText] = useState(initStr);
   const [mode, setMode] = useState("override");
-  const [duration, setDuration] = useState("0");
+  const [duration, setDuration] = useState("60");
   const ref = useRef(null);
   const rootRef = useRef(null);
   useEffect(() => {
@@ -13327,17 +13328,25 @@ function ValueEditor({
         ] }),
         (isOutput || mode === "override") && /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }, children: [
           "duration",
-          /* @__PURE__ */ jsx(
-            "input",
+          /* @__PURE__ */ jsxs(
+            "select",
             {
               value: duration,
               onChange: (e) => setDuration(e.target.value),
-              inputMode: "numeric",
-              title: "seconds (0 = permanent)",
-              style: { ...field, width: 56 }
+              style: { ...field, flex: 1 },
+              children: [
+                /* @__PURE__ */ jsx("option", { value: "10", children: "10 sec" }),
+                /* @__PURE__ */ jsx("option", { value: "30", children: "30 sec" }),
+                /* @__PURE__ */ jsx("option", { value: "60", children: "1 min" }),
+                /* @__PURE__ */ jsx("option", { value: "300", children: "5 min" }),
+                /* @__PURE__ */ jsx("option", { value: "1200", children: "20 min" }),
+                /* @__PURE__ */ jsx("option", { value: "3600", children: "1 hr" }),
+                /* @__PURE__ */ jsx("option", { value: "7200", children: "2 hr" }),
+                /* @__PURE__ */ jsx("option", { value: "86400", children: "24 hr" }),
+                /* @__PURE__ */ jsx("option", { value: "0", children: "permanent" })
+              ]
             }
-          ),
-          /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: "s" })
+          )
         ] }),
         /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6, marginTop: 2 }, children: [
           overridden && /* @__PURE__ */ jsx(
@@ -13360,6 +13369,24 @@ function ValueEditor({
           )
         ] })
       ]
+    }
+  );
+}
+function OvrBadge() {
+  return /* @__PURE__ */ jsx(
+    "span",
+    {
+      title: "overridden",
+      style: {
+        fontSize: 9,
+        padding: "0 4px",
+        background: "#f59e0b",
+        color: "#0f1115",
+        borderRadius: 2,
+        fontWeight: 600,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace"
+      },
+      children: "OVR"
     }
   );
 }
@@ -21982,7 +22009,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:54:56.976Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:00:33.175Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
