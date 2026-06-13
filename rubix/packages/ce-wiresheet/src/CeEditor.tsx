@@ -17,7 +17,8 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ChevronRight, ChevronLeft, CornerDownRight } from "lucide-react";
+import { ChevronRight, ChevronLeft, CornerDownRight, Table2, X, Maximize2, Minimize2 } from "lucide-react";
+import { ComponentTable } from "./components/ComponentTable";
 
 // Selected-edge highlight. RF adds .selected to .react-flow__edge when the
 // edge's `selected` flag is true; the default stylesheet's selected color is
@@ -1297,12 +1298,32 @@ function Inner({ base }: { base: string }) {
     };
   }, []);
 
+  // Value subscription = the union of what the graph viewport needs and what the
+  // table view shows (so off-screen table rows still stream). Each source writes
+  // its set into a ref and triggers a flush.
+  const graphSubsRef = useRef<Set<number>>(new Set());
+  const tableSubsRef = useRef<Set<number>>(new Set());
+  const flushSubs = useCallback(() => {
+    const union = new Set<number>([...graphSubsRef.current, ...tableSubsRef.current]);
+    wsClient?.setDesiredSubscription(union);
+    diagGauges.subscribedComponents = union.size;
+  }, []);
   // Stable callback for VisibilitySub — inline would churn its effect on every
   // App re-render (frequent during a pan as nodes mount/unmount).
-  const onVisibleSubscription = useCallback((uids: Set<number>) => {
-    wsClient?.setDesiredSubscription(uids);
-    diagGauges.subscribedComponents = uids.size;
-  }, []);
+  const onVisibleSubscription = useCallback(
+    (uids: Set<number>) => {
+      graphSubsRef.current = uids;
+      flushSubs();
+    },
+    [flushSubs],
+  );
+  const onTableRows = useCallback(
+    (uids: number[]) => {
+      tableSubsRef.current = new Set(uids);
+      flushSubs();
+    },
+    [flushSubs],
+  );
 
   // Stable adapter over the module-level wsClient singleton so the DiagPanel's
   // rate controls always hit the live socket (wsClient is null at first render,
@@ -2457,9 +2478,53 @@ function Inner({ base }: { base: string }) {
     [rf, onAddNode],
   );
 
+  // --- Table view (split pane) ---
+  const [tableOpen, setTableOpen] = useState(false);
+  const [splitPct, setSplitPct] = useState(55); // graph pane width %
+  const splitRestore = useRef(55);
+  const tableMaxed = splitPct <= 12;
+  const onTableSelect = useCallback((uid: number, additive: boolean) => {
+    setNodes((ns) =>
+      ns.map((n) => {
+        if (n.id === String(uid)) return n.selected ? n : { ...n, selected: true };
+        if (additive) return n;
+        return n.selected ? { ...n, selected: false } : n;
+      }),
+    );
+  }, []);
+  const startSplitDrag = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    const move = (ev: PointerEvent) => {
+      const pct = (ev.clientX / window.innerWidth) * 100;
+      setSplitPct(Math.min(90, Math.max(10, pct)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }, []);
+  // Selected component uids (from RF node state) for row highlighting.
+  const tableSelected = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+
   return (
     <CeWiresheetContext.Provider value={ceCtx}>
       <style>{EDGE_SELECTED_CSS}</style>
+      <div style={{ position: "absolute", inset: 0, display: "flex" }}>
+        {/* LEFT: graph pane. The transform makes it the containing block for its
+            position:fixed overlays (dock, panels, menus) so they stay within the
+            pane instead of spilling over the table. */}
+        <div
+          style={{
+            position: "relative",
+            height: "100%",
+            width: tableOpen ? `${splitPct}%` : "100%",
+            flexShrink: 0,
+            transform: "translateZ(0)",
+            overflow: "hidden",
+          }}
+        >
       <div
         style={{ position: "absolute", inset: 0 }}
         onDragOver={onDragOver}
@@ -2755,6 +2820,92 @@ function Inner({ base }: { base: string }) {
         );
       })()}
       {error && <ErrorBanner error={error} onClose={() => setError(null)} />}
+        {/* Right-edge tab to open the table when it's hidden. */}
+        {!tableOpen && (
+          <button
+            onClick={() => setTableOpen(true)}
+            title="Open table view"
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: 0,
+              transform: "translateY(-50%)",
+              zIndex: 20,
+              width: 26,
+              height: 70,
+              background: "rgba(20,23,30,0.92)",
+              border: "1px solid #2c313c",
+              borderRight: "none",
+              borderRadius: "6px 0 0 6px",
+              color: "#cbd3e0",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Table2 size={16} />
+          </button>
+        )}
+      </div>
+      {tableOpen && (
+        <div
+          onPointerDown={startSplitDrag}
+          title="Drag to resize"
+          style={{ width: 5, flexShrink: 0, cursor: "col-resize", background: "#2c313c" }}
+        />
+      )}
+      {tableOpen && (
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              padding: "3px 6px",
+              background: "#1a1d24",
+              borderBottom: "1px solid #2c313c",
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontSize: 10, color: "#5a6172", marginRight: "auto" }}>table view</span>
+            <button
+              title={tableMaxed ? "Restore split" : "Maximize table"}
+              onClick={() => {
+                if (tableMaxed) setSplitPct(splitRestore.current || 55);
+                else {
+                  splitRestore.current = splitPct;
+                  setSplitPct(8);
+                }
+              }}
+              style={tableChromeBtn}
+            >
+              {tableMaxed ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            </button>
+            <button title="Close table" onClick={() => setTableOpen(false)} style={tableChromeBtn}>
+              <X size={14} />
+            </button>
+          </div>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ComponentTable
+              currentParentUid={currentParentUid}
+              selectedUids={tableSelected}
+              onSelectRow={onTableSelect}
+              onDrillIn={enter}
+              onRowsChange={onTableRows}
+            />
+          </div>
+        </div>
+      )}
+      </div>
     </CeWiresheetContext.Provider>
   );
 }
@@ -2863,6 +3014,16 @@ function EdgeMenuItem({
 
 // Parse the Details panel's alias text field ("0=off, 1=auto, 2=manual") into
 // {code,label} entries; ignores blanks / malformed parts.
+const tableChromeBtn: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  background: "transparent",
+  border: "none",
+  color: "#8892a0",
+  cursor: "pointer",
+  padding: "2px 4px",
+};
+
 const detailsField: CSSProperties = {
   background: "#0f1115",
   color: "#e6e8eb",

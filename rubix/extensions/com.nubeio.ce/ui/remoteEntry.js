@@ -530,22 +530,22 @@ function DevicesPanel() {
     ) }),
     /* @__PURE__ */ jsx("div", { className: "ext-card overflow-hidden", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
       /* @__PURE__ */ jsx("thead", { className: "bg-muted/40 text-muted-foreground", children: /* @__PURE__ */ jsxs("tr", { children: [
-        /* @__PURE__ */ jsx(Th, { children: "Name" }),
-        /* @__PURE__ */ jsx(Th, { children: "Kind" }),
-        /* @__PURE__ */ jsx(Th, { children: "Address" }),
-        /* @__PURE__ */ jsx(Th, { children: "Status" }),
-        /* @__PURE__ */ jsx(Th, { children: "" })
+        /* @__PURE__ */ jsx(Th$1, { children: "Name" }),
+        /* @__PURE__ */ jsx(Th$1, { children: "Kind" }),
+        /* @__PURE__ */ jsx(Th$1, { children: "Address" }),
+        /* @__PURE__ */ jsx(Th$1, { children: "Status" }),
+        /* @__PURE__ */ jsx(Th$1, { children: "" })
       ] }) }),
       /* @__PURE__ */ jsx("tbody", { children: rows.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 5, className: "px-3 py-6 text-center text-muted-foreground", children: "No engines registered yet." }) }) : rows.map((d) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border", children: [
-        /* @__PURE__ */ jsx(Td, { children: d.name ?? d.device_id }),
-        /* @__PURE__ */ jsx(Td, { children: d.engine_kind ?? "—" }),
-        /* @__PURE__ */ jsxs(Td, { children: [
+        /* @__PURE__ */ jsx(Td$1, { children: d.name ?? d.device_id }),
+        /* @__PURE__ */ jsx(Td$1, { children: d.engine_kind ?? "—" }),
+        /* @__PURE__ */ jsxs(Td$1, { children: [
           d.ip,
           ":",
           d.port
         ] }),
-        /* @__PURE__ */ jsx(Td, { children: d.status ?? "unknown" }),
-        /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
+        /* @__PURE__ */ jsx(Td$1, { children: d.status ?? "unknown" }),
+        /* @__PURE__ */ jsx(Td$1, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
           /* @__PURE__ */ jsxs(
             "a",
             {
@@ -583,10 +583,10 @@ function DevicesPanel() {
     ] }) })
   ] });
 }
-function Th({ children }) {
+function Th$1({ children }) {
   return /* @__PURE__ */ jsx("th", { className: "px-3 py-2 text-left font-medium", children });
 }
-function Td({ children }) {
+function Td$1({ children }) {
   return /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children });
 }
 
@@ -12326,6 +12326,67 @@ const Layers = createLucideIcon("Layers", [
  */
 
 
+const Maximize2 = createLucideIcon("Maximize2", [
+  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
+  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
+  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Minimize2 = createLucideIcon("Minimize2", [
+  ["polyline", { points: "4 14 10 14 10 20", key: "11kfnr" }],
+  ["polyline", { points: "20 10 14 10 14 4", key: "rlmsce" }],
+  ["line", { x1: "14", x2: "21", y1: "10", y2: "3", key: "o5lafz" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Table2 = createLucideIcon("Table2", [
+  [
+    "path",
+    {
+      d: "M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18",
+      key: "gugj83"
+    }
+  ]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const X = createLucideIcon("X", [
+  ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+  ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Zap = createLucideIcon("Zap", [
   [
     "path",
@@ -12335,6 +12396,68 @@ const Zap = createLucideIcon("Zap", [
     }
   ]
 ]);
+
+const isIterable = (obj) => Symbol.iterator in obj;
+const hasIterableEntries = (value) => (
+  // HACK: avoid checking entries type
+  "entries" in value
+);
+const compareEntries = (valueA, valueB) => {
+  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
+  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
+  if (mapA.size !== mapB.size) {
+    return false;
+  }
+  for (const [key, value] of mapA) {
+    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
+      return false;
+    }
+  }
+  return true;
+};
+const compareIterables = (valueA, valueB) => {
+  const iteratorA = valueA[Symbol.iterator]();
+  const iteratorB = valueB[Symbol.iterator]();
+  let nextA = iteratorA.next();
+  let nextB = iteratorB.next();
+  while (!nextA.done && !nextB.done) {
+    if (!Object.is(nextA.value, nextB.value)) {
+      return false;
+    }
+    nextA = iteratorA.next();
+    nextB = iteratorB.next();
+  }
+  return !!nextA.done && !!nextB.done;
+};
+function shallow(valueA, valueB) {
+  if (Object.is(valueA, valueB)) {
+    return true;
+  }
+  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
+    return false;
+  }
+  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
+    return false;
+  }
+  if (isIterable(valueA) && isIterable(valueB)) {
+    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
+      return compareEntries(valueA, valueB);
+    }
+    return compareIterables(valueA, valueB);
+  }
+  return compareEntries(
+    { entries: () => Object.entries(valueA) },
+    { entries: () => Object.entries(valueB) }
+  );
+}
+
+function useShallow(selector) {
+  const prev = React__default.useRef(void 0);
+  return (state) => {
+    const next = selector(state);
+    return shallow(prev.current, next) ? prev.current : prev.current = next;
+  };
+}
 
 const createStoreImpl = (createState) => {
   let state;
@@ -12510,6 +12633,357 @@ const store = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   useStructural,
   useValues
 }, Symbol.toStringTag, { value: 'Module' }));
+
+const CATEGORY_INPUT = 0;
+const CATEGORY_OUTPUT = 1;
+const CATEGORY_CONFIG = 2;
+const DATATYPE_NUMBER = 0;
+const DATATYPE_BOOL = 1;
+const DATATYPE_STRING = 2;
+const ROLE_NORMAL = 0;
+const ROLE_STATUS = 1;
+const STATUS_OVERRIDDEN = 1 << 5;
+const TYPE_BOOL = 1;
+const TYPE_U32 = 16;
+const TYPE_I32 = 17;
+const TYPE_F32 = 18;
+const TYPE_U64 = 32;
+const TYPE_I64 = 33;
+const TYPE_F64 = 34;
+const TYPE_STR = 48;
+const TYPE_STATUS = 64;
+const MSG_UPDATE = 1;
+const MSG_SNAPSHOT = 2;
+
+const RS = "";
+const US = "";
+const GS = "";
+const FS = "";
+const FACET_PROP = "__facets";
+function parseFacet(raw) {
+  const out = /* @__PURE__ */ new Map();
+  if (!raw) return out;
+  for (const rec of raw.split(RS)) {
+    if (!rec) continue;
+    const fields = rec.split(US);
+    const uid = Number(fields[0]);
+    if (!Number.isFinite(uid)) continue;
+    const f = {};
+    for (let i = 1; i < fields.length; i++) {
+      const fld = fields[i];
+      if (!fld) continue;
+      const v = fld.slice(1);
+      switch (fld[0]) {
+        case "l":
+          f.label = v;
+          break;
+        case "u":
+          f.unit = v;
+          break;
+        case "d":
+          f.decimals = Number(v);
+          break;
+        case "n":
+          f.min = Number(v);
+          break;
+        case "x":
+          f.max = Number(v);
+          break;
+        case "h":
+          f.hidden = v !== "0";
+          break;
+        case "r":
+          f.order = Number(v);
+          break;
+        case "a":
+          f.action = v;
+          break;
+        case "e":
+          f.expose = v === "o" ? "output" : "input";
+          break;
+        case "c":
+          f.childComponent = Number(v);
+          break;
+        case "f":
+          f.facetProp = Number(v);
+          break;
+        case "o":
+          f.aliases = v.split(GS).map((o) => {
+            const j = o.indexOf(FS);
+            return j < 0 ? { code: Number(o), label: o } : { code: Number(o.slice(0, j)), label: o.slice(j + 1) };
+          });
+          break;
+      }
+    }
+    out.set(uid, f);
+  }
+  return out;
+}
+function serializeFacet(facet) {
+  const recs = [];
+  for (const [uid, f] of facet) {
+    const fields = [String(uid)];
+    if (f.label) fields.push("l" + f.label);
+    if (f.unit) fields.push("u" + f.unit);
+    if (f.decimals != null) fields.push("d" + f.decimals);
+    if (f.min != null) fields.push("n" + f.min);
+    if (f.max != null) fields.push("x" + f.max);
+    if (f.hidden) fields.push("h1");
+    if (f.order != null) fields.push("r" + f.order);
+    if (f.action) fields.push("a" + f.action);
+    if (f.expose) fields.push("e" + (f.expose === "output" ? "o" : "i"));
+    if (f.childComponent != null) fields.push("c" + f.childComponent);
+    if (f.facetProp != null) fields.push("f" + f.facetProp);
+    if (f.aliases && f.aliases.length) {
+      fields.push("o" + f.aliases.map((a) => a.code + FS + a.label).join(GS));
+    }
+    if (fields.length > 1) recs.push(fields.join(US));
+  }
+  return recs.join(RS);
+}
+const mapUid = (m, k) => (m instanceof Map ? m.get(k) : m[k]) ?? k;
+function remapFacetUids(raw, compMap, propMap) {
+  const facet = parseFacet(raw);
+  if (facet.size === 0) return raw;
+  const out = /* @__PURE__ */ new Map();
+  for (const [propUid, f] of facet) {
+    const nf = { ...f };
+    if (nf.childComponent != null) nf.childComponent = mapUid(compMap, nf.childComponent);
+    if (nf.facetProp != null) nf.facetProp = mapUid(propMap, nf.facetProp);
+    out.set(mapUid(propMap, propUid), nf);
+  }
+  return serializeFacet(out);
+}
+const cache = /* @__PURE__ */ new Map();
+function facetFor(componentUid, raw) {
+  const key = raw ?? "";
+  const hit = cache.get(componentUid);
+  if (hit && hit.raw === key) return hit.parsed;
+  const parsed = parseFacet(key);
+  cache.set(componentUid, { raw: key, parsed });
+  return parsed;
+}
+function rawFacet(properties) {
+  const v = properties?.[FACET_PROP]?.value;
+  return typeof v === "string" ? v : void 0;
+}
+function exposedPorts(facet) {
+  const out = [];
+  for (const [uid, f] of facet) {
+    if (f.expose) out.push({ childUid: uid, side: f.expose, facet: f });
+  }
+  return out;
+}
+function parseAliasInput(s) {
+  const out = [];
+  for (const part of s.split(",")) {
+    const t = part.trim();
+    if (!t) continue;
+    const j = t.indexOf("=");
+    if (j < 0) continue;
+    const code = Number(t.slice(0, j).trim());
+    const label = t.slice(j + 1).trim();
+    if (Number.isFinite(code) && label) out.push({ code, label });
+  }
+  return out;
+}
+function aliasLabel(aliases, value) {
+  if (!aliases || aliases.length === 0) return void 0;
+  const code = value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
+  return aliases.find((a) => a.code === code)?.label;
+}
+
+const fmtCell = (v, facet) => {
+  if (v === void 0 || v === null) return "—";
+  const al = aliasLabel(facet?.aliases, v);
+  if (al) return al;
+  let s;
+  if (typeof v === "number" && facet?.decimals != null) s = v.toFixed(facet.decimals);
+  else s = String(v);
+  return facet?.unit ? `${s} ${facet.unit}` : s;
+};
+const catRank = (c) => c === CATEGORY_INPUT ? 0 : c === CATEGORY_OUTPUT ? 1 : 2;
+function ComponentTable({
+  currentParentUid,
+  selectedUids,
+  onSelectRow,
+  onDrillIn,
+  onRowsChange
+}) {
+  const [showHidden, setShowHidden] = useState(false);
+  const components = useStructural((s) => s.components);
+  const rows = useMemo(
+    () => Array.from(components.values()).filter((c) => c.parent === currentParentUid).sort((a, b) => (a.name || a.type).localeCompare(b.name || b.type)),
+    [components, currentParentUid]
+  );
+  const facets = useMemo(
+    () => new Map(rows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
+    [rows]
+  );
+  const visibleProps = (c) => Object.entries(c.properties).filter(([, p]) => {
+    if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) return false;
+    if (showHidden) return true;
+    return !facets.get(c.uid)?.get(p.uid)?.hidden;
+  });
+  const columns = useMemo(() => {
+    const byName = /* @__PURE__ */ new Map();
+    for (const c of rows) {
+      for (const [name, p] of visibleProps(c)) {
+        if (!byName.has(name)) byName.set(name, p.category);
+      }
+    }
+    return [...byName.entries()].map(([name, category]) => ({ name, category })).sort((a, b) => catRank(a.category) - catRank(b.category) || a.name.localeCompare(b.name));
+  }, [rows, showHidden, facets]);
+  const watchUids = useMemo(() => {
+    const set = /* @__PURE__ */ new Set();
+    for (const c of rows) {
+      for (const p of Object.values(c.properties)) {
+        if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) {
+          set.add(p.uid);
+        }
+      }
+    }
+    return [...set];
+  }, [rows]);
+  const values = useValues(
+    useShallow((s) => {
+      const out = {};
+      for (const uid of watchUids) out[uid] = s.values.get(uid);
+      return out;
+    })
+  );
+  useEffect(() => {
+    onRowsChange(rows.map((c) => c.uid));
+    return () => onRowsChange([]);
+  }, [rows, onRowsChange]);
+  const sel = new Set(selectedUids);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        background: "#15181e",
+        color: "#e6e8eb",
+        fontFamily: "-apple-system, system-ui, sans-serif",
+        fontSize: 12,
+        minWidth: 0
+      },
+      children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 10px",
+              borderBottom: "1px solid #2c313c",
+              flexShrink: 0
+            },
+            children: [
+              /* @__PURE__ */ jsx("span", { style: { fontWeight: 600 }, children: "Components" }),
+              /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 11 }, children: rows.length }),
+              /* @__PURE__ */ jsxs(
+                "label",
+                {
+                  style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
+                  children: [
+                    /* @__PURE__ */ jsx("input", { type: "checkbox", checked: showHidden, onChange: (e) => setShowHidden(e.target.checked) }),
+                    "show hidden"
+                  ]
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx("div", { style: { overflow: "auto", flex: 1 }, children: rows.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: "no components in this folder" }) : /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: [
+          /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { style: { position: "sticky", top: 0, background: "#1a1d24", zIndex: 1 }, children: [
+            /* @__PURE__ */ jsx(Th, { children: "name" }),
+            /* @__PURE__ */ jsx(Th, { children: "type" }),
+            columns.map((col) => /* @__PURE__ */ jsx(Th, { numeric: true, children: col.name }, col.name))
+          ] }) }),
+          /* @__PURE__ */ jsx("tbody", { children: rows.map((c) => {
+            const facet = facets.get(c.uid);
+            const isFolder = (c.childrenCount ?? 0) > 0;
+            return /* @__PURE__ */ jsxs(
+              "tr",
+              {
+                onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
+                onDoubleClick: () => isFolder && onDrillIn(c.uid),
+                style: {
+                  cursor: "pointer",
+                  background: sel.has(c.uid) ? "#2c3a55" : "transparent",
+                  borderBottom: "1px solid #232733"
+                },
+                children: [
+                  /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4 }, children: [
+                    isFolder && /* @__PURE__ */ jsx(
+                      "span",
+                      {
+                        title: "Double-click to enter",
+                        style: { display: "flex", color: "#9ecbff" },
+                        children: /* @__PURE__ */ jsx(Layers, { size: 12 })
+                      }
+                    ),
+                    /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
+                    isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172", style: { marginLeft: 2 } })
+                  ] }) }),
+                  /* @__PURE__ */ jsx(Td, { muted: true, children: c.type }),
+                  columns.map((col) => {
+                    const p = c.properties[col.name];
+                    if (!p) return /* @__PURE__ */ jsx(Td, { numeric: true, muted: true }, col.name);
+                    const f = facet?.get(p.uid);
+                    const isInput = p.category === CATEGORY_INPUT;
+                    return /* @__PURE__ */ jsx(Td, { numeric: true, input: isInput, children: fmtCell(values[p.uid], f) }, col.name);
+                  })
+                ]
+              },
+              c.uid
+            );
+          }) })
+        ] }) })
+      ]
+    }
+  );
+}
+function Th({ children, numeric }) {
+  return /* @__PURE__ */ jsx(
+    "th",
+    {
+      style: {
+        textAlign: numeric ? "right" : "left",
+        padding: "5px 10px",
+        borderBottom: "1px solid #2c313c",
+        color: "#8892a0",
+        fontWeight: 600,
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace"
+      },
+      children
+    }
+  );
+}
+function Td({
+  children,
+  numeric,
+  muted,
+  input
+}) {
+  return /* @__PURE__ */ jsx(
+    "td",
+    {
+      style: {
+        textAlign: numeric ? "right" : "left",
+        padding: "4px 10px",
+        color: muted ? "#5a6172" : input ? "#cbd3e0" : "#e6e8eb",
+        fontFamily: "ui-monospace, SFMono-Regular, monospace"
+      },
+      children
+    }
+  );
+}
 
 const EVENT_CAP = 500;
 const events = [];
@@ -14355,227 +14829,6 @@ function ZoomRateController({
     return () => window.clearInterval(id);
   }, [enabled, setRate, store]);
   return null;
-}
-
-const isIterable = (obj) => Symbol.iterator in obj;
-const hasIterableEntries = (value) => (
-  // HACK: avoid checking entries type
-  "entries" in value
-);
-const compareEntries = (valueA, valueB) => {
-  const mapA = valueA instanceof Map ? valueA : new Map(valueA.entries());
-  const mapB = valueB instanceof Map ? valueB : new Map(valueB.entries());
-  if (mapA.size !== mapB.size) {
-    return false;
-  }
-  for (const [key, value] of mapA) {
-    if (!mapB.has(key) || !Object.is(value, mapB.get(key))) {
-      return false;
-    }
-  }
-  return true;
-};
-const compareIterables = (valueA, valueB) => {
-  const iteratorA = valueA[Symbol.iterator]();
-  const iteratorB = valueB[Symbol.iterator]();
-  let nextA = iteratorA.next();
-  let nextB = iteratorB.next();
-  while (!nextA.done && !nextB.done) {
-    if (!Object.is(nextA.value, nextB.value)) {
-      return false;
-    }
-    nextA = iteratorA.next();
-    nextB = iteratorB.next();
-  }
-  return !!nextA.done && !!nextB.done;
-};
-function shallow(valueA, valueB) {
-  if (Object.is(valueA, valueB)) {
-    return true;
-  }
-  if (typeof valueA !== "object" || valueA === null || typeof valueB !== "object" || valueB === null) {
-    return false;
-  }
-  if (Object.getPrototypeOf(valueA) !== Object.getPrototypeOf(valueB)) {
-    return false;
-  }
-  if (isIterable(valueA) && isIterable(valueB)) {
-    if (hasIterableEntries(valueA) && hasIterableEntries(valueB)) {
-      return compareEntries(valueA, valueB);
-    }
-    return compareIterables(valueA, valueB);
-  }
-  return compareEntries(
-    { entries: () => Object.entries(valueA) },
-    { entries: () => Object.entries(valueB) }
-  );
-}
-
-function useShallow(selector) {
-  const prev = React__default.useRef(void 0);
-  return (state) => {
-    const next = selector(state);
-    return shallow(prev.current, next) ? prev.current : prev.current = next;
-  };
-}
-
-const CATEGORY_INPUT = 0;
-const CATEGORY_OUTPUT = 1;
-const CATEGORY_CONFIG = 2;
-const DATATYPE_NUMBER = 0;
-const DATATYPE_BOOL = 1;
-const DATATYPE_STRING = 2;
-const ROLE_NORMAL = 0;
-const ROLE_STATUS = 1;
-const STATUS_OVERRIDDEN = 1 << 5;
-const TYPE_BOOL = 1;
-const TYPE_U32 = 16;
-const TYPE_I32 = 17;
-const TYPE_F32 = 18;
-const TYPE_U64 = 32;
-const TYPE_I64 = 33;
-const TYPE_F64 = 34;
-const TYPE_STR = 48;
-const TYPE_STATUS = 64;
-const MSG_UPDATE = 1;
-const MSG_SNAPSHOT = 2;
-
-const RS = "";
-const US = "";
-const GS = "";
-const FS = "";
-const FACET_PROP = "__facets";
-function parseFacet(raw) {
-  const out = /* @__PURE__ */ new Map();
-  if (!raw) return out;
-  for (const rec of raw.split(RS)) {
-    if (!rec) continue;
-    const fields = rec.split(US);
-    const uid = Number(fields[0]);
-    if (!Number.isFinite(uid)) continue;
-    const f = {};
-    for (let i = 1; i < fields.length; i++) {
-      const fld = fields[i];
-      if (!fld) continue;
-      const v = fld.slice(1);
-      switch (fld[0]) {
-        case "l":
-          f.label = v;
-          break;
-        case "u":
-          f.unit = v;
-          break;
-        case "d":
-          f.decimals = Number(v);
-          break;
-        case "n":
-          f.min = Number(v);
-          break;
-        case "x":
-          f.max = Number(v);
-          break;
-        case "h":
-          f.hidden = v !== "0";
-          break;
-        case "r":
-          f.order = Number(v);
-          break;
-        case "a":
-          f.action = v;
-          break;
-        case "e":
-          f.expose = v === "o" ? "output" : "input";
-          break;
-        case "c":
-          f.childComponent = Number(v);
-          break;
-        case "f":
-          f.facetProp = Number(v);
-          break;
-        case "o":
-          f.aliases = v.split(GS).map((o) => {
-            const j = o.indexOf(FS);
-            return j < 0 ? { code: Number(o), label: o } : { code: Number(o.slice(0, j)), label: o.slice(j + 1) };
-          });
-          break;
-      }
-    }
-    out.set(uid, f);
-  }
-  return out;
-}
-function serializeFacet(facet) {
-  const recs = [];
-  for (const [uid, f] of facet) {
-    const fields = [String(uid)];
-    if (f.label) fields.push("l" + f.label);
-    if (f.unit) fields.push("u" + f.unit);
-    if (f.decimals != null) fields.push("d" + f.decimals);
-    if (f.min != null) fields.push("n" + f.min);
-    if (f.max != null) fields.push("x" + f.max);
-    if (f.hidden) fields.push("h1");
-    if (f.order != null) fields.push("r" + f.order);
-    if (f.action) fields.push("a" + f.action);
-    if (f.expose) fields.push("e" + (f.expose === "output" ? "o" : "i"));
-    if (f.childComponent != null) fields.push("c" + f.childComponent);
-    if (f.facetProp != null) fields.push("f" + f.facetProp);
-    if (f.aliases && f.aliases.length) {
-      fields.push("o" + f.aliases.map((a) => a.code + FS + a.label).join(GS));
-    }
-    if (fields.length > 1) recs.push(fields.join(US));
-  }
-  return recs.join(RS);
-}
-const mapUid = (m, k) => (m instanceof Map ? m.get(k) : m[k]) ?? k;
-function remapFacetUids(raw, compMap, propMap) {
-  const facet = parseFacet(raw);
-  if (facet.size === 0) return raw;
-  const out = /* @__PURE__ */ new Map();
-  for (const [propUid, f] of facet) {
-    const nf = { ...f };
-    if (nf.childComponent != null) nf.childComponent = mapUid(compMap, nf.childComponent);
-    if (nf.facetProp != null) nf.facetProp = mapUid(propMap, nf.facetProp);
-    out.set(mapUid(propMap, propUid), nf);
-  }
-  return serializeFacet(out);
-}
-const cache = /* @__PURE__ */ new Map();
-function facetFor(componentUid, raw) {
-  const key = raw ?? "";
-  const hit = cache.get(componentUid);
-  if (hit && hit.raw === key) return hit.parsed;
-  const parsed = parseFacet(key);
-  cache.set(componentUid, { raw: key, parsed });
-  return parsed;
-}
-function rawFacet(properties) {
-  const v = properties?.[FACET_PROP]?.value;
-  return typeof v === "string" ? v : void 0;
-}
-function exposedPorts(facet) {
-  const out = [];
-  for (const [uid, f] of facet) {
-    if (f.expose) out.push({ childUid: uid, side: f.expose, facet: f });
-  }
-  return out;
-}
-function parseAliasInput(s) {
-  const out = [];
-  for (const part of s.split(",")) {
-    const t = part.trim();
-    if (!t) continue;
-    const j = t.indexOf("=");
-    if (j < 0) continue;
-    const code = Number(t.slice(0, j).trim());
-    const label = t.slice(j + 1).trim();
-    if (Number.isFinite(code) && label) out.push({ code, label });
-  }
-  return out;
-}
-function aliasLabel(aliases, value) {
-  if (!aliases || aliases.length === 0) return void 0;
-  const code = value === true ? 1 : value === false ? 0 : typeof value === "number" ? value : Number(value);
-  return aliases.find((a) => a.code === code)?.label;
 }
 
 function takenInputUids(edges) {
@@ -18164,10 +18417,27 @@ function Inner({ base }) {
       stopDiagnostics();
     };
   }, []);
-  const onVisibleSubscription = useCallback((uids) => {
-    wsClient?.setDesiredSubscription(uids);
-    diagGauges.subscribedComponents = uids.size;
+  const graphSubsRef = useRef(/* @__PURE__ */ new Set());
+  const tableSubsRef = useRef(/* @__PURE__ */ new Set());
+  const flushSubs = useCallback(() => {
+    const union = /* @__PURE__ */ new Set([...graphSubsRef.current, ...tableSubsRef.current]);
+    wsClient?.setDesiredSubscription(union);
+    diagGauges.subscribedComponents = union.size;
   }, []);
+  const onVisibleSubscription = useCallback(
+    (uids) => {
+      graphSubsRef.current = uids;
+      flushSubs();
+    },
+    [flushSubs]
+  );
+  const onTableRows = useCallback(
+    (uids) => {
+      tableSubsRef.current = new Set(uids);
+      flushSubs();
+    },
+    [flushSubs]
+  );
   const rateThrottle = useRef({
     timer: null,
     pending: null
@@ -18947,275 +19217,410 @@ function Inner({ base }) {
     },
     [rf, onAddNode]
   );
+  const [tableOpen, setTableOpen] = useState(false);
+  const [splitPct, setSplitPct] = useState(55);
+  const splitRestore = useRef(55);
+  const tableMaxed = splitPct <= 12;
+  const onTableSelect = useCallback((uid, additive) => {
+    setNodes(
+      (ns) => ns.map((n) => {
+        if (n.id === String(uid)) return n.selected ? n : { ...n, selected: true };
+        if (additive) return n;
+        return n.selected ? { ...n, selected: false } : n;
+      })
+    );
+  }, []);
+  const startSplitDrag = useCallback((e) => {
+    e.preventDefault();
+    const move = (ev) => {
+      const pct = ev.clientX / window.innerWidth * 100;
+      setSplitPct(Math.min(90, Math.max(10, pct)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }, []);
+  const tableSelected = nodes.filter((n) => n.selected).map((n) => Number(n.id));
   return /* @__PURE__ */ jsxs(CeWiresheetContext.Provider, { value: ceCtx, children: [
     /* @__PURE__ */ jsx("style", { children: EDGE_SELECTED_CSS }),
-    /* @__PURE__ */ jsx(
-      "div",
-      {
-        style: { position: "absolute", inset: 0 },
-        onDragOver,
-        onDrop,
-        onPointerDown: onCanvasPointerDown,
-        onPointerMove: onCanvasPointerMove,
-        onPointerUp: onCanvasPointerUp,
-        onContextMenu: (e) => {
-          e.preventDefault();
-        },
-        children: /* @__PURE__ */ jsxs(
-          index,
-          {
-            nodes,
-            edges,
-            nodeTypes,
-            onNodesChange,
-            onEdgesChange,
-            onEdgeContextMenu,
-            onNodeDragStart,
-            onNodeDrag,
-            onNodeDragStop,
-            onConnect,
-            onNodesDelete,
-            onEdgesDelete,
-            defaultViewport: { x: 80, y: 80, zoom: 1 },
-            minZoom: 0.1,
-            maxZoom: 2,
-            onlyRenderVisibleElements: true,
-            nodeOrigin: [0, 0],
-            deleteKeyCode: ["Delete", "Backspace"],
-            panOnDrag: [0],
-            selectionMode: SelectionMode.Partial,
-            multiSelectionKeyCode: ["Shift", "Meta", "Control"],
-            selectionKeyCode: null,
-            nodeDragThreshold: 4,
-            panOnScroll: false,
-            panOnScrollMode: PanOnScrollMode.Free,
-            proOptions: { hideAttribution: true },
-            children: [
-              /* @__PURE__ */ jsx(Background, { color: "#1f242e", gap: 20 }),
-              /* @__PURE__ */ jsx(
-                MiniMap,
-                {
-                  position: "bottom-right",
-                  pannable: true,
-                  zoomable: true,
-                  ariaLabel: "Graph overview",
-                  style: {
-                    backgroundColor: "#2b313c",
-                    border: "1px solid #3d444d",
-                    borderRadius: 6
-                  },
-                  maskColor: "rgba(10,12,16,0.45)",
-                  nodeStrokeWidth: 2,
-                  nodeColor: miniMapNodeColor,
-                  nodeStrokeColor: miniMapNodeStroke
-                }
-              ),
-              /* @__PURE__ */ jsx(ZoomRateController, { enabled: autoRate, setRate: wsAdapter.setRate }),
-              /* @__PURE__ */ jsx(VisibilitySub, { onVisible: onVisibleSubscription })
-            ]
-          }
-        )
-      }
-    ),
-    /* @__PURE__ */ jsx(
-      LeftDock,
-      {
-        palette,
-        onAdd: (t) => onAddNode(t),
-        currentParentUid,
-        onPick: (uid) => void goToComponent(uid)
-      }
-    ),
-    /* @__PURE__ */ jsx(Breadcrumb, { crumbs, onGoTo: goToCrumb }),
-    clickDebugOpen && /* @__PURE__ */ jsx(ClickDebugger, {}),
-    /* @__PURE__ */ jsx(EventsPanel, {}),
-    /* @__PURE__ */ jsx(
-      DiagPanel,
-      {
-        wsRef: wsAdapter,
-        autoRate,
-        manualRate,
-        onSetManualRate,
-        onToggleAutoRate: () => setAutoRate((v) => !v)
-      }
-    ),
-    /* @__PURE__ */ jsx(PresenceBar, {}),
-    /* @__PURE__ */ jsx(
-      FindPanel,
-      {
-        open: findOpen,
-        currentParentUid,
-        onClose: () => setFindOpen(false),
-        onPick: (uid) => void goToComponent(uid)
-      }
-    ),
-    marqueeRect && /* @__PURE__ */ jsx(
-      "div",
-      {
-        style: {
-          position: "fixed",
-          left: marqueeRect.x,
-          top: marqueeRect.y,
-          width: marqueeRect.w,
-          height: marqueeRect.h,
-          border: "1px solid #4a9eff",
-          background: "rgba(74,158,255,0.12)",
-          zIndex: 40,
-          pointerEvents: "none"
-        }
-      }
-    ),
-    nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
-      NodeContextMenu,
-      {
-        x: nodeMenu.x,
-        y: nodeMenu.y,
-        hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
-        canRename: nodes.filter((n) => n.selected).length === 1,
-        count: nodes.filter((n) => n.selected).length,
-        uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
-        name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
-        onRename: async () => {
-          const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-          setNodeMenu(null);
-          if (sel.length !== 1) return;
-          const uid = sel[0];
-          const cur = useStructural.getState().components.get(uid);
-          const next = window.prompt("Rename component", cur?.name ?? "");
-          if (next == null) return;
-          const trimmed = next.trim();
-          if (!trimmed || trimmed === cur?.name) return;
-          try {
-            await updateNode(uid, { name: trimmed });
-            await reload();
-          } catch (e) {
-            reportError(e);
-          }
-        },
-        onDetails: () => {
-          const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-          if (sel.length === 1) setDetailsUid(sel[0]);
-        },
-        onGroup: () => {
-          void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
-          setNodeMenu(null);
-        },
-        onMoveInto: () => setMovePickerOpen(true),
-        onAction: () => setActionPickerOpen(true),
-        onClose: () => setNodeMenu(null)
-      }
-    ),
-    nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
-      ActionPicker,
-      {
-        x: nodeMenu.x,
-        y: nodeMenu.y,
-        targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
-        actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
-        onInvoke: invokeAction,
-        onClose: () => {
-          setActionPickerOpen(false);
-          setNodeMenu(null);
-        }
-      }
-    ),
-    nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
-      MoveIntoPicker,
-      {
-        x: nodeMenu.x,
-        y: nodeMenu.y,
-        movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
-        onMove: async (newParent) => {
-          const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-          for (const uid of moving) {
-            try {
-              await updateNode(uid, { parentUid: newParent });
-            } catch (e) {
-              reportError(e);
-            }
-          }
-          setMovePickerOpen(false);
-          setNodeMenu(null);
-          await reload();
-        },
-        onClose: () => {
-          setMovePickerOpen(false);
-          setNodeMenu(null);
-        }
-      }
-    ),
-    detailsUid != null && /* @__PURE__ */ jsx(
-      ConfigurePanel,
-      {
-        componentUid: detailsUid,
-        currentParentUid,
-        exposeProp,
-        unexposeProp,
-        onSave: async (facetString) => {
-          try {
-            await updateNode(detailsUid, {
-              properties: { [FACET_PROP]: { value: facetString } }
-            });
-            await reload();
-          } catch (e) {
-            reportError(e);
-          }
-        },
-        onClose: () => {
-          setDetailsUid(null);
-          setNodeMenu(null);
-        }
-      }
-    ),
-    paneMenu && /* @__PURE__ */ jsx(
-      PaneContextMenu,
-      {
-        x: paneMenu.x,
-        y: paneMenu.y,
-        canGoUp: crumbs.length > 1,
-        parentName: crumbs.length > 1 ? crumbs[crumbs.length - 2].name : "",
-        palette,
-        canPaste: (clipboardRef.current?.uids.length ?? 0) > 0,
-        onUp: () => goToCrumb(crumbs.length - 2),
-        onAdd: (type) => void onAddNode(type, rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y })),
-        onPaste: () => {
-          mouseScreenPos.current = { x: paneMenu.x, y: paneMenu.y };
-          void pasteFromClipboard();
-        },
-        onClose: () => setPaneMenu(null)
-      }
-    ),
-    edgeMenu && (() => {
-      const rest = useStructural.getState().edges.get(Number(edgeMenu.edgeId));
-      if (!rest) return null;
-      const isLoop = rest.loopBack === true;
-      return /* @__PURE__ */ jsx(
-        EdgeContextMenu,
+    /* @__PURE__ */ jsxs("div", { style: { position: "absolute", inset: 0, display: "flex" }, children: [
+      /* @__PURE__ */ jsxs(
+        "div",
         {
-          x: edgeMenu.x,
-          y: edgeMenu.y,
-          isLoopBack: isLoop,
-          onPrimary: () => {
-            const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
-            const filtered = ids.filter((id) => {
-              const e = useStructural.getState().edges.get(Number(id));
-              return e ? e.loopBack === true === isLoop : false;
-            });
-            if (isLoop) void reEvaluateEdges(filtered.map(Number));
-            else void setEdgesLoopBack(filtered.map(Number));
-            setEdgeMenu(null);
+          style: {
+            position: "relative",
+            height: "100%",
+            width: tableOpen ? `${splitPct}%` : "100%",
+            flexShrink: 0,
+            transform: "translateZ(0)",
+            overflow: "hidden"
           },
-          onDelete: () => {
-            const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
-            const drop = edges.filter((e) => ids.includes(e.id));
-            void onEdgesDelete(drop);
-            setEdgeMenu(null);
-          },
-          onClose: () => setEdgeMenu(null)
+          children: [
+            /* @__PURE__ */ jsx(
+              "div",
+              {
+                style: { position: "absolute", inset: 0 },
+                onDragOver,
+                onDrop,
+                onPointerDown: onCanvasPointerDown,
+                onPointerMove: onCanvasPointerMove,
+                onPointerUp: onCanvasPointerUp,
+                onContextMenu: (e) => {
+                  e.preventDefault();
+                },
+                children: /* @__PURE__ */ jsxs(
+                  index,
+                  {
+                    nodes,
+                    edges,
+                    nodeTypes,
+                    onNodesChange,
+                    onEdgesChange,
+                    onEdgeContextMenu,
+                    onNodeDragStart,
+                    onNodeDrag,
+                    onNodeDragStop,
+                    onConnect,
+                    onNodesDelete,
+                    onEdgesDelete,
+                    defaultViewport: { x: 80, y: 80, zoom: 1 },
+                    minZoom: 0.1,
+                    maxZoom: 2,
+                    onlyRenderVisibleElements: true,
+                    nodeOrigin: [0, 0],
+                    deleteKeyCode: ["Delete", "Backspace"],
+                    panOnDrag: [0],
+                    selectionMode: SelectionMode.Partial,
+                    multiSelectionKeyCode: ["Shift", "Meta", "Control"],
+                    selectionKeyCode: null,
+                    nodeDragThreshold: 4,
+                    panOnScroll: false,
+                    panOnScrollMode: PanOnScrollMode.Free,
+                    proOptions: { hideAttribution: true },
+                    children: [
+                      /* @__PURE__ */ jsx(Background, { color: "#1f242e", gap: 20 }),
+                      /* @__PURE__ */ jsx(
+                        MiniMap,
+                        {
+                          position: "bottom-right",
+                          pannable: true,
+                          zoomable: true,
+                          ariaLabel: "Graph overview",
+                          style: {
+                            backgroundColor: "#2b313c",
+                            border: "1px solid #3d444d",
+                            borderRadius: 6
+                          },
+                          maskColor: "rgba(10,12,16,0.45)",
+                          nodeStrokeWidth: 2,
+                          nodeColor: miniMapNodeColor,
+                          nodeStrokeColor: miniMapNodeStroke
+                        }
+                      ),
+                      /* @__PURE__ */ jsx(ZoomRateController, { enabled: autoRate, setRate: wsAdapter.setRate }),
+                      /* @__PURE__ */ jsx(VisibilitySub, { onVisible: onVisibleSubscription })
+                    ]
+                  }
+                )
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              LeftDock,
+              {
+                palette,
+                onAdd: (t) => onAddNode(t),
+                currentParentUid,
+                onPick: (uid) => void goToComponent(uid)
+              }
+            ),
+            /* @__PURE__ */ jsx(Breadcrumb, { crumbs, onGoTo: goToCrumb }),
+            clickDebugOpen && /* @__PURE__ */ jsx(ClickDebugger, {}),
+            /* @__PURE__ */ jsx(EventsPanel, {}),
+            /* @__PURE__ */ jsx(
+              DiagPanel,
+              {
+                wsRef: wsAdapter,
+                autoRate,
+                manualRate,
+                onSetManualRate,
+                onToggleAutoRate: () => setAutoRate((v) => !v)
+              }
+            ),
+            /* @__PURE__ */ jsx(PresenceBar, {}),
+            /* @__PURE__ */ jsx(
+              FindPanel,
+              {
+                open: findOpen,
+                currentParentUid,
+                onClose: () => setFindOpen(false),
+                onPick: (uid) => void goToComponent(uid)
+              }
+            ),
+            marqueeRect && /* @__PURE__ */ jsx(
+              "div",
+              {
+                style: {
+                  position: "fixed",
+                  left: marqueeRect.x,
+                  top: marqueeRect.y,
+                  width: marqueeRect.w,
+                  height: marqueeRect.h,
+                  border: "1px solid #4a9eff",
+                  background: "rgba(74,158,255,0.12)",
+                  zIndex: 40,
+                  pointerEvents: "none"
+                }
+              }
+            ),
+            nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
+              NodeContextMenu,
+              {
+                x: nodeMenu.x,
+                y: nodeMenu.y,
+                hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
+                canRename: nodes.filter((n) => n.selected).length === 1,
+                count: nodes.filter((n) => n.selected).length,
+                uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
+                name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
+                onRename: async () => {
+                  const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                  setNodeMenu(null);
+                  if (sel.length !== 1) return;
+                  const uid = sel[0];
+                  const cur = useStructural.getState().components.get(uid);
+                  const next = window.prompt("Rename component", cur?.name ?? "");
+                  if (next == null) return;
+                  const trimmed = next.trim();
+                  if (!trimmed || trimmed === cur?.name) return;
+                  try {
+                    await updateNode(uid, { name: trimmed });
+                    await reload();
+                  } catch (e) {
+                    reportError(e);
+                  }
+                },
+                onDetails: () => {
+                  const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                  if (sel.length === 1) setDetailsUid(sel[0]);
+                },
+                onGroup: () => {
+                  void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
+                  setNodeMenu(null);
+                },
+                onMoveInto: () => setMovePickerOpen(true),
+                onAction: () => setActionPickerOpen(true),
+                onClose: () => setNodeMenu(null)
+              }
+            ),
+            nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
+              ActionPicker,
+              {
+                x: nodeMenu.x,
+                y: nodeMenu.y,
+                targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+                actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
+                onInvoke: invokeAction,
+                onClose: () => {
+                  setActionPickerOpen(false);
+                  setNodeMenu(null);
+                }
+              }
+            ),
+            nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
+              MoveIntoPicker,
+              {
+                x: nodeMenu.x,
+                y: nodeMenu.y,
+                movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+                onMove: async (newParent) => {
+                  const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                  for (const uid of moving) {
+                    try {
+                      await updateNode(uid, { parentUid: newParent });
+                    } catch (e) {
+                      reportError(e);
+                    }
+                  }
+                  setMovePickerOpen(false);
+                  setNodeMenu(null);
+                  await reload();
+                },
+                onClose: () => {
+                  setMovePickerOpen(false);
+                  setNodeMenu(null);
+                }
+              }
+            ),
+            detailsUid != null && /* @__PURE__ */ jsx(
+              ConfigurePanel,
+              {
+                componentUid: detailsUid,
+                currentParentUid,
+                exposeProp,
+                unexposeProp,
+                onSave: async (facetString) => {
+                  try {
+                    await updateNode(detailsUid, {
+                      properties: { [FACET_PROP]: { value: facetString } }
+                    });
+                    await reload();
+                  } catch (e) {
+                    reportError(e);
+                  }
+                },
+                onClose: () => {
+                  setDetailsUid(null);
+                  setNodeMenu(null);
+                }
+              }
+            ),
+            paneMenu && /* @__PURE__ */ jsx(
+              PaneContextMenu,
+              {
+                x: paneMenu.x,
+                y: paneMenu.y,
+                canGoUp: crumbs.length > 1,
+                parentName: crumbs.length > 1 ? crumbs[crumbs.length - 2].name : "",
+                palette,
+                canPaste: (clipboardRef.current?.uids.length ?? 0) > 0,
+                onUp: () => goToCrumb(crumbs.length - 2),
+                onAdd: (type) => void onAddNode(type, rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y })),
+                onPaste: () => {
+                  mouseScreenPos.current = { x: paneMenu.x, y: paneMenu.y };
+                  void pasteFromClipboard();
+                },
+                onClose: () => setPaneMenu(null)
+              }
+            ),
+            edgeMenu && (() => {
+              const rest = useStructural.getState().edges.get(Number(edgeMenu.edgeId));
+              if (!rest) return null;
+              const isLoop = rest.loopBack === true;
+              return /* @__PURE__ */ jsx(
+                EdgeContextMenu,
+                {
+                  x: edgeMenu.x,
+                  y: edgeMenu.y,
+                  isLoopBack: isLoop,
+                  onPrimary: () => {
+                    const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
+                    const filtered = ids.filter((id) => {
+                      const e = useStructural.getState().edges.get(Number(id));
+                      return e ? e.loopBack === true === isLoop : false;
+                    });
+                    if (isLoop) void reEvaluateEdges(filtered.map(Number));
+                    else void setEdgesLoopBack(filtered.map(Number));
+                    setEdgeMenu(null);
+                  },
+                  onDelete: () => {
+                    const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
+                    const drop = edges.filter((e) => ids.includes(e.id));
+                    void onEdgesDelete(drop);
+                    setEdgeMenu(null);
+                  },
+                  onClose: () => setEdgeMenu(null)
+                }
+              );
+            })(),
+            error && /* @__PURE__ */ jsx(ErrorBanner, { error, onClose: () => setError(null) }),
+            !tableOpen && /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => setTableOpen(true),
+                title: "Open table view",
+                style: {
+                  position: "absolute",
+                  top: "50%",
+                  right: 0,
+                  transform: "translateY(-50%)",
+                  zIndex: 20,
+                  width: 26,
+                  height: 70,
+                  background: "rgba(20,23,30,0.92)",
+                  border: "1px solid #2c313c",
+                  borderRight: "none",
+                  borderRadius: "6px 0 0 6px",
+                  color: "#cbd3e0",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                },
+                children: /* @__PURE__ */ jsx(Table2, { size: 16 })
+              }
+            )
+          ]
         }
-      );
-    })(),
-    error && /* @__PURE__ */ jsx(ErrorBanner, { error, onClose: () => setError(null) })
+      ),
+      tableOpen && /* @__PURE__ */ jsx(
+        "div",
+        {
+          onPointerDown: startSplitDrag,
+          title: "Drag to resize",
+          style: { width: 5, flexShrink: 0, cursor: "col-resize", background: "#2c313c" }
+        }
+      ),
+      tableOpen && /* @__PURE__ */ jsxs(
+        "div",
+        {
+          style: {
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column"
+          },
+          children: [
+            /* @__PURE__ */ jsxs(
+              "div",
+              {
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "3px 6px",
+                  background: "#1a1d24",
+                  borderBottom: "1px solid #2c313c",
+                  flexShrink: 0
+                },
+                children: [
+                  /* @__PURE__ */ jsx("span", { style: { fontSize: 10, color: "#5a6172", marginRight: "auto" }, children: "table view" }),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      title: tableMaxed ? "Restore split" : "Maximize table",
+                      onClick: () => {
+                        if (tableMaxed) setSplitPct(splitRestore.current || 55);
+                        else {
+                          splitRestore.current = splitPct;
+                          setSplitPct(8);
+                        }
+                      },
+                      style: tableChromeBtn,
+                      children: tableMaxed ? /* @__PURE__ */ jsx(Minimize2, { size: 14 }) : /* @__PURE__ */ jsx(Maximize2, { size: 14 })
+                    }
+                  ),
+                  /* @__PURE__ */ jsx("button", { title: "Close table", onClick: () => setTableOpen(false), style: tableChromeBtn, children: /* @__PURE__ */ jsx(X, { size: 14 }) })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsx("div", { style: { flex: 1, minHeight: 0 }, children: /* @__PURE__ */ jsx(
+              ComponentTable,
+              {
+                currentParentUid,
+                selectedUids: tableSelected,
+                onSelectRow: onTableSelect,
+                onDrillIn: enter,
+                onRowsChange: onTableRows
+              }
+            ) })
+          ]
+        }
+      )
+    ] })
   ] });
 }
 function selectedEdgeIds(edges, rightClickedId) {
@@ -19299,6 +19704,15 @@ function EdgeMenuItem({
     }
   );
 }
+const tableChromeBtn = {
+  display: "flex",
+  alignItems: "center",
+  background: "transparent",
+  border: "none",
+  color: "#8892a0",
+  cursor: "pointer",
+  padding: "2px 4px"
+};
 const detailsField = {
   background: "#0f1115",
   color: "#e6e8eb",
@@ -21096,7 +21510,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T08:44:46.148Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T09:21:40.933Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
