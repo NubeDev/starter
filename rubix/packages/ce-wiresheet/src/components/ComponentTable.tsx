@@ -13,9 +13,9 @@ import {
 } from "../lib/engine-types";
 import type { Component, FlexValue } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
-import { facetFor, rawFacet, type PropFacet, type ComponentFacet } from "../lib/facet";
+import { facetFor, rawFacet, exposedPorts, type PropFacet, type ComponentFacet } from "../lib/facet";
 import { fmtValueFacet, inferDataType } from "../lib/format";
-import { Layers, ArrowUp, ArrowDown, FolderUp, Link2 } from "lucide-react";
+import { Layers, ArrowUp, ArrowDown, FolderUp, Link2, CornerDownRight, EyeOff } from "lucide-react";
 
 // Table view of the CURRENT folder's components. Each component is a row; its
 // props align into per-slot columns under Inputs / Outputs / Config category
@@ -33,6 +33,8 @@ interface Cell {
   name: string;
   label: string;
   category: number;
+  exposed?: boolean; // a child prop projected onto this (folder) component
+  hidden?: boolean; // facet-hidden (only shown when "show hidden" is on)
 }
 interface RowCells {
   inputs: Cell[];
@@ -100,9 +102,31 @@ export function ComponentTable({
     for (const [name, p] of Object.entries(c.properties)) {
       if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
       const f = facet?.get(p.uid);
-      if (!showHidden && f?.hidden) continue;
+      // A wired (linked) prop can't be hidden — always show it.
+      const hidden = !!f?.hidden && !linkedProps.has(p.uid);
+      if (!showHidden && hidden) continue;
       const b = buckets[p.category];
-      if (b) b.push({ uid: p.uid, name, label: f?.label || name, category: p.category, order: f?.order ?? 1e9 });
+      if (b)
+        b.push({ uid: p.uid, name, label: f?.label || name, category: p.category, order: f?.order ?? 1e9, hidden });
+    }
+    // Exposed ports: child props this (folder) component projects as its own
+    // input/output ports — read-only, value streams via the prop subscription.
+    if (facet) {
+      for (const ep of exposedPorts(facet)) {
+        const hidden = !!ep.facet.hidden;
+        if (!showHidden && hidden) continue;
+        const cat = ep.side === "input" ? CATEGORY_INPUT : CATEGORY_OUTPUT;
+        const label = ep.facet.label || `#${ep.childUid}`;
+        buckets[cat].push({
+          uid: ep.childUid,
+          name: label,
+          label,
+          category: cat,
+          order: ep.facet.order ?? 1e9,
+          exposed: true,
+          hidden,
+        });
+      }
     }
     const sortB = (arr: (Cell & { order: number })[]) =>
       arr.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
@@ -125,7 +149,7 @@ export function ComponentTable({
     }
     return { maxIn: i, maxOut: o, maxCfg: g };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allRows, showHidden, facets]);
+  }, [allRows, showHidden, facets, linkedProps]);
 
   const q = query.trim().toLowerCase();
   const matches = (c: Component) =>
@@ -140,11 +164,15 @@ export function ComponentTable({
 
   const watchUids = useMemo(() => {
     const set = new Set<number>();
-    for (const c of allRows)
+    for (const c of allRows) {
       for (const p of Object.values(c.properties))
         if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
+      // Exposed-port child prop values (streamed at property level by the editor).
+      for (const ep of exposedPorts(facets.get(c.uid) ?? new Map())) set.add(ep.childUid);
+    }
     return [...set];
-  }, [allRows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allRows, facets]);
   const values = useValues(
     useShallow((s) => {
       const out: Record<number, DecodedValue | undefined> = {};
@@ -206,13 +234,15 @@ export function ComponentTable({
 
   const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean, slot: string) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
-    const editableDefault = cell != null && cell.category !== CATEGORY_OUTPUT; // outputs are computed
+    // Exposed ports are read-only here (override/default go through the child's
+    // own component, not the folder); outputs are computed.
+    const editableDefault = cell != null && cell.category !== CATEGORY_OUTPUT && !cell.exposed;
     const isEditingDefault = cell != null && defaultEdit?.comp === c.uid && defaultEdit.uid === cell.uid;
     return (
       <td
         key={slot}
         onContextMenu={(e) => {
-          if (cell) {
+          if (cell && !cell.exposed) {
             e.preventDefault();
             e.stopPropagation();
             setOverride({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
@@ -227,8 +257,15 @@ export function ComponentTable({
       >
         {cell && (
           <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
-            {linkedProps.has(cell.uid) && (
-              <Link2 size={11} color="#4a9eff" style={{ alignSelf: "center" }} aria-label="linked" />
+            {cell.hidden && (
+              <EyeOff size={11} color="#5a6172" style={{ alignSelf: "center" }} aria-label="hidden" />
+            )}
+            {cell.exposed ? (
+              <CornerDownRight size={11} color="#7a8a9f" style={{ alignSelf: "center" }} aria-label="exposed" />
+            ) : (
+              linkedProps.has(cell.uid) && (
+                <Link2 size={11} color="#4a9eff" style={{ alignSelf: "center" }} aria-label="linked" />
+              )
             )}
             <span style={{ color: "#5a6172" }}>{cell.label}</span>
             {isEditingDefault ? (

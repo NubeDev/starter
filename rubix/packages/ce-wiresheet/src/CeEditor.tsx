@@ -3176,6 +3176,7 @@ function ConfigurePanel({
   onClose: () => void;
 }) {
   const comp = useStructural((s) => s.components.get(componentUid));
+  const linkedProps = useStructural((s) => s.linkedProps);
   const props = useMemo(() => {
     if (!comp) return [] as { uid: number; name: string; category: number }[];
     return Object.entries(comp.properties)
@@ -3385,10 +3386,19 @@ function ConfigurePanel({
             onKeyDown={onFieldKey}
             style={detailsField}
           />
-          <label style={{ display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }}>
+          <label
+            title={linkedProps.has(uid) ? "can't hide a wired prop" : undefined}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              color: linkedProps.has(uid) ? "#3b4350" : "#8892a0",
+            }}
+          >
             <input
               type="checkbox"
-              checked={d.hidden}
+              checked={d.hidden && !linkedProps.has(uid)}
+              disabled={linkedProps.has(uid)}
               onChange={(e) => set(uid, { hidden: e.target.checked })}
             />
             hide

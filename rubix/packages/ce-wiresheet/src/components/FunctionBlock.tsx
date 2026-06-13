@@ -1539,6 +1539,8 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   // block without a manual reload. Default Object.is equality only re-renders when
   // THIS uid's entry changes (upsertComponent swaps just that one entry).
   const restComp = useStructural((s) => s.components.get(data.componentUid));
+  // Prop uids that are an edge endpoint — used to keep wired props from hiding.
+  const linkedProps = useStructural((s) => s.linkedProps);
   // The uids of THIS component's properties. Pre-computed so the per-component
   // selectors below don't have to walk restComp.properties on every state
   // notification.
@@ -1675,8 +1677,10 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         systemRole: p.systemRole,
         facet: facet.get(p.uid),
       }));
-    const hiddenCount = mappedRows.filter((r) => r.facet?.hidden).length;
-    const userRows = mappedRows.filter((r) => !r.facet?.hidden);
+    // A wired (linked) prop is never hidden — keep it visible even if its facet
+    // says hidden (you can't hide an active connection).
+    const hiddenCount = mappedRows.filter((r) => r.facet?.hidden && !linkedProps.has(r.uid)).length;
+    const userRows = mappedRows.filter((r) => !r.facet?.hidden || linkedProps.has(r.uid));
     // Exposed ports: child props this component projects as its own input/output
     // ports (see FACET_DESIGN.md §9). uid = the child prop uid (its handle id),
     // dataType from the global schema index, value via the subscription above.
@@ -1714,7 +1718,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
     // schemaV in deps: when the WS schema fills propertyDataType, recompute
     // dataTypes. restComp identity swaps on any structural change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restComp, schemaV]);
+  }, [restComp, schemaV, linkedProps]);
 
   // Count this render for diagnostics. A re-render storm (every node
   // re-rendering on every frame) shows up as renders/sec ≈ frames/sec ×

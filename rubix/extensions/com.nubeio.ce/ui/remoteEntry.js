@@ -12925,9 +12925,28 @@ function ComponentTable({
     for (const [name, p] of Object.entries(c.properties)) {
       if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
       const f = facet?.get(p.uid);
-      if (!showHidden && f?.hidden) continue;
+      const hidden = !!f?.hidden && !linkedProps.has(p.uid);
+      if (!showHidden && hidden) continue;
       const b = buckets[p.category];
-      if (b) b.push({ uid: p.uid, name, label: f?.label || name, category: p.category, order: f?.order ?? 1e9 });
+      if (b)
+        b.push({ uid: p.uid, name, label: f?.label || name, category: p.category, order: f?.order ?? 1e9, hidden });
+    }
+    if (facet) {
+      for (const ep of exposedPorts(facet)) {
+        const hidden = !!ep.facet.hidden;
+        if (!showHidden && hidden) continue;
+        const cat = ep.side === "input" ? CATEGORY_INPUT : CATEGORY_OUTPUT;
+        const label = ep.facet.label || `#${ep.childUid}`;
+        buckets[cat].push({
+          uid: ep.childUid,
+          name: label,
+          label,
+          category: cat,
+          order: ep.facet.order ?? 1e9,
+          exposed: true,
+          hidden
+        });
+      }
     }
     const sortB = (arr) => arr.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
     return {
@@ -12947,7 +12966,7 @@ function ComponentTable({
       g = Math.max(g, r.config.length);
     }
     return { maxIn: i, maxOut: o, maxCfg: g };
-  }, [allRows, showHidden, facets]);
+  }, [allRows, showHidden, facets, linkedProps]);
   const q = query.trim().toLowerCase();
   const matches = (c) => !q || (c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q);
   const rows = useMemo(
@@ -12957,11 +12976,13 @@ function ComponentTable({
   );
   const watchUids = useMemo(() => {
     const set = /* @__PURE__ */ new Set();
-    for (const c of allRows)
+    for (const c of allRows) {
       for (const p of Object.values(c.properties))
         if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
+      for (const ep of exposedPorts(facets.get(c.uid) ?? /* @__PURE__ */ new Map())) set.add(ep.childUid);
+    }
     return [...set];
-  }, [allRows]);
+  }, [allRows, facets]);
   const values = useValues(
     useShallow((s) => {
       const out = {};
@@ -13012,13 +13033,13 @@ function ComponentTable({
   };
   const valueCell = (cell, c, groupStart, slot) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
-    const editableDefault = cell != null && cell.category !== CATEGORY_OUTPUT;
+    const editableDefault = cell != null && cell.category !== CATEGORY_OUTPUT && !cell.exposed;
     const isEditingDefault = cell != null && defaultEdit?.comp === c.uid && defaultEdit.uid === cell.uid;
     return /* @__PURE__ */ jsx(
       "td",
       {
         onContextMenu: (e) => {
-          if (cell) {
+          if (cell && !cell.exposed) {
             e.preventDefault();
             e.stopPropagation();
             setOverride({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
@@ -13031,7 +13052,8 @@ function ComponentTable({
           fontFamily: "ui-monospace, SFMono-Regular, monospace"
         },
         children: cell && /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
-          linkedProps.has(cell.uid) && /* @__PURE__ */ jsx(Link2, { size: 11, color: "#4a9eff", style: { alignSelf: "center" }, "aria-label": "linked" }),
+          cell.hidden && /* @__PURE__ */ jsx(EyeOff, { size: 11, color: "#5a6172", style: { alignSelf: "center" }, "aria-label": "hidden" }),
+          cell.exposed ? /* @__PURE__ */ jsx(CornerDownRight, { size: 11, color: "#7a8a9f", style: { alignSelf: "center" }, "aria-label": "exposed" }) : linkedProps.has(cell.uid) && /* @__PURE__ */ jsx(Link2, { size: 11, color: "#4a9eff", style: { alignSelf: "center" }, "aria-label": "linked" }),
           /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: cell.label }),
           isEditingDefault ? /* @__PURE__ */ jsx(
             DefaultEditor,
@@ -16561,6 +16583,7 @@ function FunctionBlockInner({ data, selected }) {
   const schemaV = useSchemaVersion((s) => s.version);
   const ctx = useContext(CeWiresheetContext);
   const restComp = useStructural((s) => s.components.get(data.componentUid));
+  const linkedProps = useStructural((s) => s.linkedProps);
   const ourUids = useMemo(() => {
     if (!restComp) return [];
     const own = Object.values(restComp.properties).map((p) => p.uid);
@@ -16631,8 +16654,8 @@ function FunctionBlockInner({ data, selected }) {
       systemRole: p.systemRole,
       facet: facet.get(p.uid)
     }));
-    const hiddenCount2 = mappedRows.filter((r) => r.facet?.hidden).length;
-    const userRows = mappedRows.filter((r) => !r.facet?.hidden);
+    const hiddenCount2 = mappedRows.filter((r) => r.facet?.hidden && !linkedProps.has(r.uid)).length;
+    const userRows = mappedRows.filter((r) => !r.facet?.hidden || linkedProps.has(r.uid));
     const portRows = exposedPorts(facet).map((ep) => ({
       uid: ep.childUid,
       name: ep.facet.label ?? `#${ep.childUid}`,
@@ -16662,7 +16685,7 @@ function FunctionBlockInner({ data, selected }) {
       statusPropExists: statusEntry != null,
       hiddenCount: hiddenCount2
     };
-  }, [restComp, schemaV]);
+  }, [restComp, schemaV, linkedProps]);
   diagRecordRender("FunctionBlock");
   if (!restComp || !structural) {
     return /* @__PURE__ */ jsxs(
@@ -20313,6 +20336,7 @@ function ConfigurePanel({
   onClose
 }) {
   const comp = useStructural((s) => s.components.get(componentUid));
+  const linkedProps = useStructural((s) => s.linkedProps);
   const props = useMemo(() => {
     if (!comp) return [];
     return Object.entries(comp.properties).filter(([, p]) => (p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL).map(([name, p]) => ({ uid: p.uid, name, category: p.category }));
@@ -20496,17 +20520,30 @@ function ConfigurePanel({
                 style: detailsField
               }
             ),
-            /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0" }, children: [
-              /* @__PURE__ */ jsx(
-                "input",
-                {
-                  type: "checkbox",
-                  checked: d.hidden,
-                  onChange: (e) => set(uid, { hidden: e.target.checked })
-                }
-              ),
-              "hide"
-            ] })
+            /* @__PURE__ */ jsxs(
+              "label",
+              {
+                title: linkedProps.has(uid) ? "can't hide a wired prop" : void 0,
+                style: {
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  color: linkedProps.has(uid) ? "#3b4350" : "#8892a0"
+                },
+                children: [
+                  /* @__PURE__ */ jsx(
+                    "input",
+                    {
+                      type: "checkbox",
+                      checked: d.hidden && !linkedProps.has(uid),
+                      disabled: linkedProps.has(uid),
+                      onChange: (e) => set(uid, { hidden: e.target.checked })
+                    }
+                  ),
+                  "hide"
+                ]
+              }
+            )
           ]
         }
       ),
@@ -22081,7 +22118,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:38:35.681Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:46:39.803Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
