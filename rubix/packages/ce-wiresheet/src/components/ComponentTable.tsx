@@ -4,15 +4,23 @@ import { useStructural, useValues } from "../lib/store";
 import { ROLE_NORMAL, ROLE_STATUS, CATEGORY_INPUT, CATEGORY_OUTPUT } from "../lib/engine-types";
 import type { Component } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
-import { facetFor, rawFacet, aliasLabel, type PropFacet, type ComponentFacet } from "../lib/facet";
-import { Layers, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  facetFor,
+  rawFacet,
+  aliasLabel,
+  exposedPorts,
+  type PropFacet,
+  type ComponentFacet,
+} from "../lib/facet";
+import { Layers, ChevronRight, CornerDownRight, ArrowUp, ArrowDown } from "lucide-react";
 
-// Flat list view of the CURRENT folder's components. Each component is one
-// self-labelling line — name followed by `<label> <value>` pairs (the inline
-// name resolves to the facet label, fallback to the raw prop name). No column
-// headers, no per-type grids: each row carries its own props, so a folder of 100
-// mixed components reads cleanly. Live values, search, name sort; a selected
-// component the search filters out is pinned at the bottom.
+// Flat list of the CURRENT folder's components in an ALIGNED grid: columns are
+// the union of their user-facing props AND exposed ports (so values line up for
+// scanning), grouped under "Inputs / Outputs / Config" header bands. Exposed
+// ports carry a ↪ marker. Column headers use the facet label when every
+// component agrees, else the raw prop name. Search covers names, types, prop
+// names/labels and value aliases. A selected component the search filters out is
+// pinned at the bottom.
 
 const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): string => {
   if (v === undefined || v === null) return "—";
@@ -25,11 +33,22 @@ const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): str
 };
 
 const catRank = (c: number) => (c === CATEGORY_INPUT ? 0 : c === CATEGORY_OUTPUT ? 1 : 2);
+const catLabel = (c: number) => (c === CATEGORY_INPUT ? "Inputs" : c === CATEGORY_OUTPUT ? "Outputs" : "Config");
 
-interface PropCell {
-  uid: number;
+// One displayable field of a component: an own prop, or an exposed child-prop port.
+interface Field {
+  key: string; // column id (prop name, or "↪label" for a port)
+  uid: number; // value-stream uid (own prop uid, or the child prop uid)
   label: string;
   category: number;
+  exposed: boolean;
+  facet?: PropFacet;
+}
+interface Column {
+  key: string;
+  category: number;
+  header: string;
+  exposed: boolean;
 }
 
 export function ComponentTable({
@@ -62,29 +81,42 @@ export function ComponentTable({
     [allRows],
   );
 
-  // The visible prop cells for a component: user-facing (+ not hidden unless the
-  // toggle is on), ordered input→output→config then by facet order then name.
-  const cellsFor = (c: Component): PropCell[] => {
+  // Own visible props + exposed ports, as a unified field list.
+  const fieldsFor = (c: Component): Field[] => {
     const facet = facets.get(c.uid);
-    const out: (PropCell & { name: string })[] = [];
+    const out: Field[] = [];
     for (const [name, p] of Object.entries(c.properties)) {
       if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
       const f = facet?.get(p.uid);
       if (!showHidden && f?.hidden) continue;
-      out.push({ uid: p.uid, label: f?.label || name, category: p.category, name });
+      out.push({ key: name, uid: p.uid, label: f?.label || name, category: p.category, exposed: false, facet: f });
     }
-    out.sort(
-      (a, b) =>
-        catRank(a.category) - catRank(b.category) ||
-        (facets.get(c.uid)?.get(a.uid)?.order ?? 1e9) - (facets.get(c.uid)?.get(b.uid)?.order ?? 1e9) ||
-        a.name.localeCompare(b.name),
-    );
+    if (facet) {
+      for (const ep of exposedPorts(facet)) {
+        const label = ep.facet.label || `port ${ep.childUid}`;
+        out.push({
+          key: `↪${label}`,
+          uid: ep.childUid,
+          label,
+          category: ep.side === "input" ? CATEGORY_INPUT : CATEGORY_OUTPUT,
+          exposed: true,
+          facet: ep.facet,
+        });
+      }
+    }
     return out;
   };
 
   const q = query.trim().toLowerCase();
-  const matches = (c: Component) =>
-    !q || (c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q);
+  const matches = (c: Component) => {
+    if (!q) return true;
+    if ((c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q)) return true;
+    for (const f of fieldsFor(c)) {
+      if (f.label.toLowerCase().includes(q) || f.key.toLowerCase().includes(q)) return true;
+      if (f.facet?.aliases?.some((a) => a.label.toLowerCase().includes(q))) return true;
+    }
+    return false;
+  };
 
   const rows = useMemo(
     () =>
@@ -92,17 +124,54 @@ export function ComponentTable({
         .filter(matches)
         .sort((a, b) => (a.name || a.type).localeCompare(b.name || b.type) * dir),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allRows, q, dir],
+    [allRows, q, dir, showHidden, facets],
   );
 
-  // Live values for every cell + status, in one shallow read.
+  // Union columns across the visible rows, ordered input→output→config then name.
+  const columns = useMemo<Column[]>(() => {
+    const map = new Map<string, { category: number; labels: Set<string>; exposed: boolean }>();
+    for (const c of rows) {
+      for (const f of fieldsFor(c)) {
+        let e = map.get(f.key);
+        if (!e) {
+          e = { category: f.category, labels: new Set(), exposed: f.exposed };
+          map.set(f.key, e);
+        }
+        e.labels.add(f.label);
+      }
+    }
+    return [...map.entries()]
+      .map(([key, e]) => ({
+        key,
+        category: e.category,
+        exposed: e.exposed,
+        header: e.labels.size === 1 ? [...e.labels][0] : key.replace(/^↪/, ""),
+      }))
+      .sort((a, b) => catRank(a.category) - catRank(b.category) || a.header.localeCompare(b.header));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, showHidden, facets]);
+
+  const bands = useMemo(() => {
+    const out: { category: number; count: number }[] = [];
+    for (const col of columns) {
+      const last = out[out.length - 1];
+      if (last && last.category === col.category) last.count++;
+      else out.push({ category: col.category, count: 1 });
+    }
+    return out;
+  }, [columns]);
+
+  // Live values for own props + status + exposed child props (the latter are
+  // already property-subscribed by the graph for the current folder's ports).
   const watchUids = useMemo(() => {
     const set = new Set<number>();
-    for (const c of allRows)
+    for (const c of allRows) {
       for (const p of Object.values(c.properties))
         if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
+      for (const ep of exposedPorts(facets.get(c.uid) ?? new Map())) set.add(ep.childUid);
+    }
     return [...set];
-  }, [allRows]);
+  }, [allRows, facets]);
   const values = useValues(
     useShallow((s) => {
       const out: Record<number, DecodedValue | undefined> = {};
@@ -125,43 +194,43 @@ export function ComponentTable({
   }, [firstSel, rows]);
 
   const sel = new Set(selectedUids);
-  // Selected components the search filtered out — pinned at the bottom.
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
 
   const renderRow = (c: Component) => {
     const isFolder = (c.childrenCount ?? 0) > 0;
+    const byKey = new Map(fieldsFor(c).map((f) => [f.key, f]));
     return (
-      <div
+      <tr
         key={c.uid}
         data-uid={c.uid}
         onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
         onDoubleClick={() => isFolder && onDrillIn(c.uid)}
         style={{
-          display: "flex",
-          alignItems: "baseline",
-          flexWrap: "wrap",
-          gap: "2px 14px",
-          padding: "5px 10px",
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",
           borderBottom: "1px solid #1f232b",
-          fontFamily: "ui-monospace, SFMono-Regular, monospace",
         }}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: 4, minWidth: 120, fontWeight: 600 }}>
-          {isFolder && <Layers size={12} color="#9ecbff" />}
-          <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>
-          {isFolder && <ChevronRight size={12} color="#5a6172" />}
-        </span>
-        {cellsFor(c).map((p) => (
-          <span key={p.uid} style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
-            <span style={{ color: "#5a6172" }}>{p.label}</span>
-            <span style={{ color: p.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb" }}>
-              {fmtCell(values[p.uid], facets.get(c.uid)?.get(p.uid))}
-            </span>
+        <Td sticky>
+          <span style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
+            {isFolder && <Layers size={12} color="#9ecbff" />}
+            <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>
+            {isFolder && <ChevronRight size={12} color="#5a6172" />}
           </span>
-        ))}
-      </div>
+        </Td>
+        {columns.map((col) => {
+          const f = byKey.get(col.key);
+          if (!f) return <Td key={col.key} numeric muted />;
+          return (
+            <Td key={col.key} numeric input={f.category === CATEGORY_INPUT}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, justifyContent: "flex-end" }}>
+                {f.exposed && <CornerDownRight size={10} color="#7a8a9f" />}
+                {fmtCell(values[f.uid], f.facet)}
+              </span>
+            </Td>
+          );
+        })}
+      </tr>
     );
   };
 
@@ -191,7 +260,7 @@ export function ComponentTable({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="search components…"
+          placeholder="search name, prop, alias…"
           spellCheck={false}
           style={{
             flex: 1,
@@ -237,29 +306,138 @@ export function ComponentTable({
             {allRows.length === 0 ? "no components in this folder" : "no matches"}
           </div>
         ) : (
-          rows.map(renderRow)
-        )}
-
-        {orphans.length > 0 && (
-          <>
-            <div
-              style={{
-                padding: "5px 10px",
-                background: "#221a1a",
-                borderTop: "1px solid #3a2a2a",
-                borderBottom: "1px solid #3a2a2a",
-                color: "#c9a86a",
-                fontSize: 10,
-                textTransform: "uppercase",
-                letterSpacing: 0.4,
-              }}
-            >
-              selected · filtered out ({orphans.length})
-            </div>
-            {orphans.map(renderRow)}
-          </>
+          <table style={{ borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }}>
+            <thead>
+              <tr style={{ position: "sticky", top: 0, zIndex: 2 }}>
+                <BandTh sticky />
+                {bands.map((b, i) => (
+                  <BandTh key={i} span={b.count}>
+                    {catLabel(b.category)}
+                  </BandTh>
+                ))}
+              </tr>
+              <tr style={{ position: "sticky", top: 22, zIndex: 2 }}>
+                <ColTh sticky>name</ColTh>
+                {columns.map((col) => (
+                  <ColTh key={col.key} title={col.key.replace(/^↪/, "")} exposed={col.exposed}>
+                    {col.header}
+                  </ColTh>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(renderRow)}
+              {orphans.length > 0 && (
+                <>
+                  <tr>
+                    <td
+                      colSpan={columns.length + 1}
+                      style={{
+                        padding: "5px 10px",
+                        background: "#221a1a",
+                        borderTop: "1px solid #3a2a2a",
+                        borderBottom: "1px solid #3a2a2a",
+                        color: "#c9a86a",
+                        fontSize: 10,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.4,
+                      }}
+                    >
+                      selected · filtered out ({orphans.length})
+                    </td>
+                  </tr>
+                  {orphans.map(renderRow)}
+                </>
+              )}
+            </tbody>
+          </table>
         )}
       </div>
     </div>
+  );
+}
+
+function BandTh({ children, span, sticky }: { children?: React.ReactNode; span?: number; sticky?: boolean }) {
+  return (
+    <th
+      colSpan={span}
+      style={{
+        textAlign: "center",
+        padding: "3px 10px",
+        background: "#181c23",
+        borderBottom: "1px solid #2c313c",
+        borderLeft: span ? "1px solid #2c313c" : undefined,
+        color: "#7a8aa0",
+        fontWeight: 600,
+        fontSize: 9,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+        ...(sticky ? { position: "sticky", left: 0, zIndex: 1, textAlign: "left" } : {}),
+      }}
+    >
+      {children}
+    </th>
+  );
+}
+
+function ColTh({
+  children,
+  sticky,
+  title,
+  exposed,
+}: {
+  children?: React.ReactNode;
+  sticky?: boolean;
+  title?: string;
+  exposed?: boolean;
+}) {
+  return (
+    <th
+      title={title}
+      style={{
+        textAlign: sticky ? "left" : "right",
+        padding: "4px 10px",
+        background: "#1a1d24",
+        borderBottom: "1px solid #2c313c",
+        color: "#8892a0",
+        fontWeight: 600,
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        ...(sticky ? { position: "sticky", left: 0, zIndex: 1 } : {}),
+      }}
+    >
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 3, justifyContent: "flex-end" }}>
+        {exposed && <CornerDownRight size={10} color="#7a8a9f" />}
+        {children}
+      </span>
+    </th>
+  );
+}
+
+function Td({
+  children,
+  numeric,
+  muted,
+  input,
+  sticky,
+}: {
+  children?: React.ReactNode;
+  numeric?: boolean;
+  muted?: boolean;
+  input?: boolean;
+  sticky?: boolean;
+}) {
+  return (
+    <td
+      style={{
+        textAlign: numeric ? "right" : "left",
+        padding: "4px 10px",
+        color: muted ? "#5a6172" : input ? "#cbd3e0" : "#e6e8eb",
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        ...(sticky ? { position: "sticky", left: 0, background: "inherit", zIndex: 1 } : {}),
+      }}
+    >
+      {children}
+    </td>
   );
 }

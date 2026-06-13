@@ -537,15 +537,15 @@ function DevicesPanel() {
         /* @__PURE__ */ jsx(Th, { children: "" })
       ] }) }),
       /* @__PURE__ */ jsx("tbody", { children: rows.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 5, className: "px-3 py-6 text-center text-muted-foreground", children: "No engines registered yet." }) }) : rows.map((d) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border", children: [
-        /* @__PURE__ */ jsx(Td, { children: d.name ?? d.device_id }),
-        /* @__PURE__ */ jsx(Td, { children: d.engine_kind ?? "—" }),
-        /* @__PURE__ */ jsxs(Td, { children: [
+        /* @__PURE__ */ jsx(Td$1, { children: d.name ?? d.device_id }),
+        /* @__PURE__ */ jsx(Td$1, { children: d.engine_kind ?? "—" }),
+        /* @__PURE__ */ jsxs(Td$1, { children: [
           d.ip,
           ":",
           d.port
         ] }),
-        /* @__PURE__ */ jsx(Td, { children: d.status ?? "unknown" }),
-        /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
+        /* @__PURE__ */ jsx(Td$1, { children: d.status ?? "unknown" }),
+        /* @__PURE__ */ jsx(Td$1, { children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
           /* @__PURE__ */ jsxs(
             "a",
             {
@@ -586,7 +586,7 @@ function DevicesPanel() {
 function Th({ children }) {
   return /* @__PURE__ */ jsx("th", { className: "px-3 py-2 text-left font-medium", children });
 }
-function Td({ children }) {
+function Td$1({ children }) {
   return /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children });
 }
 
@@ -12829,6 +12829,7 @@ const fmtCell = (v, facet) => {
   return facet?.unit ? `${s} ${facet.unit}` : s;
 };
 const catRank = (c) => c === CATEGORY_INPUT ? 0 : c === CATEGORY_OUTPUT ? 1 : 2;
+const catLabel = (c) => c === CATEGORY_INPUT ? "Inputs" : c === CATEGORY_OUTPUT ? "Outputs" : "Config";
 function ComponentTable({
   currentParentUid,
   selectedUids,
@@ -12849,34 +12850,82 @@ function ComponentTable({
     () => new Map(allRows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
     [allRows]
   );
-  const cellsFor = (c) => {
+  const fieldsFor = (c) => {
     const facet = facets.get(c.uid);
     const out = [];
     for (const [name, p] of Object.entries(c.properties)) {
       if ((p.systemRole ?? ROLE_NORMAL) !== ROLE_NORMAL) continue;
       const f = facet?.get(p.uid);
       if (!showHidden && f?.hidden) continue;
-      out.push({ uid: p.uid, label: f?.label || name, category: p.category, name });
+      out.push({ key: name, uid: p.uid, label: f?.label || name, category: p.category, exposed: false, facet: f });
     }
-    out.sort(
-      (a, b) => catRank(a.category) - catRank(b.category) || (facets.get(c.uid)?.get(a.uid)?.order ?? 1e9) - (facets.get(c.uid)?.get(b.uid)?.order ?? 1e9) || a.name.localeCompare(b.name)
-    );
+    if (facet) {
+      for (const ep of exposedPorts(facet)) {
+        const label = ep.facet.label || `port ${ep.childUid}`;
+        out.push({
+          key: `↪${label}`,
+          uid: ep.childUid,
+          label,
+          category: ep.side === "input" ? CATEGORY_INPUT : CATEGORY_OUTPUT,
+          exposed: true,
+          facet: ep.facet
+        });
+      }
+    }
     return out;
   };
   const q = query.trim().toLowerCase();
-  const matches = (c) => !q || (c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q);
+  const matches = (c) => {
+    if (!q) return true;
+    if ((c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q)) return true;
+    for (const f of fieldsFor(c)) {
+      if (f.label.toLowerCase().includes(q) || f.key.toLowerCase().includes(q)) return true;
+      if (f.facet?.aliases?.some((a) => a.label.toLowerCase().includes(q))) return true;
+    }
+    return false;
+  };
   const rows = useMemo(
     () => allRows.filter(matches).sort((a, b) => (a.name || a.type).localeCompare(b.name || b.type) * dir),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allRows, q, dir]
+    [allRows, q, dir, showHidden, facets]
   );
+  const columns = useMemo(() => {
+    const map = /* @__PURE__ */ new Map();
+    for (const c of rows) {
+      for (const f of fieldsFor(c)) {
+        let e = map.get(f.key);
+        if (!e) {
+          e = { category: f.category, labels: /* @__PURE__ */ new Set(), exposed: f.exposed };
+          map.set(f.key, e);
+        }
+        e.labels.add(f.label);
+      }
+    }
+    return [...map.entries()].map(([key, e]) => ({
+      key,
+      category: e.category,
+      exposed: e.exposed,
+      header: e.labels.size === 1 ? [...e.labels][0] : key.replace(/^↪/, "")
+    })).sort((a, b) => catRank(a.category) - catRank(b.category) || a.header.localeCompare(b.header));
+  }, [rows, showHidden, facets]);
+  const bands = useMemo(() => {
+    const out = [];
+    for (const col of columns) {
+      const last = out[out.length - 1];
+      if (last && last.category === col.category) last.count++;
+      else out.push({ category: col.category, count: 1 });
+    }
+    return out;
+  }, [columns]);
   const watchUids = useMemo(() => {
     const set = /* @__PURE__ */ new Set();
-    for (const c of allRows)
+    for (const c of allRows) {
       for (const p of Object.values(c.properties))
         if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
+      for (const ep of exposedPorts(facets.get(c.uid) ?? /* @__PURE__ */ new Map())) set.add(ep.childUid);
+    }
     return [...set];
-  }, [allRows]);
+  }, [allRows, facets]);
   const values = useValues(
     useShallow((s) => {
       const out = {};
@@ -12897,33 +12946,32 @@ function ComponentTable({
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   const renderRow = (c) => {
     const isFolder = (c.childrenCount ?? 0) > 0;
+    const byKey = new Map(fieldsFor(c).map((f) => [f.key, f]));
     return /* @__PURE__ */ jsxs(
-      "div",
+      "tr",
       {
         "data-uid": c.uid,
         onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
         onDoubleClick: () => isFolder && onDrillIn(c.uid),
         style: {
-          display: "flex",
-          alignItems: "baseline",
-          flexWrap: "wrap",
-          gap: "2px 14px",
-          padding: "5px 10px",
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",
-          borderBottom: "1px solid #1f232b",
-          fontFamily: "ui-monospace, SFMono-Regular, monospace"
+          borderBottom: "1px solid #1f232b"
         },
         children: [
-          /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4, minWidth: 120, fontWeight: 600 }, children: [
+          /* @__PURE__ */ jsx(Td, { sticky: true, children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }, children: [
             isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
             /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
             isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172" })
-          ] }),
-          cellsFor(c).map((p) => /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
-            /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: p.label }),
-            /* @__PURE__ */ jsx("span", { style: { color: p.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb" }, children: fmtCell(values[p.uid], facets.get(c.uid)?.get(p.uid)) })
-          ] }, p.uid))
+          ] }) }),
+          columns.map((col) => {
+            const f = byKey.get(col.key);
+            if (!f) return /* @__PURE__ */ jsx(Td, { numeric: true, muted: true }, col.key);
+            return /* @__PURE__ */ jsx(Td, { numeric: true, input: f.category === CATEGORY_INPUT, children: /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", alignItems: "center", gap: 3, justifyContent: "flex-end" }, children: [
+              f.exposed && /* @__PURE__ */ jsx(CornerDownRight, { size: 10, color: "#7a8a9f" }),
+              fmtCell(values[f.uid], f.facet)
+            ] }) }, col.key);
+          })
         ]
       },
       c.uid
@@ -12960,7 +13008,7 @@ function ComponentTable({
                 {
                   value: query,
                   onChange: (e) => setQuery(e.target.value),
-                  placeholder: "search components…",
+                  placeholder: "search name, prop, alias…",
                   spellCheck: false,
                   style: {
                     flex: 1,
@@ -13007,33 +13055,117 @@ function ComponentTable({
             ]
           }
         ),
-        /* @__PURE__ */ jsxs("div", { ref: scrollRef, style: { overflow: "auto", flex: 1 }, children: [
-          rows.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: allRows.length === 0 ? "no components in this folder" : "no matches" }) : rows.map(renderRow),
-          orphans.length > 0 && /* @__PURE__ */ jsxs(Fragment, { children: [
-            /* @__PURE__ */ jsxs(
-              "div",
-              {
-                style: {
-                  padding: "5px 10px",
-                  background: "#221a1a",
-                  borderTop: "1px solid #3a2a2a",
-                  borderBottom: "1px solid #3a2a2a",
-                  color: "#c9a86a",
-                  fontSize: 10,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.4
-                },
-                children: [
-                  "selected · filtered out (",
-                  orphans.length,
-                  ")"
-                ]
-              }
-            ),
-            orphans.map(renderRow)
+        /* @__PURE__ */ jsx("div", { ref: scrollRef, style: { overflow: "auto", flex: 1 }, children: rows.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: allRows.length === 0 ? "no components in this folder" : "no matches" }) : /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: [
+          /* @__PURE__ */ jsxs("thead", { children: [
+            /* @__PURE__ */ jsxs("tr", { style: { position: "sticky", top: 0, zIndex: 2 }, children: [
+              /* @__PURE__ */ jsx(BandTh, { sticky: true }),
+              bands.map((b, i) => /* @__PURE__ */ jsx(BandTh, { span: b.count, children: catLabel(b.category) }, i))
+            ] }),
+            /* @__PURE__ */ jsxs("tr", { style: { position: "sticky", top: 22, zIndex: 2 }, children: [
+              /* @__PURE__ */ jsx(ColTh, { sticky: true, children: "name" }),
+              columns.map((col) => /* @__PURE__ */ jsx(ColTh, { title: col.key.replace(/^↪/, ""), exposed: col.exposed, children: col.header }, col.key))
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("tbody", { children: [
+            rows.map(renderRow),
+            orphans.length > 0 && /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsxs(
+                "td",
+                {
+                  colSpan: columns.length + 1,
+                  style: {
+                    padding: "5px 10px",
+                    background: "#221a1a",
+                    borderTop: "1px solid #3a2a2a",
+                    borderBottom: "1px solid #3a2a2a",
+                    color: "#c9a86a",
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.4
+                  },
+                  children: [
+                    "selected · filtered out (",
+                    orphans.length,
+                    ")"
+                  ]
+                }
+              ) }),
+              orphans.map(renderRow)
+            ] })
           ] })
-        ] })
+        ] }) })
       ]
+    }
+  );
+}
+function BandTh({ children, span, sticky }) {
+  return /* @__PURE__ */ jsx(
+    "th",
+    {
+      colSpan: span,
+      style: {
+        textAlign: "center",
+        padding: "3px 10px",
+        background: "#181c23",
+        borderBottom: "1px solid #2c313c",
+        borderLeft: span ? "1px solid #2c313c" : void 0,
+        color: "#7a8aa0",
+        fontWeight: 600,
+        fontSize: 9,
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+        ...sticky ? { position: "sticky", left: 0, zIndex: 1, textAlign: "left" } : {}
+      },
+      children
+    }
+  );
+}
+function ColTh({
+  children,
+  sticky,
+  title,
+  exposed
+}) {
+  return /* @__PURE__ */ jsx(
+    "th",
+    {
+      title,
+      style: {
+        textAlign: sticky ? "left" : "right",
+        padding: "4px 10px",
+        background: "#1a1d24",
+        borderBottom: "1px solid #2c313c",
+        color: "#8892a0",
+        fontWeight: 600,
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        ...sticky ? { position: "sticky", left: 0, zIndex: 1 } : {}
+      },
+      children: /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", alignItems: "center", gap: 3, justifyContent: "flex-end" }, children: [
+        exposed && /* @__PURE__ */ jsx(CornerDownRight, { size: 10, color: "#7a8a9f" }),
+        children
+      ] })
+    }
+  );
+}
+function Td({
+  children,
+  numeric,
+  muted,
+  input,
+  sticky
+}) {
+  return /* @__PURE__ */ jsx(
+    "td",
+    {
+      style: {
+        textAlign: numeric ? "right" : "left",
+        padding: "4px 10px",
+        color: muted ? "#5a6172" : input ? "#cbd3e0" : "#e6e8eb",
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        ...sticky ? { position: "sticky", left: 0, background: "inherit", zIndex: 1 } : {}
+      },
+      children
     }
   );
 }
@@ -21572,7 +21704,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:22:57.996Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:28:35.381Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
