@@ -2512,42 +2512,6 @@ function Inner({ base }: { base: string }) {
     <CeWiresheetContext.Provider value={ceCtx}>
       <style>{EDGE_SELECTED_CSS}</style>
       <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
-        {/* Shared top bar (spans both panes): folder breadcrumb + table toggle. */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "5px 10px",
-            background: "#1a1d24",
-            borderBottom: "1px solid #2c313c",
-            flexShrink: 0,
-            zIndex: 30,
-            color: "#e6e8eb",
-          }}
-        >
-          <Breadcrumb crumbs={crumbs} onGoTo={goToCrumb} />
-          <span style={{ marginLeft: "auto", flexShrink: 0 }}>
-            <button
-              onClick={() => setTableOpen((v) => !v)}
-              title={tableOpen ? "Hide table view" : "Show table view"}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                background: tableOpen ? "#2c3a55" : "transparent",
-                color: tableOpen ? "#cfe0ff" : "#8892a0",
-                border: "1px solid #2c313c",
-                borderRadius: 4,
-                padding: "3px 8px",
-                cursor: "pointer",
-                fontSize: 11,
-              }}
-            >
-              <Table2 size={14} /> Table
-            </button>
-          </span>
-        </div>
         {/* Split row: graph | divider | table */}
         <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
         {/* LEFT: graph pane. The transform makes it the containing block for its
@@ -2857,6 +2821,33 @@ function Inner({ base }: { base: string }) {
         );
       })()}
       {error && <ErrorBanner error={error} onClose={() => setError(null)} />}
+        {/* Right-edge tab to open the table when it's hidden. */}
+        {!tableOpen && (
+          <button
+            onClick={() => setTableOpen(true)}
+            title="Open table view"
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: 0,
+              transform: "translateY(-50%)",
+              zIndex: 20,
+              width: 26,
+              height: 70,
+              background: "rgba(20,23,30,0.92)",
+              border: "1px solid #2c313c",
+              borderRight: "none",
+              borderRadius: "6px 0 0 6px",
+              color: "#cbd3e0",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Table2 size={16} />
+          </button>
+        )}
         </div>
       {tableOpen && (
         <div
@@ -2915,6 +2906,22 @@ function Inner({ base }: { base: string }) {
           </div>
         </div>
       )}
+        </div>
+        {/* Shared bottom bar (spans both panes): folder breadcrumb. */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "4px 10px",
+            background: "#1a1d24",
+            borderTop: "1px solid #2c313c",
+            flexShrink: 0,
+            zIndex: 30,
+            color: "#e6e8eb",
+          }}
+        >
+          <Breadcrumb crumbs={crumbs} onGoTo={goToCrumb} />
         </div>
       </div>
     </CeWiresheetContext.Provider>
