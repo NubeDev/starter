@@ -1272,13 +1272,14 @@ function Inner({ base }: { base: string }) {
     const comps = useStructural.getState().components;
     setNodes((ns) => {
       let changed = false;
-      const next = ns.map((n) => {
+      const next: AnyNode[] = ns.map((n) => {
         if (n.type !== "fb") return n;
-        const t = comps.get(Number(n.id))?.type;
+        const fb = n as RfNode<FunctionBlockData>;
+        const t = comps.get(Number(fb.id))?.type;
         const has = t ? actionsByType.has(t) : false;
-        if ((n.data as FunctionBlockData).hasActions === has) return n;
+        if (fb.data.hasActions === has) return n;
         changed = true;
-        return { ...n, data: { ...n.data, hasActions: has } };
+        return { ...fb, data: { ...fb.data, hasActions: has } };
       });
       return changed ? next : ns;
     });
@@ -2188,7 +2189,7 @@ function Inner({ base }: { base: string }) {
       if (near?.metadata?.position) {
         const GAP = 80;
         const dx = (NODE_W + GAP) * (opts?.side === "left" ? -1 : 1);
-        pos = { x: near.metadata.position.x + dx, y: near.metadata.position.y };
+        pos = { x: (near.metadata.position.x ?? 0) + dx, y: near.metadata.position.y ?? 0 };
       } else {
         const vp = rf.getViewport();
         pos = {

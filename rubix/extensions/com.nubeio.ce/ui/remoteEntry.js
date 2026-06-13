@@ -17908,11 +17908,12 @@ function Inner({ base }) {
       let changed = false;
       const next = ns.map((n) => {
         if (n.type !== "fb") return n;
-        const t = comps.get(Number(n.id))?.type;
+        const fb = n;
+        const t = comps.get(Number(fb.id))?.type;
         const has = t ? actionsByType.has(t) : false;
-        if (n.data.hasActions === has) return n;
+        if (fb.data.hasActions === has) return n;
         changed = true;
-        return { ...n, data: { ...n.data, hasActions: has } };
+        return { ...fb, data: { ...fb.data, hasActions: has } };
       });
       return changed ? next : ns;
     });
@@ -18494,7 +18495,7 @@ function Inner({ base }) {
       if (near?.metadata?.position) {
         const GAP = 80;
         const dx = (NODE_W + GAP) * (opts?.side === "left" ? -1 : 1);
-        pos = { x: near.metadata.position.x + dx, y: near.metadata.position.y };
+        pos = { x: (near.metadata.position.x ?? 0) + dx, y: near.metadata.position.y ?? 0 };
       } else {
         const vp = rf.getViewport();
         pos = {
@@ -20853,7 +20854,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-12T09:53:53.478Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T07:08:26.465Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
