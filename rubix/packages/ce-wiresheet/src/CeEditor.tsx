@@ -19,6 +19,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { ChevronRight, ChevronLeft, CornerDownRight, Table2, X, Maximize2, Minimize2 } from "lucide-react";
 import { ComponentTable } from "./components/ComponentTable";
+import { createPortal } from "react-dom";
 
 // Selected-edge highlight. RF adds .selected to .react-flow__edge when the
 // edge's `selected` flag is true; the default stylesheet's selected color is
@@ -804,6 +805,14 @@ function Inner({ base }: { base: string }) {
       // edge below; both-off-canvas edges are dropped.
       const { inEdges, crossEdges } = partitionEdges(scopedEdges, childUids);
       useStructural.getState().setNodes(children, inEdges);
+      // Linked-prop flags for the table: every endpoint of every scoped edge,
+      // including cross-folder ones (which don't live in the store's `edges`).
+      const linked = new Set<number>();
+      for (const e of scopedEdges) {
+        if (e.sourcePropertyUid != null) linked.add(e.sourcePropertyUid);
+        if (e.targetPropertyUid != null) linked.add(e.targetPropertyUid);
+      }
+      useStructural.getState().setLinkedProps(linked);
 
       // Build ghost nodes + their cross-folder edges. Cross-folder edges that
       // share the same visible-side (component, property) are GROUPED into one
@@ -2719,10 +2728,15 @@ function Inner({ base }: { base: string }) {
           }}
         />
       )}
-      {nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && (
-        <NodeContextMenu
-          x={nodeMenu.x}
-          y={nodeMenu.y}
+      {/* Node menu + its pickers / Configure panel are portaled to <body> so a
+          right-click in the TABLE pane (outside the graph pane's clip) opens them
+          at the cursor; modals also cover the full viewport. */}
+      {createPortal(
+        <>
+          {nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && (
+            <NodeContextMenu
+              x={nodeMenu.x}
+              y={nodeMenu.y}
           hasActions={
             getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0
           }
@@ -2835,6 +2849,9 @@ function Inner({ base }: { base: string }) {
             setNodeMenu(null);
           }}
         />
+      )}
+        </>,
+        document.body,
       )}
       {paneMenu && (
         <PaneContextMenu
@@ -2970,6 +2987,7 @@ function Inner({ base }: { base: string }) {
               selectedUids={tableSelected}
               onSelect={onTableSelect}
               onDrillIn={enter}
+              onNameContextMenu={openNodeContextMenu}
               onRowsChange={onTableRows}
               onSetOverride={onTableSetOverride}
               onSetDefault={onTableSetDefault}

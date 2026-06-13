@@ -12575,6 +12575,8 @@ const useStructural = create((set) => ({
   components: /* @__PURE__ */ new Map(),
   componentsByPath: /* @__PURE__ */ new Map(),
   edges: /* @__PURE__ */ new Map(),
+  linkedProps: /* @__PURE__ */ new Set(),
+  setLinkedProps: (linkedProps) => set({ linkedProps }),
   setNodes: (comps, edges) => {
     const cByUid = /* @__PURE__ */ new Map();
     const cByPath = /* @__PURE__ */ new Map();
@@ -12867,6 +12869,7 @@ function ComponentTable({
   selectedUids,
   onSelect,
   onDrillIn,
+  onNameContextMenu,
   onRowsChange,
   onSetOverride,
   onSetDefault,
@@ -12886,15 +12889,7 @@ function ComponentTable({
     () => Array.from(components.values()).filter((c) => c.parent === currentParentUid),
     [components, currentParentUid]
   );
-  const edges = useStructural((s) => s.edges);
-  const linkedProps = useMemo(() => {
-    const set = /* @__PURE__ */ new Set();
-    for (const e of edges.values()) {
-      if (e.sourcePropertyUid != null) set.add(e.sourcePropertyUid);
-      if (e.targetPropertyUid != null) set.add(e.targetPropertyUid);
-    }
-    return set;
-  }, [edges]);
+  const linkedProps = useStructural((s) => s.linkedProps);
   const facets = useMemo(
     () => new Map(allRows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
     [allRows]
@@ -13067,10 +13062,21 @@ function ComponentTable({
           borderBottom: "1px solid #1f232b"
         },
         children: [
-          /* @__PURE__ */ jsx("td", { style: { padding: "4px 10px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }, children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }, children: [
-            isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
-            /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type })
-          ] }) }),
+          /* @__PURE__ */ jsx(
+            "td",
+            {
+              onContextMenu: (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onNameContextMenu(c.uid, e.clientX, e.clientY);
+              },
+              style: { padding: "4px 10px", fontFamily: "ui-monospace, SFMono-Regular, monospace" },
+              children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }, children: [
+                isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
+                /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type })
+              ] })
+            }
+          ),
           Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0, `i${i}`)),
           Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0, `o${i}`)),
           Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0, `g${i}`))
@@ -18559,6 +18565,12 @@ function Inner({ base }) {
       const childByUid = new Map(children.map((c) => [c.uid, c]));
       const { inEdges, crossEdges } = partitionEdges(scopedEdges, childUids);
       useStructural.getState().setNodes(children, inEdges);
+      const linked = /* @__PURE__ */ new Set();
+      for (const e of scopedEdges) {
+        if (e.sourcePropertyUid != null) linked.add(e.sourcePropertyUid);
+        if (e.targetPropertyUid != null) linked.add(e.targetPropertyUid);
+      }
+      useStructural.getState().setLinkedProps(linked);
       const { index: exposedIndex, remap: exposedRemap, subProps } = exposedPortIndex(children);
       exposedRemapRef.current = exposedRemap;
       wsClient?.setDesiredPropSubscription(subProps);
@@ -19914,107 +19926,112 @@ function Inner({ base }) {
                   }
                 }
               ),
-              nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
-                NodeContextMenu,
-                {
-                  x: nodeMenu.x,
-                  y: nodeMenu.y,
-                  hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
-                  canRename: nodes.filter((n) => n.selected).length === 1,
-                  count: nodes.filter((n) => n.selected).length,
-                  uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
-                  name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
-                  onRename: async () => {
-                    const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-                    setNodeMenu(null);
-                    if (sel.length !== 1) return;
-                    const uid = sel[0];
-                    const cur = useStructural.getState().components.get(uid);
-                    const next = window.prompt("Rename component", cur?.name ?? "");
-                    if (next == null) return;
-                    const trimmed = next.trim();
-                    if (!trimmed || trimmed === cur?.name) return;
-                    try {
-                      await updateNode(uid, { name: trimmed });
-                      await reload();
-                    } catch (e) {
-                      reportError(e);
+              createPortal(
+                /* @__PURE__ */ jsxs(Fragment, { children: [
+                  nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
+                    NodeContextMenu,
+                    {
+                      x: nodeMenu.x,
+                      y: nodeMenu.y,
+                      hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
+                      canRename: nodes.filter((n) => n.selected).length === 1,
+                      count: nodes.filter((n) => n.selected).length,
+                      uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
+                      name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
+                      onRename: async () => {
+                        const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                        setNodeMenu(null);
+                        if (sel.length !== 1) return;
+                        const uid = sel[0];
+                        const cur = useStructural.getState().components.get(uid);
+                        const next = window.prompt("Rename component", cur?.name ?? "");
+                        if (next == null) return;
+                        const trimmed = next.trim();
+                        if (!trimmed || trimmed === cur?.name) return;
+                        try {
+                          await updateNode(uid, { name: trimmed });
+                          await reload();
+                        } catch (e) {
+                          reportError(e);
+                        }
+                      },
+                      onDetails: () => {
+                        const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                        if (sel.length === 1) setDetailsUid(sel[0]);
+                      },
+                      onGroup: () => {
+                        void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
+                        setNodeMenu(null);
+                      },
+                      onMoveInto: () => setMovePickerOpen(true),
+                      onAction: () => setActionPickerOpen(true),
+                      onClose: () => setNodeMenu(null)
                     }
-                  },
-                  onDetails: () => {
-                    const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-                    if (sel.length === 1) setDetailsUid(sel[0]);
-                  },
-                  onGroup: () => {
-                    void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
-                    setNodeMenu(null);
-                  },
-                  onMoveInto: () => setMovePickerOpen(true),
-                  onAction: () => setActionPickerOpen(true),
-                  onClose: () => setNodeMenu(null)
-                }
-              ),
-              nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
-                ActionPicker,
-                {
-                  x: nodeMenu.x,
-                  y: nodeMenu.y,
-                  targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
-                  actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
-                  onInvoke: invokeAction,
-                  onClose: () => {
-                    setActionPickerOpen(false);
-                    setNodeMenu(null);
-                  }
-                }
-              ),
-              nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
-                MoveIntoPicker,
-                {
-                  x: nodeMenu.x,
-                  y: nodeMenu.y,
-                  movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
-                  onMove: async (newParent) => {
-                    const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-                    for (const uid of moving) {
-                      try {
-                        await updateNode(uid, { parentUid: newParent });
-                      } catch (e) {
-                        reportError(e);
+                  ),
+                  nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
+                    ActionPicker,
+                    {
+                      x: nodeMenu.x,
+                      y: nodeMenu.y,
+                      targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+                      actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
+                      onInvoke: invokeAction,
+                      onClose: () => {
+                        setActionPickerOpen(false);
+                        setNodeMenu(null);
                       }
                     }
-                    setMovePickerOpen(false);
-                    setNodeMenu(null);
-                    await reload();
-                  },
-                  onClose: () => {
-                    setMovePickerOpen(false);
-                    setNodeMenu(null);
-                  }
-                }
-              ),
-              detailsUid != null && /* @__PURE__ */ jsx(
-                ConfigurePanel,
-                {
-                  componentUid: detailsUid,
-                  currentParentUid,
-                  exposeProp,
-                  unexposeProp,
-                  onSave: async (facetString) => {
-                    try {
-                      await updateNode(detailsUid, {
-                        properties: { [FACET_PROP]: { value: facetString } }
-                      });
-                      await reload();
-                    } catch (e) {
-                      reportError(e);
+                  ),
+                  nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
+                    MoveIntoPicker,
+                    {
+                      x: nodeMenu.x,
+                      y: nodeMenu.y,
+                      movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+                      onMove: async (newParent) => {
+                        const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                        for (const uid of moving) {
+                          try {
+                            await updateNode(uid, { parentUid: newParent });
+                          } catch (e) {
+                            reportError(e);
+                          }
+                        }
+                        setMovePickerOpen(false);
+                        setNodeMenu(null);
+                        await reload();
+                      },
+                      onClose: () => {
+                        setMovePickerOpen(false);
+                        setNodeMenu(null);
+                      }
                     }
-                  },
-                  onClose: () => {
-                    setDetailsUid(null);
-                    setNodeMenu(null);
-                  }
-                }
+                  ),
+                  detailsUid != null && /* @__PURE__ */ jsx(
+                    ConfigurePanel,
+                    {
+                      componentUid: detailsUid,
+                      currentParentUid,
+                      exposeProp,
+                      unexposeProp,
+                      onSave: async (facetString) => {
+                        try {
+                          await updateNode(detailsUid, {
+                            properties: { [FACET_PROP]: { value: facetString } }
+                          });
+                          await reload();
+                        } catch (e) {
+                          reportError(e);
+                        }
+                      },
+                      onClose: () => {
+                        setDetailsUid(null);
+                        setNodeMenu(null);
+                      }
+                    }
+                  )
+                ] }),
+                document.body
               ),
               paneMenu && /* @__PURE__ */ jsx(
                 PaneContextMenu,
@@ -20153,6 +20170,7 @@ function Inner({ base }) {
                   selectedUids: tableSelected,
                   onSelect: onTableSelect,
                   onDrillIn: enter,
+                  onNameContextMenu: openNodeContextMenu,
                   onRowsChange: onTableRows,
                   onSetOverride: onTableSetOverride,
                   onSetDefault: onTableSetDefault,
@@ -22063,7 +22081,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:20:13.376Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:27:09.586Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

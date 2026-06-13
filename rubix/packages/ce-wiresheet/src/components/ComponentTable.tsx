@@ -49,6 +49,7 @@ export function ComponentTable({
   selectedUids,
   onSelect,
   onDrillIn,
+  onNameContextMenu,
   onRowsChange,
   onSetOverride,
   onSetDefault,
@@ -60,6 +61,7 @@ export function ComponentTable({
   selectedUids: number[];
   onSelect: (uids: number[]) => void; // replaces the selection with these uids
   onDrillIn: (uid: number) => void;
+  onNameContextMenu: (uid: number, x: number, y: number) => void;
   onRowsChange: (uids: number[]) => void;
   onSetOverride: (componentUid: number, property: string, value: FlexValue, duration: number) => void;
   onSetDefault: (componentUid: number, property: string, value: FlexValue) => void;
@@ -83,15 +85,8 @@ export function ComponentTable({
   );
 
   // Prop uids that are an endpoint of an edge → flagged as "linked" (wired).
-  const edges = useStructural((s) => s.edges);
-  const linkedProps = useMemo(() => {
-    const set = new Set<number>();
-    for (const e of edges.values()) {
-      if (e.sourcePropertyUid != null) set.add(e.sourcePropertyUid);
-      if (e.targetPropertyUid != null) set.add(e.targetPropertyUid);
-    }
-    return set;
-  }, [edges]);
+  // Sourced from the store's linkedProps, which includes cross-folder edges.
+  const linkedProps = useStructural((s) => s.linkedProps);
 
   const facets = useMemo(
     () =>
@@ -300,7 +295,14 @@ export function ComponentTable({
           borderBottom: "1px solid #1f232b",
         }}
       >
-        <td style={{ padding: "4px 10px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}>
+        <td
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onNameContextMenu(c.uid, e.clientX, e.clientY);
+          }}
+          style={{ padding: "4px 10px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }}
+        >
           <span style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
             {isFolder && <Layers size={12} color="#9ecbff" />}
             <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>

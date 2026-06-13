@@ -23,7 +23,12 @@ interface StructuralState {
   components: Map<number, Component>;      // by UID
   componentsByPath: Map<string, Component>;
   edges: Map<number, Edge>;                // by UID
+  // Prop uids that are an endpoint of ANY edge in the current view's scope —
+  // including cross-folder edges (which aren't kept in `edges`, since only
+  // both-ends-visible edges are drawn). Used to flag "linked" props in the table.
+  linkedProps: Set<number>;
   setNodes(comps: Component[], edges: Edge[]): void;
+  setLinkedProps(props: Set<number>): void;
   upsertComponent(c: Component): void;
   removeComponent(uid: number): void;
   upsertEdge(e: Edge): void;
@@ -51,6 +56,8 @@ export const useStructural = create<StructuralState>((set) => ({
   components: new Map(),
   componentsByPath: new Map(),
   edges: new Map(),
+  linkedProps: new Set(),
+  setLinkedProps: (linkedProps) => set({ linkedProps }),
   setNodes: (comps, edges) => {
     const cByUid = new Map<number, Component>();
     const cByPath = new Map<string, Component>();
