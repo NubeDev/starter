@@ -174,10 +174,6 @@ const DATATYPE_LABEL: Record<number, string> = {
 // detail stays through normal working zooms and LOD only kicks in on a deep
 // zoom-out.
 const LOD_ZOOM = 0.12;
-// Stable empties returned by the value/status selectors while in LOD, so a
-// value change doesn't re-render a node that isn't showing values anyway.
-const EMPTY_VALUES: Record<number, DecodedValue | undefined> = Object.freeze({});
-const EMPTY_FLAGS: Record<number, number> = Object.freeze({});
 
 function colorForType(dt: PropertyDataType): string {
   if (dt === DATATYPE_BOOL) return COLOR_BOOL;
@@ -1529,6 +1525,119 @@ interface InnerProps {
   selected?: boolean;
 }
 
+// A single property row. PERF: subscribes to its OWN value + status uid, so a
+// value frame re-renders only the rows whose values changed — not the whole node.
+// memo'd so a parent re-render (structural change) with the same row props is a
+// no-op for unchanged rows.
+const ValueRow = memo(function ValueRow({
+  row: p,
+  i,
+  componentUid,
+  initialFlags,
+}: {
+  row: PropRow;
+  i: number;
+  componentUid: number;
+  initialFlags: number;
+}) {
+  const v = useValues((s) => s.values.get(p.uid));
+  const liveFlags = useStatusFlags((s) => s.flags.get(p.uid));
+  // Exposed ports read presentation LIVE from the child's streamed __facets.
+  const facetV = useValues((s) =>
+    p.facetPropUid != null ? s.values.get(p.facetPropUid) : undefined,
+  );
+
+  const isInput = p.category === CATEGORY_INPUT;
+  const isOutput = p.category === CATEGORY_OUTPUT;
+  let rowFacet = p.facet;
+  if (p.exposed && p.facetPropUid != null && p.exposedComponent != null && typeof facetV === "string") {
+    const live = facetFor(p.exposedComponent, facetV).get(p.uid);
+    if (live) rowFacet = { ...p.facet, ...live, label: live.label ?? p.facet?.label };
+  }
+  const flags = liveFlags ?? initialFlags;
+  const overridden = (flags & STATUS_OVERRIDDEN) !== 0;
+  const editable = !p.exposed && (isInput || p.category === CATEGORY_CONFIG);
+  const rowTitle = `${p.name} — prop uid ${p.uid} · component uid ${
+    p.exposed ? (p.exposedComponent ?? "?") : componentUid
+  }`;
+
+  return (
+    <div
+      data-row-uid={p.uid}
+      title={rowTitle}
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: TITLE_H + i * ROW_H,
+        height: ROW_H,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "0 12px",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        background: overridden ? "rgba(245,158,11,0.08)" : "transparent",
+      }}
+    >
+      <span
+        style={{
+          color: isInput ? "#8892a0" : isOutput ? "#cbd3e0" : "#9aa3b2",
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
+        {p.exposed && (
+          <span
+            style={{ display: "flex", alignItems: "center", color: "#7a8a9f" }}
+            title="exposed from a child"
+          >
+            <CornerDownRight size={11} strokeWidth={2} />
+          </span>
+        )}
+        <span title={rowFacet?.label ? p.name : undefined}>{rowFacet?.label ?? p.name}</span>
+        {p.category === CATEGORY_CONFIG ? " (cfg)" : ""}
+        {overridden && (
+          <span
+            title="overridden"
+            style={{
+              fontSize: 9,
+              padding: "0 4px",
+              background: "#f59e0b",
+              color: "#0f1115",
+              borderRadius: 2,
+              fontWeight: 600,
+            }}
+          >
+            OVR
+          </span>
+        )}
+      </span>
+      {editable ? (
+        <PropertyValueEditor
+          componentUid={componentUid}
+          propName={p.name}
+          value={v}
+          dataType={p.dataType}
+          facet={rowFacet}
+        />
+      ) : (
+        <span
+          style={{
+            color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
+            fontVariantNumeric: "tabular-nums",
+            padding: "0 2px",
+          }}
+          title={DATATYPE_LABEL[p.dataType]}
+        >
+          {fmtValueFacet(v, p.dataType, rowFacet)}
+        </span>
+      )}
+    </div>
+  );
+});
+
 function FunctionBlockInner({ data, selected }: InnerProps) {
   // ALL hooks run unconditionally before any early-return branch — otherwise React
   // loses its hook-order invariant and throws "Rendered more hooks than during the
@@ -1541,47 +1650,21 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   const restComp = useStructural((s) => s.components.get(data.componentUid));
   // Prop uids that are an edge endpoint — used to keep wired props from hiding.
   const linkedProps = useStructural((s) => s.linkedProps);
-  // The uids of THIS component's properties. Pre-computed so the per-component
-  // selectors below don't have to walk restComp.properties on every state
-  // notification.
-  const ourUids = useMemo(() => {
-    if (!restComp) return [] as number[];
-    const own = Object.values(restComp.properties).map((p) => p.uid);
-    // Also subscribe to the values of any child props this component exposes as
-    // ports — they're off-canvas, so they wouldn't otherwise stream to us.
-    for (const ep of exposedPorts(facetFor(restComp.uid, rawFacet(restComp.properties)))) {
-      own.push(ep.childUid); // the port's live value
-      if (ep.facet.facetProp != null) own.push(ep.facet.facetProp); // child's live __facets
-    }
-    return own;
-  }, [restComp]);
   // Level-of-detail: true when zoomed out far enough that values aren't legible.
   // Boolean selector → this node only re-renders when CROSSING the threshold,
   // not on every zoom delta.
   const lod = useRfStore((s) => s.transform[2] < LOD_ZOOM);
-  // Per-component value subscription. At scale (many components in the view),
-  // subscribing to the global `version` counter forces every FunctionBlock to
-  // re-render on every WS frame — that's the source of the "view feels frozen"
-  // pain when you have 100+ nodes. Shallow-equality selector means a frame
-  // touching unrelated uids returns the same Record and Zustand skips us.
-  // In LOD we return a stable empty object so value changes don't re-render a
-  // node that isn't drawing values.
-  const valuesByUid = useValues(
-    useShallow((s) => {
-      if (lod) return EMPTY_VALUES;
-      const out: Record<number, DecodedValue | undefined> = {};
-      for (const uid of ourUids) out[uid] = s.values.get(uid);
-      return out;
-    }),
-  );
-  const flagsByUid = useStatusFlags(
-    useShallow((s) => {
-      if (lod) return EMPTY_FLAGS;
-      const out: Record<number, number> = {};
-      for (const uid of ourUids) out[uid] = s.flags.get(uid) ?? 0;
-      return out;
-    }),
-  );
+  // PERF: the node body does NOT subscribe to the value/status stream — each prop
+  // ROW (ValueRow) subscribes to its OWN uid, so a value change re-renders just
+  // that row, not the whole node (which would re-create every row element every
+  // frame). The parent only watches its own __facets value, to detect a
+  // cross-session facet edit and trigger a reload (below).
+  const ownFacetUid = restComp?.properties[FACET_PROP]?.uid;
+  const liveFacetRaw = useValues((s) => {
+    if (ownFacetUid == null) return undefined;
+    const v = s.values.get(ownFacetUid);
+    return typeof v === "string" ? v : undefined;
+  });
   const [menu, setMenu] = useState<{
     x: number;
     y: number;
@@ -1636,11 +1719,6 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
   // (another session edited the facet), request a debounced scope reload so REST
   // refreshes structural and the rows/ports/edges rebuild consistently. Compared
   // against the previous STREAMED value (not structural) so it can't loop.
-  const ownFacetUid = restComp?.properties[FACET_PROP]?.uid;
-  const liveFacetRaw =
-    ownFacetUid != null && typeof valuesByUid[ownFacetUid] === "string"
-      ? (valuesByUid[ownFacetUid] as string)
-      : undefined;
   const prevFacetRaw = useRef<string | null>(null);
   useEffect(() => {
     if (liveFacetRaw == null) return;
@@ -1748,11 +1826,6 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
       </div>
     );
   }
-  // Live per-component value / status maps (re-read each render; the row JSX
-  // below reads these by uid). The structural shell (rows, nodeH, status text)
-  // comes from the memo above and is NOT rebuilt on a value-only re-render.
-  const values = valuesByUid;
-  const statusFlagsMap = flagsByUid;
   const { rows, nodeH, kind, statusText, statusColor, statusPropExists, hiddenCount } = structural;
 
   return (
@@ -1779,7 +1852,12 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         if (!p) return;
         e.preventDefault();
         e.stopPropagation();
-        const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
+        // Read the live value/status imperatively at click time (the body no
+        // longer subscribes to the stream).
+        const flags =
+          useStatusFlags.getState().flags.get(p.uid) ??
+          restComp.properties[p.name]?.statusFlags ??
+          0;
         setMenu({
           x: e.clientX,
           y: e.clientY,
@@ -1787,7 +1865,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
           propUid: p.uid,
           category: p.category,
           dataType: p.dataType,
-          currentValue: values[p.uid],
+          currentValue: useValues.getState().values.get(p.uid),
           overridden: (flags & STATUS_OVERRIDDEN) !== 0,
           exposed: !!p.exposed,
           exposedComponent: p.exposedComponent,
@@ -1985,124 +2063,16 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
       {/* Row CONTENT (labels + value cells) only at normal zoom. In LOD the
           node is just its title bar + handles — values aren't legible anyway,
           and skipping these divs is the bulk of the zoomed-out render saving. */}
-      {!lod && rows.map((p, i) => {
-        const isInput = p.category === CATEGORY_INPUT;
-        const isOutput = p.category === CATEGORY_OUTPUT;
-        const v = values[p.uid];
-        // An exposed port reads its presentation LIVE from the child's streamed
-        // __facets (no stale copy). Live label/unit/aliases win; the baked label
-        // is just a fallback name.
-        let rowFacet = p.facet;
-        if (p.exposed && p.facetPropUid != null && p.exposedComponent != null) {
-          const fv = values[p.facetPropUid];
-          if (typeof fv === "string") {
-            const live = facetFor(p.exposedComponent, fv).get(p.uid);
-            if (live) rowFacet = { ...p.facet, ...live, label: live.label ?? p.facet?.label };
-          }
-        }
-        // Status: prefer the live WS-driven map (updated by STATUS sections in
-        // every binary frame), fall back to the REST snapshot.
-        const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
-        const overridden = (flags & STATUS_OVERRIDDEN) !== 0;
-        // `editable` here gates the inline click-to-edit. Inputs and config
-        // properties PATCH /nodes which sets the value directly. Outputs are
-        // engine-computed — PATCH /nodes wouldn't take, but PATCH /overrides
-        // still freezes them. So outputs aren't inline-editable here but ARE
-        // overridable via the right-click menu (which uses /overrides).
-        // Exposed ports are read-only here (edit the real value inside the
-        // child); their value still displays + the handle is wired.
-        const editable = !p.exposed && (isInput || p.category === CATEGORY_CONFIG);
-        // Hover tooltip exposes the real uids for debugging — for an exposed port
-        // that's the CHILD's prop + component, not the folder's.
-        const rowTitle = `${p.name} — prop uid ${p.uid} · component uid ${
-          p.exposed ? (p.exposedComponent ?? "?") : data.componentUid
-        }`;
-        return (
-          <div
+      {!lod &&
+        rows.map((p, i) => (
+          <ValueRow
             key={p.uid}
-            data-row-uid={p.uid}
-            title={rowTitle}
-            // NOTE: no `nodrag` here. The row must be draggable so the user can
-            // grab the node anywhere on its body, not just the 40px title bar.
-            // Only the genuinely interactive controls carry `nodrag` — the
-            // inline editor input/select while editing (so text-select / the
-            // dropdown work). A plain click on a value still edits (RF's
-            // nodeDragThreshold treats <4px as a click, not a drag).
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: TITLE_H + i * ROW_H,
-              height: ROW_H,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "0 12px",
-              fontSize: 11,
-              fontFamily: "ui-monospace, SFMono-Regular, monospace",
-              background: overridden ? "rgba(245,158,11,0.08)" : "transparent",
-            }}
-          >
-            <span
-              style={{
-                color: isInput ? "#8892a0" : isOutput ? "#cbd3e0" : "#9aa3b2",
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              {p.exposed && (
-                <span
-                  style={{ display: "flex", alignItems: "center", color: "#7a8a9f" }}
-                  title="exposed from a child"
-                >
-                  <CornerDownRight size={11} strokeWidth={2} />
-                </span>
-              )}
-              <span title={rowFacet?.label ? p.name : undefined}>{rowFacet?.label ?? p.name}</span>
-              {p.category === CATEGORY_CONFIG ? " (cfg)" : ""}
-              {overridden && (
-                <span
-                  title="overridden"
-                  style={{
-                    fontSize: 9,
-                    padding: "0 4px",
-                    background: "#f59e0b",
-                    color: "#0f1115",
-                    borderRadius: 2,
-                    fontWeight: 600,
-                  }}
-                >
-                  OVR
-                </span>
-              )}
-            </span>
-            {editable ? (
-              <PropertyValueEditor
-                componentUid={data.componentUid}
-                propName={p.name}
-                value={v}
-                dataType={p.dataType}
-                facet={rowFacet}
-              />
-            ) : (
-              <span
-                style={{
-                  color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
-                  fontVariantNumeric: "tabular-nums",
-                  // Same 2px horizontal padding as the inline editor's display
-                  // span, so input and output values line up at the same right
-                  // edge instead of outputs sitting 2px further right.
-                  padding: "0 2px",
-                }}
-                title={DATATYPE_LABEL[p.dataType]}
-              >
-                {fmtValueFacet(v, p.dataType, rowFacet)}
-              </span>
-            )}
-          </div>
-        );
-      })}
+            row={p}
+            i={i}
+            componentUid={data.componentUid}
+            initialFlags={restComp.properties[p.name]?.statusFlags ?? 0}
+          />
+        ))}
 
       {rows.map((p, i) => {
         if (p.category === CATEGORY_CONFIG) return null;

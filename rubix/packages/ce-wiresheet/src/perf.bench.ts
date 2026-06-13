@@ -7,7 +7,7 @@ import { layoutPositions } from "./lib/layout";
 import { partitionEdges } from "./lib/routing";
 import { buildSearchIndex } from "./lib/search";
 import { useValues, propertyDataType } from "./lib/store";
-import type { Component, Edge, Property } from "./lib/engine-types";
+import type { Component, Edge, Property, PropertyCategory } from "./lib/engine-types";
 
 // Performance regression harness. Run with: pnpm --filter @nube/ce-wiresheet bench
 // (or `bench:compare` to diff against a saved baseline). These model the steady-
@@ -19,7 +19,7 @@ const N = 100; // visible components
 const PROPS_PER = 3; // in1, in2, out
 
 // --- synthetic scene: N components, each with a facet (label/unit/decimals/alias)
-function prop(uid: number, componentUid: number, category: number): Property {
+function prop(uid: number, componentUid: number, category: PropertyCategory): Property {
   return { uid, componentUid, category, value: 0, statusFlags: 0 };
 }
 const comps: Component[] = [];

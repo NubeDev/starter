@@ -15450,8 +15450,6 @@ const DATATYPE_LABEL = {
   [DATATYPE_STRING]: "string"
 };
 const LOD_ZOOM = 0.12;
-const EMPTY_VALUES = Object.freeze({});
-const EMPTY_FLAGS = Object.freeze({});
 function colorForType(dt) {
   if (dt === DATATYPE_BOOL) return COLOR_BOOL;
   if (dt === DATATYPE_STRING) return COLOR_STRING;
@@ -16579,37 +16577,123 @@ function statusColorFor(s) {
   if (v === "ERROR" || v === "FAULT" || v === "DOWN") return { bg: "#ef4444", label: v.toLowerCase() };
   return { bg: "#8892a0", label: s };
 }
+const ValueRow = memo(function ValueRow2({
+  row: p,
+  i,
+  componentUid,
+  initialFlags
+}) {
+  const v = useValues((s) => s.values.get(p.uid));
+  const liveFlags = useStatusFlags((s) => s.flags.get(p.uid));
+  const facetV = useValues(
+    (s) => p.facetPropUid != null ? s.values.get(p.facetPropUid) : void 0
+  );
+  const isInput = p.category === CATEGORY_INPUT;
+  const isOutput = p.category === CATEGORY_OUTPUT;
+  let rowFacet = p.facet;
+  if (p.exposed && p.facetPropUid != null && p.exposedComponent != null && typeof facetV === "string") {
+    const live = facetFor(p.exposedComponent, facetV).get(p.uid);
+    if (live) rowFacet = { ...p.facet, ...live, label: live.label ?? p.facet?.label };
+  }
+  const flags = liveFlags ?? initialFlags;
+  const overridden = (flags & STATUS_OVERRIDDEN) !== 0;
+  const editable = !p.exposed && (isInput || p.category === CATEGORY_CONFIG);
+  const rowTitle = `${p.name} — prop uid ${p.uid} · component uid ${p.exposed ? p.exposedComponent ?? "?" : componentUid}`;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-row-uid": p.uid,
+      title: rowTitle,
+      style: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        top: TITLE_H + i * ROW_H,
+        height: ROW_H,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "0 12px",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        background: overridden ? "rgba(245,158,11,0.08)" : "transparent"
+      },
+      children: [
+        /* @__PURE__ */ jsxs(
+          "span",
+          {
+            style: {
+              color: isInput ? "#8892a0" : isOutput ? "#cbd3e0" : "#9aa3b2",
+              display: "flex",
+              alignItems: "center",
+              gap: 4
+            },
+            children: [
+              p.exposed && /* @__PURE__ */ jsx(
+                "span",
+                {
+                  style: { display: "flex", alignItems: "center", color: "#7a8a9f" },
+                  title: "exposed from a child",
+                  children: /* @__PURE__ */ jsx(CornerDownRight, { size: 11, strokeWidth: 2 })
+                }
+              ),
+              /* @__PURE__ */ jsx("span", { title: rowFacet?.label ? p.name : void 0, children: rowFacet?.label ?? p.name }),
+              p.category === CATEGORY_CONFIG ? " (cfg)" : "",
+              overridden && /* @__PURE__ */ jsx(
+                "span",
+                {
+                  title: "overridden",
+                  style: {
+                    fontSize: 9,
+                    padding: "0 4px",
+                    background: "#f59e0b",
+                    color: "#0f1115",
+                    borderRadius: 2,
+                    fontWeight: 600
+                  },
+                  children: "OVR"
+                }
+              )
+            ]
+          }
+        ),
+        editable ? /* @__PURE__ */ jsx(
+          PropertyValueEditor,
+          {
+            componentUid,
+            propName: p.name,
+            value: v,
+            dataType: p.dataType,
+            facet: rowFacet
+          }
+        ) : /* @__PURE__ */ jsx(
+          "span",
+          {
+            style: {
+              color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
+              fontVariantNumeric: "tabular-nums",
+              padding: "0 2px"
+            },
+            title: DATATYPE_LABEL[p.dataType],
+            children: fmtValueFacet(v, p.dataType, rowFacet)
+          }
+        )
+      ]
+    }
+  );
+});
 function FunctionBlockInner({ data, selected }) {
   const schemaV = useSchemaVersion((s) => s.version);
   const ctx = useContext(CeWiresheetContext);
   const restComp = useStructural((s) => s.components.get(data.componentUid));
   const linkedProps = useStructural((s) => s.linkedProps);
-  const ourUids = useMemo(() => {
-    if (!restComp) return [];
-    const own = Object.values(restComp.properties).map((p) => p.uid);
-    for (const ep of exposedPorts(facetFor(restComp.uid, rawFacet(restComp.properties)))) {
-      own.push(ep.childUid);
-      if (ep.facet.facetProp != null) own.push(ep.facet.facetProp);
-    }
-    return own;
-  }, [restComp]);
   const lod = useStore$1((s) => s.transform[2] < LOD_ZOOM);
-  const valuesByUid = useValues(
-    useShallow((s) => {
-      if (lod) return EMPTY_VALUES;
-      const out = {};
-      for (const uid of ourUids) out[uid] = s.values.get(uid);
-      return out;
-    })
-  );
-  const flagsByUid = useStatusFlags(
-    useShallow((s) => {
-      if (lod) return EMPTY_FLAGS;
-      const out = {};
-      for (const uid of ourUids) out[uid] = s.flags.get(uid) ?? 0;
-      return out;
-    })
-  );
+  const ownFacetUid = restComp?.properties[FACET_PROP]?.uid;
+  const liveFacetRaw = useValues((s) => {
+    if (ownFacetUid == null) return void 0;
+    const v = s.values.get(ownFacetUid);
+    return typeof v === "string" ? v : void 0;
+  });
   const [menu, setMenu] = useState(null);
   const otherSelectorKeys = usePresence(
     useShallow((s) => {
@@ -16627,8 +16711,6 @@ function FunctionBlockInner({ data, selected }) {
     const [color, name] = k.split("	");
     return { color, name };
   });
-  const ownFacetUid = restComp?.properties[FACET_PROP]?.uid;
-  const liveFacetRaw = ownFacetUid != null && typeof valuesByUid[ownFacetUid] === "string" ? valuesByUid[ownFacetUid] : void 0;
   const prevFacetRaw = useRef(null);
   useEffect(() => {
     if (liveFacetRaw == null) return;
@@ -16711,8 +16793,6 @@ function FunctionBlockInner({ data, selected }) {
       }
     );
   }
-  const values = valuesByUid;
-  const statusFlagsMap = flagsByUid;
   const { rows, nodeH, kind, statusText, statusColor, statusPropExists, hiddenCount } = structural;
   return /* @__PURE__ */ jsxs(
     "div",
@@ -16733,7 +16813,7 @@ function FunctionBlockInner({ data, selected }) {
         if (!p) return;
         e.preventDefault();
         e.stopPropagation();
-        const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
+        const flags = useStatusFlags.getState().flags.get(p.uid) ?? restComp.properties[p.name]?.statusFlags ?? 0;
         setMenu({
           x: e.clientX,
           y: e.clientY,
@@ -16741,7 +16821,7 @@ function FunctionBlockInner({ data, selected }) {
           propUid: p.uid,
           category: p.category,
           dataType: p.dataType,
-          currentValue: values[p.uid],
+          currentValue: useValues.getState().values.get(p.uid),
           overridden: (flags & STATUS_OVERRIDDEN) !== 0,
           exposed: !!p.exposed,
           exposedComponent: p.exposedComponent,
@@ -16925,109 +17005,16 @@ function FunctionBlockInner({ data, selected }) {
             ]
           }
         ),
-        !lod && rows.map((p, i) => {
-          const isInput = p.category === CATEGORY_INPUT;
-          const isOutput = p.category === CATEGORY_OUTPUT;
-          const v = values[p.uid];
-          let rowFacet = p.facet;
-          if (p.exposed && p.facetPropUid != null && p.exposedComponent != null) {
-            const fv = values[p.facetPropUid];
-            if (typeof fv === "string") {
-              const live = facetFor(p.exposedComponent, fv).get(p.uid);
-              if (live) rowFacet = { ...p.facet, ...live, label: live.label ?? p.facet?.label };
-            }
-          }
-          const flags = statusFlagsMap[p.uid] ?? restComp.properties[p.name]?.statusFlags ?? 0;
-          const overridden = (flags & STATUS_OVERRIDDEN) !== 0;
-          const editable = !p.exposed && (isInput || p.category === CATEGORY_CONFIG);
-          const rowTitle = `${p.name} — prop uid ${p.uid} · component uid ${p.exposed ? p.exposedComponent ?? "?" : data.componentUid}`;
-          return /* @__PURE__ */ jsxs(
-            "div",
-            {
-              "data-row-uid": p.uid,
-              title: rowTitle,
-              style: {
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: TITLE_H + i * ROW_H,
-                height: ROW_H,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "0 12px",
-                fontSize: 11,
-                fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                background: overridden ? "rgba(245,158,11,0.08)" : "transparent"
-              },
-              children: [
-                /* @__PURE__ */ jsxs(
-                  "span",
-                  {
-                    style: {
-                      color: isInput ? "#8892a0" : isOutput ? "#cbd3e0" : "#9aa3b2",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4
-                    },
-                    children: [
-                      p.exposed && /* @__PURE__ */ jsx(
-                        "span",
-                        {
-                          style: { display: "flex", alignItems: "center", color: "#7a8a9f" },
-                          title: "exposed from a child",
-                          children: /* @__PURE__ */ jsx(CornerDownRight, { size: 11, strokeWidth: 2 })
-                        }
-                      ),
-                      /* @__PURE__ */ jsx("span", { title: rowFacet?.label ? p.name : void 0, children: rowFacet?.label ?? p.name }),
-                      p.category === CATEGORY_CONFIG ? " (cfg)" : "",
-                      overridden && /* @__PURE__ */ jsx(
-                        "span",
-                        {
-                          title: "overridden",
-                          style: {
-                            fontSize: 9,
-                            padding: "0 4px",
-                            background: "#f59e0b",
-                            color: "#0f1115",
-                            borderRadius: 2,
-                            fontWeight: 600
-                          },
-                          children: "OVR"
-                        }
-                      )
-                    ]
-                  }
-                ),
-                editable ? /* @__PURE__ */ jsx(
-                  PropertyValueEditor,
-                  {
-                    componentUid: data.componentUid,
-                    propName: p.name,
-                    value: v,
-                    dataType: p.dataType,
-                    facet: rowFacet
-                  }
-                ) : /* @__PURE__ */ jsx(
-                  "span",
-                  {
-                    style: {
-                      color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
-                      fontVariantNumeric: "tabular-nums",
-                      // Same 2px horizontal padding as the inline editor's display
-                      // span, so input and output values line up at the same right
-                      // edge instead of outputs sitting 2px further right.
-                      padding: "0 2px"
-                    },
-                    title: DATATYPE_LABEL[p.dataType],
-                    children: fmtValueFacet(v, p.dataType, rowFacet)
-                  }
-                )
-              ]
-            },
-            p.uid
-          );
-        }),
+        !lod && rows.map((p, i) => /* @__PURE__ */ jsx(
+          ValueRow,
+          {
+            row: p,
+            i,
+            componentUid: data.componentUid,
+            initialFlags: restComp.properties[p.name]?.statusFlags ?? 0
+          },
+          p.uid
+        )),
         rows.map((p, i) => {
           if (p.category === CATEGORY_CONFIG) return null;
           const isInput = p.category === CATEGORY_INPUT;
@@ -22139,7 +22126,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:58:56.392Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T13:19:02.257Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
