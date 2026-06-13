@@ -1,24 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useStructural, useValues } from "../lib/store";
+import { useStructural, useValues, useStatusFlags, propertyDataType } from "../lib/store";
 import {
   ROLE_NORMAL,
   ROLE_STATUS,
   CATEGORY_INPUT,
   CATEGORY_OUTPUT,
   CATEGORY_CONFIG,
+  STATUS_OVERRIDDEN,
+  DATATYPE_BOOL,
+  DATATYPE_NUMBER,
 } from "../lib/engine-types";
-import type { Component } from "../lib/engine-types";
+import type { Component, FlexValue } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
 import { facetFor, rawFacet, aliasLabel, type PropFacet, type ComponentFacet } from "../lib/facet";
-import { Layers, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { Layers, ArrowUp, ArrowDown, FolderUp } from "lucide-react";
 
 // Table view of the CURRENT folder's components. Each component is a row; its
-// props are aligned into per-slot columns grouped under Inputs / Outputs / Config
-// category headers (no per-prop headers — each cell self-labels with the facet
-// label, fallback raw prop name). Aligning by slot lets you scan a column even
-// across mixed types. Live values, search, name sort; a selected component the
-// search filters out is pinned at the bottom.
+// props align into per-slot columns under Inputs / Outputs / Config category
+// headers (no per-prop headers — each cell self-labels with the facet label).
+// Input cells are editable (commit sets an override); outputs are read-only.
+// Double-click a row centers the wiresheet on that component.
 
 const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): string => {
   if (v === undefined || v === null) return "—";
@@ -32,7 +34,9 @@ const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): str
 
 interface Cell {
   uid: number;
+  name: string;
   label: string;
+  category: number;
 }
 interface RowCells {
   inputs: Cell[];
@@ -45,17 +49,28 @@ export function ComponentTable({
   selectedUids,
   onSelectRow,
   onDrillIn,
+  onCenter,
   onRowsChange,
+  onSetOverride,
+  onClearOverride,
+  canGoUp,
+  onUp,
 }: {
   currentParentUid: number;
   selectedUids: number[];
   onSelectRow: (uid: number, additive: boolean) => void;
   onDrillIn: (uid: number) => void;
+  onCenter: (uid: number) => void;
   onRowsChange: (uids: number[]) => void;
+  onSetOverride: (componentUid: number, property: string, value: FlexValue) => void;
+  onClearOverride: (componentUid: number, property: string) => void;
+  canGoUp: boolean;
+  onUp: () => void;
 }) {
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState<1 | -1>(1);
+  const [editing, setEditing] = useState<{ comp: number; uid: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const components = useStructural((s) => s.components);
@@ -70,12 +85,9 @@ export function ComponentTable({
     [allRows],
   );
 
-  // Split a component's user-facing props into Inputs/Outputs/Config, each
-  // ordered by facet order then name. Hidden props excluded unless the toggle is
-  // on. Each cell self-labels with the facet label (fallback raw name).
   const cellsFor = (c: Component): RowCells => {
     const facet = facets.get(c.uid);
-    const buckets: Record<number, (Cell & { name: string; order: number })[]> = {
+    const buckets: Record<number, (Cell & { order: number })[]> = {
       [CATEGORY_INPUT]: [],
       [CATEGORY_OUTPUT]: [],
       [CATEGORY_CONFIG]: [],
@@ -85,9 +97,9 @@ export function ComponentTable({
       const f = facet?.get(p.uid);
       if (!showHidden && f?.hidden) continue;
       const b = buckets[p.category];
-      if (b) b.push({ uid: p.uid, label: f?.label || name, name, order: f?.order ?? 1e9 });
+      if (b) b.push({ uid: p.uid, name, label: f?.label || name, category: p.category, order: f?.order ?? 1e9 });
     }
-    const sortB = (arr: (Cell & { name: string; order: number })[]) =>
+    const sortB = (arr: (Cell & { order: number })[]) =>
       arr.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
     return {
       inputs: sortB(buckets[CATEGORY_INPUT]),
@@ -96,8 +108,6 @@ export function ComponentTable({
     };
   };
 
-  // Column counts = the widest row in each category (stable across the search so
-  // columns don't jump as you filter).
   const { maxIn, maxOut, maxCfg } = useMemo(() => {
     let i = 0;
     let o = 0;
@@ -137,6 +147,13 @@ export function ComponentTable({
       return out;
     }),
   );
+  const flags = useStatusFlags(
+    useShallow((s) => {
+      const out: Record<number, number> = {};
+      for (const uid of watchUids) out[uid] = s.flags.get(uid) ?? 0;
+      return out;
+    }),
+  );
 
   useEffect(() => {
     onRowsChange(allRows.map((c) => c.uid));
@@ -155,26 +172,65 @@ export function ComponentTable({
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   const totalCols = 1 + maxIn + maxOut + maxCfg;
 
-  const valueCell = (cell: Cell | undefined, compUid: number, input: boolean, groupStart: boolean) => (
-    <td
-      key={`${compUid}:${cell?.uid ?? "_"}:${input}`}
-      style={{
-        padding: "4px 8px",
-        whiteSpace: "nowrap",
-        borderLeft: groupStart ? "1px solid #2c313c" : undefined,
-        fontFamily: "ui-monospace, SFMono-Regular, monospace",
-      }}
-    >
-      {cell && (
-        <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
-          <span style={{ color: "#5a6172" }}>{cell.label}</span>
-          <span style={{ color: input ? "#cbd3e0" : "#e6e8eb" }}>
-            {fmtCell(values[cell.uid], facets.get(compUid)?.get(cell.uid))}
-          </span>
-        </span>
-      )}
-    </td>
-  );
+  const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean) => {
+    const editable = cell != null && cell.category === CATEGORY_INPUT;
+    const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
+    const isEditing = cell != null && editing?.comp === c.uid && editing.uid === cell.uid;
+    return (
+      <td
+        key={`${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`}
+        onContextMenu={(e) => {
+          if (overridden && cell) {
+            e.preventDefault();
+            e.stopPropagation();
+            onClearOverride(c.uid, cell.name);
+          }
+        }}
+        style={{
+          padding: "4px 8px",
+          whiteSpace: "nowrap",
+          borderLeft: groupStart ? "1px solid #2c313c" : undefined,
+          fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        }}
+      >
+        {cell &&
+          (isEditing ? (
+            <Editor
+              initial={values[cell.uid]}
+              dataType={propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER}
+              facet={facets.get(c.uid)?.get(cell.uid)}
+              onCommit={(v) => {
+                onSetOverride(c.uid, cell.name, v);
+                setEditing(null);
+              }}
+              onCancel={() => setEditing(null)}
+            />
+          ) : (
+            <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
+              <span style={{ color: "#5a6172" }}>{cell.label}</span>
+              <span
+                onClick={
+                  editable
+                    ? (e) => {
+                        e.stopPropagation();
+                        setEditing({ comp: c.uid, uid: cell.uid });
+                      }
+                    : undefined
+                }
+                title={overridden ? "overridden — right-click to clear" : editable ? "click to set" : undefined}
+                style={{
+                  color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
+                  cursor: editable ? "text" : "default",
+                  borderBottom: editable ? "1px dotted #3b4350" : undefined,
+                }}
+              >
+                {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
+              </span>
+            </span>
+          ))}
+      </td>
+    );
+  };
 
   const renderRow = (c: Component) => {
     const r = cellsFor(c);
@@ -183,8 +239,15 @@ export function ComponentTable({
       <tr
         key={c.uid}
         data-uid={c.uid}
-        onClick={(e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey)}
-        onDoubleClick={() => isFolder && onDrillIn(c.uid)}
+        // Plain click = select; Ctrl/Cmd-click = focus the graph on it;
+        // Shift-click = add to selection; double-click = go inside (works even
+        // for childless components — drills to an empty level).
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey) onCenter(c.uid);
+          else onSelectRow(c.uid, e.shiftKey);
+        }}
+        onDoubleClick={() => onDrillIn(c.uid)}
+        title="double-click to go inside · ctrl-click to focus on canvas"
         style={{
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",
@@ -195,12 +258,11 @@ export function ComponentTable({
           <span style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
             {isFolder && <Layers size={12} color="#9ecbff" />}
             <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>
-            {isFolder && <ChevronRight size={12} color="#5a6172" />}
           </span>
         </td>
-        {Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c.uid, true, i === 0))}
-        {Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c.uid, false, i === 0))}
-        {Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c.uid, false, i === 0))}
+        {Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0))}
+        {Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0))}
+        {Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0))}
       </tr>
     );
   };
@@ -228,6 +290,24 @@ export function ComponentTable({
           flexShrink: 0,
         }}
       >
+        <button
+          onClick={onUp}
+          disabled={!canGoUp}
+          title="Up to parent folder"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            background: "transparent",
+            border: "1px solid #2c313c",
+            borderRadius: 3,
+            color: canGoUp ? "#cbd3e0" : "#3b4350",
+            cursor: canGoUp ? "pointer" : "default",
+            padding: "3px 6px",
+            flexShrink: 0,
+          }}
+        >
+          <FolderUp size={14} />
+        </button>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -315,6 +395,102 @@ export function ComponentTable({
         )}
       </div>
     </div>
+  );
+}
+
+// Inline value editor — a dropdown for aliased / boolean props, else a text
+// input. Enter or blur commits, Esc cancels.
+function Editor({
+  initial,
+  dataType,
+  facet,
+  onCommit,
+  onCancel,
+}: {
+  initial: DecodedValue | undefined;
+  dataType: number;
+  facet: PropFacet | undefined;
+  onCommit: (v: FlexValue) => void;
+  onCancel: () => void;
+}) {
+  const aliases = facet?.aliases;
+  const codeOf = (v: DecodedValue | undefined) =>
+    v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
+  const initStr =
+    aliases?.length || dataType === DATATYPE_BOOL
+      ? String(codeOf(initial))
+      : initial == null
+        ? ""
+        : String(initial);
+  const [text, setText] = useState(initStr);
+  const ref = useRef<HTMLInputElement | HTMLSelectElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    if (ref.current instanceof HTMLInputElement) ref.current.select();
+  }, []);
+
+  const coerce = (raw: string): FlexValue => {
+    if (aliases?.length) {
+      const code = Number(raw);
+      return dataType === DATATYPE_BOOL ? code === 1 : code;
+    }
+    if (dataType === DATATYPE_BOOL) return raw === "1" || raw === "true";
+    if (dataType === DATATYPE_NUMBER) return Number(raw);
+    return raw;
+  };
+
+  const fieldStyle = {
+    background: "#0f1115",
+    color: "#e6e8eb",
+    border: "1px solid #3b5388",
+    borderRadius: 2,
+    padding: "1px 4px",
+    fontSize: 12,
+    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+    outline: "none",
+    width: 70,
+  } as const;
+
+  const onKey = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === "Enter") onCommit(coerce(text));
+    else if (e.key === "Escape") onCancel();
+  };
+
+  if (aliases?.length || dataType === DATATYPE_BOOL) {
+    const opts = aliases?.length
+      ? aliases.map((a) => ({ v: String(a.code), label: a.label }))
+      : [
+          { v: "0", label: "false" },
+          { v: "1", label: "true" },
+        ];
+    return (
+      <select
+        ref={ref as React.RefObject<HTMLSelectElement>}
+        value={text}
+        onChange={(e) => onCommit(coerce(e.target.value))}
+        onKeyDown={onKey}
+        onBlur={onCancel}
+        style={{ ...fieldStyle, width: "auto" }}
+      >
+        {opts.map((o) => (
+          <option key={o.v} value={o.v}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  return (
+    <input
+      ref={ref as React.RefObject<HTMLInputElement>}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={onKey}
+      onBlur={() => onCommit(coerce(text))}
+      inputMode={dataType === DATATYPE_NUMBER ? "decimal" : "text"}
+      style={fieldStyle}
+    />
   );
 }
 

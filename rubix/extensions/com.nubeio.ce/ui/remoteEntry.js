@@ -12320,6 +12320,26 @@ const EyeOff = createLucideIcon("EyeOff", [
  */
 
 
+const FolderUp = createLucideIcon("FolderUp", [
+  [
+    "path",
+    {
+      d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+      key: "1kt360"
+    }
+  ],
+  ["path", { d: "M12 10v6", key: "1bos4e" }],
+  ["path", { d: "m9 13 3-3 3 3", key: "1pxg3c" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Layers = createLucideIcon("Layers", [
   [
     "path",
@@ -12833,11 +12853,17 @@ function ComponentTable({
   selectedUids,
   onSelectRow,
   onDrillIn,
-  onRowsChange
+  onCenter,
+  onRowsChange,
+  onSetOverride,
+  onClearOverride,
+  canGoUp,
+  onUp
 }) {
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState(1);
+  const [editing, setEditing] = useState(null);
   const scrollRef = useRef(null);
   const components = useStructural((s) => s.components);
   const allRows = useMemo(
@@ -12860,7 +12886,7 @@ function ComponentTable({
       const f = facet?.get(p.uid);
       if (!showHidden && f?.hidden) continue;
       const b = buckets[p.category];
-      if (b) b.push({ uid: p.uid, label: f?.label || name, name, order: f?.order ?? 1e9 });
+      if (b) b.push({ uid: p.uid, name, label: f?.label || name, category: p.category, order: f?.order ?? 1e9 });
     }
     const sortB = (arr) => arr.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
     return {
@@ -12902,6 +12928,13 @@ function ComponentTable({
       return out;
     })
   );
+  const flags = useStatusFlags(
+    useShallow((s) => {
+      const out = {};
+      for (const uid of watchUids) out[uid] = s.flags.get(uid) ?? 0;
+      return out;
+    })
+  );
   useEffect(() => {
     onRowsChange(allRows.map((c) => c.uid));
     return () => onRowsChange([]);
@@ -12914,22 +12947,61 @@ function ComponentTable({
   const sel = new Set(selectedUids);
   const orphans = q ? allRows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   const totalCols = 1 + maxIn + maxOut + maxCfg;
-  const valueCell = (cell, compUid, input, groupStart) => /* @__PURE__ */ jsx(
-    "td",
-    {
-      style: {
-        padding: "4px 8px",
-        whiteSpace: "nowrap",
-        borderLeft: groupStart ? "1px solid #2c313c" : void 0,
-        fontFamily: "ui-monospace, SFMono-Regular, monospace"
+  const valueCell = (cell, c, groupStart) => {
+    const editable = cell != null && cell.category === CATEGORY_INPUT;
+    const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
+    const isEditing = cell != null && editing?.comp === c.uid && editing.uid === cell.uid;
+    return /* @__PURE__ */ jsx(
+      "td",
+      {
+        onContextMenu: (e) => {
+          if (overridden && cell) {
+            e.preventDefault();
+            e.stopPropagation();
+            onClearOverride(c.uid, cell.name);
+          }
+        },
+        style: {
+          padding: "4px 8px",
+          whiteSpace: "nowrap",
+          borderLeft: groupStart ? "1px solid #2c313c" : void 0,
+          fontFamily: "ui-monospace, SFMono-Regular, monospace"
+        },
+        children: cell && (isEditing ? /* @__PURE__ */ jsx(
+          Editor,
+          {
+            initial: values[cell.uid],
+            dataType: propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER,
+            facet: facets.get(c.uid)?.get(cell.uid),
+            onCommit: (v) => {
+              onSetOverride(c.uid, cell.name, v);
+              setEditing(null);
+            },
+            onCancel: () => setEditing(null)
+          }
+        ) : /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
+          /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: cell.label }),
+          /* @__PURE__ */ jsx(
+            "span",
+            {
+              onClick: editable ? (e) => {
+                e.stopPropagation();
+                setEditing({ comp: c.uid, uid: cell.uid });
+              } : void 0,
+              title: overridden ? "overridden — right-click to clear" : editable ? "click to set" : void 0,
+              style: {
+                color: overridden ? "#ffd166" : cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
+                cursor: editable ? "text" : "default",
+                borderBottom: editable ? "1px dotted #3b4350" : void 0
+              },
+              children: fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))
+            }
+          )
+        ] }))
       },
-      children: cell && /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
-        /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: cell.label }),
-        /* @__PURE__ */ jsx("span", { style: { color: input ? "#cbd3e0" : "#e6e8eb" }, children: fmtCell(values[cell.uid], facets.get(compUid)?.get(cell.uid)) })
-      ] })
-    },
-    `${compUid}:${cell?.uid ?? "_"}:${input}`
-  );
+      `${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`
+    );
+  };
   const renderRow = (c) => {
     const r = cellsFor(c);
     const isFolder = (c.childrenCount ?? 0) > 0;
@@ -12937,8 +13009,12 @@ function ComponentTable({
       "tr",
       {
         "data-uid": c.uid,
-        onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
-        onDoubleClick: () => isFolder && onDrillIn(c.uid),
+        onClick: (e) => {
+          if (e.metaKey || e.ctrlKey) onCenter(c.uid);
+          else onSelectRow(c.uid, e.shiftKey);
+        },
+        onDoubleClick: () => onDrillIn(c.uid),
+        title: "double-click to go inside · ctrl-click to focus on canvas",
         style: {
           cursor: "pointer",
           background: sel.has(c.uid) ? "#2c3a55" : "transparent",
@@ -12947,12 +13023,11 @@ function ComponentTable({
         children: [
           /* @__PURE__ */ jsx("td", { style: { padding: "4px 10px", fontFamily: "ui-monospace, SFMono-Regular, monospace" }, children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }, children: [
             isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
-            /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
-            isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172" })
+            /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type })
           ] }) }),
-          Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c.uid, true, i === 0)),
-          Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c.uid, false, i === 0)),
-          Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c.uid, false, i === 0))
+          Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0)),
+          Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0)),
+          Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0))
         ]
       },
       c.uid
@@ -12984,6 +13059,26 @@ function ComponentTable({
               flexShrink: 0
             },
             children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: onUp,
+                  disabled: !canGoUp,
+                  title: "Up to parent folder",
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    background: "transparent",
+                    border: "1px solid #2c313c",
+                    borderRadius: 3,
+                    color: canGoUp ? "#cbd3e0" : "#3b4350",
+                    cursor: canGoUp ? "pointer" : "default",
+                    padding: "3px 6px",
+                    flexShrink: 0
+                  },
+                  children: /* @__PURE__ */ jsx(FolderUp, { size: 14 })
+                }
+              ),
               /* @__PURE__ */ jsx(
                 "input",
                 {
@@ -13072,6 +13167,78 @@ function ComponentTable({
           ] })
         ] }) })
       ]
+    }
+  );
+}
+function Editor({
+  initial,
+  dataType,
+  facet,
+  onCommit,
+  onCancel
+}) {
+  const aliases = facet?.aliases;
+  const codeOf = (v) => v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
+  const initStr = aliases?.length || dataType === DATATYPE_BOOL ? String(codeOf(initial)) : initial == null ? "" : String(initial);
+  const [text, setText] = useState(initStr);
+  const ref = useRef(null);
+  useEffect(() => {
+    ref.current?.focus();
+    if (ref.current instanceof HTMLInputElement) ref.current.select();
+  }, []);
+  const coerce = (raw) => {
+    if (aliases?.length) {
+      const code = Number(raw);
+      return dataType === DATATYPE_BOOL ? code === 1 : code;
+    }
+    if (dataType === DATATYPE_BOOL) return raw === "1" || raw === "true";
+    if (dataType === DATATYPE_NUMBER) return Number(raw);
+    return raw;
+  };
+  const fieldStyle = {
+    background: "#0f1115",
+    color: "#e6e8eb",
+    border: "1px solid #3b5388",
+    borderRadius: 2,
+    padding: "1px 4px",
+    fontSize: 12,
+    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+    outline: "none",
+    width: 70
+  };
+  const onKey = (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") onCommit(coerce(text));
+    else if (e.key === "Escape") onCancel();
+  };
+  if (aliases?.length || dataType === DATATYPE_BOOL) {
+    const opts = aliases?.length ? aliases.map((a) => ({ v: String(a.code), label: a.label })) : [
+      { v: "0", label: "false" },
+      { v: "1", label: "true" }
+    ];
+    return /* @__PURE__ */ jsx(
+      "select",
+      {
+        ref,
+        value: text,
+        onChange: (e) => onCommit(coerce(e.target.value)),
+        onKeyDown: onKey,
+        onBlur: onCancel,
+        style: { ...fieldStyle, width: "auto" },
+        children: opts.map((o) => /* @__PURE__ */ jsx("option", { value: o.v, children: o.label }, o.v))
+      }
+    );
+  }
+  return /* @__PURE__ */ jsx(
+    "input",
+    {
+      ref,
+      value: text,
+      onChange: (e) => setText(e.target.value),
+      onKeyDown: onKey,
+      onBlur: () => onCommit(coerce(text)),
+      inputMode: dataType === DATATYPE_NUMBER ? "decimal" : "text",
+      style: fieldStyle
     }
   );
 }
@@ -19355,6 +19522,43 @@ function Inner({ base }) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   }, []);
+  const centerOnComponent = useCallback(
+    (uid) => {
+      const node = rf.getNode(String(uid));
+      if (!node) {
+        void goToComponent(uid);
+        return;
+      }
+      const w = node.width ?? NODE_W;
+      const h = node.height ?? 80;
+      rf.setCenter(node.position.x + w / 2, node.position.y + h / 2, {
+        zoom: rf.getViewport().zoom,
+        duration: 350
+      });
+      setNodes((ns) => ns.map((n) => n.selected === (n.id === String(uid)) ? n : { ...n, selected: n.id === String(uid) }));
+    },
+    [rf, goToComponent]
+  );
+  const onTableSetOverride = useCallback(
+    async (componentUid, property, value) => {
+      try {
+        await patchOverrides(componentUid, { setOverrides: [{ property, value, duration: 0 }] });
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    []
+  );
+  const onTableClearOverride = useCallback(
+    async (componentUid, property) => {
+      try {
+        await patchOverrides(componentUid, { clearOverrides: [property] });
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    []
+  );
   const tableSelected = nodes.filter((n) => n.selected).map((n) => Number(n.id));
   return /* @__PURE__ */ jsxs(CeWiresheetContext.Provider, { value: ceCtx, children: [
     /* @__PURE__ */ jsx("style", { children: EDGE_SELECTED_CSS }),
@@ -19726,7 +19930,12 @@ function Inner({ base }) {
                   selectedUids: tableSelected,
                   onSelectRow: onTableSelect,
                   onDrillIn: enter,
-                  onRowsChange: onTableRows
+                  onCenter: centerOnComponent,
+                  onRowsChange: onTableRows,
+                  onSetOverride: onTableSetOverride,
+                  onClearOverride: onTableClearOverride,
+                  canGoUp: crumbs.length > 1,
+                  onUp: () => goToCrumb(crumbs.length - 2)
                 }
               ) })
             ]
@@ -21631,7 +21840,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:37:46.202Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T11:45:26.675Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

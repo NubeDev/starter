@@ -61,6 +61,7 @@ import {
   restoreItems,
   getNodeByUid,
   getRootNodes,
+  patchOverrides,
   removeEdge as restRemoveEdge,
   removeNode as restRemoveNode,
   setEngineBase,
@@ -2505,6 +2506,47 @@ function Inner({ base }: { base: string }) {
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   }, []);
+  // Ctrl-click a table row → pan the canvas to that component and select it.
+  // The table only lists the current folder, so the node is in view; fall back to
+  // a full navigation if it somehow isn't.
+  const centerOnComponent = useCallback(
+    (uid: number) => {
+      const node = rf.getNode(String(uid));
+      if (!node) {
+        void goToComponent(uid);
+        return;
+      }
+      const w = node.width ?? NODE_W;
+      const h = node.height ?? 80;
+      rf.setCenter(node.position.x + w / 2, node.position.y + h / 2, {
+        zoom: rf.getViewport().zoom,
+        duration: 350,
+      });
+      setNodes((ns) => ns.map((n) => (n.selected === (n.id === String(uid)) ? n : { ...n, selected: n.id === String(uid) })));
+    },
+    [rf, goToComponent],
+  );
+  // Table inline-edit → override (set / clear) on the live engine.
+  const onTableSetOverride = useCallback(
+    async (componentUid: number, property: string, value: FlexValue) => {
+      try {
+        await patchOverrides(componentUid, { setOverrides: [{ property, value, duration: 0 }] });
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [],
+  );
+  const onTableClearOverride = useCallback(
+    async (componentUid: number, property: string) => {
+      try {
+        await patchOverrides(componentUid, { clearOverrides: [property] });
+      } catch (e) {
+        reportError(e);
+      }
+    },
+    [],
+  );
   // Selected component uids (from RF node state) for row highlighting.
   const tableSelected = nodes.filter((n) => n.selected).map((n) => Number(n.id));
 
@@ -2901,7 +2943,12 @@ function Inner({ base }: { base: string }) {
               selectedUids={tableSelected}
               onSelectRow={onTableSelect}
               onDrillIn={enter}
+              onCenter={centerOnComponent}
               onRowsChange={onTableRows}
+              onSetOverride={onTableSetOverride}
+              onClearOverride={onTableClearOverride}
+              canGoUp={crumbs.length > 1}
+              onUp={() => goToCrumb(crumbs.length - 2)}
             />
           </div>
         </div>
