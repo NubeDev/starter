@@ -139,6 +139,32 @@ value only appears on the next tick, which is slow at low rates / zoomed out.)
 
 ---
 
+## 5. Component UI definition (custom UX)  — new, for declarative component panels
+
+**Why.** Some component types need a richer UI than the default prop rows (e.g. a
+scheduler's week grid). The wiresheet renders these from a prebuilt SDUI widget
+library, driven by a layout the extension author ships — **no JavaScript from the
+extension**. The layout (an SDUI IR document) is stored as a separate file per
+component type, and the frontend fetches it lazily when a panel is opened. See
+`COMPONENT_UX_DESIGN.md`.
+
+Add a read endpoint that returns the IR for a type (404 when the type has none):
+
+```jsonc
+GET /api/v0/ui/{type}        // type = "NubeIO-control::scheduler"
+→ { "data": <SDUI IR document> }     // 200
+→ 404                                 // type has no custom UI
+```
+
+- **Static per type**, like `/schema`. Co-locating with `/schema` (same CE) is the
+  natural home; the IR files live alongside the extension.
+- The panel's data binds to the component's existing **prop values** (already on
+  the WS stream) and its **actions** (already callable via
+  `POST /call/nodes/uid/{uid}`), so no other API is needed — only the IR fetch.
+- Optional later: include a `uiTypes: string[]` (or a per-component-type flag) in
+  the `/schema` response so the UI knows which types have a panel **without** a
+  probe request.
+
 ## Notes
 - Values are scalar (`string | number | boolean | null`) and the binary typeTags
   are all scalar — none of the above needs a new value type.
