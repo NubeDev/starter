@@ -101,6 +101,7 @@ import {
   rawFacet,
   serializeFacet,
   FACET_PROP,
+  MAX_DECIMALS,
   type ComponentFacet,
   type PropFacet,
 } from "./lib/facet";
@@ -3298,7 +3299,9 @@ function ConfigurePanel({
     if (d.unit.trim()) f.unit = d.unit.trim();
     else delete f.unit;
     const dec = Number(d.decimals);
-    if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
+    if (d.decimals.trim() !== "" && Number.isFinite(dec)) {
+      f.decimals = Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(dec)));
+    }
     else delete f.decimals;
     if (d.hidden) f.hidden = true;
     else delete f.hidden;

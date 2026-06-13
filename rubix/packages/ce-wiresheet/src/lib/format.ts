@@ -10,7 +10,7 @@ import {
   type PropertyDataType,
 } from "./engine-types";
 import type { DecodedValue } from "./wire";
-import { aliasLabel, type PropFacet } from "./facet";
+import { aliasLabel, MAX_DECIMALS, type PropFacet } from "./facet";
 
 // CONFIG / NULL props carry no schema dataType — infer from the runtime value.
 export function inferDataType(v: unknown): PropertyDataType {
@@ -39,7 +39,7 @@ export function fmtValueFacet(
   if (al != null) return al;
   let base: string;
   if (facet?.decimals != null && Number.isFinite(facet.decimals) && typeof v === "number") {
-    base = v.toFixed(Math.min(100, Math.max(0, Math.trunc(facet.decimals))));
+    base = v.toFixed(Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(facet.decimals))));
   } else {
     base = fmtValue(v, dt);
   }

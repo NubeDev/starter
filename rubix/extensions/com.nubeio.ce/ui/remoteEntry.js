@@ -12722,6 +12722,7 @@ const US = "";
 const GS = "";
 const FS = "";
 const FACET_PROP = "__facets";
+const MAX_DECIMALS = 10;
 function parseFacet(raw) {
   const out = /* @__PURE__ */ new Map();
   if (!raw) return out;
@@ -12744,7 +12745,7 @@ function parseFacet(raw) {
           break;
         case "d": {
           const d = Number(v);
-          if (Number.isFinite(d)) f.decimals = Math.min(100, Math.max(0, Math.trunc(d)));
+          if (Number.isFinite(d)) f.decimals = Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(d)));
           break;
         }
         case "n":
@@ -12876,7 +12877,7 @@ function fmtValueFacet(v, dt, facet) {
   if (al != null) return al;
   let base;
   if (facet?.decimals != null && Number.isFinite(facet.decimals) && typeof v === "number") {
-    base = v.toFixed(Math.min(100, Math.max(0, Math.trunc(facet.decimals))));
+    base = v.toFixed(Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(facet.decimals))));
   } else {
     base = fmtValue(v, dt);
   }
@@ -20409,8 +20410,9 @@ function ConfigurePanel({
     if (d.unit.trim()) f.unit = d.unit.trim();
     else delete f.unit;
     const dec = Number(d.decimals);
-    if (d.decimals.trim() !== "" && Number.isFinite(dec)) f.decimals = dec;
-    else delete f.decimals;
+    if (d.decimals.trim() !== "" && Number.isFinite(dec)) {
+      f.decimals = Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(dec)));
+    } else delete f.decimals;
     if (d.hidden) f.hidden = true;
     else delete f.hidden;
     const aliases = parseAliasInput(d.aliases);
@@ -22079,7 +22081,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:32:21.558Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:38:35.681Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

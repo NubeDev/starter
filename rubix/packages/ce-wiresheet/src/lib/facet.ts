@@ -15,6 +15,10 @@ const FS = "\x1c"; // between an alias's code and its label
 // The property name that carries the facet string on every component.
 export const FACET_PROP = "__facets";
 
+// Display decimals are clamped to this — more is meaningless for a UI (and beyond
+// 100 toFixed throws). Keeps a fat-fingered "123" from rendering a 100-digit value.
+export const MAX_DECIMALS = 10;
+
 export interface Alias {
   code: number; // the property's native value (int; bool → 0/1)
   label: string;
@@ -58,10 +62,10 @@ export function parseFacet(raw: string): ComponentFacet {
         case "l": f.label = v; break;
         case "u": f.unit = v; break;
         case "d": {
-          // Clamp to toFixed's valid range so a bad stored value can't crash
-          // the formatters.
+          // Clamp to a sane range so a bad stored value can't crash the
+          // formatters (toFixed > 100 throws) or render absurd precision.
           const d = Number(v);
-          if (Number.isFinite(d)) f.decimals = Math.min(100, Math.max(0, Math.trunc(d)));
+          if (Number.isFinite(d)) f.decimals = Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(d)));
           break;
         }
         case "n": f.min = Number(v); break;
