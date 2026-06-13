@@ -13,7 +13,8 @@ import {
 } from "../lib/engine-types";
 import type { Component, FlexValue } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
-import { facetFor, rawFacet, aliasLabel, type PropFacet, type ComponentFacet } from "../lib/facet";
+import { facetFor, rawFacet, type PropFacet, type ComponentFacet } from "../lib/facet";
+import { fmtValueFacet, inferDataType } from "../lib/format";
 import { Layers, ArrowUp, ArrowDown, FolderUp, Link2 } from "lucide-react";
 
 // Table view of the CURRENT folder's components. Each component is a row; its
@@ -22,15 +23,10 @@ import { Layers, ArrowUp, ArrowDown, FolderUp, Link2 } from "lucide-react";
 // Input cells are editable (commit sets an override); outputs are read-only.
 // Double-click a row centers the wiresheet on that component.
 
-const fmtCell = (v: DecodedValue | undefined, facet: PropFacet | undefined): string => {
-  if (v === undefined || v === null) return "—";
-  const al = aliasLabel(facet?.aliases, v);
-  if (al) return al;
-  let s: string;
-  if (typeof v === "number" && facet?.decimals != null) s = v.toFixed(facet.decimals);
-  else s = String(v);
-  return facet?.unit ? `${s} ${facet.unit}` : s;
-};
+// Same formatting as the wiresheet (shared lib/format). dataType is inferred
+// when the prop isn't in the schema's streamable table.
+const fmtCell = (v: DecodedValue | undefined, uid: number, facet: PropFacet | undefined): string =>
+  fmtValueFacet(v, propertyDataType.get(uid) ?? inferDataType(v), facet);
 
 interface Cell {
   uid: number;
@@ -267,7 +263,7 @@ export function ComponentTable({
                   borderBottom: editableDefault ? "1px dotted #3b4350" : undefined,
                 }}
               >
-                {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
+                {fmtCell(values[cell.uid], cell.uid, facets.get(c.uid)?.get(cell.uid))}
               </span>
             )}
             {overridden && <OvrBadge />}

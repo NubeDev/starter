@@ -30,14 +30,8 @@ import {
   type PropertySystemRole,
 } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
-import {
-  facetFor,
-  rawFacet,
-  aliasLabel,
-  exposedPorts,
-  FACET_PROP,
-  type PropFacet,
-} from "../lib/facet";
+import { facetFor, rawFacet, exposedPorts, FACET_PROP, type PropFacet } from "../lib/facet";
+import { fmtValueFacet, inferDataType } from "../lib/format";
 import {
   buildConnectGroups,
   filterConnectGroups,
@@ -192,40 +186,6 @@ function colorForType(dt: PropertyDataType): string {
 }
 
 // Fallback for properties not in the WS schema table (CONFIG-category and
-// NULL-typed are excluded from the value plane, so the schema doesn't carry a
-// dataType for them). Infer from the REST value's runtime type.
-function inferDataType(v: unknown): PropertyDataType {
-  if (typeof v === "boolean") return DATATYPE_BOOL;
-  if (typeof v === "string") return DATATYPE_STRING;
-  return DATATYPE_NUMBER;
-}
-
-function fmtValue(v: DecodedValue | undefined, dt: PropertyDataType): string {
-  if (v === undefined) return "—";
-  if (typeof v === "bigint") return v.toString();
-  if (typeof v === "boolean") return v ? "true" : "false";
-  if (typeof v === "string") return JSON.stringify(v).slice(1, -1);
-  // number
-  if (dt === DATATYPE_BOOL) return v ? "true" : "false";
-  if (Number.isInteger(v)) return v.toString();
-  return v.toFixed(2);
-}
-
-// fmtValue + facet: alias label wins; otherwise apply the facet's decimals and
-// unit suffix on top of the base formatting.
-function fmtValueFacet(
-  v: DecodedValue | undefined,
-  dt: PropertyDataType,
-  facet: PropFacet | undefined,
-): string {
-  const al = aliasLabel(facet?.aliases, v);
-  if (al != null) return al;
-  let base: string;
-  if (facet?.decimals != null && typeof v === "number") base = v.toFixed(facet.decimals);
-  else base = fmtValue(v, dt);
-  return facet?.unit && base !== "—" ? `${base} ${facet.unit}` : base;
-}
-
 function rowYCenter(rowIndex: number): number {
   return TITLE_H + rowIndex * ROW_H + ROW_H / 2;
 }

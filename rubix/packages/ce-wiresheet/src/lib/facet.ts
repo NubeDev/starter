@@ -57,7 +57,13 @@ export function parseFacet(raw: string): ComponentFacet {
       switch (fld[0]) {
         case "l": f.label = v; break;
         case "u": f.unit = v; break;
-        case "d": f.decimals = Number(v); break;
+        case "d": {
+          // Clamp to toFixed's valid range so a bad stored value can't crash
+          // the formatters.
+          const d = Number(v);
+          if (Number.isFinite(d)) f.decimals = Math.min(100, Math.max(0, Math.trunc(d)));
+          break;
+        }
         case "n": f.min = Number(v); break;
         case "x": f.max = Number(v); break;
         case "h": f.hidden = v !== "0"; break;

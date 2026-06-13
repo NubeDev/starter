@@ -12742,9 +12742,11 @@ function parseFacet(raw) {
         case "u":
           f.unit = v;
           break;
-        case "d":
-          f.decimals = Number(v);
+        case "d": {
+          const d = Number(v);
+          if (Number.isFinite(d)) f.decimals = Math.min(100, Math.max(0, Math.trunc(d)));
           break;
+        }
         case "n":
           f.min = Number(v);
           break;
@@ -12855,15 +12857,33 @@ function aliasLabel(aliases, value) {
   return aliases.find((a) => a.code === code)?.label;
 }
 
-const fmtCell = (v, facet) => {
-  if (v === void 0 || v === null) return "—";
+function inferDataType(v) {
+  if (typeof v === "boolean") return DATATYPE_BOOL;
+  if (typeof v === "string") return DATATYPE_STRING;
+  return DATATYPE_NUMBER;
+}
+function fmtValue(v, dt) {
+  if (v === void 0) return "—";
+  if (typeof v === "bigint") return v.toString();
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "string") return JSON.stringify(v).slice(1, -1);
+  if (dt === DATATYPE_BOOL) return v ? "true" : "false";
+  if (Number.isInteger(v)) return v.toString();
+  return v.toFixed(2);
+}
+function fmtValueFacet(v, dt, facet) {
   const al = aliasLabel(facet?.aliases, v);
-  if (al) return al;
-  let s;
-  if (typeof v === "number" && facet?.decimals != null) s = v.toFixed(facet.decimals);
-  else s = String(v);
-  return facet?.unit ? `${s} ${facet.unit}` : s;
-};
+  if (al != null) return al;
+  let base;
+  if (facet?.decimals != null && Number.isFinite(facet.decimals) && typeof v === "number") {
+    base = v.toFixed(Math.min(100, Math.max(0, Math.trunc(facet.decimals))));
+  } else {
+    base = fmtValue(v, dt);
+  }
+  return facet?.unit && base !== "—" ? `${base} ${facet.unit}` : base;
+}
+
+const fmtCell = (v, uid, facet) => fmtValueFacet(v, propertyDataType.get(uid) ?? inferDataType(v), facet);
 function ComponentTable({
   currentParentUid,
   selectedUids,
@@ -13037,7 +13057,7 @@ function ComponentTable({
                 cursor: editableDefault ? "pointer" : "default",
                 borderBottom: editableDefault ? "1px dotted #3b4350" : void 0
               },
-              children: fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))
+              children: fmtCell(values[cell.uid], cell.uid, facets.get(c.uid)?.get(cell.uid))
             }
           ),
           overridden && /* @__PURE__ */ jsx(OvrBadge, {})
@@ -15413,28 +15433,6 @@ function colorForType(dt) {
   if (dt === DATATYPE_BOOL) return COLOR_BOOL;
   if (dt === DATATYPE_STRING) return COLOR_STRING;
   return COLOR_NUMBER;
-}
-function inferDataType(v) {
-  if (typeof v === "boolean") return DATATYPE_BOOL;
-  if (typeof v === "string") return DATATYPE_STRING;
-  return DATATYPE_NUMBER;
-}
-function fmtValue(v, dt) {
-  if (v === void 0) return "—";
-  if (typeof v === "bigint") return v.toString();
-  if (typeof v === "boolean") return v ? "true" : "false";
-  if (typeof v === "string") return JSON.stringify(v).slice(1, -1);
-  if (dt === DATATYPE_BOOL) return v ? "true" : "false";
-  if (Number.isInteger(v)) return v.toString();
-  return v.toFixed(2);
-}
-function fmtValueFacet(v, dt, facet) {
-  const al = aliasLabel(facet?.aliases, v);
-  if (al != null) return al;
-  let base;
-  if (facet?.decimals != null && typeof v === "number") base = v.toFixed(facet.decimals);
-  else base = fmtValue(v, dt);
-  return facet?.unit && base !== "—" ? `${base} ${facet.unit}` : base;
 }
 function CopyUid({ label, value }) {
   const [copied, setCopied] = useState(false);
@@ -22081,7 +22079,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:27:09.586Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:32:21.558Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
