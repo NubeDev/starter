@@ -91,6 +91,28 @@ The IR served for the scheduler type:
 3. **`schedule` widget** end-to-end against a real scheduler component.
 4. Polish: Puck authoring, more domain widgets as needed.
 
+## Feasibility (spiked — confirmed)
+
+The renderer mounts `<SduiPage>` under `<SduiProvider>` with an injected
+`SduiTransport`. Its four methods map directly onto our needs — the live-data and
+action wiring is exactly the seam the renderer was built around, not a workaround:
+
+| `SduiTransport` method | wiresheet implementation |
+|---|---|
+| `resolve(req)`     | fetch the type's IR (`GET /ui/{type}`, or a local stub) |
+| `subscribe(subjects, onUpdate)` | bridge to the WS value store — subjects = the component's props; fire `onUpdate` on each value tick (live data for free) |
+| `action(req)`      | → `callAction(componentUid, name, params)` |
+| `table(req)`       | from the component's props (or unused initially) |
+
+Staged form edits use the package's `usePageState` / `usePageStateKey` (so
+`$field` refs and Save-on-action come built in). The `schedule` widget is a new
+entry in the renderer `registry`.
+
+**Caveat — bundle weight.** `@nube/starter-ui-sdui-react` pulls
+`@nube/starter-ui-kit`, `@tanstack/react-query`, `uplot`, `@nube/starter-ui-ir`.
+**Lazy-load** the renderer (dynamic `import()` on first panel open) so it stays
+out of the main wiresheet bundle.
+
 ## Open / to confirm
 
 - Who serves `/ui/{type}` — the **CE** (co-located with `/schema`, natural) or the
