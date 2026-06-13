@@ -12970,7 +12970,7 @@ function ComponentTable({
     onSelect([uid]);
     setAnchor(uid);
   };
-  const valueCell = (cell, c, groupStart) => {
+  const valueCell = (cell, c, groupStart, slot) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
     return /* @__PURE__ */ jsx(
       "td",
@@ -13009,7 +13009,7 @@ function ComponentTable({
           overridden && /* @__PURE__ */ jsx(OvrBadge, {})
         ] })
       },
-      `${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`
+      slot
     );
   };
   const renderRow = (c) => {
@@ -13032,9 +13032,9 @@ function ComponentTable({
             isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
             /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type })
           ] }) }),
-          Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0)),
-          Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0)),
-          Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0))
+          Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0, `i${i}`)),
+          Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0, `o${i}`)),
+          Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0, `g${i}`))
         ]
       },
       c.uid
@@ -22009,7 +22009,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:00:33.175Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:01:48.987Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

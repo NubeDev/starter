@@ -200,11 +200,11 @@ export function ComponentTable({
     setAnchor(uid);
   };
 
-  const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean) => {
+  const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean, slot: string) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
     return (
       <td
-        key={`${c.uid}:${cell?.uid ?? "_"}:${cell?.category ?? 0}`}
+        key={slot}
         onContextMenu={(e) => {
           if (overridden && cell) {
             e.preventDefault();
@@ -267,9 +267,9 @@ export function ComponentTable({
             <span style={{ color: "#e6e8eb" }}>{c.name || c.type}</span>
           </span>
         </td>
-        {Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0))}
-        {Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0))}
-        {Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0))}
+        {Array.from({ length: maxIn }, (_, i) => valueCell(r.inputs[i], c, i === 0, `i${i}`))}
+        {Array.from({ length: maxOut }, (_, i) => valueCell(r.outputs[i], c, i === 0, `o${i}`))}
+        {Array.from({ length: maxCfg }, (_, i) => valueCell(r.config[i], c, i === 0, `g${i}`))}
       </tr>
     );
   };
