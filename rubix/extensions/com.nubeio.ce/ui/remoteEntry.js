@@ -12218,6 +12218,32 @@ const createLucideIcon = (iconName, iconNode) => {
  */
 
 
+const ArrowDown = createLucideIcon("ArrowDown", [
+  ["path", { d: "M12 5v14", key: "s699le" }],
+  ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ArrowUp = createLucideIcon("ArrowUp", [
+  ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
+  ["path", { d: "M12 19V5", key: "x0mq9r" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const ChevronDown = createLucideIcon("ChevronDown", [
   ["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]
 ]);
@@ -12803,6 +12829,7 @@ const fmtCell = (v, facet) => {
   return facet?.unit ? `${s} ${facet.unit}` : s;
 };
 const catRank = (c) => c === CATEGORY_INPUT ? 0 : c === CATEGORY_OUTPUT ? 1 : 2;
+const shortType = (t) => t.split("::").pop() || t;
 function ComponentTable({
   currentParentUid,
   selectedUids,
@@ -12811,9 +12838,13 @@ function ComponentTable({
   onRowsChange
 }) {
   const [showHidden, setShowHidden] = useState(false);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState({ col: "name", dir: 1 });
+  const [collapsed, setCollapsed] = useState(/* @__PURE__ */ new Set());
+  const scrollRef = useRef(null);
   const components = useStructural((s) => s.components);
   const rows = useMemo(
-    () => Array.from(components.values()).filter((c) => c.parent === currentParentUid).sort((a, b) => (a.name || a.type).localeCompare(b.name || b.type)),
+    () => Array.from(components.values()).filter((c) => c.parent === currentParentUid),
     [components, currentParentUid]
   );
   const facets = useMemo(
@@ -12825,24 +12856,30 @@ function ComponentTable({
     if (showHidden) return true;
     return !facets.get(c.uid)?.get(p.uid)?.hidden;
   });
-  const columns = useMemo(() => {
-    const byName = /* @__PURE__ */ new Map();
+  const q = query.trim().toLowerCase();
+  const matches = (c) => !q || (c.name || c.type).toLowerCase().includes(q) || c.type.toLowerCase().includes(q);
+  const groups = useMemo(() => {
+    const byType = /* @__PURE__ */ new Map();
     for (const c of rows) {
-      for (const [name, p] of visibleProps(c)) {
-        if (!byName.has(name)) byName.set(name, p.category);
-      }
+      if (!matches(c)) continue;
+      const arr = byType.get(c.type);
+      if (arr) arr.push(c);
+      else byType.set(c.type, [c]);
     }
-    return [...byName.entries()].map(([name, category]) => ({ name, category })).sort((a, b) => catRank(a.category) - catRank(b.category) || a.name.localeCompare(b.name));
-  }, [rows, showHidden, facets]);
+    const out = [];
+    for (const [type, members] of byType) {
+      const colMap = /* @__PURE__ */ new Map();
+      for (const c of members) for (const [name, p] of visibleProps(c)) if (!colMap.has(name)) colMap.set(name, p.category);
+      const columns = [...colMap.entries()].map(([name, category]) => ({ name, category })).sort((a, b) => catRank(a.category) - catRank(b.category) || a.name.localeCompare(b.name));
+      out.push({ type, members, columns });
+    }
+    return out.sort((a, b) => shortType(a.type).localeCompare(shortType(b.type)));
+  }, [rows, q, showHidden, facets]);
   const watchUids = useMemo(() => {
     const set = /* @__PURE__ */ new Set();
-    for (const c of rows) {
-      for (const p of Object.values(c.properties)) {
-        if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) {
-          set.add(p.uid);
-        }
-      }
-    }
+    for (const c of rows)
+      for (const p of Object.values(c.properties))
+        if ((p.systemRole ?? ROLE_NORMAL) === ROLE_NORMAL || p.systemRole === ROLE_STATUS) set.add(p.uid);
     return [...set];
   }, [rows]);
   const values = useValues(
@@ -12856,7 +12893,32 @@ function ComponentTable({
     onRowsChange(rows.map((c) => c.uid));
     return () => onRowsChange([]);
   }, [rows, onRowsChange]);
+  const firstSel = selectedUids[0];
+  useEffect(() => {
+    if (firstSel == null) return;
+    scrollRef.current?.querySelector(`[data-uid="${firstSel}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [firstSel, groups]);
   const sel = new Set(selectedUids);
+  const sortKey = (c) => {
+    if (sort.col === "name") return (c.name || c.type).toLowerCase();
+    const p = c.properties[sort.col];
+    return p ? values[p.uid] : void 0;
+  };
+  const sortMembers = (members) => {
+    const arr = [...members];
+    arr.sort((a, b) => {
+      const ka = sortKey(a);
+      const kb = sortKey(b);
+      if (ka === void 0 && kb === void 0) return 0;
+      if (ka === void 0) return 1;
+      if (kb === void 0) return -1;
+      const c = typeof ka === "number" && typeof kb === "number" ? ka - kb : String(ka).localeCompare(String(kb));
+      return c * sort.dir;
+    });
+    return arr;
+  };
+  const onSort = (col) => setSort((s) => s.col === col ? { col, dir: s.dir === 1 ? -1 : 1 } : { col, dir: 1 });
+  const orphans = q ? rows.filter((c) => sel.has(c.uid) && !matches(c)) : [];
   return /* @__PURE__ */ jsxs(
     "div",
     {
@@ -12883,85 +12945,205 @@ function ComponentTable({
               flexShrink: 0
             },
             children: [
-              /* @__PURE__ */ jsx("span", { style: { fontWeight: 600 }, children: "Components" }),
-              /* @__PURE__ */ jsx("span", { style: { color: "#5a6172", fontSize: 11 }, children: rows.length }),
-              /* @__PURE__ */ jsxs(
-                "label",
+              /* @__PURE__ */ jsx(
+                "input",
                 {
-                  style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, color: "#8892a0" },
-                  children: [
-                    /* @__PURE__ */ jsx("input", { type: "checkbox", checked: showHidden, onChange: (e) => setShowHidden(e.target.checked) }),
-                    "show hidden"
-                  ]
+                  value: query,
+                  onChange: (e) => setQuery(e.target.value),
+                  placeholder: "search components…",
+                  spellCheck: false,
+                  style: {
+                    flex: 1,
+                    minWidth: 0,
+                    background: "#222731",
+                    color: "#cbd3e0",
+                    border: "1px solid #2c313c",
+                    borderRadius: 3,
+                    padding: "4px 7px",
+                    fontSize: 11,
+                    fontFamily: "ui-monospace, monospace",
+                    outline: "none"
+                  }
                 }
-              )
+              ),
+              /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 4, color: "#8892a0", flexShrink: 0 }, children: [
+                /* @__PURE__ */ jsx("input", { type: "checkbox", checked: showHidden, onChange: (e) => setShowHidden(e.target.checked) }),
+                "hidden"
+              ] })
             ]
           }
         ),
-        /* @__PURE__ */ jsx("div", { style: { overflow: "auto", flex: 1 }, children: rows.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: "no components in this folder" }) : /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: [
-          /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { style: { position: "sticky", top: 0, background: "#1a1d24", zIndex: 1 }, children: [
-            /* @__PURE__ */ jsx(Th, { children: "name" }),
-            /* @__PURE__ */ jsx(Th, { children: "type" }),
-            columns.map((col) => /* @__PURE__ */ jsx(Th, { numeric: true, children: col.name }, col.name))
-          ] }) }),
-          /* @__PURE__ */ jsx("tbody", { children: rows.map((c) => {
-            const facet = facets.get(c.uid);
-            const isFolder = (c.childrenCount ?? 0) > 0;
-            return /* @__PURE__ */ jsxs(
+        /* @__PURE__ */ jsxs("div", { ref: scrollRef, style: { overflow: "auto", flex: 1 }, children: [
+          groups.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: rows.length === 0 ? "no components in this folder" : "no matches" }) : groups.map((g) => {
+            const isCollapsed = collapsed.has(g.type);
+            return /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: () => setCollapsed((cur) => {
+                    const next = new Set(cur);
+                    if (next.has(g.type)) next.delete(g.type);
+                    else next.add(g.type);
+                    return next;
+                  }),
+                  title: g.type,
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    width: "100%",
+                    textAlign: "left",
+                    background: "#1a1d24",
+                    border: "none",
+                    borderBottom: "1px solid #2c313c",
+                    color: "#cbd3e0",
+                    cursor: "pointer",
+                    padding: "5px 10px",
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 1,
+                    fontFamily: "ui-monospace, SFMono-Regular, monospace",
+                    fontSize: 11
+                  },
+                  children: [
+                    isCollapsed ? /* @__PURE__ */ jsx(ChevronRight, { size: 13 }) : /* @__PURE__ */ jsx(ChevronDown, { size: 13 }),
+                    /* @__PURE__ */ jsx("span", { style: { fontWeight: 600 }, children: shortType(g.type) }),
+                    /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: g.members.length })
+                  ]
+                }
+              ),
+              !isCollapsed && /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: [
+                /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { children: [
+                  /* @__PURE__ */ jsx(Th, { sortable: true, active: sort.col === "name", dir: sort.dir, onClick: () => onSort("name"), children: "name" }),
+                  g.columns.map((col) => /* @__PURE__ */ jsx(
+                    Th,
+                    {
+                      numeric: true,
+                      sortable: true,
+                      active: sort.col === col.name,
+                      dir: sort.dir,
+                      onClick: () => onSort(col.name),
+                      children: col.name
+                    },
+                    col.name
+                  ))
+                ] }) }),
+                /* @__PURE__ */ jsx("tbody", { children: sortMembers(g.members).map((c) => {
+                  const facet = facets.get(c.uid);
+                  const isFolder = (c.childrenCount ?? 0) > 0;
+                  return /* @__PURE__ */ jsxs(
+                    "tr",
+                    {
+                      "data-uid": c.uid,
+                      onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
+                      onDoubleClick: () => isFolder && onDrillIn(c.uid),
+                      style: {
+                        cursor: "pointer",
+                        background: sel.has(c.uid) ? "#2c3a55" : "transparent",
+                        borderBottom: "1px solid #232733"
+                      },
+                      children: [
+                        /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4 }, children: [
+                          isFolder && /* @__PURE__ */ jsx(Layers, { size: 12, color: "#9ecbff" }),
+                          /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
+                          isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172" })
+                        ] }) }),
+                        g.columns.map((col) => {
+                          const p = c.properties[col.name];
+                          if (!p) return /* @__PURE__ */ jsx(Td, { numeric: true, muted: true }, col.name);
+                          return /* @__PURE__ */ jsx(Td, { numeric: true, input: p.category === CATEGORY_INPUT, children: fmtCell(values[p.uid], facet?.get(p.uid)) }, col.name);
+                        })
+                      ]
+                    },
+                    c.uid
+                  );
+                }) })
+              ] })
+            ] }, g.type);
+          }),
+          orphans.length > 0 && /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs(
+              "div",
+              {
+                style: {
+                  padding: "5px 10px",
+                  background: "#221a1a",
+                  borderTop: "1px solid #3a2a2a",
+                  borderBottom: "1px solid #3a2a2a",
+                  color: "#c9a86a",
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.4
+                },
+                children: [
+                  "selected · filtered out (",
+                  orphans.length,
+                  ")"
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsx("table", { style: { borderCollapse: "collapse", width: "100%", whiteSpace: "nowrap" }, children: /* @__PURE__ */ jsx("tbody", { children: orphans.map((c) => /* @__PURE__ */ jsxs(
               "tr",
               {
+                "data-uid": c.uid,
                 onClick: (e) => onSelectRow(c.uid, e.shiftKey || e.metaKey || e.ctrlKey),
-                onDoubleClick: () => isFolder && onDrillIn(c.uid),
                 style: {
                   cursor: "pointer",
-                  background: sel.has(c.uid) ? "#2c3a55" : "transparent",
+                  background: "#2c3a55",
                   borderBottom: "1px solid #232733"
                 },
                 children: [
-                  /* @__PURE__ */ jsx(Td, { children: /* @__PURE__ */ jsxs("span", { style: { display: "flex", alignItems: "center", gap: 4 }, children: [
-                    isFolder && /* @__PURE__ */ jsx(
-                      "span",
-                      {
-                        title: "Double-click to enter",
-                        style: { display: "flex", color: "#9ecbff" },
-                        children: /* @__PURE__ */ jsx(Layers, { size: 12 })
-                      }
-                    ),
-                    /* @__PURE__ */ jsx("span", { style: { color: "#e6e8eb" }, children: c.name || c.type }),
-                    isFolder && /* @__PURE__ */ jsx(ChevronRight, { size: 12, color: "#5a6172", style: { marginLeft: 2 } })
-                  ] }) }),
-                  /* @__PURE__ */ jsx(Td, { muted: true, children: c.type }),
-                  columns.map((col) => {
-                    const p = c.properties[col.name];
-                    if (!p) return /* @__PURE__ */ jsx(Td, { numeric: true, muted: true }, col.name);
-                    const f = facet?.get(p.uid);
-                    const isInput = p.category === CATEGORY_INPUT;
-                    return /* @__PURE__ */ jsx(Td, { numeric: true, input: isInput, children: fmtCell(values[p.uid], f) }, col.name);
-                  })
+                  /* @__PURE__ */ jsx(Td, { children: c.name || c.type }),
+                  /* @__PURE__ */ jsx(Td, { muted: true, children: shortType(c.type) })
                 ]
               },
               c.uid
-            );
-          }) })
-        ] }) })
+            )) }) })
+          ] })
+        ] })
       ]
     }
   );
 }
-function Th({ children, numeric }) {
+function Th({
+  children,
+  numeric,
+  sortable,
+  active,
+  dir,
+  onClick
+}) {
   return /* @__PURE__ */ jsx(
     "th",
     {
+      onClick,
       style: {
         textAlign: numeric ? "right" : "left",
-        padding: "5px 10px",
+        padding: "4px 10px",
         borderBottom: "1px solid #2c313c",
-        color: "#8892a0",
+        color: active ? "#cbd3e0" : "#8892a0",
         fontWeight: 600,
         fontSize: 11,
-        fontFamily: "ui-monospace, SFMono-Regular, monospace"
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        cursor: sortable ? "pointer" : "default",
+        userSelect: "none",
+        whiteSpace: "nowrap"
       },
-      children
+      children: /* @__PURE__ */ jsxs(
+        "span",
+        {
+          style: {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 2,
+            flexDirection: numeric ? "row-reverse" : "row"
+          },
+          children: [
+            children,
+            active && (dir === 1 ? /* @__PURE__ */ jsx(ArrowUp, { size: 11 }) : /* @__PURE__ */ jsx(ArrowDown, { size: 11 }))
+          ]
+        }
+      )
     }
   );
 }
@@ -19246,380 +19428,397 @@ function Inner({ base }) {
   const tableSelected = nodes.filter((n) => n.selected).map((n) => Number(n.id));
   return /* @__PURE__ */ jsxs(CeWiresheetContext.Provider, { value: ceCtx, children: [
     /* @__PURE__ */ jsx("style", { children: EDGE_SELECTED_CSS }),
-    /* @__PURE__ */ jsxs("div", { style: { position: "absolute", inset: 0, display: "flex" }, children: [
+    /* @__PURE__ */ jsxs("div", { style: { position: "absolute", inset: 0, display: "flex", flexDirection: "column" }, children: [
       /* @__PURE__ */ jsxs(
         "div",
         {
           style: {
-            position: "relative",
-            height: "100%",
-            width: tableOpen ? `${splitPct}%` : "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "5px 10px",
+            background: "#1a1d24",
+            borderBottom: "1px solid #2c313c",
             flexShrink: 0,
-            transform: "translateZ(0)",
-            overflow: "hidden"
+            zIndex: 30,
+            color: "#e6e8eb"
           },
           children: [
-            /* @__PURE__ */ jsx(
-              "div",
-              {
-                style: { position: "absolute", inset: 0 },
-                onDragOver,
-                onDrop,
-                onPointerDown: onCanvasPointerDown,
-                onPointerMove: onCanvasPointerMove,
-                onPointerUp: onCanvasPointerUp,
-                onContextMenu: (e) => {
-                  e.preventDefault();
-                },
-                children: /* @__PURE__ */ jsxs(
-                  index,
-                  {
-                    nodes,
-                    edges,
-                    nodeTypes,
-                    onNodesChange,
-                    onEdgesChange,
-                    onEdgeContextMenu,
-                    onNodeDragStart,
-                    onNodeDrag,
-                    onNodeDragStop,
-                    onConnect,
-                    onNodesDelete,
-                    onEdgesDelete,
-                    defaultViewport: { x: 80, y: 80, zoom: 1 },
-                    minZoom: 0.1,
-                    maxZoom: 2,
-                    onlyRenderVisibleElements: true,
-                    nodeOrigin: [0, 0],
-                    deleteKeyCode: ["Delete", "Backspace"],
-                    panOnDrag: [0],
-                    selectionMode: SelectionMode.Partial,
-                    multiSelectionKeyCode: ["Shift", "Meta", "Control"],
-                    selectionKeyCode: null,
-                    nodeDragThreshold: 4,
-                    panOnScroll: false,
-                    panOnScrollMode: PanOnScrollMode.Free,
-                    proOptions: { hideAttribution: true },
-                    children: [
-                      /* @__PURE__ */ jsx(Background, { color: "#1f242e", gap: 20 }),
-                      /* @__PURE__ */ jsx(
-                        MiniMap,
-                        {
-                          position: "bottom-right",
-                          pannable: true,
-                          zoomable: true,
-                          ariaLabel: "Graph overview",
-                          style: {
-                            backgroundColor: "#2b313c",
-                            border: "1px solid #3d444d",
-                            borderRadius: 6
-                          },
-                          maskColor: "rgba(10,12,16,0.45)",
-                          nodeStrokeWidth: 2,
-                          nodeColor: miniMapNodeColor,
-                          nodeStrokeColor: miniMapNodeStroke
-                        }
-                      ),
-                      /* @__PURE__ */ jsx(ZoomRateController, { enabled: autoRate, setRate: wsAdapter.setRate }),
-                      /* @__PURE__ */ jsx(VisibilitySub, { onVisible: onVisibleSubscription })
-                    ]
-                  }
-                )
-              }
-            ),
-            /* @__PURE__ */ jsx(
-              LeftDock,
-              {
-                palette,
-                onAdd: (t) => onAddNode(t),
-                currentParentUid,
-                onPick: (uid) => void goToComponent(uid)
-              }
-            ),
             /* @__PURE__ */ jsx(Breadcrumb, { crumbs, onGoTo: goToCrumb }),
-            clickDebugOpen && /* @__PURE__ */ jsx(ClickDebugger, {}),
-            /* @__PURE__ */ jsx(EventsPanel, {}),
-            /* @__PURE__ */ jsx(
-              DiagPanel,
-              {
-                wsRef: wsAdapter,
-                autoRate,
-                manualRate,
-                onSetManualRate,
-                onToggleAutoRate: () => setAutoRate((v) => !v)
-              }
-            ),
-            /* @__PURE__ */ jsx(PresenceBar, {}),
-            /* @__PURE__ */ jsx(
-              FindPanel,
-              {
-                open: findOpen,
-                currentParentUid,
-                onClose: () => setFindOpen(false),
-                onPick: (uid) => void goToComponent(uid)
-              }
-            ),
-            marqueeRect && /* @__PURE__ */ jsx(
-              "div",
-              {
-                style: {
-                  position: "fixed",
-                  left: marqueeRect.x,
-                  top: marqueeRect.y,
-                  width: marqueeRect.w,
-                  height: marqueeRect.h,
-                  border: "1px solid #4a9eff",
-                  background: "rgba(74,158,255,0.12)",
-                  zIndex: 40,
-                  pointerEvents: "none"
-                }
-              }
-            ),
-            nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
-              NodeContextMenu,
-              {
-                x: nodeMenu.x,
-                y: nodeMenu.y,
-                hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
-                canRename: nodes.filter((n) => n.selected).length === 1,
-                count: nodes.filter((n) => n.selected).length,
-                uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
-                name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
-                onRename: async () => {
-                  const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-                  setNodeMenu(null);
-                  if (sel.length !== 1) return;
-                  const uid = sel[0];
-                  const cur = useStructural.getState().components.get(uid);
-                  const next = window.prompt("Rename component", cur?.name ?? "");
-                  if (next == null) return;
-                  const trimmed = next.trim();
-                  if (!trimmed || trimmed === cur?.name) return;
-                  try {
-                    await updateNode(uid, { name: trimmed });
-                    await reload();
-                  } catch (e) {
-                    reportError(e);
-                  }
-                },
-                onDetails: () => {
-                  const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-                  if (sel.length === 1) setDetailsUid(sel[0]);
-                },
-                onGroup: () => {
-                  void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
-                  setNodeMenu(null);
-                },
-                onMoveInto: () => setMovePickerOpen(true),
-                onAction: () => setActionPickerOpen(true),
-                onClose: () => setNodeMenu(null)
-              }
-            ),
-            nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
-              ActionPicker,
-              {
-                x: nodeMenu.x,
-                y: nodeMenu.y,
-                targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
-                actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
-                onInvoke: invokeAction,
-                onClose: () => {
-                  setActionPickerOpen(false);
-                  setNodeMenu(null);
-                }
-              }
-            ),
-            nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
-              MoveIntoPicker,
-              {
-                x: nodeMenu.x,
-                y: nodeMenu.y,
-                movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
-                onMove: async (newParent) => {
-                  const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
-                  for (const uid of moving) {
-                    try {
-                      await updateNode(uid, { parentUid: newParent });
-                    } catch (e) {
-                      reportError(e);
-                    }
-                  }
-                  setMovePickerOpen(false);
-                  setNodeMenu(null);
-                  await reload();
-                },
-                onClose: () => {
-                  setMovePickerOpen(false);
-                  setNodeMenu(null);
-                }
-              }
-            ),
-            detailsUid != null && /* @__PURE__ */ jsx(
-              ConfigurePanel,
-              {
-                componentUid: detailsUid,
-                currentParentUid,
-                exposeProp,
-                unexposeProp,
-                onSave: async (facetString) => {
-                  try {
-                    await updateNode(detailsUid, {
-                      properties: { [FACET_PROP]: { value: facetString } }
-                    });
-                    await reload();
-                  } catch (e) {
-                    reportError(e);
-                  }
-                },
-                onClose: () => {
-                  setDetailsUid(null);
-                  setNodeMenu(null);
-                }
-              }
-            ),
-            paneMenu && /* @__PURE__ */ jsx(
-              PaneContextMenu,
-              {
-                x: paneMenu.x,
-                y: paneMenu.y,
-                canGoUp: crumbs.length > 1,
-                parentName: crumbs.length > 1 ? crumbs[crumbs.length - 2].name : "",
-                palette,
-                canPaste: (clipboardRef.current?.uids.length ?? 0) > 0,
-                onUp: () => goToCrumb(crumbs.length - 2),
-                onAdd: (type) => void onAddNode(type, rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y })),
-                onPaste: () => {
-                  mouseScreenPos.current = { x: paneMenu.x, y: paneMenu.y };
-                  void pasteFromClipboard();
-                },
-                onClose: () => setPaneMenu(null)
-              }
-            ),
-            edgeMenu && (() => {
-              const rest = useStructural.getState().edges.get(Number(edgeMenu.edgeId));
-              if (!rest) return null;
-              const isLoop = rest.loopBack === true;
-              return /* @__PURE__ */ jsx(
-                EdgeContextMenu,
-                {
-                  x: edgeMenu.x,
-                  y: edgeMenu.y,
-                  isLoopBack: isLoop,
-                  onPrimary: () => {
-                    const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
-                    const filtered = ids.filter((id) => {
-                      const e = useStructural.getState().edges.get(Number(id));
-                      return e ? e.loopBack === true === isLoop : false;
-                    });
-                    if (isLoop) void reEvaluateEdges(filtered.map(Number));
-                    else void setEdgesLoopBack(filtered.map(Number));
-                    setEdgeMenu(null);
-                  },
-                  onDelete: () => {
-                    const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
-                    const drop = edges.filter((e) => ids.includes(e.id));
-                    void onEdgesDelete(drop);
-                    setEdgeMenu(null);
-                  },
-                  onClose: () => setEdgeMenu(null)
-                }
-              );
-            })(),
-            error && /* @__PURE__ */ jsx(ErrorBanner, { error, onClose: () => setError(null) }),
-            !tableOpen && /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsx("span", { style: { marginLeft: "auto", flexShrink: 0 }, children: /* @__PURE__ */ jsxs(
               "button",
               {
-                onClick: () => setTableOpen(true),
-                title: "Open table view",
+                onClick: () => setTableOpen((v) => !v),
+                title: tableOpen ? "Hide table view" : "Show table view",
                 style: {
-                  position: "absolute",
-                  top: "50%",
-                  right: 0,
-                  transform: "translateY(-50%)",
-                  zIndex: 20,
-                  width: 26,
-                  height: 70,
-                  background: "rgba(20,23,30,0.92)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: tableOpen ? "#2c3a55" : "transparent",
+                  color: tableOpen ? "#cfe0ff" : "#8892a0",
                   border: "1px solid #2c313c",
-                  borderRight: "none",
-                  borderRadius: "6px 0 0 6px",
-                  color: "#cbd3e0",
+                  borderRadius: 4,
+                  padding: "3px 8px",
                   cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                },
-                children: /* @__PURE__ */ jsx(Table2, { size: 16 })
-              }
-            )
-          ]
-        }
-      ),
-      tableOpen && /* @__PURE__ */ jsx(
-        "div",
-        {
-          onPointerDown: startSplitDrag,
-          title: "Drag to resize",
-          style: { width: 5, flexShrink: 0, cursor: "col-resize", background: "#2c313c" }
-        }
-      ),
-      tableOpen && /* @__PURE__ */ jsxs(
-        "div",
-        {
-          style: {
-            flex: 1,
-            minWidth: 0,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column"
-          },
-          children: [
-            /* @__PURE__ */ jsxs(
-              "div",
-              {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  padding: "3px 6px",
-                  background: "#1a1d24",
-                  borderBottom: "1px solid #2c313c",
-                  flexShrink: 0
+                  fontSize: 11
                 },
                 children: [
-                  /* @__PURE__ */ jsx("span", { style: { fontSize: 10, color: "#5a6172", marginRight: "auto" }, children: "table view" }),
-                  /* @__PURE__ */ jsx(
-                    "button",
-                    {
-                      title: tableMaxed ? "Restore split" : "Maximize table",
-                      onClick: () => {
-                        if (tableMaxed) setSplitPct(splitRestore.current || 55);
-                        else {
-                          splitRestore.current = splitPct;
-                          setSplitPct(8);
-                        }
-                      },
-                      style: tableChromeBtn,
-                      children: tableMaxed ? /* @__PURE__ */ jsx(Minimize2, { size: 14 }) : /* @__PURE__ */ jsx(Maximize2, { size: 14 })
-                    }
-                  ),
-                  /* @__PURE__ */ jsx("button", { title: "Close table", onClick: () => setTableOpen(false), style: tableChromeBtn, children: /* @__PURE__ */ jsx(X, { size: 14 }) })
+                  /* @__PURE__ */ jsx(Table2, { size: 14 }),
+                  " Table"
                 ]
-              }
-            ),
-            /* @__PURE__ */ jsx("div", { style: { flex: 1, minHeight: 0 }, children: /* @__PURE__ */ jsx(
-              ComponentTable,
-              {
-                currentParentUid,
-                selectedUids: tableSelected,
-                onSelectRow: onTableSelect,
-                onDrillIn: enter,
-                onRowsChange: onTableRows
               }
             ) })
           ]
         }
-      )
+      ),
+      /* @__PURE__ */ jsxs("div", { style: { flex: 1, minHeight: 0, display: "flex" }, children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              position: "relative",
+              height: "100%",
+              width: tableOpen ? `${splitPct}%` : "100%",
+              flexShrink: 0,
+              transform: "translateZ(0)",
+              overflow: "hidden"
+            },
+            children: [
+              /* @__PURE__ */ jsx(
+                "div",
+                {
+                  style: { position: "absolute", inset: 0 },
+                  onDragOver,
+                  onDrop,
+                  onPointerDown: onCanvasPointerDown,
+                  onPointerMove: onCanvasPointerMove,
+                  onPointerUp: onCanvasPointerUp,
+                  onContextMenu: (e) => {
+                    e.preventDefault();
+                  },
+                  children: /* @__PURE__ */ jsxs(
+                    index,
+                    {
+                      nodes,
+                      edges,
+                      nodeTypes,
+                      onNodesChange,
+                      onEdgesChange,
+                      onEdgeContextMenu,
+                      onNodeDragStart,
+                      onNodeDrag,
+                      onNodeDragStop,
+                      onConnect,
+                      onNodesDelete,
+                      onEdgesDelete,
+                      defaultViewport: { x: 80, y: 80, zoom: 1 },
+                      minZoom: 0.1,
+                      maxZoom: 2,
+                      onlyRenderVisibleElements: true,
+                      nodeOrigin: [0, 0],
+                      deleteKeyCode: ["Delete", "Backspace"],
+                      panOnDrag: [0],
+                      selectionMode: SelectionMode.Partial,
+                      multiSelectionKeyCode: ["Shift", "Meta", "Control"],
+                      selectionKeyCode: null,
+                      nodeDragThreshold: 4,
+                      panOnScroll: false,
+                      panOnScrollMode: PanOnScrollMode.Free,
+                      proOptions: { hideAttribution: true },
+                      children: [
+                        /* @__PURE__ */ jsx(Background, { color: "#1f242e", gap: 20 }),
+                        /* @__PURE__ */ jsx(
+                          MiniMap,
+                          {
+                            position: "bottom-right",
+                            pannable: true,
+                            zoomable: true,
+                            ariaLabel: "Graph overview",
+                            style: {
+                              backgroundColor: "#2b313c",
+                              border: "1px solid #3d444d",
+                              borderRadius: 6
+                            },
+                            maskColor: "rgba(10,12,16,0.45)",
+                            nodeStrokeWidth: 2,
+                            nodeColor: miniMapNodeColor,
+                            nodeStrokeColor: miniMapNodeStroke
+                          }
+                        ),
+                        /* @__PURE__ */ jsx(ZoomRateController, { enabled: autoRate, setRate: wsAdapter.setRate }),
+                        /* @__PURE__ */ jsx(VisibilitySub, { onVisible: onVisibleSubscription })
+                      ]
+                    }
+                  )
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                LeftDock,
+                {
+                  palette,
+                  onAdd: (t) => onAddNode(t),
+                  currentParentUid,
+                  onPick: (uid) => void goToComponent(uid)
+                }
+              ),
+              clickDebugOpen && /* @__PURE__ */ jsx(ClickDebugger, {}),
+              /* @__PURE__ */ jsx(EventsPanel, {}),
+              /* @__PURE__ */ jsx(
+                DiagPanel,
+                {
+                  wsRef: wsAdapter,
+                  autoRate,
+                  manualRate,
+                  onSetManualRate,
+                  onToggleAutoRate: () => setAutoRate((v) => !v)
+                }
+              ),
+              /* @__PURE__ */ jsx(PresenceBar, {}),
+              /* @__PURE__ */ jsx(
+                FindPanel,
+                {
+                  open: findOpen,
+                  currentParentUid,
+                  onClose: () => setFindOpen(false),
+                  onPick: (uid) => void goToComponent(uid)
+                }
+              ),
+              marqueeRect && /* @__PURE__ */ jsx(
+                "div",
+                {
+                  style: {
+                    position: "fixed",
+                    left: marqueeRect.x,
+                    top: marqueeRect.y,
+                    width: marqueeRect.w,
+                    height: marqueeRect.h,
+                    border: "1px solid #4a9eff",
+                    background: "rgba(74,158,255,0.12)",
+                    zIndex: 40,
+                    pointerEvents: "none"
+                  }
+                }
+              ),
+              nodeMenu && !movePickerOpen && !actionPickerOpen && detailsUid === null && /* @__PURE__ */ jsx(
+                NodeContextMenu,
+                {
+                  x: nodeMenu.x,
+                  y: nodeMenu.y,
+                  hasActions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))).length > 0,
+                  canRename: nodes.filter((n) => n.selected).length === 1,
+                  count: nodes.filter((n) => n.selected).length,
+                  uid: nodes.filter((n) => n.selected).length === 1 ? Number(nodes.filter((n) => n.selected)[0].id) : void 0,
+                  name: nodes.filter((n) => n.selected).length === 1 ? useStructural.getState().components.get(Number(nodes.filter((n) => n.selected)[0].id))?.name : void 0,
+                  onRename: async () => {
+                    const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                    setNodeMenu(null);
+                    if (sel.length !== 1) return;
+                    const uid = sel[0];
+                    const cur = useStructural.getState().components.get(uid);
+                    const next = window.prompt("Rename component", cur?.name ?? "");
+                    if (next == null) return;
+                    const trimmed = next.trim();
+                    if (!trimmed || trimmed === cur?.name) return;
+                    try {
+                      await updateNode(uid, { name: trimmed });
+                      await reload();
+                    } catch (e) {
+                      reportError(e);
+                    }
+                  },
+                  onDetails: () => {
+                    const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                    if (sel.length === 1) setDetailsUid(sel[0]);
+                  },
+                  onGroup: () => {
+                    void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
+                    setNodeMenu(null);
+                  },
+                  onMoveInto: () => setMovePickerOpen(true),
+                  onAction: () => setActionPickerOpen(true),
+                  onClose: () => setNodeMenu(null)
+                }
+              ),
+              nodeMenu && actionPickerOpen && /* @__PURE__ */ jsx(
+                ActionPicker,
+                {
+                  x: nodeMenu.x,
+                  y: nodeMenu.y,
+                  targetUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+                  actions: getActionsFor(nodes.filter((n) => n.selected).map((n) => Number(n.id))),
+                  onInvoke: invokeAction,
+                  onClose: () => {
+                    setActionPickerOpen(false);
+                    setNodeMenu(null);
+                  }
+                }
+              ),
+              nodeMenu && movePickerOpen && /* @__PURE__ */ jsx(
+                MoveIntoPicker,
+                {
+                  x: nodeMenu.x,
+                  y: nodeMenu.y,
+                  movingUids: nodes.filter((n) => n.selected).map((n) => Number(n.id)),
+                  onMove: async (newParent) => {
+                    const moving = nodes.filter((n) => n.selected).map((n) => Number(n.id));
+                    for (const uid of moving) {
+                      try {
+                        await updateNode(uid, { parentUid: newParent });
+                      } catch (e) {
+                        reportError(e);
+                      }
+                    }
+                    setMovePickerOpen(false);
+                    setNodeMenu(null);
+                    await reload();
+                  },
+                  onClose: () => {
+                    setMovePickerOpen(false);
+                    setNodeMenu(null);
+                  }
+                }
+              ),
+              detailsUid != null && /* @__PURE__ */ jsx(
+                ConfigurePanel,
+                {
+                  componentUid: detailsUid,
+                  currentParentUid,
+                  exposeProp,
+                  unexposeProp,
+                  onSave: async (facetString) => {
+                    try {
+                      await updateNode(detailsUid, {
+                        properties: { [FACET_PROP]: { value: facetString } }
+                      });
+                      await reload();
+                    } catch (e) {
+                      reportError(e);
+                    }
+                  },
+                  onClose: () => {
+                    setDetailsUid(null);
+                    setNodeMenu(null);
+                  }
+                }
+              ),
+              paneMenu && /* @__PURE__ */ jsx(
+                PaneContextMenu,
+                {
+                  x: paneMenu.x,
+                  y: paneMenu.y,
+                  canGoUp: crumbs.length > 1,
+                  parentName: crumbs.length > 1 ? crumbs[crumbs.length - 2].name : "",
+                  palette,
+                  canPaste: (clipboardRef.current?.uids.length ?? 0) > 0,
+                  onUp: () => goToCrumb(crumbs.length - 2),
+                  onAdd: (type) => void onAddNode(type, rf.screenToFlowPosition({ x: paneMenu.x, y: paneMenu.y })),
+                  onPaste: () => {
+                    mouseScreenPos.current = { x: paneMenu.x, y: paneMenu.y };
+                    void pasteFromClipboard();
+                  },
+                  onClose: () => setPaneMenu(null)
+                }
+              ),
+              edgeMenu && (() => {
+                const rest = useStructural.getState().edges.get(Number(edgeMenu.edgeId));
+                if (!rest) return null;
+                const isLoop = rest.loopBack === true;
+                return /* @__PURE__ */ jsx(
+                  EdgeContextMenu,
+                  {
+                    x: edgeMenu.x,
+                    y: edgeMenu.y,
+                    isLoopBack: isLoop,
+                    onPrimary: () => {
+                      const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
+                      const filtered = ids.filter((id) => {
+                        const e = useStructural.getState().edges.get(Number(id));
+                        return e ? e.loopBack === true === isLoop : false;
+                      });
+                      if (isLoop) void reEvaluateEdges(filtered.map(Number));
+                      else void setEdgesLoopBack(filtered.map(Number));
+                      setEdgeMenu(null);
+                    },
+                    onDelete: () => {
+                      const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
+                      const drop = edges.filter((e) => ids.includes(e.id));
+                      void onEdgesDelete(drop);
+                      setEdgeMenu(null);
+                    },
+                    onClose: () => setEdgeMenu(null)
+                  }
+                );
+              })(),
+              error && /* @__PURE__ */ jsx(ErrorBanner, { error, onClose: () => setError(null) })
+            ]
+          }
+        ),
+        tableOpen && /* @__PURE__ */ jsx(
+          "div",
+          {
+            onPointerDown: startSplitDrag,
+            title: "Drag to resize",
+            style: { width: 5, flexShrink: 0, cursor: "col-resize", background: "#2c313c" }
+          }
+        ),
+        tableOpen && /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              flex: 1,
+              minWidth: 0,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column"
+            },
+            children: [
+              /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  style: {
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "3px 6px",
+                    background: "#1a1d24",
+                    borderBottom: "1px solid #2c313c",
+                    flexShrink: 0
+                  },
+                  children: [
+                    /* @__PURE__ */ jsx("span", { style: { fontSize: 10, color: "#5a6172", marginRight: "auto" }, children: "table view" }),
+                    /* @__PURE__ */ jsx(
+                      "button",
+                      {
+                        title: tableMaxed ? "Restore split" : "Maximize table",
+                        onClick: () => {
+                          if (tableMaxed) setSplitPct(splitRestore.current || 55);
+                          else {
+                            splitRestore.current = splitPct;
+                            setSplitPct(8);
+                          }
+                        },
+                        style: tableChromeBtn,
+                        children: tableMaxed ? /* @__PURE__ */ jsx(Minimize2, { size: 14 }) : /* @__PURE__ */ jsx(Maximize2, { size: 14 })
+                      }
+                    ),
+                    /* @__PURE__ */ jsx("button", { title: "Close table", onClick: () => setTableOpen(false), style: tableChromeBtn, children: /* @__PURE__ */ jsx(X, { size: 14 }) })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsx("div", { style: { flex: 1, minHeight: 0 }, children: /* @__PURE__ */ jsx(
+                ComponentTable,
+                {
+                  currentParentUid,
+                  selectedUids: tableSelected,
+                  onSelectRow: onTableSelect,
+                  onDrillIn: enter,
+                  onRowsChange: onTableRows
+                }
+              ) })
+            ]
+          }
+        )
+      ] })
     ] })
   ] });
 }
@@ -20923,21 +21122,12 @@ function Breadcrumb({ crumbs, onGoTo }) {
     "div",
     {
       style: {
-        position: "fixed",
-        bottom: 12,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 20,
         display: "flex",
         alignItems: "center",
-        background: "rgba(20,23,30,0.92)",
-        border: "1px solid #2c313c",
-        borderRadius: 6,
-        padding: "6px 12px",
         gap: 6,
         fontSize: 12,
         fontFamily: "ui-monospace, SFMono-Regular, monospace",
-        maxWidth: "70%",
+        minWidth: 0,
         overflowX: "auto"
       },
       children: crumbs.map((c, i) => {
@@ -21510,7 +21700,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T09:21:40.933Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T10:02:40.397Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
