@@ -12877,7 +12877,8 @@ function ComponentTable({
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState(1);
-  const [editing, setEditing] = useState(null);
+  const [defaultEdit, setDefaultEdit] = useState(null);
+  const [override, setOverride] = useState(null);
   const [anchor, setAnchor] = useState(null);
   const scrollRef = useRef(null);
   const components = useStructural((s) => s.components);
@@ -12995,14 +12996,16 @@ function ComponentTable({
   };
   const valueCell = (cell, c, groupStart, slot) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
+    const editableDefault = cell != null && cell.category !== CATEGORY_OUTPUT;
+    const isEditingDefault = cell != null && defaultEdit?.comp === c.uid && defaultEdit.uid === cell.uid;
     return /* @__PURE__ */ jsx(
       "td",
       {
         onContextMenu: (e) => {
-          if (overridden && cell) {
+          if (cell) {
             e.preventDefault();
             e.stopPropagation();
-            onClearOverride(c.uid, cell.name);
+            setOverride({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
           }
         },
         style: {
@@ -13012,28 +13015,32 @@ function ComponentTable({
           fontFamily: "ui-monospace, SFMono-Regular, monospace"
         },
         children: cell && /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
-          linkedProps.has(cell.uid) && /* @__PURE__ */ jsx(
-            Link2,
-            {
-              size: 11,
-              color: "#4a9eff",
-              style: { alignSelf: "center" },
-              "aria-label": "linked"
-            }
-          ),
+          linkedProps.has(cell.uid) && /* @__PURE__ */ jsx(Link2, { size: 11, color: "#4a9eff", style: { alignSelf: "center" }, "aria-label": "linked" }),
           /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: cell.label }),
-          /* @__PURE__ */ jsx(
+          isEditingDefault ? /* @__PURE__ */ jsx(
+            DefaultEditor,
+            {
+              initial: values[cell.uid],
+              dataType: propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER,
+              facet: facets.get(c.uid)?.get(cell.uid),
+              onCommit: (v) => {
+                onSetDefault(c.uid, cell.name, v);
+                setDefaultEdit(null);
+              },
+              onCancel: () => setDefaultEdit(null)
+            }
+          ) : /* @__PURE__ */ jsx(
             "span",
             {
-              onClick: (e) => {
+              onClick: editableDefault ? (e) => {
                 e.stopPropagation();
-                setEditing({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
-              },
-              title: overridden ? "overridden — right-click to clear · click to edit" : "click to edit",
+                setDefaultEdit({ comp: c.uid, uid: cell.uid });
+              } : void 0,
+              title: editableDefault ? "click to edit default · right-click to override" : "right-click to override",
               style: {
                 color: cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
-                cursor: "pointer",
-                borderBottom: "1px dotted #3b4350"
+                cursor: editableDefault ? "pointer" : "default",
+                borderBottom: editableDefault ? "1px dotted #3b4350" : void 0
               },
               children: fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))
             }
@@ -13205,35 +13212,102 @@ function ComponentTable({
             ] })
           ] })
         ] }) }),
-        editing && /* @__PURE__ */ jsx(
-          ValueEditor,
+        override && /* @__PURE__ */ jsx(
+          OverrideEditor,
           {
-            rect: editing.rect,
-            cell: editing.cell,
-            initial: values[editing.cell.uid],
-            dataType: propertyDataType.get(editing.cell.uid) ?? DATATYPE_NUMBER,
-            facet: facets.get(editing.comp)?.get(editing.cell.uid),
-            overridden: (flags[editing.cell.uid] & STATUS_OVERRIDDEN) !== 0,
+            rect: override.rect,
+            cell: override.cell,
+            initial: values[override.cell.uid],
+            dataType: propertyDataType.get(override.cell.uid) ?? DATATYPE_NUMBER,
+            facet: facets.get(override.comp)?.get(override.cell.uid),
+            overridden: (flags[override.cell.uid] & STATUS_OVERRIDDEN) !== 0,
             onOverride: (v, duration) => {
-              onSetOverride(editing.comp, editing.cell.name, v, duration);
-              setEditing(null);
-            },
-            onDefault: (v) => {
-              onSetDefault(editing.comp, editing.cell.name, v);
-              setEditing(null);
+              onSetOverride(override.comp, override.cell.name, v, duration);
+              setOverride(null);
             },
             onClear: () => {
-              onClearOverride(editing.comp, editing.cell.name);
-              setEditing(null);
+              onClearOverride(override.comp, override.cell.name);
+              setOverride(null);
             },
-            onClose: () => setEditing(null)
+            onClose: () => setOverride(null)
           }
         )
       ]
     }
   );
 }
-function ValueEditor({
+const codeOf = (v) => v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
+const initialStr = (v, dataType, facet) => facet?.aliases?.length || dataType === DATATYPE_BOOL ? String(codeOf(v)) : v == null ? "" : String(v);
+const coerceValue = (raw, dataType, facet) => {
+  if (facet?.aliases?.length) {
+    const code = Number(raw);
+    return dataType === DATATYPE_BOOL ? code === 1 : code;
+  }
+  if (dataType === DATATYPE_BOOL) return raw === "1" || raw === "true";
+  if (dataType === DATATYPE_NUMBER) return Number(raw);
+  return raw;
+};
+const editField = {
+  background: "#0f1115",
+  color: "#e6e8eb",
+  border: "1px solid #3b5388",
+  borderRadius: 2,
+  padding: "1px 4px",
+  fontSize: 12,
+  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+  outline: "none"
+};
+function DefaultEditor({
+  initial,
+  dataType,
+  facet,
+  onCommit,
+  onCancel
+}) {
+  const aliases = facet?.aliases;
+  const [text, setText] = useState(initialStr(initial, dataType, facet));
+  const ref = useRef(null);
+  useEffect(() => {
+    ref.current?.focus();
+    if (ref.current instanceof HTMLInputElement) ref.current.select();
+  }, []);
+  const onKey = (e) => {
+    e.stopPropagation();
+    if (e.key === "Enter") onCommit(coerceValue(text, dataType, facet));
+    else if (e.key === "Escape") onCancel();
+  };
+  if (aliases?.length || dataType === DATATYPE_BOOL) {
+    const opts = aliases?.length ? aliases.map((a) => ({ v: String(a.code), label: a.label })) : [
+      { v: "0", label: "false" },
+      { v: "1", label: "true" }
+    ];
+    return /* @__PURE__ */ jsx(
+      "select",
+      {
+        ref,
+        value: text,
+        onChange: (e) => onCommit(coerceValue(e.target.value, dataType, facet)),
+        onKeyDown: onKey,
+        onBlur: onCancel,
+        style: editField,
+        children: opts.map((o) => /* @__PURE__ */ jsx("option", { value: o.v, children: o.label }, o.v))
+      }
+    );
+  }
+  return /* @__PURE__ */ jsx(
+    "input",
+    {
+      ref,
+      value: text,
+      onChange: (e) => setText(e.target.value),
+      onKeyDown: onKey,
+      onBlur: () => onCommit(coerceValue(text, dataType, facet)),
+      inputMode: dataType === DATATYPE_NUMBER ? "decimal" : "text",
+      style: { ...editField, width: 70 }
+    }
+  );
+}
+function OverrideEditor({
   rect,
   cell,
   initial,
@@ -13241,16 +13315,11 @@ function ValueEditor({
   facet,
   overridden,
   onOverride,
-  onDefault,
   onClear,
   onClose
 }) {
   const aliases = facet?.aliases;
-  const isOutput = cell.category === CATEGORY_OUTPUT;
-  const codeOf = (v) => v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
-  const initStr = aliases?.length || dataType === DATATYPE_BOOL ? String(codeOf(initial)) : initial == null ? "" : String(initial);
-  const [text, setText] = useState(initStr);
-  const [mode, setMode] = useState("override");
+  const [text, setText] = useState(initialStr(initial, dataType, facet));
   const [duration, setDuration] = useState("60");
   const ref = useRef(null);
   const rootRef = useRef(null);
@@ -13265,37 +13334,14 @@ function ValueEditor({
     document.addEventListener("pointerdown", dismiss, true);
     return () => document.removeEventListener("pointerdown", dismiss, true);
   }, [onClose]);
-  const coerce = (raw) => {
-    if (aliases?.length) {
-      const code = Number(raw);
-      return dataType === DATATYPE_BOOL ? code === 1 : code;
-    }
-    if (dataType === DATATYPE_BOOL) return raw === "1" || raw === "true";
-    if (dataType === DATATYPE_NUMBER) return Number(raw);
-    return raw;
-  };
-  const apply = () => {
-    const v = coerce(text);
-    if (mode === "default" && !isOutput) onDefault(v);
-    else onOverride(v, Number(duration) || 0);
-  };
-  const field = {
-    background: "#0f1115",
-    color: "#e6e8eb",
-    border: "1px solid #2c313c",
+  const apply = () => onOverride(coerceValue(text, dataType, facet), Number(duration) || 0);
+  const field = { ...editField, border: "1px solid #2c313c", borderRadius: 3, padding: "3px 6px" };
+  const btn = (accent) => ({
+    background: accent ? "#2c3a55" : "transparent",
+    color: accent ? "#cfe0ff" : "#8892a0",
+    border: `1px solid ${accent ? "#3b5388" : "#2c313c"}`,
     borderRadius: 3,
-    padding: "3px 6px",
-    fontSize: 12,
-    fontFamily: "ui-monospace, SFMono-Regular, monospace",
-    outline: "none"
-  };
-  const segBtn = (active) => ({
-    flex: 1,
-    background: active ? "#2c3a55" : "transparent",
-    color: active ? "#cfe0ff" : "#8892a0",
-    border: "1px solid #2c313c",
-    borderRadius: 3,
-    padding: "3px 6px",
+    padding: "3px 8px",
     cursor: "pointer",
     fontSize: 11
   });
@@ -13330,7 +13376,10 @@ function ValueEditor({
         fontSize: 12
       },
       children: [
-        /* @__PURE__ */ jsx("div", { style: { color: "#9ecbff", fontFamily: "ui-monospace, monospace", fontSize: 11 }, children: cell.label }),
+        /* @__PURE__ */ jsxs("div", { style: { color: "#9ecbff", fontFamily: "ui-monospace, monospace", fontSize: 11 }, children: [
+          "Override ",
+          cell.label
+        ] }),
         aliases?.length || dataType === DATATYPE_BOOL ? /* @__PURE__ */ jsx(
           "select",
           {
@@ -13354,51 +13403,24 @@ function ValueEditor({
             style: field
           }
         ),
-        !isOutput && /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 4 }, children: [
-          /* @__PURE__ */ jsx("button", { onClick: () => setMode("override"), style: segBtn(mode === "override"), children: "Override" }),
-          /* @__PURE__ */ jsx("button", { onClick: () => setMode("default"), style: segBtn(mode === "default"), children: "Default" })
-        ] }),
-        (isOutput || mode === "override") && /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }, children: [
+        /* @__PURE__ */ jsxs("label", { style: { display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }, children: [
           "duration",
-          /* @__PURE__ */ jsxs(
-            "select",
-            {
-              value: duration,
-              onChange: (e) => setDuration(e.target.value),
-              style: { ...field, flex: 1 },
-              children: [
-                /* @__PURE__ */ jsx("option", { value: "10", children: "10 sec" }),
-                /* @__PURE__ */ jsx("option", { value: "30", children: "30 sec" }),
-                /* @__PURE__ */ jsx("option", { value: "60", children: "1 min" }),
-                /* @__PURE__ */ jsx("option", { value: "300", children: "5 min" }),
-                /* @__PURE__ */ jsx("option", { value: "1200", children: "20 min" }),
-                /* @__PURE__ */ jsx("option", { value: "3600", children: "1 hr" }),
-                /* @__PURE__ */ jsx("option", { value: "7200", children: "2 hr" }),
-                /* @__PURE__ */ jsx("option", { value: "86400", children: "24 hr" }),
-                /* @__PURE__ */ jsx("option", { value: "0", children: "permanent" })
-              ]
-            }
-          )
+          /* @__PURE__ */ jsxs("select", { value: duration, onChange: (e) => setDuration(e.target.value), style: { ...field, flex: 1 }, children: [
+            /* @__PURE__ */ jsx("option", { value: "10", children: "10 sec" }),
+            /* @__PURE__ */ jsx("option", { value: "30", children: "30 sec" }),
+            /* @__PURE__ */ jsx("option", { value: "60", children: "1 min" }),
+            /* @__PURE__ */ jsx("option", { value: "300", children: "5 min" }),
+            /* @__PURE__ */ jsx("option", { value: "1200", children: "20 min" }),
+            /* @__PURE__ */ jsx("option", { value: "3600", children: "1 hr" }),
+            /* @__PURE__ */ jsx("option", { value: "7200", children: "2 hr" }),
+            /* @__PURE__ */ jsx("option", { value: "86400", children: "24 hr" }),
+            /* @__PURE__ */ jsx("option", { value: "0", children: "permanent" })
+          ] })
         ] }),
         /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 6, marginTop: 2 }, children: [
-          overridden && /* @__PURE__ */ jsx(
-            "button",
-            {
-              onClick: onClear,
-              style: { ...segBtn(false), flex: "0 0 auto", color: "#c98a8a" },
-              title: "Clear override",
-              children: "clear"
-            }
-          ),
-          /* @__PURE__ */ jsx("button", { onClick: onClose, style: { ...segBtn(false), marginLeft: "auto", flex: "0 0 auto" }, children: "cancel" }),
-          /* @__PURE__ */ jsx(
-            "button",
-            {
-              onClick: apply,
-              style: { ...segBtn(true), flex: "0 0 auto", borderColor: "#3b5388" },
-              children: "set"
-            }
-          )
+          overridden && /* @__PURE__ */ jsx("button", { onClick: onClear, style: { ...btn(), color: "#c98a8a" }, title: "Clear override", children: "clear" }),
+          /* @__PURE__ */ jsx("button", { onClick: onClose, style: { ...btn(), marginLeft: "auto" }, children: "cancel" }),
+          /* @__PURE__ */ jsx("button", { onClick: apply, style: btn(true), children: "set" })
         ] })
       ]
     }
@@ -22041,7 +22063,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:16:44.820Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:20:13.376Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });

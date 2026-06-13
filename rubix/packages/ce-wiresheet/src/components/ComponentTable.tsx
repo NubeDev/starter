@@ -70,7 +70,9 @@ export function ComponentTable({
   const [showHidden, setShowHidden] = useState(false);
   const [query, setQuery] = useState("");
   const [dir, setDir] = useState<1 | -1>(1);
-  const [editing, setEditing] = useState<{ comp: number; cell: Cell; rect: DOMRect } | null>(null);
+  // Click = edit the stored default inline; right-click = override popover.
+  const [defaultEdit, setDefaultEdit] = useState<{ comp: number; uid: number } | null>(null);
+  const [override, setOverride] = useState<{ comp: number; cell: Cell; rect: DOMRect } | null>(null);
   const [anchor, setAnchor] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -213,14 +215,16 @@ export function ComponentTable({
 
   const valueCell = (cell: Cell | undefined, c: Component, groupStart: boolean, slot: string) => {
     const overridden = cell != null && (flags[cell.uid] & STATUS_OVERRIDDEN) !== 0;
+    const editableDefault = cell != null && cell.category !== CATEGORY_OUTPUT; // outputs are computed
+    const isEditingDefault = cell != null && defaultEdit?.comp === c.uid && defaultEdit.uid === cell.uid;
     return (
       <td
         key={slot}
         onContextMenu={(e) => {
-          if (overridden && cell) {
+          if (cell) {
             e.preventDefault();
             e.stopPropagation();
-            onClearOverride(c.uid, cell.name);
+            setOverride({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
           }
         }}
         style={{
@@ -233,28 +237,44 @@ export function ComponentTable({
         {cell && (
           <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
             {linkedProps.has(cell.uid) && (
-              <Link2
-                size={11}
-                color="#4a9eff"
-                style={{ alignSelf: "center" }}
-                aria-label="linked"
-              />
+              <Link2 size={11} color="#4a9eff" style={{ alignSelf: "center" }} aria-label="linked" />
             )}
             <span style={{ color: "#5a6172" }}>{cell.label}</span>
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditing({ comp: c.uid, cell, rect: e.currentTarget.getBoundingClientRect() });
-              }}
-              title={overridden ? "overridden — right-click to clear · click to edit" : "click to edit"}
-              style={{
-                color: cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
-                cursor: "pointer",
-                borderBottom: "1px dotted #3b4350",
-              }}
-            >
-              {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
-            </span>
+            {isEditingDefault ? (
+              <DefaultEditor
+                initial={values[cell.uid]}
+                dataType={propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER}
+                facet={facets.get(c.uid)?.get(cell.uid)}
+                onCommit={(v) => {
+                  onSetDefault(c.uid, cell.name, v);
+                  setDefaultEdit(null);
+                }}
+                onCancel={() => setDefaultEdit(null)}
+              />
+            ) : (
+              <span
+                onClick={
+                  editableDefault
+                    ? (e) => {
+                        e.stopPropagation();
+                        setDefaultEdit({ comp: c.uid, uid: cell.uid });
+                      }
+                    : undefined
+                }
+                title={
+                  editableDefault
+                    ? "click to edit default · right-click to override"
+                    : "right-click to override"
+                }
+                style={{
+                  color: cell.category === CATEGORY_INPUT ? "#cbd3e0" : "#e6e8eb",
+                  cursor: editableDefault ? "pointer" : "default",
+                  borderBottom: editableDefault ? "1px dotted #3b4350" : undefined,
+                }}
+              >
+                {fmtCell(values[cell.uid], facets.get(c.uid)?.get(cell.uid))}
+              </span>
+            )}
             {overridden && <OvrBadge />}
           </span>
         )}
@@ -421,37 +441,129 @@ export function ComponentTable({
         )}
       </div>
 
-      {editing && (
-        <ValueEditor
-          rect={editing.rect}
-          cell={editing.cell}
-          initial={values[editing.cell.uid]}
-          dataType={propertyDataType.get(editing.cell.uid) ?? DATATYPE_NUMBER}
-          facet={facets.get(editing.comp)?.get(editing.cell.uid)}
-          overridden={(flags[editing.cell.uid] & STATUS_OVERRIDDEN) !== 0}
+      {override && (
+        <OverrideEditor
+          rect={override.rect}
+          cell={override.cell}
+          initial={values[override.cell.uid]}
+          dataType={propertyDataType.get(override.cell.uid) ?? DATATYPE_NUMBER}
+          facet={facets.get(override.comp)?.get(override.cell.uid)}
+          overridden={(flags[override.cell.uid] & STATUS_OVERRIDDEN) !== 0}
           onOverride={(v, duration) => {
-            onSetOverride(editing.comp, editing.cell.name, v, duration);
-            setEditing(null);
-          }}
-          onDefault={(v) => {
-            onSetDefault(editing.comp, editing.cell.name, v);
-            setEditing(null);
+            onSetOverride(override.comp, override.cell.name, v, duration);
+            setOverride(null);
           }}
           onClear={() => {
-            onClearOverride(editing.comp, editing.cell.name);
-            setEditing(null);
+            onClearOverride(override.comp, override.cell.name);
+            setOverride(null);
           }}
-          onClose={() => setEditing(null)}
+          onClose={() => setOverride(null)}
         />
       )}
     </div>
   );
 }
 
-// Popover value editor. Inputs/config can be applied as an OVERRIDE (with a
-// duration) or written as the stored DEFAULT; outputs are override-only. Aliased
-// / boolean props edit as a dropdown, else a text/number field.
-function ValueEditor({
+// Shared value coercion for the editors.
+const codeOf = (v: DecodedValue | undefined) =>
+  v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
+const initialStr = (
+  v: DecodedValue | undefined,
+  dataType: number,
+  facet: PropFacet | undefined,
+) =>
+  facet?.aliases?.length || dataType === DATATYPE_BOOL
+    ? String(codeOf(v))
+    : v == null
+      ? ""
+      : String(v);
+const coerceValue = (raw: string, dataType: number, facet: PropFacet | undefined): FlexValue => {
+  if (facet?.aliases?.length) {
+    const code = Number(raw);
+    return dataType === DATATYPE_BOOL ? code === 1 : code;
+  }
+  if (dataType === DATATYPE_BOOL) return raw === "1" || raw === "true";
+  if (dataType === DATATYPE_NUMBER) return Number(raw);
+  return raw;
+};
+const editField = {
+  background: "#0f1115",
+  color: "#e6e8eb",
+  border: "1px solid #3b5388",
+  borderRadius: 2,
+  padding: "1px 4px",
+  fontSize: 12,
+  fontFamily: "ui-monospace, SFMono-Regular, monospace",
+  outline: "none",
+} as const;
+
+// Inline editor for the stored DEFAULT value (left-click). Dropdown for aliased /
+// boolean props, else a text/number field. Enter / blur commits, Esc cancels.
+function DefaultEditor({
+  initial,
+  dataType,
+  facet,
+  onCommit,
+  onCancel,
+}: {
+  initial: DecodedValue | undefined;
+  dataType: number;
+  facet: PropFacet | undefined;
+  onCommit: (v: FlexValue) => void;
+  onCancel: () => void;
+}) {
+  const aliases = facet?.aliases;
+  const [text, setText] = useState(initialStr(initial, dataType, facet));
+  const ref = useRef<HTMLInputElement | HTMLSelectElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    if (ref.current instanceof HTMLInputElement) ref.current.select();
+  }, []);
+  const onKey = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (e.key === "Enter") onCommit(coerceValue(text, dataType, facet));
+    else if (e.key === "Escape") onCancel();
+  };
+  if (aliases?.length || dataType === DATATYPE_BOOL) {
+    const opts = aliases?.length
+      ? aliases.map((a) => ({ v: String(a.code), label: a.label }))
+      : [
+          { v: "0", label: "false" },
+          { v: "1", label: "true" },
+        ];
+    return (
+      <select
+        ref={ref as React.RefObject<HTMLSelectElement>}
+        value={text}
+        onChange={(e) => onCommit(coerceValue(e.target.value, dataType, facet))}
+        onKeyDown={onKey}
+        onBlur={onCancel}
+        style={editField}
+      >
+        {opts.map((o) => (
+          <option key={o.v} value={o.v}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+  return (
+    <input
+      ref={ref as React.RefObject<HTMLInputElement>}
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={onKey}
+      onBlur={() => onCommit(coerceValue(text, dataType, facet))}
+      inputMode={dataType === DATATYPE_NUMBER ? "decimal" : "text"}
+      style={{ ...editField, width: 70 }}
+    />
+  );
+}
+
+// Override popover (right-click) — value + duration, set / clear. Matches the
+// wiresheet's override flow.
+function OverrideEditor({
   rect,
   cell,
   initial,
@@ -459,7 +571,6 @@ function ValueEditor({
   facet,
   overridden,
   onOverride,
-  onDefault,
   onClear,
   onClose,
 }: {
@@ -470,25 +581,12 @@ function ValueEditor({
   facet: PropFacet | undefined;
   overridden: boolean;
   onOverride: (v: FlexValue, duration: number) => void;
-  onDefault: (v: FlexValue) => void;
   onClear: () => void;
   onClose: () => void;
 }) {
   const aliases = facet?.aliases;
-  const isOutput = cell.category === CATEGORY_OUTPUT;
-  const codeOf = (v: DecodedValue | undefined) =>
-    v === true ? 1 : v === false ? 0 : typeof v === "number" ? v : Number(v);
-  const initStr =
-    aliases?.length || dataType === DATATYPE_BOOL
-      ? String(codeOf(initial))
-      : initial == null
-        ? ""
-        : String(initial);
-  const [text, setText] = useState(initStr);
-  const [mode, setMode] = useState<"override" | "default">("override");
-  // Default 60s — matching the standard override menu. (duration 0 / "permanent"
-  // does not actually hold on this engine, so it can't be the default.)
-  const [duration, setDuration] = useState("60");
+  const [text, setText] = useState(initialStr(initial, dataType, facet));
+  const [duration, setDuration] = useState("60"); // matches standard override menu
   const ref = useRef<HTMLInputElement | HTMLSelectElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -504,39 +602,16 @@ function ValueEditor({
     return () => document.removeEventListener("pointerdown", dismiss, true);
   }, [onClose]);
 
-  const coerce = (raw: string): FlexValue => {
-    if (aliases?.length) {
-      const code = Number(raw);
-      return dataType === DATATYPE_BOOL ? code === 1 : code;
-    }
-    if (dataType === DATATYPE_BOOL) return raw === "1" || raw === "true";
-    if (dataType === DATATYPE_NUMBER) return Number(raw);
-    return raw;
-  };
-  const apply = () => {
-    const v = coerce(text);
-    if (mode === "default" && !isOutput) onDefault(v);
-    else onOverride(v, Number(duration) || 0);
-  };
+  const apply = () => onOverride(coerceValue(text, dataType, facet), Number(duration) || 0);
 
-  const field = {
-    background: "#0f1115",
-    color: "#e6e8eb",
-    border: "1px solid #2c313c",
-    borderRadius: 3,
-    padding: "3px 6px",
-    fontSize: 12,
-    fontFamily: "ui-monospace, SFMono-Regular, monospace",
-    outline: "none",
-  } as const;
-  const segBtn = (active: boolean) =>
+  const field = { ...editField, border: "1px solid #2c313c", borderRadius: 3, padding: "3px 6px" };
+  const btn = (accent?: boolean) =>
     ({
-      flex: 1,
-      background: active ? "#2c3a55" : "transparent",
-      color: active ? "#cfe0ff" : "#8892a0",
-      border: "1px solid #2c313c",
+      background: accent ? "#2c3a55" : "transparent",
+      color: accent ? "#cfe0ff" : "#8892a0",
+      border: `1px solid ${accent ? "#3b5388" : "#2c313c"}`,
       borderRadius: 3,
-      padding: "3px 6px",
+      padding: "3px 8px",
       cursor: "pointer",
       fontSize: 11,
     }) as const;
@@ -573,7 +648,7 @@ function ValueEditor({
       }}
     >
       <div style={{ color: "#9ecbff", fontFamily: "ui-monospace, monospace", fontSize: 11 }}>
-        {cell.label}
+        Override {cell.label}
       </div>
 
       {aliases?.length || dataType === DATATYPE_BOOL ? (
@@ -606,55 +681,31 @@ function ValueEditor({
         />
       )}
 
-      {!isOutput && (
-        <div style={{ display: "flex", gap: 4 }}>
-          <button onClick={() => setMode("override")} style={segBtn(mode === "override")}>
-            Override
-          </button>
-          <button onClick={() => setMode("default")} style={segBtn(mode === "default")}>
-            Default
-          </button>
-        </div>
-      )}
-
-      {(isOutput || mode === "override") && (
-        <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }}>
-          duration
-          <select
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            style={{ ...field, flex: 1 }}
-          >
-            <option value="10">10 sec</option>
-            <option value="30">30 sec</option>
-            <option value="60">1 min</option>
-            <option value="300">5 min</option>
-            <option value="1200">20 min</option>
-            <option value="3600">1 hr</option>
-            <option value="7200">2 hr</option>
-            <option value="86400">24 hr</option>
-            <option value="0">permanent</option>
-          </select>
-        </label>
-      )}
+      <label style={{ display: "flex", alignItems: "center", gap: 6, color: "#8892a0", fontSize: 11 }}>
+        duration
+        <select value={duration} onChange={(e) => setDuration(e.target.value)} style={{ ...field, flex: 1 }}>
+          <option value="10">10 sec</option>
+          <option value="30">30 sec</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+          <option value="1200">20 min</option>
+          <option value="3600">1 hr</option>
+          <option value="7200">2 hr</option>
+          <option value="86400">24 hr</option>
+          <option value="0">permanent</option>
+        </select>
+      </label>
 
       <div style={{ display: "flex", gap: 6, marginTop: 2 }}>
         {overridden && (
-          <button
-            onClick={onClear}
-            style={{ ...segBtn(false), flex: "0 0 auto", color: "#c98a8a" }}
-            title="Clear override"
-          >
+          <button onClick={onClear} style={{ ...btn(), color: "#c98a8a" }} title="Clear override">
             clear
           </button>
         )}
-        <button onClick={onClose} style={{ ...segBtn(false), marginLeft: "auto", flex: "0 0 auto" }}>
+        <button onClick={onClose} style={{ ...btn(), marginLeft: "auto" }}>
           cancel
         </button>
-        <button
-          onClick={apply}
-          style={{ ...segBtn(true), flex: "0 0 auto", borderColor: "#3b5388" }}
-        >
+        <button onClick={apply} style={btn(true)}>
           set
         </button>
       </div>
