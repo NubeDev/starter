@@ -14,7 +14,7 @@ import {
 import type { Component, FlexValue } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
 import { facetFor, rawFacet, aliasLabel, type PropFacet, type ComponentFacet } from "../lib/facet";
-import { Layers, ArrowUp, ArrowDown, FolderUp } from "lucide-react";
+import { Layers, ArrowUp, ArrowDown, FolderUp, Link2 } from "lucide-react";
 
 // Table view of the CURRENT folder's components. Each component is a row; its
 // props align into per-slot columns under Inputs / Outputs / Config category
@@ -79,6 +79,17 @@ export function ComponentTable({
     () => Array.from(components.values()).filter((c) => c.parent === currentParentUid),
     [components, currentParentUid],
   );
+
+  // Prop uids that are an endpoint of an edge → flagged as "linked" (wired).
+  const edges = useStructural((s) => s.edges);
+  const linkedProps = useMemo(() => {
+    const set = new Set<number>();
+    for (const e of edges.values()) {
+      if (e.sourcePropertyUid != null) set.add(e.sourcePropertyUid);
+      if (e.targetPropertyUid != null) set.add(e.targetPropertyUid);
+    }
+    return set;
+  }, [edges]);
 
   const facets = useMemo(
     () =>
@@ -221,6 +232,14 @@ export function ComponentTable({
       >
         {cell && (
           <span style={{ display: "inline-flex", gap: 5, alignItems: "baseline" }}>
+            {linkedProps.has(cell.uid) && (
+              <Link2
+                size={11}
+                color="#4a9eff"
+                style={{ alignSelf: "center" }}
+                aria-label="linked"
+              />
+            )}
             <span style={{ color: "#5a6172" }}>{cell.label}</span>
             <span
               onClick={(e) => {
@@ -364,7 +383,7 @@ export function ComponentTable({
             {allRows.length === 0 ? "no components in this folder" : "no matches"}
           </div>
         ) : (
-          <table style={{ borderCollapse: "collapse", whiteSpace: "nowrap" }}>
+          <table style={{ borderCollapse: "collapse", whiteSpace: "nowrap", userSelect: "none" }}>
             <thead>
               <tr style={{ position: "sticky", top: 0, background: "#1a1d24", zIndex: 1 }}>
                 <GroupTh />

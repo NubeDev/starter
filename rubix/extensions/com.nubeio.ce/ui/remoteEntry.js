@@ -12372,6 +12372,20 @@ const Layers = createLucideIcon("Layers", [
  */
 
 
+const Link2 = createLucideIcon("Link2", [
+  ["path", { d: "M9 17H7A5 5 0 0 1 7 7h2", key: "8i5ue5" }],
+  ["path", { d: "M15 7h2a5 5 0 1 1 0 10h-2", key: "1b9ql8" }],
+  ["line", { x1: "8", x2: "16", y1: "12", y2: "12", key: "1jonct" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Maximize2 = createLucideIcon("Maximize2", [
   ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
   ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
@@ -12871,6 +12885,15 @@ function ComponentTable({
     () => Array.from(components.values()).filter((c) => c.parent === currentParentUid),
     [components, currentParentUid]
   );
+  const edges = useStructural((s) => s.edges);
+  const linkedProps = useMemo(() => {
+    const set = /* @__PURE__ */ new Set();
+    for (const e of edges.values()) {
+      if (e.sourcePropertyUid != null) set.add(e.sourcePropertyUid);
+      if (e.targetPropertyUid != null) set.add(e.targetPropertyUid);
+    }
+    return set;
+  }, [edges]);
   const facets = useMemo(
     () => new Map(allRows.map((c) => [c.uid, facetFor(c.uid, rawFacet(c.properties))])),
     [allRows]
@@ -12989,6 +13012,15 @@ function ComponentTable({
           fontFamily: "ui-monospace, SFMono-Regular, monospace"
         },
         children: cell && /* @__PURE__ */ jsxs("span", { style: { display: "inline-flex", gap: 5, alignItems: "baseline" }, children: [
+          linkedProps.has(cell.uid) && /* @__PURE__ */ jsx(
+            Link2,
+            {
+              size: 11,
+              color: "#4a9eff",
+              style: { alignSelf: "center" },
+              "aria-label": "linked"
+            }
+          ),
           /* @__PURE__ */ jsx("span", { style: { color: "#5a6172" }, children: cell.label }),
           /* @__PURE__ */ jsx(
             "span",
@@ -13138,7 +13170,7 @@ function ComponentTable({
             ]
           }
         ),
-        /* @__PURE__ */ jsx("div", { ref: scrollRef, style: { overflow: "auto", flex: 1 }, children: rows.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: allRows.length === 0 ? "no components in this folder" : "no matches" }) : /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", whiteSpace: "nowrap" }, children: [
+        /* @__PURE__ */ jsx("div", { ref: scrollRef, style: { overflow: "auto", flex: 1 }, children: rows.length === 0 && orphans.length === 0 ? /* @__PURE__ */ jsx("div", { style: { padding: 12, color: "#5a6172" }, children: allRows.length === 0 ? "no components in this folder" : "no matches" }) : /* @__PURE__ */ jsxs("table", { style: { borderCollapse: "collapse", whiteSpace: "nowrap", userSelect: "none" }, children: [
           /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { style: { position: "sticky", top: 0, background: "#1a1d24", zIndex: 1 }, children: [
             /* @__PURE__ */ jsx(GroupTh, {}),
             maxIn > 0 && /* @__PURE__ */ jsx(GroupTh, { span: maxIn, children: "Inputs" }),
@@ -22009,7 +22041,7 @@ function Centered({ children }) {
 }
 
 if (typeof window !== "undefined") {
-  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:01:48.987Z");
+  console.info("[com.nubeio.ce] bundle loaded — build-", "2026-06-13T12:16:44.820Z");
 }
 function Main() {
   return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
