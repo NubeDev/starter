@@ -12,6 +12,7 @@ use clap::{Parser, Subcommand};
 
 mod bootstrap_user;
 mod mcp;
+mod secrets;
 mod system;
 
 #[derive(Debug, Parser)]
@@ -34,6 +35,11 @@ enum Command {
     /// `probe()` the REST handler dispatches.
     #[command(subcommand)]
     System(system::SystemCommand),
+    /// Manage the age-encrypted secret store the agent reads at
+    /// boot — e.g. `secrets set db:password <pwd>` so the DSN in
+    /// `agent.toml` can stay password-less.
+    #[command(subcommand)]
+    Secrets(secrets::SecretsCommand),
     /// Run the MCP stdio JSON-RPC transport so an MCP host
     /// (Claude Desktop, another agent) can talk to rubix as a
     /// child process. `RUBIX_PRINCIPAL_EMAIL` selects the actor;
@@ -70,5 +76,6 @@ async fn main() -> Result<()> {
         Command::BootstrapUser(args) => bootstrap_user::run(args).await,
         Command::System(cmd) => system::run(cmd).await,
         Command::Mcp(args) => mcp::run(args).await,
+        Command::Secrets(cmd) => secrets::run(cmd).await,
     }
 }

@@ -4,7 +4,7 @@ import { isTauri, type Transport } from './transport'
 import { createTauriTransport } from './tauriTransport'
 import { createWebTransport } from './webTransport'
 
-export type { Transport, AuthUser, QueueItem } from './transport'
+export type { Transport, AuthUser, QueueItem, PingResult } from './transport'
 export { isTauri } from './transport'
 
 // Chosen once at module load: Tauri impl when inside the webview (the global

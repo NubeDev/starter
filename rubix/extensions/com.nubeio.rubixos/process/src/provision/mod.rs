@@ -25,6 +25,7 @@ pub mod ids;
 pub mod identity;
 mod label;
 mod orchestrate;
+mod pages;
 mod placement;
 mod points;
 pub mod template;
@@ -95,6 +96,17 @@ pub fn handle_location_create(ctx: &RubixOsCtx, params: &Value) -> starter_ext_s
 /// `bc_page_create`.
 pub fn handle_page_create(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
     crud::crud_insert(ctx, params, "bc_pages", "page_id", "bc_page_create")
+}
+
+/// `bc_page_update` — rename or re-pin a page (by `page_id`).
+pub fn handle_page_update(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
+    pages::handle_update(ctx, params)
+}
+
+/// `bc_page_delete` — delete a page; drop its widgets and detach (keep)
+/// the devices placed on it as `pending`.
+pub fn handle_page_delete(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Value> {
+    pages::handle_delete(ctx, params)
 }
 
 /// `bc_template_upsert`.

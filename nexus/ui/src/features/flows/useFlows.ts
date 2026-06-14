@@ -1,0 +1,118 @@
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseQueryResult,
+} from "@tanstack/react-query";
+import { useStarterClient } from "@nube/starter-client-react";
+
+import { createFlow } from "@/api/flows/create";
+import { getFlow } from "@/api/flows/get";
+import { listFlows } from "@/api/flows/list";
+import { exportFlow, importFlow } from "@/api/flows/portability";
+import { removeFlow } from "@/api/flows/remove";
+import { updateFlow } from "@/api/flows/update";
+import { startFlow, stopFlow } from "@/api/flows/lifecycle";
+import type {
+  CreateFlowRequest,
+  FlowDetail,
+  FlowExport,
+  FlowSummary,
+  UpdateFlowRequest,
+} from "@/api/types";
+
+const FLOWS_KEY = ["nexus", "flows"] as const;
+
+// The tenant's saved flows with their enabled/running state. Returns the
+// full query result so the screen renders loading/empty/error (F0).
+export function useFlows(): UseQueryResult<FlowSummary[]> {
+  const client = useStarterClient();
+  return useQuery({
+    queryKey: FLOWS_KEY,
+    queryFn: () => listFlows(client),
+    // Running state changes server-side (FlowManager), so keep it fresh.
+    staleTime: 10_000,
+  });
+}
+
+// Start / stop / delete, each refreshing the list so the running pill and
+// row set reflect the new state.
+export function useFlowActions() {
+  const client = useStarterClient();
+  const queryClient = useQueryClient();
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: FLOWS_KEY });
+
+  const start = useMutation<FlowDetail, Error, string>({
+    mutationFn: (id) => startFlow(client, id),
+    onSuccess: invalidate,
+  });
+  const stop = useMutation<FlowDetail, Error, string>({
+    mutationFn: (id) => stopFlow(client, id),
+    onSuccess: invalidate,
+  });
+  const remove = useMutation<void, Error, string>({
+    mutationFn: (id) => removeFlow(client, id),
+    onSuccess: invalidate,
+  });
+
+  return { start, stop, remove };
+}
+
+// One flow's full config (input / pipeline / output), fetched on demand so the
+// builder can open a saved flow for editing. Disabled until an id is given.
+export function useFlow(id: string | null): UseQueryResult<FlowDetail> {
+  const client = useStarterClient();
+  return useQuery({
+    queryKey: [...FLOWS_KEY, id],
+    queryFn: () => getFlow(client, id as string),
+    enabled: id !== null,
+    // The editor wants the config as last saved, not a cached half-edit.
+    staleTime: 0,
+  });
+}
+
+// Create a flow from an assembled request, then refresh the list.
+export function useCreateFlow() {
+  const client = useStarterClient();
+  const queryClient = useQueryClient();
+  return useMutation<FlowDetail, Error, CreateFlowRequest>({
+    mutationFn: (body) => createFlow(client, body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FLOWS_KEY }),
+  });
+}
+
+// Update an existing flow's name / enabled flag / config, then refresh the
+// list and the flow's own detail so a re-open shows the saved state.
+export function useUpdateFlow() {
+  const client = useStarterClient();
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { id: string; body: UpdateFlowRequest }>({
+    mutationFn: ({ id, body }) => updateFlow(client, id, body),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FLOWS_KEY }),
+  });
+}
+
+// Fetch a flow's portable JSON model on demand (the caller saves it to a file
+// for sharing). A mutation, not a query, because it is a user-triggered
+// one-shot. Secrets are redacted server-side.
+export function useExportFlow() {
+  const client = useStarterClient();
+  return useMutation<FlowExport, Error, string>({
+    mutationFn: (id) => exportFlow(client, id),
+  });
+}
+
+// Re-create a flow from a previously exported model (a shared file). Lands
+// stopped. Invalidates the list so the imported flow appears.
+export function useImportFlow() {
+  const client = useStarterClient();
+  const queryClient = useQueryClient();
+  return useMutation<FlowDetail, Error, FlowExport>({
+    mutationFn: (model) => importFlow(client, model),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: FLOWS_KEY }),
+  });
+}

@@ -247,18 +247,19 @@ async fn resolve_tenant(
         };
     }
 
-    match memberships.len() {
-        1 => Ok(memberships[0].tenant_id.clone()),
-        0 => {
-            // No memberships, but a global Admin can still mint
-            // against the super-admin sentinel — matches the
-            // cookie-session admin paths.
-            if matches!(user_role, Role::Admin) {
-                Ok("*".to_string())
-            } else {
-                Err(StatusCode::FORBIDDEN.into_response())
-            }
-        }
+    // No explicit tenant_id requested. Resolution mirrors the cookie path's
+    // `resolve_login_tenant` (login.rs) so a user's bearer and cookie principals
+    // agree. An admin with exactly one membership binds to THAT tenant (they are
+    // that tenant's admin, not a cross-tenant operator); an admin with zero or
+    // several memberships defaults to the super-admin sentinel "*" (a genuinely
+    // global operator that sees every tenant). An admin who wants the global view
+    // despite holding one membership can still pass `tenant_id="*"` explicitly
+    // (handled above). Non-admins resolve from memberships only.
+    match (user_role, memberships.len()) {
+        (Role::Admin, 1) => Ok(memberships[0].tenant_id.clone()),
+        (Role::Admin, _) => Ok("*".to_string()),
+        (_, 1) => Ok(memberships[0].tenant_id.clone()),
+        (_, 0) => Err(StatusCode::FORBIDDEN.into_response()),
         _ => Err((
             StatusCode::CONFLICT,
             Json(TenantRequiredResponse {

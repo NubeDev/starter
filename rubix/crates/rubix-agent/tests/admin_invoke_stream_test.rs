@@ -36,6 +36,7 @@ fn principal(subject: &str, role: Role, scopes: Vec<Scope>) -> Principal {
         scopes,
         tenant_id: None,
         teams: vec![],
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     }
 }

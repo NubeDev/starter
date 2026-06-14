@@ -67,6 +67,8 @@ members = [
     "crates/starter-blob-compose",
     "crates/starter-blob-axum",
     "crates/starter-cron",
+    "crates/starter-setup-spi",
+    "crates/starter-setup",
     "crates/smoke-tests",
     "examples/minimal",
     "examples/gh-report",
@@ -97,7 +99,13 @@ members = [
 # whose manifests pick up `starter-ext-sdk` from the starter-extensions
 # workspace via a path dep; the root rubix workspace must not claim
 # them as members.
-exclude = ["starter-extensions", "rubix/extensions", "rubix/apps"]
+# `nexus/backend/` and `nexus/poc/backend/` are sibling cargo workspaces with
+# their own pinned ArkFlow git rev and a heavy dep tree (DataFusion, protoc). They
+# path-depend up into `crates/starter-*` but keep their own `Cargo.lock`, so the
+# root workspace must not absorb them.
+# `nexus/extensions/` mirrors `rubix/extensions/`: a sibling workspace holding
+# nexus-owned process-flavour extension binaries (path-dep on `starter-ext-sdk`).
+exclude = ["starter-extensions", "rubix/extensions", "rubix/apps", "nexus/poc/backend", "nexus/backend", "nexus/extensions"]
 
 # Pre-existing clippy lints surfaced by clippy 1.94+ that are unrelated to the
 # warehouse-engine-swap rename. CI pins to `stable` (older clippy) so these
@@ -171,6 +179,8 @@ starter-export           = { path = "crates/starter-export",           version =
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-flow-spi         = { path = "crates/starter-flow-spi",         version = "0.1.0" }
 starter-cron             = { path = "crates/starter-cron",             version = "0.1.0" }
+starter-setup-spi        = { path = "crates/starter-setup-spi",        version = "0.1.0" }
+starter-setup            = { path = "crates/starter-setup",            version = "0.1.0" }
 starter-insights         = { path = "crates/starter-insights",         version = "0.1.0" }
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }
 starter-skills           = { path = "crates/starter-skills",           version = "0.1.0" }
@@ -278,6 +288,7 @@ icu_locale_core = { version = "2", default-features = false, features = ["alloc"
 # validator, never the remote `$ref` resolver).
 schemars   = { version = "0.8", features = ["preserve_order"] }
 jsonschema = { version = "0.18", default-features = false }
+serde_yaml = "0.9"
 
 # Storage.
 sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros"] }

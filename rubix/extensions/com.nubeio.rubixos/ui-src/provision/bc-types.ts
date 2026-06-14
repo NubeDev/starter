@@ -83,6 +83,15 @@ export interface MutationResult {
   template?: unknown;
 }
 
+// Result of `bc_page_delete`: the page removed, plus how many widgets
+// were dropped and how many devices were detached (kept, → pending).
+export interface PageDeleteResult {
+  operation: string;
+  affected: number;
+  widgets_deleted: number;
+  devices_detached: number;
+}
+
 export interface DeviceRow {
   device_id: string;
   template: string;
@@ -94,6 +103,10 @@ export interface DeviceRow {
   page_id: string | null;
   status: string;
   provisioned_at: string | null;
+  // Only projected by the single-device read (`bc_device_get`); the
+  // lighter `bc_devices_list` omits them, so they're optional here.
+  default_ip?: string | null;
+  hw_rev?: string | null;
 }
 
 export interface SiteRow {

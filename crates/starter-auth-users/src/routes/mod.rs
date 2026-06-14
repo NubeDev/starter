@@ -16,8 +16,8 @@ pub use router::auth_router;
 pub use signup::{SignupError, SignupRequest, SignupResponse};
 pub use state::AuthState;
 pub use tenants::{
-    tenants_router, AddMemberBody, CreateTenantBody, MembershipView, PatchMemberBody,
-    PatchTenantBody, TenantView,
+    tenant_users_router, tenants_router, AddMemberBody, CreateTenantBody, CreateUserBody,
+    MembershipView, PatchMemberBody, PatchTenantBody, TenantView,
 };
 pub use token::{
     MissingTenantIdResponse, TenantMembershipEntry, TenantRequiredResponse, TokenRequest,

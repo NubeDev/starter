@@ -59,12 +59,19 @@ export interface PageDetailDrawerProps {
   page: ResourceInstance | null;
   /** Tenant id — drives the team/member picker and the grant scope. */
   tenantId: string;
+  /**
+   * Resource kind the grants/share-scope target. Defaults to the Rubix dashboard
+   * page so existing callers are unchanged; hosts owning a different kind (e.g.
+   * nexus passes `nexus.dashboard`) override it to reuse this drawer verbatim.
+   */
+  kind?: string;
   onClose: () => void;
 }
 
 export function PageDetailDrawer({
   page,
   tenantId,
+  kind = PAGE_KIND,
   onClose,
 }: PageDetailDrawerProps) {
   const open = page !== null;
@@ -74,7 +81,7 @@ export function PageDetailDrawer({
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-lg"
       >
-        {page ? <Body page={page} tenantId={tenantId} /> : null}
+        {page ? <Body page={page} tenantId={tenantId} kind={kind} /> : null}
       </SheetContent>
     </Sheet>
   );
@@ -83,9 +90,11 @@ export function PageDetailDrawer({
 function Body({
   page,
   tenantId,
+  kind,
 }: {
   page: ResourceInstance;
   tenantId: string;
+  kind: string;
 }) {
   const acl = page.effective_acl;
   return (
@@ -93,7 +102,7 @@ function Body({
       <SheetHeader className="border-b border-border px-6 py-4">
         <SheetTitle className="text-lg">{page.label}</SheetTitle>
         <SheetDescription>
-          Manage who can access this page.
+          Manage who can access this.
         </SheetDescription>
       </SheetHeader>
       <ScrollArea className="flex-1">
@@ -113,7 +122,7 @@ function Body({
             </div>
             <div className="grid gap-1">
               <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                Page ID
+                Resource ID
               </dt>
               <dd>
                 <code className="text-xs">{page.id}</code>
@@ -133,10 +142,12 @@ function Body({
             scope={acl.share_scope}
             pageId={page.id}
             tenantId={tenantId}
+            kind={kind}
           />
           <GrantsSection
             pageId={page.id}
             tenantId={tenantId}
+            kind={kind}
             fallback={acl}
           />
         </div>
@@ -149,10 +160,12 @@ function ShareScopeSection({
   scope,
   pageId,
   tenantId,
+  kind,
 }: {
   scope: ShareScope;
   pageId: string;
   tenantId: string;
+  kind: string;
 }) {
   const setScope = useSetShareScope();
   return (
@@ -162,7 +175,7 @@ function ShareScopeSection({
         value={scope}
         onValueChange={(v) =>
           setScope.mutate({
-            kind: PAGE_KIND,
+            kind,
             resourceId: pageId,
             body: { scope: v as ShareScope, tenant_id: tenantId },
           })
@@ -190,15 +203,17 @@ function ShareScopeSection({
 function GrantsSection({
   pageId,
   tenantId,
+  kind,
   fallback,
 }: {
   pageId: string;
   tenantId: string;
+  kind: string;
   fallback: EffectiveAcl;
 }) {
   const [adding, setAdding] = useState(false);
   const grants = useGrants({
-    resource_kind: PAGE_KIND,
+    resource_kind: kind,
     resource_id: pageId,
     tenant_id: tenantId,
   });
@@ -247,7 +262,7 @@ function GrantsSection({
             create.mutate(
               {
                 subject,
-                resource_kind: PAGE_KIND,
+                resource_kind: kind,
                 resource_id: pageId,
                 tier,
                 tenant_id: tenantId,

@@ -35,6 +35,7 @@ fn principal_with_teams(subject: &str, tenant_id: &str, teams: &[&str]) -> Princ
         scopes: vec![],
         tenant_id: Some(tenant_id.into()),
         teams: teams.iter().map(|s| (*s).to_string()).collect(),
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

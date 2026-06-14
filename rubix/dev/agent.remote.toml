@@ -1,0 +1,26 @@
+# rubix-agent config — remote Timescale test DB (timescale-test.nube-iiot.com).
+#
+# Boot against it with:
+#     RUBIX_CONFIG=rubix/dev/agent.remote.toml cargo run -p rubix-agent
+#
+# The DB password is NOT in this file — it lives in the age-encrypted
+# secrets store under the key `db:password` and is spliced into the
+# DSN at boot by `boot::secrets::resolve_database_url`. Set it once:
+#     rubix-admin secrets set db:password '<pwd>' --path ~/.config/rubix/secrets
+
+# Same port as the local-DB dev agent (8088) so the Vite frontend proxy
+# and `make wait-agent` work unchanged — this REPLACES the local agent
+# rather than running beside it. `make start-remote` calls `make stop`
+# first to free the port.
+bind = "0.0.0.0:8088"
+
+# Password-less DSN; boot splices in `db:password` from the store.
+# Single Timescale-enabled Postgres backs both OLTP and the warehouse
+# read plane (WarehouseClient::from_pool), so the extension's
+# warehouse_read templates resolve against the same connection.
+database_url = "postgres://postgres@timescale-test.nube-iiot.com:5432/postgres"
+database_password_secret = "db:password"
+
+# age-encrypted store holding `db:password`. Identity (decryption) key
+# is at <secrets_path>/identity.age-key — BACK IT UP.
+secrets_path = "/home/user/.config/rubix/secrets"

@@ -1,0 +1,148 @@
+# Nexus backend — its own cargo workspace (a sibling of the root starter
+# workspace, excluded from it). The separate lockfile keeps the backend's
+# DataFusion/Arrow resolution from perturbing the root workspace.
+[workspace]
+resolver = "2"
+members = [
+    "crates/nexus-spi",
+    "crates/nexus-engine",
+    "crates/nexus-insights",
+    "crates/nexus-store",
+    "crates/nexus-api",
+    "crates/nexus-ai",
+    "crates/nexus-skills",
+    "crates/nexus-watchdog",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.88"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+# In-repo nexus crates (path deps within this workspace).
+nexus-spi      = { path = "crates/nexus-spi" }
+nexus-engine   = { path = "crates/nexus-engine" }
+nexus-insights = { path = "crates/nexus-insights" }
+nexus-store  = { path = "crates/nexus-store" }
+nexus-ai     = { path = "crates/nexus-ai" }
+nexus-skills = { path = "crates/nexus-skills" }
+
+# Starter crates consumed from the root workspace via path deps. Path
+# dependencies cross workspace boundaries freely; these are NOT forked.
+starter-spi            = { path = "../../crates/starter-spi" }
+starter-server         = { path = "../../crates/starter-server" }
+starter-prefs          = { path = "../../crates/starter-prefs" }
+starter-auth-users     = { path = "../../crates/starter-auth-users" }
+starter-authz          = { path = "../../crates/starter-authz" }
+starter-store-postgres = { path = "../../crates/starter-store-postgres" }
+starter-config         = { path = "../../crates/starter-config" }
+starter-observability  = { path = "../../crates/starter-observability" }
+# Shared data-root resolver (override > $NEXUS_DATA_ROOT > OS XDG). Used to land
+# uploaded extension bundles + supervisor pidfiles under an external data root
+# (the same convention rubix uses via `Paths::resolve("rubix", …)`), instead of
+# inside the in-repo crate tree.
+starter-paths          = { path = "../../crates/starter-paths" }
+# WS-12 audit/undo: reuse the platform changelog read-side query API and the
+# per-actor undo service + Reversible registry. nexus ships its own tenant-aware
+# recorder/changelog over a tenant-scoped `nexus_changes` table (RLS), but the
+# `Change`/`ChangeFilter`/`ReversibleRegistry`/`UndoService`/`PgUndoCursor` types
+# are consumed unchanged.
+starter-changelog      = { path = "../../crates/starter-changelog" }
+starter-undo           = { path = "../../crates/starter-undo" }
+
+# Setup/Automation Builder: the template/run domain + REST/SSE/MCP surfaces, the
+# flow engine that executes runs, and the extension→flow node adapter. Consumed
+# by path like the other `starter-*` crates so the `Router<S>`/`Principal`/
+# `NodeBehavior` types unify across the seam (incl. the `starter-ext-flow`
+# `ProcessNodeProxy`, which shares `starter-ext-supervisor`'s `SupervisorHandle`).
+starter-setup          = { path = "../../crates/starter-setup" }
+starter-flow           = { path = "../../crates/starter-flow" }
+starter-flow-spi       = { path = "../../crates/starter-flow-spi" }
+starter-ext-flow       = { path = "../../starter-extensions/crates/starter-ext-flow" }
+
+# WS-14 extensions runtime. The `starter-extensions` kernel is a separate
+# sibling cargo workspace (excluded from the root `starter` workspace), but its
+# crates are consumed here by path the same way the `starter-*` crates are.
+# These crates depend on `starter-spi`/`starter-server`/`starter-authz` via the
+# *same* physical path deps nexus uses (`../../crates/...`), so Cargo unifies
+# them to one copy and the `Authenticator`/`Role`/`Router<S>` types match across
+# the seam.
+starter-ext-spi        = { path = "../../starter-extensions/crates/starter-ext-spi" }
+starter-ext-host       = { path = "../../starter-extensions/crates/starter-ext-host" }
+starter-ext-server     = { path = "../../starter-extensions/crates/starter-ext-server" }
+starter-ext-supervisor = { path = "../../starter-extensions/crates/starter-ext-supervisor" }
+starter-ext-store-pg   = { path = "../../starter-extensions/crates/starter-ext-store-pg" }
+
+# DataFusion / Arrow — the engine's vectorised core. Pinned to 47 (the version
+# the native pipeline was cut over against). Free to bump post-cutover, before
+# federation (RW-05) leans on newer sqlparser fixes.
+datafusion = "47"
+
+# Web + async stack — versions matched to the starter crates so the shared axum
+# Router / utoipa OpenApi types unify across the dependency graph.
+axum         = { version = "0.8", features = ["macros"] }
+tower        = "0.5"
+tower-http   = { version = "0.6", features = ["cors", "trace"] }
+utoipa       = { version = "5", features = ["axum_extras", "uuid", "chrono"] }
+tokio        = { version = "1", features = ["rt-multi-thread", "macros", "sync", "signal", "time"] }
+tokio-util   = { version = "0.7", features = ["rt"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures      = "0.3"
+
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "macros", "migrate", "uuid", "chrono", "json"] }
+
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Declarative kind packs (WS-10): YAML manifest + JSON-Schema param validation.
+# Both versions are the ones already resolved in the graph (via zag-agent), so
+# adding them as direct deps pulls nothing new.
+serde_yaml = "0.9"
+jsonschema = { version = "0.29", default-features = false }
+uuid       = { version = "1", features = ["v4", "serde"] }
+chrono     = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+
+async-trait = "0.1"
+thiserror   = "1"
+tracing     = "0.1"
+# WS-16 watchdog supervisor: a tiny error-context crate and raw `kill(2)` for the
+# signal-escalation path. Only the `nexus-watchdog` binary uses these; keeping
+# the dep set minimal is the point — a build break elsewhere must not break the
+# supervisor.
+anyhow      = "1"
+libc        = "0.2"
+
+# Sandboxed insight scripting (RW-06). `sync` makes the engine + scope `Send` so a
+# script can run inside an async handler; `no_closure` removes the one Rhai feature
+# (shared captured state) that complicates the per-execution sandbox model — every
+# insight is one fresh engine with no cross-call state by design.
+rhai = { version = "1.20", default-features = false, features = ["sync", "std"] }
+
+# MQTT client for the optional `mqtt` datasource connector (WS-08b). Pulled in
+# only when the `mqtt` feature is enabled — OFF by default per HOW-TO-CODE §9, so
+# a build without device connectors carries none of its transitive deps. `url`
+# off keeps the surface to the broker host/port/credentials nexus already models.
+rumqttc = { version = "0.24", default-features = false, features = ["use-rustls"] }
+
+# Eclipse Zenoh subscriber for the optional `zenoh` ingest source (RW-09). Pulled
+# in only when nexus-engine's `zenoh` feature is enabled — OFF by default per
+# roadmap §8 (same gating precedent as `mqtt`/rumqttc), so a build without the
+# zenoh transport carries none of its transitive deps. In-process peer mode lets
+# tests run a publisher→subscriber round-trip with no external router.
+# `transport_tcp` is the one transport we ship — the common deployment shape and
+# what the in-process loopback test connects over; the rest stay off to keep the
+# gated build's surface small.
+zenoh = { version = "1.0", default-features = false, features = ["transport_tcp"] }
+
+# Crypto for the R6 envelope encryption and R8 stream-token signing.
+aes-gcm = "0.10"
+hmac    = "0.12"
+sha2    = "0.10"
+rand    = "0.8"
+base64  = "0.22"
+
+# Test-only.
+testcontainers         = "0.23"
+testcontainers-modules = { version = "0.11", features = ["postgres"] }
+reqwest                = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+tracing-subscriber     = { version = "0.3", features = ["env-filter"] }

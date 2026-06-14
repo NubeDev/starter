@@ -115,6 +115,7 @@ async fn principal_is_bound_for_dispatch() {
         scopes: vec![],
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     };
     let (mut client, _server) = pair_with_principal(registry(), principal);

@@ -1,0 +1,10 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parquet datasource config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path"],
+  "properties": {
+    "path": { "type": "string", "minLength": 1, "title": "File path", "description": "Server-local path to the Parquet file the engine reads." }
+  }
+}

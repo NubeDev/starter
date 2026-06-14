@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MeterGetParams",
+  "description": "One meter by id.",
+  "type": "object",
+  "properties": {
+    "meter_id": { "type": "string", "minLength": 1 }
+  },
+  "required": ["meter_id"],
+  "additionalProperties": false
+}

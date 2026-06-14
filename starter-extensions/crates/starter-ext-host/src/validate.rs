@@ -172,6 +172,46 @@ fn check_namespace(m: &Manifest) -> Result<()> {
             )));
         }
     }
+    // `contributes.provides[].id` (WS-18 Wave B). A provided id must be owned
+    // by the extension (R4) *and* reference an id the extension actually
+    // contributes — a `tools[].id` or a `nodes[].kind`. Marking a non-existent
+    // id as provided is a manifest error (it could never dispatch).
+    for e in &m.contributes.provides {
+        if !owner.owns(&e.id) {
+            return Err(Error::validation(format!(
+                "contributes.provides[].id {:?} escapes the extension's namespace {:?} \
+                 (WS-18; a provided id must be owned by the extension)",
+                e.id,
+                owner.as_str()
+            )));
+        }
+        let is_tool = m.contributes.tools.iter().any(|t| t.id == e.id);
+        let is_node = m.contributes.nodes.iter().any(|n| n.kind == e.id);
+        if !is_tool && !is_node {
+            return Err(Error::validation(format!(
+                "contributes.provides[].id {:?} does not reference a contributed \
+                 tool (tools[].id) or node (nodes[].kind) (WS-18)",
+                e.id
+            )));
+        }
+    }
+    // `requires_extensions[].provides[]` (WS-18 Wave B). Each provided id the
+    // caller lists must be owned by the *peer* extension it names — a
+    // locally-checkable invariant. (That the peer actually exists, is enabled,
+    // and `provides` the id is resolved host-side at load against the sealed
+    // registry, where the peer's manifest is available.)
+    for req in &m.requires_extensions {
+        for provided in &req.provides {
+            if !req.id.owns(provided) {
+                return Err(Error::validation(format!(
+                    "requires_extensions[].provides[] {:?} is not owned by the named peer \
+                     extension {:?} (WS-18)",
+                    provided,
+                    req.id.as_str()
+                )));
+            }
+        }
+    }
     Ok(())
 }
 
@@ -221,7 +261,11 @@ fn capability_matches(c: &Capability, category: &str) -> bool {
         (Capability::Fs { .. }, "fs") => true,
         (Capability::WallClock { .. }, "wall_clock") => true,
         (Capability::WarehouseRead { .. }, "warehouse_read") => true,
+        (Capability::WarehouseWrite { .. }, "warehouse_write") => true,
         (Capability::EventBus { .. }, "event_bus") => true,
+        (Capability::Extension { .. }, "extension") => true,
+        (Capability::Datasource { .. }, "datasource") => true,
+        (Capability::Ingest { .. }, "ingest") => true,
         (Capability::DashboardRead { .. }, "dashboard_read") => true,
         (Capability::DashboardWrite { .. }, "dashboard_write") => true,
         (Capability::AuthzCheck { .. }, "authz_check") => true,
@@ -595,6 +639,132 @@ requires:
 capabilities:
   - kind: warehouse_read
     tables: [samples]
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn provides_ok_for_contributed_tool() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.geocode
+version: 0.1.0
+display_name: "G"
+runtime: { kind: process, bin: ./bin/g }
+contributes:
+  tools:
+    - id: com.acme.geocode.lookup
+      input_schema: a.json
+      output_schema: b.json
+      description_file: c.md
+  provides:
+    - id: com.acme.geocode.lookup
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn provides_ok_for_contributed_node() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.geocode
+version: 0.1.0
+display_name: "G"
+runtime: { kind: process, bin: ./bin/g }
+contributes:
+  nodes:
+    - kind: com.acme.geocode.enrich
+      settings_schema: s.json
+  provides:
+    - id: com.acme.geocode.enrich
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn provides_rejects_unknown_id() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.geocode
+version: 0.1.0
+display_name: "G"
+runtime: { kind: process, bin: ./bin/g }
+contributes:
+  provides:
+    - id: com.acme.geocode.nope
+"#,
+        );
+        let Error::Validation(msg) = validate_manifest(&m).unwrap_err() else {
+            panic!("expected Validation error");
+        };
+        assert!(
+            msg.contains("does not reference a contributed"),
+            "unexpected error: {msg}"
+        );
+    }
+
+    #[test]
+    fn provides_rejects_foreign_namespace() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.geocode
+version: 0.1.0
+display_name: "G"
+runtime: { kind: process, bin: ./bin/g }
+contributes:
+  provides:
+    - id: com.other.thing.lookup
+"#,
+        );
+        let Error::Validation(msg) = validate_manifest(&m).unwrap_err() else {
+            panic!("expected Validation error");
+        };
+        assert!(msg.contains("escapes the extension's namespace"), "{msg}");
+    }
+
+    #[test]
+    fn requires_extensions_provides_must_be_owned_by_peer() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.sites
+version: 0.1.0
+display_name: "S"
+runtime: { kind: process, bin: ./bin/s }
+requires_extensions:
+  - id: com.acme.geocode
+    provides: [com.other.geocode.lookup]
+"#,
+        );
+        let Error::Validation(msg) = validate_manifest(&m).unwrap_err() else {
+            panic!("expected Validation error");
+        };
+        assert!(msg.contains("is not owned by the named peer"), "{msg}");
+    }
+
+    #[test]
+    fn requires_extensions_ok_when_owned_by_peer() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.sites
+version: 0.1.0
+display_name: "S"
+runtime: { kind: process, bin: ./bin/s }
+requires_extensions:
+  - id: com.acme.geocode
+    provides: [com.acme.geocode.lookup]
+    version: "^1"
+capabilities:
+  - kind: extension
+    targets: [com.acme.geocode:com.acme.geocode.lookup]
 "#,
         );
         validate_manifest(&m).unwrap();

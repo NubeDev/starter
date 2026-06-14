@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RegisterSiteInput",
+  "type": "object",
+  "description": "Register a site by name + address. The address is geocoded via the com.acme.geocode peer extension.",
+  "properties": {
+    "site_name": { "type": "string", "description": "Human-readable site name." },
+    "address":   { "type": "string", "description": "Site address, resolved to coordinates by the geocode peer." }
+  },
+  "required": ["site_name", "address"]
+}

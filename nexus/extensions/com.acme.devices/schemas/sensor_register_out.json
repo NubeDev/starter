@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SensorRegisterOutput",
+  "type": "object",
+  "properties": {
+    "sensor_id": { "type": "string", "description": "Stable id of the registered sensor." },
+    "out":       { "type": "string", "description": "Summary passed to the next node." }
+  },
+  "required": ["sensor_id", "out"]
+}

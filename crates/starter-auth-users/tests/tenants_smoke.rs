@@ -36,14 +36,16 @@ fn tenant(slug: &str) -> TenantRecord {
         slug: slug.into(),
         display_name: slug.into(),
         audit_allow_sample: None,
+        parent_id: None,
     }
 }
 
 #[tokio::test]
 async fn reserved_slugs_are_rejected_at_application_level() {
-    for s in [
-        "admin", "api", "auth", "v1", "v2", "static", "system", "0", "123",
-    ] {
+    // Note: `system` is intentionally NOT reserved — migration 0007
+    // promoted it to a real tenant row (the UNIQUE slug constraint
+    // prevents duplicates), so it left the reserved list.
+    for s in ["admin", "api", "auth", "v1", "v2", "static", "0", "123"] {
         assert!(is_reserved_slug(s), "expected {s} to be reserved");
     }
     assert!(!is_reserved_slug("acme"));

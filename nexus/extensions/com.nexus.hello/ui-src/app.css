@@ -1,0 +1,74 @@
+/* Extension CSS strategy (ported from `com.nubeio.rubixos`):
+ *
+ * The extension ships its OWN Tailwind v4 bundle and renders alongside the
+ * host's bundle. Two things make that safe and correct:
+ *
+ *   1. We import ONLY `tailwindcss/utilities` (the utility class rules) and
+ *      `tailwindcss/theme` in `reference` mode — NOT `tailwindcss/preflight`.
+ *      Preflight would reset host element defaults (margins, box-sizing, …)
+ *      across the whole page. `theme(reference)` registers the token names so
+ *      Tailwind generates `bg-card` / `text-muted-foreground` / etc., but emits
+ *      ZERO token values — the host owns the actual `--*` values on `:root`.
+ *
+ *   2. The Vite config scopes every emitted selector to
+ *      `[data-ext-id="com.nexus.hello"]` so these utility rules apply only
+ *      inside the extension's own subtree and never fight the host's
+ *      identically-named classes by source order.
+ *
+ * Nexus specifics (differ from rubix):
+ *   - The nexus host flips a `.dark` CLASS on <html> for dark mode (rubix uses
+ *     `data-mode="dark"`). So any dark-mode rule here keys off `.dark`.
+ *   - The host writes BARE tokens (`--primary`, `--card`, …) and the ui-kit
+ *     aliases `--color-* → var(--*)`. The utilities below reference
+ *     `--color-primary` etc., which resolve through that alias to the host's
+ *     live palette — so switching theme/palette in the host re-tints the
+ *     extension automatically.
+ *
+ * The legacy shorthand `@import "tailwindcss" no-preflight;` is NOT valid v4 —
+ * the parser treats the trailing token as a (never-matching) media query, so
+ * every utility silently disappears. Use the explicit imports below.
+ */
+@import "tailwindcss/theme" theme(reference);
+@import "tailwindcss/utilities";
+
+/* `@theme reference` — declare the token names so Tailwind generates the
+ * utility classes (bg-card, text-primary, …) while emitting NO values. The host
+ * already defines these on :root (as `--primary` etc., aliased by the kit from
+ * `--color-primary`); the extension bundle ships only the class definitions. */
+@theme reference {
+  --color-background: initial;
+  --color-foreground: initial;
+  --color-card: initial;
+  --color-card-foreground: initial;
+  --color-popover: initial;
+  --color-popover-foreground: initial;
+  --color-primary: initial;
+  --color-primary-foreground: initial;
+  --color-secondary: initial;
+  --color-secondary-foreground: initial;
+  --color-muted: initial;
+  --color-muted-foreground: initial;
+  --color-accent: initial;
+  --color-accent-foreground: initial;
+  --color-destructive: initial;
+  --color-destructive-foreground: initial;
+  --color-border: initial;
+  --color-input: initial;
+  --color-ring: initial;
+  --color-sidebar: initial;
+  --color-sidebar-foreground: initial;
+  --color-sidebar-primary: initial;
+  --color-sidebar-primary-foreground: initial;
+  --color-sidebar-accent: initial;
+  --color-sidebar-accent-foreground: initial;
+  --color-sidebar-border: initial;
+  --color-sidebar-ring: initial;
+
+  --radius-sm: initial;
+  --radius-md: initial;
+  --radius-lg: initial;
+  --radius-xl: initial;
+
+  --font-sans: initial;
+  --font-mono: initial;
+}

@@ -14,6 +14,7 @@ import type {
   LocationRow,
   LogRow,
   MutationResult,
+  PageDeleteResult,
   PageRow,
   PointRow,
   ProvisionInput,
@@ -83,6 +84,19 @@ export function pageCreate(
   return mutate<MutationResult>(tool("bc_page_create"), { row });
 }
 
+// Update a page by `page_id` — rename, or re-pin its site/location.
+export function pageUpdate(
+  row: { page_id: string; name?: string; site_id?: string; location_id?: string },
+): Promise<MutationResult> {
+  return mutate<MutationResult>(tool("bc_page_update"), { row });
+}
+
+// Delete a page by `page_id`. Its widgets are dropped; devices placed on
+// it are kept but detached (page_id cleared, status → pending).
+export function pageDelete(page_id: string): Promise<PageDeleteResult> {
+  return mutate<PageDeleteResult>(tool("bc_page_delete"), { row: { page_id } });
+}
+
 export function templateUpsert(yaml: string): Promise<MutationResult> {
   return mutate<MutationResult>(tool("bc_template_upsert"), { yaml });
 }
@@ -97,6 +111,15 @@ export function listDevices(
   params: { site_id?: string; status?: string; limit?: number } = {},
 ): Promise<ReadonlyArray<DeviceRow>> {
   return fetchTemplate<DeviceRow>(tool("bc_devices_list"), params);
+}
+
+// Read a single device by id — the R in CRUD. Returns the full row
+// (incl. `default_ip` / `hw_rev`, which the list projection omits), or
+// null when no device matches in the caller's tenant.
+export function getDevice(device_id: string): Promise<DeviceRow | null> {
+  return fetchTemplate<DeviceRow>(tool("bc_device_get"), { device_id }).then(
+    (rows) => rows[0] ?? null,
+  );
 }
 
 export function listSites(limit = 200): Promise<ReadonlyArray<SiteRow>> {

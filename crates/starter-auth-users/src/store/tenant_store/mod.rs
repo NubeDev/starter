@@ -23,6 +23,12 @@ mod postgres;
 #[cfg(feature = "postgres")]
 pub use postgres::PgTenantStore;
 
+/// Maximum tenant tree depth (ADR-tenant-hierarchy). A create whose
+/// resulting `depth` would exceed this is refused — a cheap runaway
+/// backstop. Reseller chains are a handful of levels; 16 is far
+/// above any real hierarchy.
+pub const MAX_TENANT_DEPTH: i32 = 16;
+
 /// Tenant row.
 #[derive(Debug, Clone)]
 pub struct TenantRecord {
@@ -34,6 +40,9 @@ pub struct TenantRecord {
     pub display_name: String,
     /// Per-tenant override of the audit-log allow-sample rate.
     pub audit_allow_sample: Option<i32>,
+    /// Parent tenant id (ADR-tenant-hierarchy). `None` is a root
+    /// tenant. Immutable after create — re-parenting is unsupported.
+    pub parent_id: Option<String>,
 }
 
 /// Team row (Phase 7b — R13).
@@ -49,6 +58,17 @@ pub struct TeamRecord {
     pub display_name: String,
 }
 
+/// Team-member row (Phase 7b — R13). Joins a user to a team, with an
+/// optional email label populated when the read joins the users table.
+#[derive(Debug, Clone)]
+pub struct TeamMemberRecord {
+    /// User id.
+    pub user_id: String,
+    /// The user's email, populated when the read joins the users table.
+    /// `None` for stores that do not populate it — a human-readable label.
+    pub email: Option<String>,
+}
+
 /// Membership row joining a user to a tenant with a role.
 #[derive(Debug, Clone)]
 pub struct MembershipRecord {
@@ -58,6 +78,11 @@ pub struct MembershipRecord {
     pub user_id: String,
     /// Role within the tenant. One of `reader | writer | admin`.
     pub role: String,
+    /// The user's email, populated when the read joins the users table. `None`
+    /// for writes (add/patch return the membership without re-reading the user)
+    /// and for stores that do not populate it — a human-readable label for
+    /// member pickers.
+    pub email: Option<String>,
 }
 
 /// Tenant-store failures.
@@ -76,6 +101,13 @@ pub enum TenantStoreError {
     /// Lookup found no row.
     #[error("tenant not found: {0}")]
     NotFound(String),
+    /// `parent_id` referenced a tenant that does not exist
+    /// (ADR-tenant-hierarchy).
+    #[error("parent tenant not found: {0}")]
+    ParentNotFound(String),
+    /// Creating under this parent would exceed [`MAX_TENANT_DEPTH`].
+    #[error("tenant tree too deep (max {MAX_TENANT_DEPTH}): {0}")]
+    MaxDepthExceeded(String),
 }
 
 /// Reserved slugs — rejected by both the application and the
@@ -117,6 +149,13 @@ pub fn is_reserved_slug(slug: &str) -> bool {
 pub trait TenantStore: Send + Sync {
     /// Insert a new tenant. Refuses reserved slugs with
     /// `ReservedSlug`; collides with `SlugConflict`.
+    ///
+    /// When `row.parent_id` is `Some`, the parent must exist
+    /// (`ParentNotFound` otherwise) and the resulting depth must not
+    /// exceed [`MAX_TENANT_DEPTH`] (`MaxDepthExceeded` otherwise).
+    /// The closure rows (the new tenant's self row plus one row per
+    /// inherited ancestor, each one deeper) are written in the same
+    /// transaction as the tenant insert (ADR-tenant-hierarchy).
     async fn create_tenant(&self, row: &TenantRecord) -> Result<(), TenantStoreError>;
 
     /// List every tenant (used by super-admin views).
@@ -183,6 +222,14 @@ pub trait TenantStore: Send + Sync {
     /// List the teams in a tenant.
     async fn list_teams(&self, tenant_id: &str) -> Result<Vec<TeamRecord>, TenantStoreError>;
 
+    /// List the members of a team (used by admin UIs). Joins the
+    /// users table for a human-readable email label, mirroring
+    /// [`members_of_tenant`](Self::members_of_tenant).
+    async fn members_of_team(
+        &self,
+        team_id: &str,
+    ) -> Result<Vec<TeamMemberRecord>, TenantStoreError>;
+
     /// Add a user to a team.
     async fn add_team_member(&self, team_id: &str, user_id: &str) -> Result<(), TenantStoreError>;
 
@@ -204,4 +251,39 @@ pub trait TenantStore: Send + Sync {
         tenant_id: &str,
         user_id: &str,
     ) -> Result<Vec<String>, TenantStoreError>;
+
+    // ------------------------------------------------- hierarchy (ADR)
+
+    /// Return every tenant id in the subtree rooted at `tenant_id`,
+    /// **inclusive** of `tenant_id` itself (the depth-0 self row).
+    /// For a leaf tenant this is `[tenant_id]`; for a parent it also
+    /// contains every descendant. Used at session-mint / token-verify
+    /// to populate `Principal.tenant_scope` (ADR-tenant-hierarchy).
+    /// An unknown `tenant_id` yields an empty vec (no closure rows).
+    async fn subtree_ids(&self, tenant_id: &str) -> Result<Vec<String>, TenantStoreError>;
+
+    /// True when `ancestor` is an ancestor of — or equal to —
+    /// `descendant` (i.e. a closure row `(ancestor, descendant)`
+    /// exists). Used to authorize provisioning: a caller may create a
+    /// tenant under `parent` only when they administer `parent`.
+    async fn is_ancestor(
+        &self,
+        ancestor: &str,
+        descendant: &str,
+    ) -> Result<bool, TenantStoreError>;
+
+    /// List the direct children of `tenant_id` (closure depth = 1).
+    /// Convenience for admin UIs rendering a tree.
+    async fn list_children(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<TenantRecord>, TenantStoreError>;
+
+    /// List every tenant in the subtree rooted at `tenant_id`,
+    /// inclusive, as full records (vs [`Self::subtree_ids`] which
+    /// returns ids only). Convenience for admin UIs.
+    async fn list_subtree(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<TenantRecord>, TenantStoreError>;
 }

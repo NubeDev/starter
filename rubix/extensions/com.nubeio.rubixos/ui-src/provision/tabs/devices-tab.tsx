@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ChevronDown,
   ChevronRight,
+  Eye,
   MapPin,
   Pencil,
   QrCode,
@@ -75,31 +76,72 @@ export function DevicesTab(): React.ReactElement {
       .finally(() => setLoading(false));
   }, [site, status]);
 
+  // Silent background refresh for the live poll: same query as `load`
+  // but without flipping the `loading` spinner (so the refresh icon
+  // doesn't blink every tick) and swallowing transient errors (a single
+  // dropped poll shouldn't paint an error banner over good data).
+  const poll = React.useCallback(() => {
+    listDevices({ site_id: site || undefined, status: status || undefined, limit: 500 })
+      .then(setRows)
+      .catch(() => undefined);
+  }, [site, status]);
+
   React.useEffect(load, [load, refresh]);
   React.useEffect(() => {
     listSites().then(setSites).catch(() => setSites([]));
   }, [refresh]);
 
-  const filtered = rows.filter((r) => {
+  // Live updates via polling (the platform has no per-extension data SSE
+  // channel today; a true push feed would need a host-side route). Poll
+  // every 5s, but never while the tab is hidden (no point refetching
+  // off-screen) nor mid-interaction (`editing`/`placing` own the row —
+  // a refetch underneath them would be jarring). The toolbar refresh
+  // button stays for an on-demand pull. On regaining focus we refetch
+  // once immediately so a backgrounded tab catches up at once.
+  React.useEffect(() => {
+    const busy = () => document.hidden || editing !== null || placing !== null;
+    const id = window.setInterval(() => {
+      if (!busy()) poll();
+    }, 5000);
+    const onVisible = () => {
+      if (!busy()) poll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [poll, editing, placing]);
+
+  // Decommission is a soft-delete (status flips, history retained —
+  // BARCODE.md §7), so the row is still returned by the list query. Hide
+  // those tombstones from the default view so "decommission" reads as a
+  // delete; they remain reachable by explicitly selecting the
+  // "decommissioned" status filter (which sends it server-side, so this
+  // client guard is a no-op then and never hides a deliberate view).
+  const visible = rows.filter((r) => status !== "" || r.status.toLowerCase() !== "decommissioned");
+
+  const filtered = visible.filter((r) => {
     if (!q.trim()) return true;
     const hay = `${r.name ?? ""} ${r.device_id} ${r.template} ${r.address ?? ""}`.toLowerCase();
     return hay.includes(q.trim().toLowerCase());
   });
 
-  // Footer KPIs derived from the full (unfiltered) result set so the
-  // fleet totals don't change as the user types in the search box.
+  // Footer KPIs derived from the visible result set (search-independent,
+  // so totals don't shift as the user types) — decommissioned tombstones
+  // are excluded to match what the table shows.
   const kpis = React.useMemo(() => {
     let connected = 0;
     let syncing = 0;
     let alerts = 0;
-    for (const r of rows) {
+    for (const r of visible) {
       const t = statusTone(r.status);
       if (t.dot === "bg-emerald-500") connected += 1;
       else if (t.dot === "bg-amber-500") syncing += 1;
       else if (t.dot === "bg-rose-500") alerts += 1;
     }
     return { connected, syncing, alerts };
-  }, [rows]);
+  }, [visible]);
 
   const saveRename = (id: string) => {
     deviceUpdate({ device_id: id, name: editName.trim() })
@@ -234,6 +276,9 @@ export function DevicesTab(): React.ReactElement {
                             <span className="flex items-center gap-1"><MapPin className="size-4" /> Place on page</span>
                           </button>
                         ) : null}
+                        <a href={deviceHref(r.device_id)} aria-label="See device" title="See" onClick={(e) => { e.preventDefault(); gotoDevice(r.device_id); }} className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+                          <Eye className="size-4" />
+                        </a>
                         <button type="button" aria-label="Rename device" title="Rename" onClick={() => { setEditing(r.device_id); setEditName(r.name ?? ""); }} className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
                           <Pencil className="size-4" />
                         </button>
@@ -269,7 +314,7 @@ export function DevicesTab(): React.ReactElement {
         <StatTile icon={Wifi} label="Connected" value={kpis.connected} tone="bg-emerald-500/10 text-emerald-400" />
         <StatTile icon={RefreshCw} label="Syncing" value={kpis.syncing} tone="bg-amber-500/10 text-amber-400" />
         <StatTile icon={TriangleAlert} label="Alerts" value={kpis.alerts} tone="bg-rose-500/10 text-rose-400" />
-        <StatTile icon={RadioTower} label="Devices" value={rows.length} tone="bg-primary/10 text-primary" />
+        <StatTile icon={RadioTower} label="Devices" value={visible.length} tone="bg-primary/10 text-primary" />
       </div>
 
       {label ? <LabelDialog deviceId={label} onClose={() => setLabel(null)} /> : null}

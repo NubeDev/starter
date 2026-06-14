@@ -46,6 +46,7 @@ impl Authenticator for FixedAuthenticator {
                 scopes: Vec::new(),
                 tenant_id: None,
                 teams: Vec::new(),
+                tenant_scope: Vec::new(),
                 extra: Default::default(),
             })
         } else {

@@ -123,6 +123,27 @@ pub enum Capability {
         subscribe: Vec<String>,
     },
 
+    /// Synchronous peer-to-peer invocation of another extension's
+    /// **provided** tool/node via the `extension.call` host method
+    /// (WS-18 Wave B). The grant enumerates `"<ext_id>:<provided_id>"`
+    /// targets this extension may call. A target is only reachable when
+    /// it appears in **all three** of: this allowlist, the caller's
+    /// `requires.extensions[].provides`, and the callee's
+    /// `contributes.provides[]` — the host triple-checks before
+    /// dispatching.
+    ///
+    /// The call runs under the **caller's** identity (tenant + teams),
+    /// never the callee's — a callee cannot launder authority on the
+    /// caller's behalf (WS-14 §4.3: a capability is never broader than
+    /// the caller's own grants). Empty `targets` is the neutralised
+    /// form: the extension loads, every peer call is denied.
+    Extension {
+        /// Allowed `"<ext_id>:<provided_id>"` targets. Cross-checked
+        /// against each `extension.call` request at the host backend.
+        #[serde(default)]
+        targets: Vec<String>,
+    },
+
     /// SDUI dashboard pages the extension is allowed to **read**.
     /// Per
     /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
@@ -173,6 +194,49 @@ pub enum Capability {
         /// `ctx.authz().check(...)` at the host backend.
         #[serde(default)]
         kinds: Vec<String>,
+    },
+
+    /// Feed data into / drain data out of a host data-plane flow via the
+    /// `ingest.*` host methods (`ingest.write` / `ingest.read_batch`). The grant
+    /// enumerates the contributed source/sink names (from
+    /// `contributes.sources[]` / `contributes.sinks[]`) the extension may push
+    /// into or drain. An empty vec is the neutralised form: the extension loads,
+    /// every ingest call is denied.
+    ///
+    /// Tenancy is never the extension's to choose — the host stamps the caller's
+    /// tenant onto every written row, so this grant gates *which named flows* an
+    /// extension may reach, not *whose data* it may write.
+    Ingest {
+        /// Allowed contributed source/sink names. Cross-checked against the
+        /// `source`/`sink` field of each `ingest.*` request at the host backend.
+        #[serde(default)]
+        names: Vec<String>,
+    },
+
+    /// Full CRUD against configured host **datasources** via the `datasource.*`
+    /// host methods (`datasource.query` reads; `datasource.execute` writes /
+    /// DDLs). The grant enumerates the datasource ids the extension may reach;
+    /// `datasource.execute` is further bounded by the host (WS-17 §4.2): a CREATE
+    /// inside a datasource must target an `<extension_id>__<table>` (the
+    /// ownership prefix), and CRUD against a non-owned (non-prefixed) table is
+    /// allowed only under the broader `allow_foreign_tables` flag an operator
+    /// sets deliberately. Empty `datasources` is the neutralised form: the
+    /// extension loads, every datasource call is denied.
+    ///
+    /// Tenancy is the caller's, bound by the host exactly like the human
+    /// `POST /datasources/{id}/query` route — the extension cannot widen past
+    /// its caller's tenant.
+    Datasource {
+        /// Allowed datasource ids (UUID strings). Cross-checked against the
+        /// `datasource_id` of each `datasource.*` request at the host backend.
+        #[serde(default)]
+        datasources: Vec<String>,
+        /// When `true`, `datasource.execute` may CRUD tables the extension does
+        /// **not** own (no `<ext>__` prefix) — the deliberate "full CRUD of any
+        /// data" grant (WS-17 Q3). Defaults to `false`: owned-prefix tables are
+        /// writable freely, foreign tables are refused.
+        #[serde(default)]
+        allow_foreign_tables: bool,
     },
 
     /// An opaque, host-defined capability. Used as the escape hatch for
@@ -313,6 +377,25 @@ mod tests {
             publish: vec![],
             subscribe: vec![],
         };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn extension_round_trip() {
+        let cap = Capability::Extension {
+            targets: vec!["com.acme.geocode:com.acme.geocode.lookup".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "extension");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn extension_empty_targets_is_legal() {
+        let cap = Capability::Extension { targets: vec![] };
         let j = serde_json::to_string(&cap).unwrap();
         let back: Capability = serde_json::from_str(&j).unwrap();
         assert_eq!(back, cap);

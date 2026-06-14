@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RegisterSiteOutput",
+  "type": "object",
+  "description": "The registered site with its resolved coordinates.",
+  "properties": {
+    "site_name":  { "type": "string" },
+    "address":    { "type": "string" },
+    "lat":        { "type": "number" },
+    "lon":        { "type": "number" },
+    "published":  { "type": "boolean", "description": "Whether the registration was announced on the event bus." }
+  },
+  "required": ["site_name", "address", "lat", "lon", "published"]
+}

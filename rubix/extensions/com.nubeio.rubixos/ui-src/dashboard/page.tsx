@@ -169,56 +169,67 @@ export function DashboardPage(): React.ReactElement {
     setAggLoading(true);
     setAggError(null);
 
-    // Sequenced (not Promise.all): warehouse aggregates over long
-    // ranges (6m, 1y) are heavy and concurrent queries thrash the
-    // DB. Running them one after another keeps each query fast,
-    // lets the user see KPIs + map first, and avoids HTTP/2 stream
-    // contention on slow links. The cancelled-flag check between
-    // steps means a kind/range/host change aborts mid-chain.
-    (async () => {
-      try {
-        // 1) Site totals — fastest, drives KPI + map immediately.
-        const tot = await fetchTemplate<UsageSiteTotalRow>(
-          `${EXTENSION_ID}.usage_site_totals`,
-          { point_uuids: pointUuidsCsv, from: win.from, to: win.to },
-        );
-        if (cancelled) return;
-        setSiteTotals(tot);
-
-        // 2) Bucketed series — drives the main chart + heatmap.
-        const buc = await fetchTemplate<UsageBucketRow>(
-          `${EXTENSION_ID}.usage_bucketed`,
-          { point_uuids: pointUuidsCsv, from: win.from, to: win.to, bucket: win.bucket },
-        );
-        if (cancelled) return;
-        setBucketRows(buc);
-
-        // 3) Per-meter leaderboard.
-        const pm = await fetchTemplate<UsagePerMeterRow>(
-          `${EXTENSION_ID}.usage_per_meter`,
-          { point_uuids: pointUuidsCsv, from: win.from, to: win.to, limit: 50 },
-        );
-        if (cancelled) return;
-        setPerMeter(pm);
-
-        // 4) Prior-window totals for the KPI delta. Failure here
-        //    is non-fatal — we just skip the delta badge.
-        if (prevWin) {
-          const prev = await fetchTemplate<UsageSiteTotalRow>(
-            `${EXTENSION_ID}.usage_site_totals`,
-            { point_uuids: pointUuidsCsv, from: prevWin.from, to: prevWin.to },
-          ).catch(() => [] as ReadonlyArray<UsageSiteTotalRow>);
+    // Parallel (not sequenced): the four aggregates have DISTINCT cache
+    // keys, so they can't coalesce — running them back-to-back just
+    // stacks their latencies (measured ~23s sequential vs ~2s parallel
+    // for a 500-meter / 7d render). The earlier sequential chain existed
+    // to avoid a concurrent-query "thrash" that tripped the supervisor
+    // health timeout; that root cause is now fixed upstream (single-
+    // flight coalescing in starter-cache + a sane health timeout), so the
+    // DB comfortably handles these few concurrent reads.
+    //
+    // Each result still lands via its own setter the moment it resolves,
+    // so fast panels (KPI/map from site_totals) paint without waiting on
+    // the slow chart series. The cancelled flag (checked per result and
+    // flipped on cleanup) aborts a stale round when kind/range/host
+    // changes mid-flight.
+    const settle = <T,>(p: Promise<T>, apply: (v: T) => void, onErr?: () => void) =>
+      p.then(
+        (v) => { if (!cancelled) apply(v); },
+        (e) => {
           if (cancelled) return;
-          setPrevTotals(prev);
-        } else {
-          setPrevTotals([]);
-        }
-      } catch (e) {
-        if (!cancelled) setAggError(e instanceof Error ? e.message : String(e));
-      } finally {
-        if (!cancelled) setAggLoading(false);
-      }
-    })();
+          if (onErr) onErr();
+          else setAggError(e instanceof Error ? e.message : String(e));
+        },
+      );
+
+    const jobs = [
+      // Site totals — drives KPI + map; paints first when it's fastest.
+      settle(
+        fetchTemplate<UsageSiteTotalRow>(`${EXTENSION_ID}.usage_site_totals`, {
+          point_uuids: pointUuidsCsv, from: win.from, to: win.to,
+        }),
+        setSiteTotals,
+      ),
+      // Bucketed series — main chart + heatmap.
+      settle(
+        fetchTemplate<UsageBucketRow>(`${EXTENSION_ID}.usage_bucketed`, {
+          point_uuids: pointUuidsCsv, from: win.from, to: win.to, bucket: win.bucket,
+        }),
+        setBucketRows,
+      ),
+      // Per-meter leaderboard.
+      settle(
+        fetchTemplate<UsagePerMeterRow>(`${EXTENSION_ID}.usage_per_meter`, {
+          point_uuids: pointUuidsCsv, from: win.from, to: win.to, limit: 50,
+        }),
+        setPerMeter,
+      ),
+      // Prior-window totals for the KPI delta — non-fatal (skip badge).
+      prevWin
+        ? settle(
+            fetchTemplate<UsageSiteTotalRow>(`${EXTENSION_ID}.usage_site_totals`, {
+              point_uuids: pointUuidsCsv, from: prevWin.from, to: prevWin.to,
+            }),
+            setPrevTotals,
+            () => { if (!cancelled) setPrevTotals([]); },
+          )
+        : Promise.resolve(setPrevTotals([])),
+    ];
+
+    void Promise.allSettled(jobs).finally(() => {
+      if (!cancelled) setAggLoading(false);
+    });
 
     return () => { cancelled = true; };
   }, [pointUuidsCsv, win.from, win.to, win.bucket, prevWin]);

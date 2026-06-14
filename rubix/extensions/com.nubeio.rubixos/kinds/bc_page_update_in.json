@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcPageUpdateInput",
+  "description": "Update a dashboard page by `page_id`. `row` carries `page_id` (the key, required) plus any columns to change — `name` to rename, or `site_id`/`location_id` to re-pin it under a different site/location. `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "row": {
+      "type": "object",
+      "description": "Page row — must include `page_id`; other keys (`name`, `site_id`, `location_id`) are the fields to update.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["row"],
+  "additionalProperties": false
+}

@@ -108,6 +108,15 @@ pub struct Rule {
     /// cross-tenant admin tokens).
     #[serde(default)]
     pub tenant_id: Option<String>,
+
+    /// Instance scope of this rule. `None` or `"*"` is kind-wide —
+    /// the rule applies to every instance of `resource`. A concrete
+    /// id narrows the rule to the single instance whose `object.id`
+    /// equals it, which is how a per-resource grant (a grant on one
+    /// immutable dashboard/page id) is expressed: the engine only
+    /// matches the rule when the request targets that exact id.
+    #[serde(default)]
+    pub resource_id: Option<String>,
 }
 
 /// Allow or deny.

@@ -1,0 +1,88 @@
+v: 1
+id: com.nexus.hello
+version: 0.1.0
+display_name: "Nexus Hello"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# A **process**-flavour extension: a real binary the host spawns, health-checks,
+# restarts per `supervision:`, and reports live pid/uptime/RSS/CPU for. This is
+# the genuine "start / stop / reload an extension" experience — Extensions admin
+# shows a Restart button + live stats, unlike a builtin config bundle.
+#
+# It *also* contributes config (query-kinds, an insight) and UI (a sidebar nav
+# item) — `contributes` is per-field, so one extension spans the data plane, the
+# control plane, and the UI at once:
+#   - `runtime.bin` → the supervised child. Built from `process/` (cargo) and
+#     installed next to this manifest as `nexus-hello-extension`; the supervisor
+#     execs `<bundle>/<bin>` and frames stdio JSON-RPC against it.
+#   - `contributes.tools[]` → tool calls dispatched into the running child.
+#   - `contributes.warehouse_templates[]` → nexus query-kinds (dispatcher's third
+#     source), linted + materialised on boot.
+#   - `contributes.ui` → a federation nav item the FE host mounts into sidebar-nav.
+runtime:
+  kind: process
+  bin: nexus-hello-extension
+
+# Supervisor policy for the child. `on_crash` restarts only on a non-clean exit;
+# the intensity cap trips to `Failed` if it crash-loops. Health pings keep the
+# stats (uptime/CPU) live; shutdown gives the child a grace window before SIGKILL.
+supervision:
+  restart: on_crash
+  max_restarts: 5
+  within_seconds: 60
+  backoff: { initial_ms: 200, max_ms: 30000, jitter: true }
+  health:  { interval_ms: 5000, timeout_ms: 2000 }
+  shutdown_grace_ms: 5000
+
+contributes:
+  # Tool calls dispatched into the running child over stdio JSON-RPC. Proves the
+  # spawn + handshake + round-trip — if `echo` returns, the process is alive.
+  tools:
+    - id: com.nexus.hello.echo_tool
+      input_schema:  schemas/echo_in.json
+      output_schema: schemas/echo_out.json
+      description_file: docs/echo.md
+
+  warehouse_templates:
+    # A self-contained kind that needs no fixture table: it echoes a greeting and
+    # the server clock. `tables: []` means the lint requires no
+    # `$caller_tenant_id` predicate, so the example is robust on a fresh DB.
+    - name: com.nexus.hello.ping
+      params_schema: kinds/ping_params.json
+      sql_file: kinds/ping.sql
+      tables: []
+    # A second kind taking a param, to show schema validation flows through the
+    # same path file-pack kinds use.
+    - name: com.nexus.hello.echo
+      params_schema: kinds/echo_params.json
+      sql_file: kinds/echo.sql
+      tables: []
+
+  # `contributes.insights[]` → global extension-insight registry (RW-07). On
+  # boot the script is compiled against the insight sandbox and materialised into
+  # `nexus_extension_insights`; a `POST /query { insight: { insight_name:
+  # "com.nexus.hello.zscore" } }` resolves and runs it post-query;
+  # `DELETE /extensions/com.nexus.hello?purge=true` removes it via the insight
+  # cleanup provider. The dual of `warehouse_templates[]` for the insight stage.
+  insights:
+    - name: com.nexus.hello.zscore
+      script_file: insights/zscore.rhai
+      params_schema: insights/zscore_params.json
+
+  # `contributes.ui` → federation components the FE host mounts into named slots.
+  # The host resolves a slot by matching `exposes[*].slot` to the slot id, then
+  # looking up `exposes[*].name` among the components the remote's `init()`
+  # registered (`module` is metadata only). Two slots, mirroring com.nexus.demo:
+  #   - `HelloNav`   → `sidebar-nav` — a nav entry. Its `<a href>` points at the
+  #     host page route `/x/com.nexus.hello`; the host wraps the slot in a click
+  #     interceptor so the plain anchor navigates as SPA routing.
+  #   - `HelloPanel` → `main` — the page body. The host route `/x/:extId/*`
+  #     mounts it into the content area. Built from vendored shadcn/ui primitives
+  #     (`components/ui/`) on the extension's own scoped Tailwind bundle, so it
+  #     inherits the host theme/palette.
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - { name: HelloPanel, module: "./Panel", slot: main }
+      - { name: HelloNav, module: "./Nav", slot: sidebar-nav }

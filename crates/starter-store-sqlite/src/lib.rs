@@ -26,5 +26,8 @@ pub mod flow;
 #[cfg(feature = "skill-approvals")]
 pub mod skills;
 
+#[cfg(feature = "setup")]
+pub mod setup;
+
 pub use migrate::{migrate, MigrationSource};
 pub use pool::Pool;

@@ -10,6 +10,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Radix primitives (Switch, Checkbox, RadioGroup) signal their on/off
+ * state with `data-state="checked" | "unchecked"`, not a bare
+ * `data-checked` attribute. Tailwind v4 ships built-in shorthands for
+ * `data-open`/`data-closed` (→ `[data-state="open|closed"]`) but NOT for
+ * checked/unchecked, so `data-checked:bg-primary` would compile to the
+ * never-present `[data-checked]` selector and the controls would render
+ * stuck in their off styling regardless of value. Map the shorthands to
+ * the attribute Radix actually emits. */
+@custom-variant data-checked (&[data-state="checked"]);
+@custom-variant data-unchecked (&[data-state="unchecked"]);
+
 @theme inline {
     --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system,
                  BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,

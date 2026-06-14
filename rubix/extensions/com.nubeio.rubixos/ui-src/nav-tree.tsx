@@ -17,6 +17,7 @@ import {
   Database,
   FileCode,
   FileText,
+  Gauge,
   LineChart,
   LayoutGrid,
   MapPin,
@@ -69,6 +70,7 @@ const TREE: NavItem[] = [
       { title: "Energy",          href: `/extensions/${EXTENSION_ID}/energy`,  icon: Sun },
       { title: "Report (print)",  href: `/extensions/${EXTENSION_ID}/report`,  icon: FileText },
       { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: LineChart },
+      { title: "Load test",       href: `/extensions/${EXTENSION_ID}/loadtest`, icon: Gauge },
     ],
   },
   {

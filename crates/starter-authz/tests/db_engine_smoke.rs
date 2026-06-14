@@ -73,6 +73,7 @@ fn with_admin_extension(router: Router) -> Router {
         scopes: vec![Scope("admin".to_string())],
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     };
     router.layer(from_fn(move |mut req: Request<Body>, next: Next| {
@@ -92,6 +93,7 @@ fn with_role_extension(router: Router, role: Role) -> Router {
         scopes: Vec::new(),
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     };
     router.layer(from_fn(move |mut req: Request<Body>, next: Next| {
@@ -203,6 +205,7 @@ async fn rule_write_invalidates_cache() {
         scopes: vec![],
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     };
     let before = engine
@@ -266,6 +269,7 @@ async fn dry_run_matches_real_check() {
         scopes: vec![],
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     };
     let real = engine
@@ -355,6 +359,7 @@ async fn denial_logs_are_greppable() {
         scopes: vec![],
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: Value::Null,
     };
     let d = engine

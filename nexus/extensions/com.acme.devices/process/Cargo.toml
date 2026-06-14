@@ -1,0 +1,22 @@
+# `com.acme.devices` — process flavour. The supervised child that serves the
+# Setup / Automation Builder's domain side-effect node kinds (device.create,
+# sensor.register) over stdio JSON-RPC.
+#
+# Member of the `nexus/extensions/` sibling workspace; path-deps on
+# `starter-ext-sdk` with the `process` feature. The built binary installs next
+# to `block.yaml` as the manifest's `runtime.bin`.
+[package]
+name        = "acme-devices-extension"
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+publish.workspace      = true
+rust-version.workspace = true
+
+[[bin]]
+name = "acme-devices-extension"
+path = "src/main.rs"
+
+[dependencies]
+starter-ext-sdk = { path = "../../../../starter-extensions/crates/starter-ext-sdk", default-features = false, features = ["process"] }
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "io-std", "io-util", "time"] }

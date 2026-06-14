@@ -318,6 +318,44 @@ impl WarehouseWriteHandle {
     }
 }
 
+/// Datasource CRUD handle (granted by `capabilities.datasource.datasources:`).
+///
+/// WS-17 Wave B: lets an extension run full CRUD against a configured host
+/// datasource it is authorised for, scoped to the caller's tenant exactly like
+/// the human `POST /datasources/{id}/query` route. `query` is read-only;
+/// `execute` is write/DDL, bounded host-side by the ownership-prefix rule (a
+/// CREATE must target `<ext>__<table>`) and the operator `allow_foreign_tables`
+/// grant. A system frame (no caller) is refused with `Error::Capability`.
+#[derive(Debug, Clone)]
+pub struct DatasourceHandle {
+    inner: Arc<dyn private::DatasourceBackend>,
+}
+
+impl DatasourceHandle {
+    /// Run a read query against datasource `datasource_id`, returning the rows.
+    /// `params` bind as `$1`, `$2`, … in `sql`.
+    pub fn query(
+        &self,
+        datasource_id: &str,
+        sql: &str,
+        params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<Vec<Row>> {
+        self.inner.query(datasource_id, sql, params)
+    }
+
+    /// Run a write/DDL statement against datasource `datasource_id`, returning
+    /// the affected-row count. A `CREATE` must target an `<ext>__<table>`; CRUD
+    /// against a non-owned table needs the `allow_foreign_tables` grant.
+    pub fn execute(
+        &self,
+        datasource_id: &str,
+        statement: &str,
+        params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<u64> {
+        self.inner.execute(datasource_id, statement, params)
+    }
+}
+
 /// In-process publish/subscribe bus handle (granted by
 /// `capabilities.event_bus.publish:` / `subscribe:`).
 ///
@@ -345,6 +383,65 @@ impl EventBusHandle {
     /// subscriber sees the same timestamp.
     pub fn publish(&self, topic: &str, payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         self.inner.publish(topic, payload)
+    }
+
+    /// Subscribe to `topic`, returning a stream of [`EventBusMessage`]s
+    /// delivered while this invocation is live (WS-18 Wave A).
+    ///
+    /// `topic` must be in the extension's grant `subscribe: [...]`
+    /// allowlist; subscription is open across namespaces (the point of
+    /// the bus) but bounded by that allowlist and by tenant — only
+    /// messages published within the caller's tenant are delivered. A
+    /// trailing `*` segment (`com.acme.charts.*`) matches child topics.
+    ///
+    /// Backends that have not wired the stream transport for their
+    /// flavour return [`Error::Capability`](starter_ext_spi::Error); the
+    /// process flavour (the one nexus supervises) carries the live
+    /// implementation.
+    pub fn subscribe(&self, topic: &str) -> starter_ext_spi::Result<EventBusSubscription> {
+        self.inner.subscribe(topic)
+    }
+}
+
+/// A live subscription to an event-bus topic — the receiving half of a
+/// channel the host fans matching [`EventBusMessage`]s into for the
+/// lifetime of the subscribing invocation (WS-18 Wave A).
+///
+/// An `mpsc::Receiver` rather than a `futures::Stream` so builtin/wasm
+/// extensions don't pay for a `futures` dependency they otherwise avoid;
+/// callers `recv().await` it (or wrap it in `ReceiverStream` where they
+/// already depend on `tokio-stream`).
+pub type EventBusSubscription = mpsc::Receiver<EventBusMessage>;
+
+/// Synchronous peer-call handle (granted by `capabilities.extension.targets:`).
+///
+/// WS-18 Wave B: invoke another extension's **provided** tool/node and get
+/// its response back, in-process, under the *caller's* identity. The host
+/// triple-checks the target against this extension's grant `targets`, the
+/// caller's `requires.extensions[].provides`, and the callee's
+/// `contributes.provides[]` before dispatching; a call cycle or a hung
+/// callee is bounded host-side (cycle guard + timeout).
+#[derive(Debug, Clone)]
+pub struct ExtensionCallHandle {
+    inner: Arc<dyn private::ExtensionCallBackend>,
+}
+
+impl ExtensionCallHandle {
+    /// Call `provided_id` on peer extension `extension_id` with `input`,
+    /// returning the callee's output verbatim.
+    ///
+    /// `provided_id` must be a tool/node the callee lists in
+    /// `contributes.provides[]`, and `"<extension_id>:<provided_id>"` must be
+    /// in this extension's `extension` grant `targets`. The call runs under
+    /// the caller's tenant/teams — the callee cannot reach data the caller
+    /// could not.
+    pub fn call(
+        &self,
+        extension_id: &str,
+        provided_id: &str,
+        input: serde_json::Value,
+    ) -> starter_ext_spi::Result<serde_json::Value> {
+        self.inner.call(extension_id, provided_id, input)
     }
 }
 
@@ -432,7 +529,9 @@ pub struct CtxInner {
     tracing: TracingHandle,
     warehouse_read: WarehouseReadHandle,
     warehouse_write: WarehouseWriteHandle,
+    datasource: DatasourceHandle,
     event_bus: EventBusHandle,
+    extension_call: ExtensionCallHandle,
     dashboard: DashboardHandle,
     authz: AuthzHandle,
 }
@@ -453,7 +552,9 @@ impl CtxInner {
         tracing: Arc<dyn private::TracingBackend>,
         warehouse_read: Arc<dyn private::WarehouseReadBackend>,
         warehouse_write: Arc<dyn private::WarehouseWriteBackend>,
+        datasource: Arc<dyn private::DatasourceBackend>,
         event_bus: Arc<dyn private::EventBusBackend>,
+        extension_call: Arc<dyn private::ExtensionCallBackend>,
         dashboard: Arc<dyn private::DashboardBackend>,
         authz: Arc<dyn private::AuthzBackend>,
     ) -> Self {
@@ -472,7 +573,11 @@ impl CtxInner {
             warehouse_write: WarehouseWriteHandle {
                 inner: warehouse_write,
             },
+            datasource: DatasourceHandle { inner: datasource },
             event_bus: EventBusHandle { inner: event_bus },
+            extension_call: ExtensionCallHandle {
+                inner: extension_call,
+            },
             dashboard: DashboardHandle { inner: dashboard },
             authz: AuthzHandle { inner: authz },
         }
@@ -542,9 +647,17 @@ impl CtxInner {
     pub fn warehouse_write(&self) -> &WarehouseWriteHandle {
         &self.warehouse_write
     }
+    /// Borrow the datasource handle (named by `requires!(datasource)`).
+    pub fn datasource(&self) -> &DatasourceHandle {
+        &self.datasource
+    }
     /// Borrow the event-bus handle (named by `requires!(event_bus)`).
     pub fn event_bus(&self) -> &EventBusHandle {
         &self.event_bus
+    }
+    /// Borrow the peer-call handle (named by `requires!(extension)`).
+    pub fn extension_call(&self) -> &ExtensionCallHandle {
+        &self.extension_call
     }
     /// Borrow the dashboard handle (named by `requires!(dashboard)`).
     pub fn dashboard(&self) -> &DashboardHandle {
@@ -572,8 +685,9 @@ impl std::fmt::Debug for CtxInner {
 // ---------------------------------------------------------------------------
 
 pub use private::{
-    AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend,
-    TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
+    AuthzBackend, DashboardBackend, DatasourceBackend, EventBusBackend, ExtensionCallBackend,
+    FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend,
+    WarehouseReadBackend, WarehouseWriteBackend,
 };
 
 mod private {
@@ -664,10 +778,52 @@ mod private {
         }
     }
 
+    /// Host-side backing for [`super::DatasourceHandle`].
+    pub trait DatasourceBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Run a read query against `datasource_id`.
+        fn query(
+            &self,
+            datasource_id: &str,
+            sql: &str,
+            params: Vec<serde_json::Value>,
+        ) -> starter_ext_spi::Result<Vec<super::Row>>;
+
+        /// Run a write/DDL statement against `datasource_id`.
+        fn execute(
+            &self,
+            datasource_id: &str,
+            statement: &str,
+            params: Vec<serde_json::Value>,
+        ) -> starter_ext_spi::Result<u64>;
+    }
+
     /// Host-side backing for [`super::EventBusHandle`].
     pub trait EventBusBackend: std::fmt::Debug + Send + Sync + 'static {
         /// Publish `payload` on `topic`.
         fn publish(&self, topic: &str, payload: serde_json::Value) -> starter_ext_spi::Result<()>;
+
+        /// Subscribe to `topic`, returning the receiving half of a channel
+        /// the host fans matching messages into. Defaults to a capability
+        /// error so a flavour that has not wired the stream transport fails
+        /// loudly rather than silently dropping messages (mirrors the
+        /// default-erroring `WarehouseWriteBackend::delete`). The process
+        /// flavour overrides this with the live implementation.
+        fn subscribe(&self, _topic: &str) -> starter_ext_spi::Result<super::EventBusSubscription> {
+            Err(starter_ext_spi::Error::capability(
+                "event_bus.subscribe not wired by this backend flavour",
+            ))
+        }
+    }
+
+    /// Host-side backing for [`super::ExtensionCallHandle`].
+    pub trait ExtensionCallBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Invoke `provided_id` on peer `extension_id` with `input`.
+        fn call(
+            &self,
+            extension_id: &str,
+            provided_id: &str,
+            input: serde_json::Value,
+        ) -> starter_ext_spi::Result<serde_json::Value>;
     }
 
     /// Host-side backing for [`super::DashboardHandle`].
@@ -756,9 +912,37 @@ mod tests {
                 Ok(0)
             }
         }
+        impl DatasourceBackend for Noop {
+            fn query(
+                &self,
+                _: &str,
+                _: &str,
+                _: Vec<serde_json::Value>,
+            ) -> starter_ext_spi::Result<Vec<Row>> {
+                Ok(Vec::new())
+            }
+            fn execute(
+                &self,
+                _: &str,
+                _: &str,
+                _: Vec<serde_json::Value>,
+            ) -> starter_ext_spi::Result<u64> {
+                Ok(0)
+            }
+        }
         impl EventBusBackend for Noop {
             fn publish(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<()> {
                 Ok(())
+            }
+        }
+        impl ExtensionCallBackend for Noop {
+            fn call(
+                &self,
+                _: &str,
+                _: &str,
+                _: serde_json::Value,
+            ) -> starter_ext_spi::Result<serde_json::Value> {
+                Ok(serde_json::Value::Null)
             }
         }
         impl DashboardBackend for Noop {
@@ -778,16 +962,18 @@ mod tests {
         let inner = CtxInner::new(
             tx,
             Arc::new(NeverCancel),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
-            Arc::new(Noop),
+            Arc::new(Noop), // secrets
+            Arc::new(Noop), // http_out
+            Arc::new(Noop), // fs
+            Arc::new(Noop), // wall_clock
+            Arc::new(Noop), // tracing
+            Arc::new(Noop), // warehouse_read
+            Arc::new(Noop), // warehouse_write
+            Arc::new(Noop), // datasource
+            Arc::new(Noop), // event_bus
+            Arc::new(Noop), // extension_call
+            Arc::new(Noop), // dashboard
+            Arc::new(Noop), // authz
         );
         assert!(inner.caller().is_none(), "fresh CtxInner has no caller");
         let stamped = inner.clone().with_caller(Some(CallerIdentity {

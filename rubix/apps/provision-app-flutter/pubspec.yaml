@@ -1,0 +1,60 @@
+name: provision_app
+description: Rubix Provision — scan a device, place it, done. Flutter client.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State + DI
+  flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^3.0.0
+
+  # Navigation
+  go_router: ^14.0.0
+
+  # Network — Dio against the rubix-agent REST API (/api/v1) with a Bearer token.
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+
+  # Models
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Secure token storage (the sak_ Bearer), non-sensitive prefs (host, theme).
+  flutter_secure_storage: ^9.2.0
+  shared_preferences: ^2.3.0
+
+  # Camera barcode/QR scanning — replaces @zxing/browser.
+  mobile_scanner: ^7.2.0
+
+  # QR sticker rendering — replaces qrcode.react.
+  qr_flutter: ^4.1.0
+
+  # Typography — Plus Jakarta Sans (the React app's --font-sans).
+  google_fonts: ^6.2.1
+
+  # Iconography — Lucide, the same icon set the React app uses.
+  lucide_icons: ^0.257.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Lints
+  very_good_analysis: ^6.0.0
+  riverpod_lint: ^3.0.0
+
+  # Codegen
+  build_runner: ^2.4.13
+  freezed: ^3.0.0
+  json_serializable: ^6.8.0
+  riverpod_generator: ^3.0.0
+
+flutter:
+  uses-material-design: true

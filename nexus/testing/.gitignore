@@ -1,0 +1,6 @@
+# Evidence bundles produced by the feedback loop (testing/docs/feedback-loop)
+.evidence/
+
+# Generator build artifacts
+mqtt/target/
+datapump/target/

@@ -19,9 +19,9 @@
 use std::sync::Arc;
 
 use starter_ext_sdk::ctx::{
-    AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend,
-    NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend,
-    WarehouseReadBackend, WarehouseWriteBackend,
+    AuthzBackend, CtxInner, DashboardBackend, DatasourceBackend, EventBusBackend,
+    ExtensionCallBackend, FsBackend, HttpOutBackend, NeverCancel, Row, SecretsBackend,
+    TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 use starter_ext_spi::Error;
 use tokio::sync::mpsc;
@@ -43,7 +43,9 @@ pub(crate) fn make_stub_ctx() -> CtxInner {
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
         Arc::new(StubWarehouseWrite),
+        Arc::new(StubDatasource),
         Arc::new(StubEventBus),
+        Arc::new(StubExtensionCall),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
     )
@@ -126,10 +128,44 @@ impl WarehouseWriteBackend for StubWarehouseWrite {
 }
 
 #[derive(Debug)]
+struct StubDatasource;
+impl DatasourceBackend for StubDatasource {
+    fn query(
+        &self,
+        _id: &str,
+        _sql: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<Vec<Row>> {
+        Err(deny("datasource"))
+    }
+    fn execute(
+        &self,
+        _id: &str,
+        _stmt: &str,
+        _params: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<u64> {
+        Err(deny("datasource"))
+    }
+}
+
+#[derive(Debug)]
 struct StubEventBus;
 impl EventBusBackend for StubEventBus {
     fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         Err(deny("event_bus"))
+    }
+}
+
+#[derive(Debug)]
+struct StubExtensionCall;
+impl ExtensionCallBackend for StubExtensionCall {
+    fn call(
+        &self,
+        _extension_id: &str,
+        _provided_id: &str,
+        _input: serde_json::Value,
+    ) -> starter_ext_spi::Result<serde_json::Value> {
+        Err(deny("extension"))
     }
 }
 

@@ -30,6 +30,9 @@ pub mod skills;
 #[cfg(feature = "flow")]
 pub mod flow;
 
+#[cfg(feature = "setup")]
+pub mod setup;
+
 #[cfg(feature = "dimensions")]
 pub mod dimensions;
 

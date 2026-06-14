@@ -1,0 +1,49 @@
+# Starter model for the `samples` hypertable. The Playground (Data Model
+# tab) can auto-generate cubes for the other tables; this one is here so
+# there's a working example the moment Cube boots.
+cubes:
+  - name: samples
+    sql_table: public.samples
+
+    dimensions:
+      - name: tenant_id
+        sql: tenant_id
+        type: string
+
+      - name: entity_id
+        sql: entity_id
+        type: string
+
+      - name: ts
+        sql: ts
+        type: time
+        primary_key: true
+
+      - name: quality
+        sql: quality
+        type: number
+
+      - name: value_str
+        sql: value_str
+        type: string
+
+    measures:
+      - name: count
+        type: count
+
+      - name: avg_value
+        sql: value_num
+        type: avg
+
+      - name: min_value
+        sql: value_num
+        type: min
+
+      - name: max_value
+        sql: value_num
+        type: max
+
+      - name: last_value
+        sql: value_num
+        type: max
+        # for true "latest", use a time-ordered subquery; max is a simple start

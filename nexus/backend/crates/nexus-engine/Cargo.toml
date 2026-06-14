@@ -1,0 +1,136 @@
+[package]
+name = "nexus-engine"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Nexus native pipeline engine — sources, processors, sinks, runners, registry, Arrow→JSON. The keystone."
+
+[dependencies]
+nexus-spi.workspace = true
+
+datafusion.workspace = true
+
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+
+async-trait.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+starter-spi.workspace = true
+
+# Flow connectors: an http-poll input fetches an upstream API on an interval; a
+# postgres output writes the shaped rows to a datasource DB. Both are registry
+# builders, so a saved flow is config, not code.
+reqwest.workspace = true
+sqlx.workspace = true
+
+# The simulator input stamps RFC3339 timestamps on synthetic rows; the seed bin
+# uses the same row builder.
+chrono.workspace = true
+
+# Optional Eclipse Zenoh subscriber source, gated OFF by default (roadmap §8).
+# A default build pulls none of its transitive deps; `--features zenoh` adds the
+# subscriber node and registers it.
+zenoh = { workspace = true, optional = true }
+
+[features]
+default = []
+# Compile the `zenoh` ingest source and register it in the native registry.
+zenoh = ["dep:zenoh"]
+
+# A small bin that bulk-seeds the three simulator profiles into a datasource DB
+# for testing, reusing the simulator's row shapes.
+[[bin]]
+name = "nexus-seed"
+path = "src/bin/seed.rs"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "net", "io-util"] }
+serde_json.workspace = true
+
+# Integration tests mirror src/ one-to-one; cargo only auto-discovers top-level
+# tests/*.rs, so the mirrored paths are declared explicitly.
+[[test]]
+name = "core_pipeline"
+path = "tests/core/pipeline_test.rs"
+
+[[test]]
+name = "runner_query"
+path = "tests/runner/query_test.rs"
+
+[[test]]
+name = "runner_live"
+path = "tests/runner/live_test.rs"
+
+[[test]]
+name = "flow_manager"
+path = "tests/flow/manager_test.rs"
+
+[[test]]
+name = "source_http_poll"
+path = "tests/source/http_poll_test.rs"
+
+[[test]]
+name = "source_simulator"
+path = "tests/source/simulator_test.rs"
+
+[[test]]
+name = "source_http_ingest"
+path = "tests/source/http_ingest_test.rs"
+
+# The zenoh loopback round-trip compiles only with the connector feature on.
+[[test]]
+name = "source_zenoh"
+path = "tests/source/zenoh_test.rs"
+required-features = ["zenoh"]
+
+[[test]]
+name = "native_pipeline"
+path = "tests/native/pipeline_test.rs"
+
+[[test]]
+name = "native_stored_config_parity"
+path = "tests/native/stored_config_parity_test.rs"
+
+[[test]]
+name = "processor_json_to_arrow"
+path = "tests/processor/json_to_arrow_test.rs"
+
+[[test]]
+name = "processor_sql"
+path = "tests/processor/sql_test.rs"
+
+[[test]]
+name = "source_memory_native"
+path = "tests/source/memory_native_test.rs"
+
+[[test]]
+name = "source_generate_native"
+path = "tests/source/generate_native_test.rs"
+
+[[test]]
+name = "sink_sse_native"
+path = "tests/sink/sse_sink_native_test.rs"
+
+[[test]]
+name = "sink_collector_native"
+path = "tests/sink/collector_sink_native_test.rs"
+
+[[test]]
+name = "sink_datasource"
+path = "tests/sink/datasource_sink_test.rs"
+
+[[test]]
+name = "sink_datasource_registry"
+path = "tests/sink/datasource_registry_test.rs"
+
+[[test]]
+name = "federation_query"
+path = "tests/federation/query_test.rs"

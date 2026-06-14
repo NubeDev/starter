@@ -169,6 +169,7 @@ impl StoredRule {
             effect,
             priority: self.priority,
             tenant_id: self.tenant_id.clone(),
+            resource_id: self.resource_id.clone(),
         })
     }
 }

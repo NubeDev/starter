@@ -152,6 +152,7 @@ fn default_system_admin_principal() -> Principal {
         scopes: Vec::new(),
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }
@@ -329,6 +330,15 @@ impl Default for FlowRunnerConfig {
     }
 }
 
+impl FlowRunnerConfig {
+    /// Builder setter for the propagator policy block. Lets out-of-crate
+    /// callers override `propagator` despite `#[non_exhaustive]`.
+    pub fn with_propagator(mut self, propagator: PropagatorConfig) -> Self {
+        self.propagator = propagator;
+        self
+    }
+}
+
 /// Handle returned by [`FlowRunner::start`].
 ///
 /// The caller subscribes to [`Self::events_tx`] for the run's
@@ -462,6 +472,13 @@ impl FlowRunner {
     /// Borrow the attached [`SpiRunStore`] if any.
     pub fn spi_run_store(&self) -> Option<&Arc<dyn SpiRunStore>> {
         self.spi_run_store.as_ref()
+    }
+
+    /// Borrow the runner's [`GraphStore`]. Surfaces driving resume (e.g.
+    /// the Setup run service re-firing a failed node's trigger slot — DOCS
+    /// §8b) need to read current slot state to re-seed the cursor.
+    pub fn store(&self) -> &Arc<dyn GraphStore> {
+        &self.store
     }
 
     /// Replace the [`SkillSelector`] hook.
@@ -661,6 +678,7 @@ impl FlowRunner {
                     scopes: Vec::new(),
                     tenant_id: None,
                     teams: Vec::new(),
+                    tenant_scope: Vec::new(),
                     extra: serde_json::Value::Null,
                 });
                 if let Err(e) = spi
@@ -728,6 +746,7 @@ impl FlowRunner {
                 queue_for_task,
                 metrics_for_task,
                 node_state_for_task,
+                is_resume,
             )
             .await
         });
@@ -797,6 +816,7 @@ async fn run_coordinator(
     degraded_queue: Arc<DegradedQueue>,
     metrics: Arc<RunMetricsCell>,
     node_state_store: Arc<dyn starter_flow_spi::state::NodeStateStore>,
+    force_seeds: bool,
 ) -> RunStatus {
     // Mark Running.
     {
@@ -860,9 +880,18 @@ async fn run_coordinator(
     // semantics are preserved per-entry; only the coalesced wake is
     // batch-level. See store impl for the carrier-slot rule.
     if !cancel.is_cancelled() && !seeds.is_empty() {
+        // §8b resume: force the seed writes so re-seeding a failed node's
+        // trigger slot with its existing value still re-wakes the node (the
+        // R3 idempotent short-circuit would otherwise suppress the
+        // re-trigger). Fresh runs keep the historical live-write semantics.
+        let seed_opts = if force_seeds {
+            WriteSlotOpts::forced()
+        } else {
+            WriteSlotOpts::live()
+        };
         let batch: Vec<_> = seeds
             .into_iter()
-            .map(|(slot, value)| (slot, value, WriteSlotOpts::live()))
+            .map(|(slot, value)| (slot, value, seed_opts))
             .collect();
         if let Err(e) = store.write_slot_batch(batch).await {
             tracing::warn!(
@@ -1241,6 +1270,7 @@ mod tests {
                 quiescence: Duration::from_secs(10),
                 propagator: PropagatorConfig {
                     max_propagation_hops: 1_000_000,
+                    halt_on_node_failure: false,
                 },
                 ..FlowRunnerConfig::default()
             });
@@ -1305,6 +1335,7 @@ mod tests {
             FlowRunner::new(store.clone(), run_store.clone()).with_config(FlowRunnerConfig {
                 propagator: PropagatorConfig {
                     max_propagation_hops: 5,
+                    halt_on_node_failure: false,
                 },
                 quiescence: Duration::from_millis(500),
                 ..FlowRunnerConfig::default()

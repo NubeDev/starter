@@ -1,0 +1,45 @@
+# Fly.io deploy for the all-in-one Nexus image (Caddy + UI + nexus-api).
+#
+# One app, one machine: Caddy serves the UI and proxies the API. Postgres is a
+# separate Fly Postgres cluster (or any managed PG) attached via secrets — set
+# them with `make fly-secrets` (see the Makefile / nexus README).
+#
+# First-time setup:
+#   fly launch --no-deploy --copy-config   # or `fly apps create nexus`
+#   make fly-secrets                        # push DB url + keys
+#   make fly-deploy
+
+app = "nexus"
+primary_region = "iad"
+
+[build]
+  # Build context is the repo root; the Dockerfile lives under nexus/.
+  dockerfile = "Dockerfile"
+
+[env]
+  # Caddy binds 8080; nexus-api stays on loopback (set in the Dockerfile).
+  # Run the idempotent admin seed on boot — safe to leave on.
+  SEED_ADMIN = "1"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+# Secrets (NOT in this file — set via `fly secrets set`):
+#   NEXUS_METADATA_URL    postgres://...   (Fly PG attach sets DATABASE_URL;
+#   NEXUS_DATASOURCE_URL  postgres://...    map it to these two)
+#   NEXUS_MASTER_KEY      32-byte key
+#   NEXUS_STREAM_TOKEN_KEY >=32-byte key
+#   ADMIN_EMAIL / ADMIN_PASSWORD  (override the dev defaults!)
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

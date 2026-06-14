@@ -2,12 +2,16 @@
 import { cn } from "@nube/starter-ui-kit";
 import { RenderChildren } from "../headless/render.js";
 import { registerRenderer } from "../headless/registry.js";
+import { nodeStyleAttrs } from "./node-style.js";
 
 export function RenderPage({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const title = typeof node.title === "string" ? node.title : undefined;
   const eyebrow = typeof node.eyebrow === "string" ? node.eyebrow : undefined;
   return (
-    <main className={cn("sdui-page flex flex-col gap-6 p-4 sm:p-6", node.style?.className)}>
+    <main
+      {...nodeStyleAttrs(node.style)}
+      className={cn("sdui-page flex flex-col gap-6 p-4 sm:p-6", node.style?.className)}
+    >
       {title ? (
         <header className="sdui-page-header flex flex-col gap-2">
           {eyebrow ? (

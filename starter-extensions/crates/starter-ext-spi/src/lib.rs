@@ -20,12 +20,15 @@ pub mod authz;
 pub mod behavior;
 pub mod capability;
 pub mod dashboard;
+pub mod datasource;
 pub mod error;
 pub mod event_bus;
+pub mod extension;
 pub mod fs_ext;
 pub mod http_out;
 pub mod id;
 pub mod identity;
+pub mod ingest;
 pub mod issue;
 pub mod jsonrpc;
 pub mod lifecycle;
@@ -39,10 +42,20 @@ pub mod warehouse;
 
 pub use behavior::ExtensionBehavior;
 pub use capability::{Authority, Capability, PathSpec};
+pub use datasource::{
+    DatasourceExecuteRequest, DatasourceExecuteResponse, DatasourceQueryRequest,
+    DatasourceQueryResponse,
+};
 pub use error::{Error, Result};
-pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
+pub use event_bus::{
+    EventBusMessage, EventBusPublishRequest, EventBusPublishResponse, EventBusSubscribeRequest,
+};
+pub use extension::{ExtensionCallRequest, ExtensionCallResponse};
 pub use id::ExtensionId;
 pub use identity::{CallerIdentity, FrameMeta};
+pub use ingest::{
+    IngestReadBatchRequest, IngestReadBatchResponse, IngestWriteRequest, IngestWriteResponse,
+};
 pub use issue::{ExtensionIssue, IssueCode, IssueSource, Severity};
 pub use jsonrpc::{
     flow_node_error_codes, stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification,
@@ -52,9 +65,10 @@ pub use jsonrpc::{
 pub use lifecycle::LifecycleState;
 pub use manifest::{
     AuthGate, Backoff, CliStreaming, ContributeAnomalyRule, ContributeCli, ContributeGrpc,
-    ContributeNode, ContributeRest, ContributeSkillsDir, ContributeTool, ContributeUi,
-    ContributeUiExpose, ContributeWarehouseTable, ContributeWarehouseTemplate, ContributeWorker,
-    Contributes, HealthConfig, Manifest, ManifestRequires, OnErrorPolicy, PermissionGate, Require,
+    ContributeNode, ContributeProvides, ContributeRest, ContributeSink, ContributeSkillsDir,
+    ContributeSource, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWarehouseTable,
+    ContributeWarehouseTemplate, ContributeWorker, Contributes, HealthConfig, IngestDirection,
+    Manifest, ManifestRequires, OnErrorPolicy, PermissionGate, Require, RequireExtension,
     RestStreaming, RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision, TableColumn,
     MANIFEST_VERSION,
 };

@@ -119,13 +119,41 @@ pub struct PropagatorConfig {
     /// consume in a single run before failing it with
     /// [`FlowError::CycleBudgetExhausted`].
     pub max_propagation_hops: u64,
+
+    /// **§8b fatal-failure policy (opt-in).** When `true`, a node body
+    /// returning `Err(NodeError)` is treated as *terminal-but-resumable*:
+    /// the propagator emits [`FlowEvent::NodeFailed`] (so a cursor can be
+    /// recorded), then immediately emits [`FlowEvent::RunFailed`] and
+    /// stops scheduling further hops. The per-tick checkpoint up to and
+    /// including the failing tick is preserved, so a later
+    /// [`crate::run::FlowRunner::resume`] replays prior writes and
+    /// re-enters at the cursor.
+    ///
+    /// Defaults to `false`, which is the historical "node error is
+    /// non-terminal, keep propagating to quiescence" behaviour every
+    /// existing flow consumer relies on. The Setup / Automation Builder
+    /// run service sets this to `true` because an automation run that hit
+    /// a failed step must halt and become resumable, not silently
+    /// run-to-completion around the failure.
+    pub halt_on_node_failure: bool,
 }
 
 impl Default for PropagatorConfig {
     fn default() -> Self {
         Self {
             max_propagation_hops: DEFAULT_MAX_PROPAGATION_HOPS,
+            halt_on_node_failure: false,
         }
+    }
+}
+
+impl PropagatorConfig {
+    /// Builder setter for the §8b opt-in fatal-failure policy. Lets
+    /// out-of-crate callers (e.g. the Setup run service) toggle the flag
+    /// despite the `#[non_exhaustive]` attribute.
+    pub fn with_halt_on_node_failure(mut self, halt: bool) -> Self {
+        self.halt_on_node_failure = halt;
+        self
     }
 }
 
@@ -612,7 +640,38 @@ pub async fn drive_with_checkpoint(
                         }
                     }
                     Err(e) => {
-                        let _ = events.send(FlowEvent::node_failed(run, node_id, &e));
+                        let _ = events.send(FlowEvent::node_failed(run, node_id.clone(), &e));
+                        // §8b fatal-failure policy (opt-in). Persist the
+                        // tick up to the failing node (so resume can replay
+                        // prior writes), then escalate to a terminal
+                        // RunFailed and stop scheduling further hops. The
+                        // failed-node cursor is recovered by the setup
+                        // projector from the NodeFailed event above.
+                        if config.halt_on_node_failure {
+                            if let Some(hook) = checkpoint.as_ref() {
+                                // Always persist a terminal checkpoint on a
+                                // fatal failure — even with no writes this
+                                // tick — so resume has a row to load and
+                                // replay from (a node that fails before
+                                // emitting produces an empty write set, but
+                                // the run must still be resumable). DOCS §8b.
+                                let seq = hook.initial_seq.saturating_add(hops);
+                                checkpoint_one_tick(
+                                    hook,
+                                    run,
+                                    seq,
+                                    SpiRunState::Failed,
+                                    std::mem::take(&mut tick_writes),
+                                    &events,
+                                )
+                                .await;
+                            }
+                            let _ = events.send(FlowEvent::RunFailed {
+                                run,
+                                error: format!("node {node_id} failed: {e}"),
+                            });
+                            return;
+                        }
                     }
                 }
 
@@ -1031,6 +1090,7 @@ mod tests {
         let run = RunId::new();
         let cfg = PropagatorConfig {
             max_propagation_hops: 10,
+            halt_on_node_failure: false,
         };
         let handle = spawn(
             store.clone(),
@@ -1103,6 +1163,7 @@ mod tests {
         // Generous budget so the loop would otherwise run a long time.
         let cfg = PropagatorConfig {
             max_propagation_hops: 1_000_000,
+            halt_on_node_failure: false,
         };
         let handle = spawn(
             store.clone(),

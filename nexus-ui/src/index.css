@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.85rem;
+
+    /* Premium OLED dark — deep slate-black base, emerald signal accent */
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 40% 7%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 44% 6%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 152 76% 44%;
+    --primary-foreground: 152 80% 6%;
+
+    --secondary: 217 33% 14%;
+    --secondary-foreground: 210 40% 96%;
+
+    --muted: 217 33% 12%;
+    --muted-foreground: 215 20% 60%;
+
+    --accent: 152 60% 16%;
+    --accent-foreground: 152 76% 70%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 15%;
+    --input: 217 33% 16%;
+    --ring: 152 76% 44%;
+
+    --success: 152 76% 44%;
+    --warning: 38 95% 56%;
+    --info: 199 90% 56%;
+
+    color-scheme: dark;
+  }
+
+  /* Single dark theme (mockup is dark-only). Keep .dark identical. */
+  .dark {
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 40% 7%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 44% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 152 76% 44%;
+    --primary-foreground: 152 80% 6%;
+    --secondary: 217 33% 14%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 12%;
+    --muted-foreground: 215 20% 60%;
+    --accent: 152 60% 16%;
+    --accent-foreground: 152 76% 70%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 33% 15%;
+    --input: 217 33% 16%;
+    --ring: 152 76% 44%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Ambient aurora backdrop — gives the OLED black depth without noise */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at 12% -10%, hsl(152 76% 44% / 0.10), transparent 60%),
+      radial-gradient(50rem 36rem at 110% 0%, hsl(199 90% 56% / 0.08), transparent 55%),
+      radial-gradient(46rem 40rem at 50% 120%, hsl(263 80% 60% / 0.06), transparent 60%);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+  }
+  /* Frosted panel surface used across cards/sidebar */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      hsl(222 40% 9% / 0.72),
+      hsl(222 44% 6% / 0.72)
+    );
+    backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(217 33% 100% / 0.06);
+  }
+  .ring-glow {
+    box-shadow:
+      0 0 0 1px hsl(152 76% 44% / 0.25),
+      0 0 28px -6px hsl(152 76% 44% / 0.45);
+  }
+  .card-hover {
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card-hover:hover {
+    border-color: hsl(152 76% 44% / 0.35);
+    box-shadow: 0 14px 40px -18px hsl(152 76% 44% / 0.45);
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(217 33% 22%);
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ---- react-grid-layout ---- */
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+.react-grid-item.resizing {
+  z-index: 3;
+  will-change: width, height;
+}
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 30;
+  will-change: transform;
+}
+.react-grid-item.react-grid-placeholder {
+  background: hsl(152 76% 44% / 0.14);
+  border: 1.5px dashed hsl(152 76% 44% / 0.5);
+  border-radius: var(--radius);
+  transition-duration: 100ms;
+  z-index: 2;
+}
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  bottom: 2px;
+  right: 2px;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 1;
+}
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid hsl(215 20% 55%);
+  border-bottom: 2px solid hsl(215 20% 55%);
+}

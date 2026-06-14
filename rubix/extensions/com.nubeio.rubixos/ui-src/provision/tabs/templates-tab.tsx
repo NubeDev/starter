@@ -1,8 +1,9 @@
 // `templates-tab.tsx` — list templates; edit YAML in a textarea; validate+save.
 import * as React from "react";
-import { Check, FileCode2, FilePlus2 } from "lucide-react";
+import { Check, FileCode2, FilePlus2, QrCode } from "lucide-react";
 import { getTemplateYaml, listTemplates, templateUpsert } from "../bc-api";
 import { useRefreshKey } from "../refresh";
+import { TemplateQrDialog } from "./template-qr-dialog";
 import type { TemplateRow } from "../bc-types";
 
 export function TemplatesTab(): React.ReactElement {
@@ -13,6 +14,7 @@ export function TemplatesTab(): React.ReactElement {
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [qrFor, setQrFor] = React.useState<TemplateRow | null>(null);
   const refresh = useRefreshKey();
 
   const loadList = React.useCallback(() => {
@@ -72,14 +74,17 @@ export function TemplatesTab(): React.ReactElement {
             {templates.map((t) => {
               const on = selected === t.template;
               return (
-              <li key={t.template}>
+              <li
+                key={t.template}
+                className={
+                  "group flex items-start gap-1 rounded-lg pr-1.5 transition-colors " +
+                  (on ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-accent")
+                }
+              >
                 <button
                   type="button"
                   onClick={() => open(t.template)}
-                  className={
-                    "group flex w-full cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors " +
-                    (on ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-accent")
-                  }
+                  className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 text-left"
                 >
                   <span className={"mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md " + (on ? "bg-primary/15 text-primary" : "bg-muted/40 text-muted-foreground")}>
                     <FileCode2 className="size-4" />
@@ -95,6 +100,15 @@ export function TemplatesTab(): React.ReactElement {
                       </span>
                     ) : null}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrFor(t)}
+                  aria-label={`Make a QR sticker for ${t.display_name}`}
+                  title="Make QR sticker"
+                  className="mt-1.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100"
+                >
+                  <QrCode className="size-4" />
                 </button>
               </li>
               );
@@ -164,6 +178,8 @@ export function TemplatesTab(): React.ReactElement {
           </>
         )}
       </div>
+
+      {qrFor ? <TemplateQrDialog template={qrFor} onClose={() => setQrFor(null)} /> : null}
     </div>
   );
 }

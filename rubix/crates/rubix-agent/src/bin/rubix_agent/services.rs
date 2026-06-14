@@ -33,7 +33,17 @@ pub(crate) struct BootedServices {
 }
 
 pub(crate) async fn boot_services() -> Result<BootedServices> {
-    let cfg = AgentConfig::load()?;
+    let mut cfg = AgentConfig::load()?;
+
+    // Splice the DB password from the secrets store into the DSN
+    // before any pool is opened. No-op (DSN passed through verbatim)
+    // unless `database_password_secret` is set, so the `RUBIX_DSN`
+    // path is untouched. A missing secret is a hard boot error.
+    if cfg.database_password_secret.is_some() {
+        let store = boot::build_secrets_store(&cfg);
+        cfg.database_url = boot::resolve_database_url(&cfg, store.as_ref())
+            .map_err(|e| anyhow::anyhow!("resolve database password from secrets store: {e}"))?;
+    }
 
     let bundle = Arc::new(rubix_spi::i18n::rubix_bundle()?);
     let catalogue_size: usize = bundle
@@ -109,9 +119,22 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
                 // UI/i18n-cache providers auto-register upstream.
                 let mut cleanup_providers: Vec<Arc<dyn starter_ext_server::CleanupProvider>> =
                     Vec::new();
+                // The post-install hook creates a freshly-installed bundle's
+                // warehouse tables immediately, closing the boot-only-DDL
+                // window where writes land on a not-yet-created schema. Wired
+                // whenever a warehouse is configured (same condition as the
+                // cleanup reclaimer above).
+                let mut post_install_hook: Option<
+                    Arc<dyn starter_ext_server::PostInstallHook>,
+                > = None;
                 if let Some(wh) = warehouse_client.as_ref() {
                     cleanup_providers.push(Arc::new(
                         rubix_agent::extensions::WarehouseCleanupProvider::new(wh.pool().clone()),
+                    ));
+                    post_install_hook = Some(Arc::new(
+                        rubix_agent::extensions::ExtensionTablesInstallHook::new(
+                            wh.pool().clone(),
+                        ),
                     ));
                 }
                 Some(
@@ -120,6 +143,7 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
                         pool.sqlx(),
                         ext_host_methods.clone(),
                         cleanup_providers,
+                        post_install_hook,
                     )
                     .await?,
                 )

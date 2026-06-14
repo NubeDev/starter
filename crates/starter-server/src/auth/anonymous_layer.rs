@@ -70,6 +70,7 @@ pub fn local_operator(subject: impl Into<String>) -> Principal {
         scopes: Vec::new(),
         tenant_id: None,
         teams: Vec::new(),
+        tenant_scope: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }
@@ -112,6 +113,7 @@ mod tests {
                 scopes: Vec::new(),
                 tenant_id: None,
                 teams: Vec::new(),
+                tenant_scope: Vec::new(),
                 extra: serde_json::Value::Null,
             });
             next.run(req).await

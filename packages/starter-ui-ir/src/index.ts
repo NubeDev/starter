@@ -37,6 +37,28 @@ export type Kind =
   | "repeat";
 
 export interface NodeStyle {
+  // Semantic + layout tokens (mirrors the Rust `NodeStyle`).
+  intent?: string;
+  density?: string;
+  surface?: string;
+  radius?: string;
+  spacing?: string;
+  // V2.0 page-builder decoration tokens.
+  background?: string;
+  gradient?: string;
+  shadow?: string;
+  text_align?: string;
+  font_size?: string;
+  font_weight?: string;
+  // Layout constraints / a11y / visibility.
+  semantic_label?: string;
+  flex?: string;
+  min_width?: string;
+  max_width?: string;
+  width?: string;
+  height?: string;
+  align_self?: string;
+  // Undocumented escape hatch honoured by the web renderer.
   className?: string;
   show_when?: ShowWhen;
 }

@@ -4,13 +4,19 @@
 
 import type { StarterClient } from "./client.js";
 import { StarterError } from "../error/starter-error.js";
+import { csrfHeaderForMethod } from "./csrf.js";
 
 export async function fetchVoid(
   client: StarterClient,
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  const headers: Record<string, string> = { ...client.headers, ...(init.headers as Record<string, string> | undefined) };
+  // Auto-attach the CSRF token on mutating methods (see `fetchJson`).
+  const headers: Record<string, string> = {
+    ...client.headers,
+    ...csrfHeaderForMethod(init.method),
+    ...(init.headers as Record<string, string> | undefined),
+  };
   const res = await client.fetch(`${client.baseUrl}${path}`, {
     ...init,
     credentials: "include",

@@ -169,6 +169,7 @@ pub async fn build_extension_admin(
     pg_pool: &PgPool,
     host_methods: Option<Arc<RubixHostMethods>>,
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
+    post_install_hook: Option<Arc<dyn starter_ext_server::PostInstallHook>>,
 ) -> Result<ExtensionAdminBundle, BootError> {
     // (1) Migration. Idempotent — the SQL uses CREATE TABLE IF NOT
     // EXISTS so a second boot is a no-op.
@@ -333,6 +334,9 @@ pub async fn build_extension_admin(
         .with_installs_dir(installs_dir.clone());
     for provider in cleanup_providers {
         builder = builder.with_cleanup_provider(provider);
+    }
+    if let Some(hook) = post_install_hook {
+        builder = builder.with_post_install_hook(hook);
     }
     let admin = builder.build();
     // Summary boot line consumed by operators + the integration test.

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, MapPin, Pencil, Printer, Trash2 } from 'lucide-react'
+import { QrLabel } from '../scan/QrLabel'
 import { useRefreshKey } from '../api/refresh'
 import { pointsByDevice, deviceUpdate, decommission, labelRender } from '../api/bc'
 import { Toggle, TextInput } from '../components/FormKit'
@@ -50,7 +51,7 @@ export function DeviceDetail({ device, onBack }: { device: DeviceRow; onBack: ()
       .catch((e: unknown) => toast.show(e instanceof Error ? e.message : 'Failed', '#ff5a52'))
   }
 
-  const printLabel = () => {
+  const openLabel = () => {
     labelRender(device.device_id)
       .then(setLabel)
       .catch((e: unknown) => toast.show(e instanceof Error ? e.message : 'Label failed', '#ff5a52'))
@@ -90,7 +91,7 @@ export function DeviceDetail({ device, onBack }: { device: DeviceRow; onBack: ()
         {isPlaceable(device) && (
           <Action icon={MapPin} label="Place on page" onClick={() => setPlacing(true)} accent={statusColor('pending')} />
         )}
-        <Action icon={Printer} label="Label" onClick={printLabel} accent={look.accent} />
+        <Action icon={Printer} label="Label" onClick={openLabel} accent={look.accent} />
         <Action icon={Trash2} label="Decommission" onClick={decom} accent="#ffc24b" />
       </div>
 
@@ -117,12 +118,12 @@ export function DeviceDetail({ device, onBack }: { device: DeviceRow; onBack: ()
 
       <BottomSheet open={!!label} onClose={() => setLabel(null)} title="Print label">
         {label && (
-          <div className="flex flex-col items-center gap-3 text-center">
-            <img src={label.qr_url} alt={`QR code for ${label.serial}`} className="h-40 w-40 rounded-xl bg-white p-2" />
-            <p className="text-lg font-bold text-ink">{label.display_name}</p>
-            <p className="font-mono text-sm text-ink-variant">{label.serial}</p>
-            <p className="font-mono text-xs text-ink-muted">{label.code128}</p>
-          </div>
+          <QrLabel
+            value={label.qr_url}
+            title={label.display_name ?? undefined}
+            subtitle={label.serial}
+            caption={label.code128}
+          />
         )}
       </BottomSheet>
 

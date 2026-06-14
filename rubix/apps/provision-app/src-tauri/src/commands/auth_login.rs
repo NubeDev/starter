@@ -8,18 +8,21 @@ use tauri::{AppHandle, Runtime, State};
 use crate::agent::client::AgentClientState;
 use crate::agent::session::SessionState;
 use crate::error::AppError;
-use crate::store::base_url;
+use crate::store::base_url as base_url_store;
 
 #[tauri::command]
 pub async fn auth_login<R: Runtime>(
     app: AppHandle<R>,
     client: State<'_, AgentClientState>,
     session: State<'_, SessionState>,
-    base_url_arg: String,
+    // Must match the JS arg name: `invoke('auth_login', { baseUrl, ... })`
+    // → Tauri snake-cases `baseUrl` to `base_url`. A mismatched name here
+    // makes Tauri reject the call as "invalid args / missing".
+    base_url: String,
     email: String,
     password: String,
 ) -> Result<Value, AppError> {
-    let base = base_url_arg.trim().trim_end_matches('/').to_string();
+    let base = base_url.trim().trim_end_matches('/').to_string();
     if base.is_empty() {
         return Err(AppError::input("base_url must not be empty"));
     }
@@ -33,7 +36,7 @@ pub async fn auth_login<R: Runtime>(
         s.base_url = Some(base.clone());
         s.csrf_token = Some(csrf);
     }
-    base_url::save(&app, &base);
+    base_url_store::save(&app, &base);
 
     // Return identity so the UI lands logged-in without a second call.
     let me = client.me(&base).await?;

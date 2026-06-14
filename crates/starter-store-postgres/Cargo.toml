@@ -42,6 +42,10 @@ tokio                  = { workspace = true, optional = true }
 starter-skills   = { workspace = true, optional = true }
 starter-flow-spi = { workspace = true, optional = true }
 
+# `setup` feature deps (DOCS §5). Mirrors the SQLite crate's `setup`
+# feature: catalog + run-index store impls of `starter-setup-spi`.
+starter-setup-spi = { workspace = true, optional = true }
+
 # `flow` feature deps. `starter-flow-spi` is the trait surface;
 # `uuid` is needed for parsing the stringly-stored revision/run/
 # session ids back into typed handles. `chrono` is already pulled
@@ -64,6 +68,9 @@ testing = ["dep:testcontainers", "dep:testcontainers-modules", "dep:tokio"]
 # `--no-default-features` to skip the table + the `starter-skills`
 # dep entirely.
 skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
+# Postgres twin of the SQLite `setup` feature (DOCS §5). JSONB +
+# TIMESTAMPTZ store impls of the `starter-setup-spi` contracts.
+setup = ["dep:starter-setup-spi", "dep:uuid", "sqlx/chrono", "sqlx/json"]
 # MEMORY.md Phase M-B — Postgres-backed `AgentSessionStore` impl.
 # Default-off so consumers that don't need agent surfaces (the
 # common minimal binary) carry zero cost. Lives alongside the

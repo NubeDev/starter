@@ -4,15 +4,17 @@
 //! handlers live in their own modules because they have meaningfully
 //! different shapes (SSE upgrade + ETag-cached file serving).
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::Serialize;
 use starter_ext_host::ExtensionRecord;
 use starter_ext_spi::{ContributeUi, ExtensionId, LifecycleState, Manifest};
+use starter_spi::auth::Principal;
 
 use crate::admin::ExtensionAdmin;
+use crate::audit::LifecycleAction;
 use crate::store::EnablementState;
 
 // ---------------------------------------------------------------------------
@@ -42,6 +44,16 @@ pub(crate) struct ExtensionSummary {
     /// live — the sealed registry forbids hot-mount, so a newly-uploaded
     /// bundle only becomes active on next boot. The UI badges these rows.
     pub restart_required: bool,
+    /// `true` once this extension was purged (`DELETE …?purge=true`) this
+    /// run. Its persisted state (kinds, enablement row, owned tables) is
+    /// already gone, but the sealed registry still carries the record until
+    /// the next boot — so without this flag the row would still read as a
+    /// healthy `validated/enabled` extension. The UI renders these as
+    /// dead/stale, pending a restart to fully clear (`restart_required` is
+    /// also set). For an in-repo dev bundle a restart re-discovers it from
+    /// the scan dir; for an uploaded bundle the directory is removed, so a
+    /// restart clears it for good.
+    pub uninstalled: bool,
     /// Compact view of the manifest's `contributes` block — counts per
     /// kind plus the UI `entry`/`exposes` (needed by the host to register
     /// the remote bundle). Lets the list view skip a per-row
@@ -106,9 +118,12 @@ pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoRespon
             restart_count,
             capability_violations,
             enabled,
-            // A record already in the registry is live; it only needs a
-            // restart if it was reinstalled-over this run.
-            restart_required: admin.is_pending_restart(&rec.id_hint),
+            // A record already in the registry is live; it needs a restart
+            // if it was reinstalled-over OR purged this run (the purged
+            // record lingers in the sealed registry until next boot).
+            restart_required: admin.is_pending_restart(&rec.id_hint)
+                || admin.is_uninstalled(&rec.id_hint),
+            uninstalled: admin.is_uninstalled(&rec.id_hint),
             contributes: rec.manifest.as_ref().map(ContributesSummary::from_manifest),
         });
     }
@@ -135,6 +150,8 @@ pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoRespon
             capability_violations: 0,
             enabled: EnablementState::Enabled,
             restart_required: true,
+            // A pending row is a fresh install awaiting boot, not a purge.
+            uninstalled: false,
             // Pending rows have no parsed manifest yet (they go live on
             // next boot); the row will gain `contributes` then.
             contributes: None,
@@ -159,6 +176,9 @@ pub(crate) struct ExtensionDetail {
     pub failure: Option<String>,
     pub restart_count: u64,
     pub capability_violations: u64,
+    /// `true` once purged this run but still lingering in the sealed
+    /// registry until the next boot — see `ExtensionSummary::uninstalled`.
+    pub uninstalled: bool,
     /// Sequence number the next event will receive — clients use this
     /// as a `?after=<seq>` cursor when polling the events endpoint.
     pub events_cursor: u64,
@@ -221,6 +241,7 @@ pub(crate) async fn detail(
         failure: rec.failure.as_ref().map(|e| e.to_string()),
         restart_count,
         capability_violations,
+        uninstalled: admin.is_uninstalled(&rec.id_hint),
         events_cursor,
         workers,
     }))
@@ -242,6 +263,7 @@ pub(crate) struct ToggleResponse {
 pub(crate) async fn enable(
     State(admin): State<ExtensionAdmin>,
     Path(id): Path<String>,
+    principal: Option<Extension<Principal>>,
 ) -> Result<Json<ToggleResponse>, StatusCode> {
     let rec = admin
         .registry()
@@ -249,6 +271,10 @@ pub(crate) async fn enable(
         .ok_or(StatusCode::NOT_FOUND)?
         .clone();
     let eid = rec.id.clone().ok_or(StatusCode::CONFLICT)?;
+
+    // Re-enabling clears any "purged this run" mark — the operator has
+    // explicitly brought it back, so it should stop reading as dead/stale.
+    admin.clear_uninstalled(&id);
 
     // Persist first; if persistence fails we don't want a running
     // supervisor whose row doesn't say "enabled".
@@ -278,6 +304,14 @@ pub(crate) async fn enable(
         }
     }
 
+    // Audit after the mutation succeeds, with the acting admin. A sink failure
+    // is the sink's own concern (it logs); the toggle has already taken effect.
+    let actor = principal.as_ref().map(|Extension(p)| p);
+    admin
+        .audit_sink()
+        .record(LifecycleAction::Enabled, &id, actor)
+        .await;
+
     let state = current_state(&admin, &eid, rec.state);
     Ok(Json(ToggleResponse {
         id,
@@ -289,6 +323,7 @@ pub(crate) async fn enable(
 pub(crate) async fn disable(
     State(admin): State<ExtensionAdmin>,
     Path(id): Path<String>,
+    principal: Option<Extension<Principal>>,
 ) -> Result<Json<ToggleResponse>, StatusCode> {
     let rec = admin
         .registry()
@@ -312,6 +347,12 @@ pub(crate) async fn disable(
             tracing::warn!(err = %e.0, ext = %id, "enablement store set(disabled) failed");
             StatusCode::INTERNAL_SERVER_ERROR
         })?;
+
+    let actor = principal.as_ref().map(|Extension(p)| p);
+    admin
+        .audit_sink()
+        .record(LifecycleAction::Disabled, &id, actor)
+        .await;
 
     Ok(Json(ToggleResponse {
         id,

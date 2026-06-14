@@ -28,10 +28,13 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use sqlx::PgPool;
 use starter_ext_host::ExtensionRegistry;
-use starter_ext_server::{CleanupError, CleanupItem, CleanupKind, CleanupProvider};
+use starter_ext_server::{
+    CleanupError, CleanupItem, CleanupKind, CleanupProvider, PostInstallHook,
+};
 use starter_ext_spi::{ExtensionId, Manifest};
 use starter_flow_spi::skill::SkillId;
 use starter_skills::SkillRegistry;
+use starter_store_warehouse::WarehouseClient;
 
 use crate::extensions::warehouse_write::sanitize_extension_id;
 
@@ -192,6 +195,60 @@ impl CleanupProvider for WarehouseCleanupProvider {
         } else {
             Err(CleanupError::new(errors.join("; ")))
         }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Post-install: create warehouse tables immediately
+// ---------------------------------------------------------------------------
+
+/// Runs the host-managed `CREATE TABLE IF NOT EXISTS` DDL for a
+/// freshly-installed bundle, so its `warehouse_tables[]` exist the
+/// moment install returns — not only after the next boot's DDL sweep.
+///
+/// Without this, the boot-sealed registry plus boot-only DDL leave a
+/// window where a newly-declared (or re-installed) bundle's writes
+/// through `warehouse_write()` succeed against a schema that isn't there
+/// yet, and reads come back empty — the "sites/devices don't persist
+/// until a full restart" symptom. The actual creation is shared with the
+/// boot sweep via [`crate::boot::create_tables_for_manifest`], so the two
+/// paths can never drift in column shape or naming.
+///
+/// Idempotent and best-effort: the upstream install handler logs a hook
+/// failure and proceeds (the boot DDL pass is the backstop).
+pub struct ExtensionTablesInstallHook {
+    warehouse: WarehouseClient,
+}
+
+impl ExtensionTablesInstallHook {
+    /// Build against the warehouse [`PgPool`] — the same pool the boot
+    /// sweep and [`WarehouseCleanupProvider`] use.
+    pub fn new(pool: PgPool) -> Self {
+        Self {
+            warehouse: WarehouseClient::from_pool(pool),
+        }
+    }
+}
+
+#[async_trait]
+impl PostInstallHook for ExtensionTablesInstallHook {
+    async fn run(&self, id: &ExtensionId, manifest: &Manifest) -> Result<String, CleanupError> {
+        let outcome =
+            crate::boot::create_tables_for_manifest(&self.warehouse, id, manifest).await;
+        // A non-zero `skipped` means at least one table's DDL failed; the
+        // per-table reason was already logged at warn. Surface it as an
+        // error so the install handler's hook-failure branch fires and the
+        // operator sees the boot pass is now the only remaining backstop.
+        if outcome.skipped > 0 {
+            return Err(CleanupError::new(format!(
+                "{} of {} table(s) failed DDL (boot pass will retry)",
+                outcome.skipped, outcome.seen
+            )));
+        }
+        Ok(format!(
+            "{} table(s) created/verified, {} deferred to extension",
+            outcome.created_or_existing, outcome.deferred_to_extension
+        ))
     }
 }
 

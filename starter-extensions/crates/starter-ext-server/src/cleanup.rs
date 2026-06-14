@@ -118,6 +118,41 @@ pub trait CleanupProvider: Send + Sync {
     async fn purge(&self, id: &ExtensionId, items: &[CleanupItem]) -> Result<(), CleanupError>;
 }
 
+/// A consumer-supplied step that runs immediately after a bundle is
+/// successfully installed via `POST /extensions/install`, *before* the
+/// restart that makes the extension live in the sealed registry.
+///
+/// This is the install-side mirror of [`CleanupProvider`]: the
+/// **mechanism** (extract → validate → run the hook) lives here, while
+/// the **knowledge** of what provisioning a freshly-installed bundle
+/// needs (in rubix: `CREATE TABLE IF NOT EXISTS` for the manifest's
+/// `warehouse_tables[]`) lives in the consumer, because only rubix owns
+/// the warehouse.
+///
+/// Why this exists: the registry is sealed at boot and host-managed
+/// table DDL otherwise runs only at boot (see rubix's
+/// `boot::create_extension_tables`). Without this hook, a bundle that
+/// declares new or changed warehouse tables — including the common
+/// re-install dev loop — has no backing tables until the next full
+/// restart, so writes through `warehouse_write()` succeed against a
+/// schema that isn't there yet and reads come back empty. Running the
+/// hook on install closes that window: the schema is materialised
+/// immediately, even though the extension *code* still surfaces only on
+/// the next boot.
+///
+/// Implementations MUST be idempotent — install is re-runnable and the
+/// same bundle may be re-installed repeatedly. A hook failure is logged
+/// and does not fail the install (the bundle is already on disk and the
+/// boot-time DDL pass remains the backstop).
+#[async_trait]
+pub trait PostInstallHook: Send + Sync {
+    /// Provision whatever the just-installed bundle needs. `manifest`
+    /// carries the validated manifest (including `warehouse_tables[]`).
+    /// Returns a short, human-readable summary for the install log on
+    /// success.
+    async fn run(&self, id: &ExtensionId, manifest: &Manifest) -> Result<String, CleanupError>;
+}
+
 // ---------------------------------------------------------------------------
 // Built-in: enablement row
 // ---------------------------------------------------------------------------

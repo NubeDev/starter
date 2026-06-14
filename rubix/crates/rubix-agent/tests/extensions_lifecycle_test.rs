@@ -182,7 +182,7 @@ async fn extension_lifecycle_full_roundtrip() {
 
     let (pool, _guard) = with_database().await;
     let cfg = agent_config(fixture.path().to_path_buf());
-    let bundle = build_extension_admin(&cfg, pool.sqlx(), None, Vec::new())
+    let bundle = build_extension_admin(&cfg, pool.sqlx(), None, Vec::new(), None)
         .await
         .expect("build_extension_admin succeeds");
     let app: Router = ext_router::<()>(bundle.admin.clone());

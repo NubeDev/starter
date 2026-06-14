@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Postgres datasource config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["host", "database", "user"],
+  "properties": {
+    "host": { "type": "string", "minLength": 1, "title": "Host" },
+    "port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 5432, "title": "Port" },
+    "database": { "type": "string", "minLength": 1, "title": "Database" },
+    "user": { "type": "string", "minLength": 1, "title": "User" },
+    "password": { "type": "string", "title": "Password", "writeOnly": true }
+  }
+}

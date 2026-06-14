@@ -45,6 +45,9 @@ export interface MembershipView {
   tenant_id: string;
   user_id: string;
   role: TenantRole;
+  /** Present on the list endpoint (joins the users table); omitted on
+   * add/patch responses. A human-readable label for member pickers. */
+  email?: string;
 }
 
 /** Body for `POST /v1/tenants/{id}/members`. */
@@ -55,6 +58,13 @@ export interface AddMemberBody {
 
 /** Body for `PATCH /v1/tenants/{id}/members/{user_id}`. */
 export interface PatchMemberBody {
+  role: TenantRole;
+}
+
+/** Body for `POST /v1/tenants/{id}/users` — create a new account + add to tenant. */
+export interface CreateUserBody {
+  email: string;
+  password: string;
   role: TenantRole;
 }
 
@@ -77,6 +87,13 @@ export interface AddTeamMemberBody {
   user_id: string;
 }
 
+/** Team-member row from `GET /v1/tenants/{id}/teams/{team_id}/members`. */
+export interface TeamMemberView {
+  user_id: string;
+  /** Human-readable email label (joins the users table). */
+  email?: string;
+}
+
 declare module "../client/client.js" {
   interface StarterClient {
     // ----- tenants
@@ -87,6 +104,7 @@ declare module "../client/client.js" {
     // ----- members
     listTenantMembers(id: string): Promise<MembershipView[]>;
     addTenantMember(id: string, body: AddMemberBody): Promise<MembershipView>;
+    createTenantUser(id: string, body: CreateUserBody): Promise<MembershipView>;
     patchTenantMember(
       id: string,
       userId: string,
@@ -98,6 +116,7 @@ declare module "../client/client.js" {
     createTeam(id: string, body: CreateTeamBody): Promise<TeamView>;
     deleteTeam(id: string, teamId: string): Promise<void>;
     // ----- team members
+    listTeamMembers(id: string, teamId: string): Promise<TeamMemberView[]>;
     addTeamMember(
       id: string,
       teamId: string,
@@ -174,6 +193,22 @@ StarterClient.prototype.addTenantMember = function addTenantMember(
   );
 };
 
+StarterClient.prototype.createTenantUser = function createTenantUser(
+  this: StarterClient,
+  id: string,
+  body: CreateUserBody,
+): Promise<MembershipView> {
+  return fetchJson<MembershipView>(
+    this,
+    `/v1/tenants/${encodeURIComponent(id)}/users`,
+    {
+      method: "POST",
+      headers: mutHeaders(),
+      body: JSON.stringify(body),
+    },
+  );
+};
+
 StarterClient.prototype.patchTenantMember = async function patchTenantMember(
   this: StarterClient,
   id: string,
@@ -228,6 +263,17 @@ StarterClient.prototype.deleteTeam = async function deleteTeam(
     this,
     `/v1/tenants/${encodeURIComponent(id)}/teams/${encodeURIComponent(teamId)}`,
     { method: "DELETE", headers: readCsrfHeader() },
+  );
+};
+
+StarterClient.prototype.listTeamMembers = function listTeamMembers(
+  this: StarterClient,
+  id: string,
+  teamId: string,
+): Promise<TeamMemberView[]> {
+  return fetchJson<TeamMemberView[]>(
+    this,
+    `/v1/tenants/${encodeURIComponent(id)}/teams/${encodeURIComponent(teamId)}/members`,
   );
 };
 

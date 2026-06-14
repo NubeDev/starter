@@ -1,0 +1,26 @@
+# Caddy fronts the all-in-one container. It serves the built UI as a SPA and
+# reverse-proxies every backend route to nexus-api on loopback. Fly terminates
+# TLS at its edge and forwards plain HTTP to :8080, so no TLS block here.
+
+:8080 {
+	encode gzip
+
+	# Backend routes → nexus-api. These prefixes match the server's mounts:
+	# /api/* product routes, /auth/* identity, /v1/authz/* grants, plus the
+	# operational endpoints. SSE (/api/v1/streams/*) needs buffering off so
+	# events flush immediately.
+	@api path /api/* /auth/* /v1/* /health /metrics /openapi.json
+	handle @api {
+		reverse_proxy 127.0.0.1:9090 {
+			flush_interval -1
+		}
+	}
+
+	# Everything else is the UI. try_files falls back to index.html so client-
+	# side routes (e.g. /dashboards/plant-1) resolve to the SPA entry.
+	handle {
+		root * /srv/ui
+		try_files {path} /index.html
+		file_server
+	}
+}

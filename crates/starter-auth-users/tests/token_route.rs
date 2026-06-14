@@ -64,6 +64,7 @@ fn make_tenant(slug: &str) -> TenantRecord {
         slug: slug.into(),
         display_name: slug.into(),
         audit_allow_sample: None,
+        parent_id: None,
     }
 }
 

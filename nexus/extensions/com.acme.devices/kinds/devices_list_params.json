@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DevicesListParams",
+  "type": "object",
+  "description": "No params — scope comes from the caller's identity (the $caller_tenant_id / $caller_team_ids host tokens), not from input.",
+  "properties": {},
+  "additionalProperties": false
+}

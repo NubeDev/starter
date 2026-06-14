@@ -33,8 +33,20 @@ export class StarterError extends Error {
     } catch {
       // not JSON or not a Problem — fall through.
     }
-    const msg = problem?.title ?? `HTTP ${res.status}`;
-    return new StarterError(res.status, msg, problem);
+    // A Problem `title` is the best message; otherwise fall back to a plain
+    // text body (some endpoints reply `(StatusCode, "reason")` rather than a
+    // Problem), and only then to the bare status. Without this a 400 whose
+    // body explains *why* surfaces as an opaque "HTTP 400".
+    let msg = problem?.title;
+    if (!msg) {
+      try {
+        const text = (await res.clone().text()).trim();
+        if (text) msg = text;
+      } catch {
+        // body already consumed or unreadable — fall through.
+      }
+    }
+    return new StarterError(res.status, msg ?? `HTTP ${res.status}`, problem);
   }
 
   /**

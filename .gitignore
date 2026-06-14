@@ -38,3 +38,11 @@ rubix/.playwright-cli
 rubix/extensions/com.nubeio.rubixos/rubix-nubeio-rubixos-extension
 examples/rubix-app
 examples/rubix-app
+.claude/scheduled_tasks.lock
+/nexus/backend/target/
+# WS-14: dev scratch for uploaded extension bundles + supervisor pidfiles
+# (`make dev-be` writes here; never committed).
+/nexus/backend/.nexus-ext/
+examples/rubix-app
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/design_system.cpython-312.pyc
+.claude/skills/ui-ux-pro-max/scripts/__pycache__/core.cpython-312.pyc

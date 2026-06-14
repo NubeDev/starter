@@ -31,7 +31,7 @@ pub mod warehouse_write;
 
 pub use backends::{RubixCapabilityFactory, RubixWarehouseReadBackend};
 pub use caller_identity::with_caller_identity;
-pub use cleanup::{SkillCleanupProvider, WarehouseCleanupProvider};
+pub use cleanup::{ExtensionTablesInstallHook, SkillCleanupProvider, WarehouseCleanupProvider};
 pub use dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 pub use event_bus::{RubixEventBus, RubixEventBusBackend};
 pub use host_methods::RubixHostMethods;

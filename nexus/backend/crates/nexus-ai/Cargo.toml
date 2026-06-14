@@ -1,0 +1,47 @@
+# Nexus AI — a thin facade over two stacks at different layers:
+#   * `genai`  (inference: messages -> completion, 25+ providers)
+#   * `zag`    (agents: drive Claude Code / Codex / Gemini CLI sessions)
+# It does NOT re-implement either. It normalises the parts they share —
+# credentials, model-size aliasing (small/medium/large), retries, and a single
+# `Event` stream enum — behind ONE entry point with two capability traits
+# (`Inference`, `Agent`). Provider-specific power features stay reachable via
+# typed escape hatches rather than being flattened to a lowest common denominator.
+[package]
+name = "nexus-ai"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Nexus unified AI surface — one API over genai (inference) and zag (agents)."
+
+[features]
+# `inference` is on by default; `agent` pulls the heavier zag CLI driver and is
+# opt-in so a consumer that only needs chat completions doesn't compile it.
+default = ["inference"]
+inference = ["dep:genai"]
+agent = ["dep:zag"]
+
+[dependencies]
+# Inference layer. crates.io release; the unified `chat`/`stream` methods delegate
+# to its `Client::exec_chat` / `exec_chat_stream`.
+genai = { version = "0.6", optional = true }
+
+# Agent layer. Drives coding-agent CLIs (Claude Code, Codex, Gemini, Ollama).
+# Optional — wrapped behind the `agent` feature. The umbrella `zag` crate lives at
+# `bindings/rust` in the repo and re-exports `zag_agent::*` (so `zag::AgentBuilder`
+# resolves). Pinned by git; `AgentBuilder::exec` is the surface we depend on.
+zag = { git = "https://github.com/niclaslindstedt/zag", package = "zag", optional = true }
+
+tokio.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+
+serde.workspace = true
+serde_json.workspace = true
+
+async-trait.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros"] }

@@ -16,7 +16,7 @@
 //! `Arc`. Handlers take a `State<ExtensionAdmin>` and pull what they
 //! need.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
@@ -25,8 +25,10 @@ use starter_ext_metrics::MetricsRegistry;
 use starter_ext_spi::{ExtensionId, Manifest, RuntimeKind};
 use starter_ext_supervisor::SupervisorHandle;
 
+use crate::audit::{AuditSink, NoopAuditSink};
 use crate::cleanup::{
-    CleanupItem, CleanupProvider, EnablementRowProvider, I18nCacheProvider, UiCacheProvider,
+    CleanupItem, CleanupProvider, EnablementRowProvider, I18nCacheProvider, PostInstallHook,
+    UiCacheProvider,
 };
 use crate::etag::EtagCache;
 use crate::factory::{DefaultSupervisorFactory, DynFactory};
@@ -49,15 +51,33 @@ struct Inner {
     /// `build()`; consumer-supplied providers (rubix's warehouse + skill
     /// reclaimers) follow.
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
+    /// Optional consumer-supplied step run by the install handler right
+    /// after a bundle is staged + validated (rubix uses it to create the
+    /// bundle's warehouse tables immediately, instead of waiting for the
+    /// next boot's DDL pass). `None` on a `TestApp` or the generic host.
+    post_install_hook: Option<Arc<dyn PostInstallHook>>,
     /// Ids installed during this process run that are not yet live in the
     /// sealed registry — they surface on next boot. Surfaced as
     /// `restart_required` on the list projection so the UI can badge them.
     pending_restart: RwLock<HashMap<String, PendingInstall>>,
+    /// Ids purged (`DELETE …?purge=true`) during this process run. The
+    /// sealed registry still carries their record until the next boot, so
+    /// the row keeps reporting `validated/enabled` even though their
+    /// persisted state (kinds, enablement row, owned tables) is already
+    /// gone — which reads as "still installed" to an operator. Marking the
+    /// id here lets the list/detail projection report `uninstalled: true`
+    /// (+ `restart_required: true`) so the UI can show it as a dead/stale
+    /// row pending a restart to clear. Cleared if the id is re-enabled.
+    uninstalled: RwLock<HashSet<String>>,
     /// Per-extension counter registry. Shared with the transport adapters
     /// (they bump it) and read by `GET /extensions/<id>/metrics`. Defaults
     /// to a fresh empty registry so a `TestApp` that does not wire the
     /// adapters still serves all-zero counters.
     metrics: MetricsRegistry,
+    /// Consumer-supplied lifecycle audit sink. The enable/disable/install/
+    /// uninstall handlers notify it with the acting principal after a
+    /// successful mutation. Defaults to [`NoopAuditSink`] when unset.
+    audit_sink: Arc<dyn AuditSink>,
     worker_states: Option<WorkerStatesFn>,
     /// On-disk root for installed (uploaded-tarball) bundles. The
     /// install handler unpacks here and the uninstall handler removes
@@ -102,6 +122,8 @@ impl ExtensionAdmin {
             worker_states: None,
             installs_dir: None,
             cleanup_providers: Vec::new(),
+            post_install_hook: None,
+            audit_sink: None,
         }
     }
 
@@ -139,12 +161,39 @@ impl ExtensionAdmin {
         }
     }
 
+    /// Shut down every live supervisor (`SIGTERM` → grace → `SIGKILL`) and
+    /// clear the map. Called by the host at process exit so no extension child
+    /// outlives the host. Idempotent — a second call finds an empty map and is a
+    /// no-op. Builtin/wasm records have no handle and are unaffected.
+    pub async fn shutdown_all(&self) {
+        // Drain the handles out under the lock, then await their shutdowns
+        // outside it (the lock is sync; awaiting while holding it would be a
+        // deadlock risk and blocks concurrent reads).
+        let handles: Vec<SupervisorHandle> = {
+            let mut map = self
+                .inner
+                .supervisors
+                .write()
+                .expect("supervisor map poisoned");
+            map.drain().map(|(_, h)| h).collect()
+        };
+        for handle in handles {
+            handle.shutdown().await;
+        }
+    }
+
     pub(crate) fn store(&self) -> &dyn EnablementStore {
         &*self.inner.store
     }
 
     pub(crate) fn factory(&self) -> &DynFactory {
         &self.inner.factory
+    }
+
+    /// The lifecycle audit sink. Always present (defaults to the no-op sink);
+    /// the lifecycle handlers call it after a successful mutation.
+    pub(crate) fn audit_sink(&self) -> &Arc<dyn AuditSink> {
+        &self.inner.audit_sink
     }
 
     pub(crate) fn etag_cache(&self) -> &EtagCache {
@@ -168,6 +217,12 @@ impl ExtensionAdmin {
     /// wired. Used by the install / uninstall endpoints (Phase D.1).
     pub(crate) fn installs_dir(&self) -> Option<&std::path::Path> {
         self.inner.installs_dir.as_deref()
+    }
+
+    /// The consumer-supplied post-install hook, if one was wired. The
+    /// install handler runs it after a successful install.
+    pub(crate) fn post_install_hook(&self) -> Option<&Arc<dyn PostInstallHook>> {
+        self.inner.post_install_hook.as_ref()
     }
 
     pub(crate) fn worker_states(&self, id: &ExtensionId) -> Vec<serde_json::Value> {
@@ -203,6 +258,37 @@ impl ExtensionAdmin {
             .read()
             .expect("pending_restart poisoned")
             .contains_key(id)
+    }
+
+    /// Mark an id as purged this run (`DELETE …?purge=true`). Its sealed
+    /// registry record lingers until the next boot, so the projection
+    /// reports it as `uninstalled` + `restart_required` until then.
+    pub(crate) fn mark_uninstalled(&self, id: &str) {
+        self.inner
+            .uninstalled
+            .write()
+            .expect("uninstalled poisoned")
+            .insert(id.to_owned());
+    }
+
+    /// Drop an id from the purged set (e.g. on re-enable, so a re-enabled
+    /// extension stops reporting as dead/stale).
+    pub(crate) fn clear_uninstalled(&self, id: &str) {
+        self.inner
+            .uninstalled
+            .write()
+            .expect("uninstalled poisoned")
+            .remove(id);
+    }
+
+    /// Was this id purged this run and is its (now-stale) record still in
+    /// the sealed registry, awaiting a restart to clear?
+    pub(crate) fn is_uninstalled(&self, id: &str) -> bool {
+        self.inner
+            .uninstalled
+            .read()
+            .expect("uninstalled poisoned")
+            .contains(id)
     }
 
     /// Snapshot of the pending-restart ids and their captured summaries —
@@ -292,6 +378,8 @@ pub struct ExtensionAdminBuilder {
     worker_states: Option<WorkerStatesFn>,
     installs_dir: Option<PathBuf>,
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
+    post_install_hook: Option<Arc<dyn PostInstallHook>>,
+    audit_sink: Option<Arc<dyn AuditSink>>,
 }
 
 impl ExtensionAdminBuilder {
@@ -361,6 +449,25 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Register the [`PostInstallHook`] the install handler runs after a
+    /// bundle is validated (rubix wires its warehouse-table creator here so
+    /// a freshly-installed bundle's tables exist immediately, rather than
+    /// only after the next boot's DDL pass).
+    pub fn with_post_install_hook(mut self, hook: Arc<dyn PostInstallHook>) -> Self {
+        self.post_install_hook = Some(hook);
+        self
+    }
+
+    /// Wire a lifecycle [`AuditSink`]. The enable/disable/install/uninstall
+    /// handlers notify it with the acting principal after a successful
+    /// mutation. Defaults to [`NoopAuditSink`] when unset, so a host that does
+    /// not keep an audit ledger needs no wiring (nexus wires its `nexus_changes`
+    /// recorder here).
+    pub fn with_audit_sink(mut self, sink: Arc<dyn AuditSink>) -> Self {
+        self.audit_sink = Some(sink);
+        self
+    }
+
     /// Materialise the [`ExtensionAdmin`].
     pub fn build(self) -> ExtensionAdmin {
         let registry = self.registry;
@@ -389,10 +496,54 @@ impl ExtensionAdminBuilder {
                 etag_cache,
                 cleanup_providers,
                 pending_restart: RwLock::new(HashMap::new()),
+                uninstalled: RwLock::new(HashSet::new()),
                 metrics: self.metrics.unwrap_or_default(),
+                audit_sink: self.audit_sink.unwrap_or_else(|| Arc::new(NoopAuditSink)),
                 worker_states: self.worker_states,
                 installs_dir: self.installs_dir,
+                post_install_hook: self.post_install_hook,
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_admin() -> ExtensionAdmin {
+        let mut reg = ExtensionRegistry::new();
+        reg.seal();
+        ExtensionAdmin::builder(Arc::new(reg)).build()
+    }
+
+    #[test]
+    fn uninstalled_mark_is_tracked_and_clearable() {
+        let admin = test_admin();
+        let id = "com.acme.purgeme";
+
+        // Default: nothing is marked uninstalled.
+        assert!(!admin.is_uninstalled(id));
+
+        // Purge marks it — the lingering sealed-registry record now reads
+        // as dead/stale to the list/detail projection.
+        admin.mark_uninstalled(id);
+        assert!(admin.is_uninstalled(id));
+
+        // Re-enable (or any explicit clear) drops the mark, so a brought-
+        // back extension stops reporting as uninstalled.
+        admin.clear_uninstalled(id);
+        assert!(!admin.is_uninstalled(id));
+    }
+
+    #[test]
+    fn uninstalled_set_is_independent_of_pending_restart() {
+        let admin = test_admin();
+        let id = "com.acme.purgeme";
+        // The two markers are orthogonal: a purge clears pending-restart and
+        // sets uninstalled, and neither bleeds into the other's predicate.
+        admin.mark_uninstalled(id);
+        assert!(admin.is_uninstalled(id));
+        assert!(!admin.is_pending_restart(id));
     }
 }

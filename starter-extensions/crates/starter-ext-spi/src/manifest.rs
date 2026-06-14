@@ -60,6 +60,16 @@ pub struct Manifest {
     #[serde(default, deserialize_with = "deserialize_requires")]
     pub requires: Vec<Require>,
 
+    /// Peer-extension dependencies (WS-18 Wave B). Each entry names another
+    /// extension and the specific `provides[]` ids this extension intends to
+    /// call via `extension.call`. Kept separate from [`Manifest::requires`]
+    /// (which names *host interfaces*) so the operator UI can render
+    /// "peer extensions" distinctly from "host interfaces", and so the host
+    /// can fail the load fast when a named peer is absent, disabled, or does
+    /// not `provide` the listed id.
+    #[serde(default)]
+    pub requires_extensions: Vec<RequireExtension>,
+
     /// How this extension is packaged (R1: exactly one of builtin / wasm /
     /// process).
     pub runtime: Runtime,
@@ -177,6 +187,35 @@ where
 /// to consumer crates.
 #[doc(hidden)]
 pub type ManifestRequires = Vec<Require>;
+
+/// `Manifest::requires_extensions` element — a peer-extension dependency
+/// (WS-18 Wave B).
+///
+/// ```yaml
+/// requires_extensions:
+///   - id: com.acme.geocode
+///     provides: [com.acme.geocode.lookup]   # ids this ext will `extension.call`
+///     version: "^1"
+/// ```
+///
+/// The host resolves each entry at load: the named extension must exist and
+/// `contributes.provides[]` every id listed here, at a compatible version.
+/// A missing/disabled peer or an unprovided id is a hard load error — peer
+/// edges are visible to the operator at install, never a runtime surprise.
+/// Each provided id must be owned by `id` (reverse-DNS), validated locally.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RequireExtension {
+    /// The peer extension's id.
+    pub id: ExtensionId,
+    /// The peer's `provides[]` ids this extension intends to call. Each must
+    /// be owned by `id`.
+    #[serde(default)]
+    pub provides: Vec<String>,
+    /// Semver requirement against the peer's version. Defaults to `"*"`.
+    #[serde(default = "any_version_req")]
+    pub version: semver::VersionReq,
+}
 
 /// How the extension is packaged.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -402,6 +441,150 @@ pub struct Contributes {
     /// builtin NaN/Spike/Stuck rules use.
     #[serde(default)]
     pub anomaly_rules: Vec<ContributeAnomalyRule>,
+    /// Post-query insight scripts the extension contributes. Each entry names a
+    /// reusable, sandboxed transform the host materialises into its global
+    /// extension-insight registry, the dual of `warehouse_templates[]` for the
+    /// insight stage rather than the query stage. See [`ContributeInsight`].
+    ///
+    /// The host (nexus-api) compiles each entry's `script_file` against the
+    /// insight sandbox at registration and rejects the contribution on a compile
+    /// error, exactly as `warehouse_templates[]` are linted before they land.
+    /// A consumer host that does not run an insight stage simply ignores the
+    /// field — like every other contribution it is additive and defaults empty.
+    #[serde(default)]
+    pub insights: Vec<ContributeInsight>,
+    /// Data-plane source contributions — named inputs the extension feeds via
+    /// the `ingest.write` host method. Each entry declares a flow source the
+    /// host wires to a bounded channel; the extension pushes rows into it. See
+    /// [`ContributeSource`].
+    ///
+    /// Additive and empty by default: a host without a data-plane ignores it,
+    /// exactly like every other contribution field.
+    #[serde(default)]
+    pub sources: Vec<ContributeSource>,
+    /// Data-plane sink contributions — named outputs the extension drains via
+    /// the `ingest.read_batch` host method. Each entry declares a flow sink whose
+    /// batches the host buffers for the extension to long-poll. See
+    /// [`ContributeSink`].
+    #[serde(default)]
+    pub sinks: Vec<ContributeSink>,
+    /// Setup / Automation Builder template contributions
+    /// (`DOCS/setup-automation-builder.md` §9 "Bundled templates"). Each
+    /// entry names a YAML *envelope* file in the bundle that the host
+    /// imports into the `TemplateStore` on enable with
+    /// `source = Extension { ext_id }`, via the same import path REST
+    /// `/setup/templates/import` uses. Disabling the extension removes its
+    /// templates. Additive and empty by default — a host without the setup
+    /// builder simply ignores it, like every other contribution field.
+    #[serde(default)]
+    pub setup_templates: Vec<ContributeSetupTemplate>,
+    /// Peer-API surface (WS-18 Wave B). Each entry marks one of the
+    /// extension's *own* contributed tool/node ids as callable by another
+    /// extension via `extension.call`. A contributed tool/node **not** listed
+    /// here is private — reachable only on the extension's normal transports
+    /// (MCP/REST/flow), never as a peer call. There is no implicit
+    /// "all my tools are callable": peer reachability is opt-in. See
+    /// [`ContributeProvides`].
+    #[serde(default)]
+    pub provides: Vec<ContributeProvides>,
+}
+
+/// Direction of a data-plane contribution — whether the extension produces data
+/// into the host (`Source`) or consumes data the host produced (`Sink`).
+///
+/// Carried on both [`ContributeSource`] and [`ContributeSink`] so a single
+/// admin/catalog surface can list them uniformly; the field is redundant with
+/// the contribution list it appears in (a `sources[]` entry is always
+/// inbound) but explicit so the wire shape is self-describing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum IngestDirection {
+    /// Extension → host: rows pushed in via `ingest.write`.
+    Inbound,
+    /// Host → extension: rows drained out via `ingest.read_batch`.
+    Outbound,
+}
+
+/// One `contributes.sources[]` entry — a named data-plane input the extension
+/// pushes rows into via `ingest.write`.
+///
+/// The host materialises this as an `http_ingest`-style bounded source on the
+/// flow named `name` (R4 namespace ownership applies); the extension declares
+/// the row shape it sends via `config_schema` (advisory — the host coerces via
+/// `json_to_arrow` regardless). `direction` is always [`IngestDirection::Inbound`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSource {
+    /// Source name. Must be the extension id or a dotted descendant (R4).
+    pub name: String,
+    /// Optional path (relative to bundle root) to a JSON Schema describing the
+    /// rows the extension pushes. Advisory — the host shapes rows via Arrow
+    /// inference regardless. Omitted ⇒ no schema surfaced.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_schema: Option<String>,
+    /// Always [`IngestDirection::Inbound`] for a source; explicit for a uniform
+    /// catalog. Defaults to inbound when omitted.
+    #[serde(default = "inbound")]
+    pub direction: IngestDirection,
+}
+
+/// One `contributes.sinks[]` entry — a named data-plane output the extension
+/// drains via `ingest.read_batch`.
+///
+/// The host buffers the batches the flow's sink produces in a bounded output
+/// queue keyed by `name`; the extension long-polls them. `direction` is always
+/// [`IngestDirection::Outbound`].
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSink {
+    /// Sink name. Must be the extension id or a dotted descendant (R4).
+    pub name: String,
+    /// Optional path (relative to bundle root) to a JSON Schema describing the
+    /// rows the host hands back. Advisory. Omitted ⇒ no schema surfaced.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub config_schema: Option<String>,
+    /// Always [`IngestDirection::Outbound`] for a sink; explicit for a uniform
+    /// catalog. Defaults to outbound when omitted.
+    #[serde(default = "outbound")]
+    pub direction: IngestDirection,
+}
+
+/// Default `direction` for a `sources[]` entry.
+fn inbound() -> IngestDirection {
+    IngestDirection::Inbound
+}
+
+/// Default `direction` for a `sinks[]` entry.
+fn outbound() -> IngestDirection {
+    IngestDirection::Outbound
+}
+
+/// One `contributes.insights[]` entry — a named, sandboxed post-query transform
+/// script the extension contributes to the host's insight stage.
+///
+/// The extension ships a Rhai script (resolved from `script_file`, relative to
+/// the bundle root, R7: never templated at runtime) and an optional JSON Schema
+/// describing the script's `params` (resolved from `params_schema`, advisory —
+/// the sandbox enforces safety regardless). The host compiles the script at
+/// registration and refuses the contribution if it does not compile, so a
+/// broken insight never reaches a query.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeInsight {
+    /// Insight name. Must be the extension id or a dotted descendant (R4
+    /// namespace ownership), e.g. `com.acme.weather.zscore`. Host-reserved
+    /// prefixes (`starter.`, `sys.`) are rejected at load time.
+    pub name: String,
+
+    /// Path (relative to bundle root) to the Rhai script holding the transform
+    /// body. R7 — read verbatim, never templated at runtime.
+    pub script_file: String,
+
+    /// Optional path (relative to bundle root) to a JSON Schema describing the
+    /// script's bound `params`. Advisory only (the sandbox is the safety
+    /// boundary); omitted ⇒ no schema is surfaced to the UI.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub params_schema: Option<String>,
 }
 
 /// One `contributes.skills[]` entry — a directory of `SKILL.md`
@@ -467,6 +650,24 @@ pub struct ContributeWarehouseTemplate {
     /// audit; R7 — the SQL is never templated at runtime.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sql_file: Option<String>,
+}
+
+/// One `contributes.setup_templates[]` entry — a Setup / Automation
+/// Builder template the extension bundles
+/// (`DOCS/setup-automation-builder.md` §9). The host imports the named
+/// YAML envelope into the `TemplateStore` on enable with
+/// `source = Extension { ext_id }`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSetupTemplate {
+    /// Template id. Must be the extension id or a dotted descendant
+    /// (R4 namespace ownership); host-reserved prefixes are rejected at
+    /// load time. Should match the `id:` inside the envelope file.
+    pub id: String,
+
+    /// Path (relative to bundle root) to the YAML envelope file (the
+    /// `TemplateEnvelope` shape: scalar metadata + nested `flow:` body).
+    pub file: String,
 }
 
 /// One `contributes.warehouse_tables[]` entry — a warehouse table
@@ -710,6 +911,38 @@ pub struct PermissionGate {
     pub resource: String,
     /// Action verb on the resource (e.g. `"read"`, `"refresh"`).
     pub action: String,
+}
+
+/// One `contributes.provides[]` entry — a tool/node id this extension makes
+/// callable by another extension via `extension.call` (WS-18 Wave B).
+///
+/// ```yaml
+/// provides:
+///   - id: com.acme.geocode.lookup            # a contributed tool OR node kind
+///     input_schema: schemas/lookup_in.json   # optional; validated host-side
+///     output_schema: schemas/lookup_out.json
+/// ```
+///
+/// `id` must be owned by the extension (reverse-DNS, R4) **and** reference an
+/// id this extension actually contributes — either a `contributes.tools[].id`
+/// or a `contributes.nodes[].kind`. Listing an id here does not create a new
+/// dispatch target; it marks an existing one as part of the public peer-API.
+/// The schema paths are optional; when present the host validates the peer
+/// call's `input`/`output` against them.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeProvides {
+    /// The contributed tool id or node kind exposed to peers. Owned by the
+    /// extension; must match a `tools[].id` or `nodes[].kind`.
+    pub id: String,
+    /// Optional path (relative to bundle root) to a JSON Schema validating
+    /// the peer call's `input`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub input_schema: Option<String>,
+    /// Optional path (relative to bundle root) to a JSON Schema validating
+    /// the peer call's `output`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub output_schema: Option<String>,
 }
 
 /// One flow node-kind the extension contributes.
@@ -1497,6 +1730,130 @@ contributes:
     - kind: com.nube.mqtt.publish
       settings_schema: schemas/publish.json
       unexpected_field: 1
+"#;
+        assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
+    }
+
+    #[test]
+    fn contributes_insights_parses() {
+        // Additive insight contributions mirror `warehouse_templates[]`:
+        // `name` + `script_file` required, `params_schema` optional.
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  insights:
+    - name: com.acme.weather.zscore
+      script_file: insights/zscore.rhai
+      params_schema: insights/zscore_params.json
+    - name: com.acme.weather.smooth
+      script_file: insights/smooth.rhai
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.insights.len(), 2);
+        assert_eq!(m.contributes.insights[0].name, "com.acme.weather.zscore");
+        assert_eq!(
+            m.contributes.insights[0].script_file,
+            "insights/zscore.rhai"
+        );
+        assert_eq!(
+            m.contributes.insights[0].params_schema.as_deref(),
+            Some("insights/zscore_params.json")
+        );
+        assert!(m.contributes.insights[1].params_schema.is_none());
+    }
+
+    #[test]
+    fn contributes_insights_default_to_empty() {
+        let yaml = r#"
+v: 1
+id: com.acme.none
+version: 0.0.1
+display_name: "None"
+runtime: { kind: builtin, crate_name: none }
+contributes: {}
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(m.contributes.insights.is_empty());
+    }
+
+    #[test]
+    fn contributes_insights_rejects_unknown_field() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  insights:
+    - name: com.acme.weather.z
+      script_file: insights/z.rhai
+      bogus: 1
+"#;
+        assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
+    }
+
+    #[test]
+    fn contributes_sources_and_sinks_parse() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: process, bin: weatherd }
+contributes:
+  sources:
+    - name: com.acme.weather.in
+      config_schema: schemas/in.json
+    - name: com.acme.weather.raw
+  sinks:
+    - name: com.acme.weather.out
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.sources.len(), 2);
+        assert_eq!(m.contributes.sources[0].name, "com.acme.weather.in");
+        assert_eq!(
+            m.contributes.sources[0].config_schema.as_deref(),
+            Some("schemas/in.json")
+        );
+        // Direction defaults per list: sources are inbound, sinks outbound.
+        assert_eq!(m.contributes.sources[0].direction, IngestDirection::Inbound);
+        assert!(m.contributes.sources[1].config_schema.is_none());
+        assert_eq!(m.contributes.sinks.len(), 1);
+        assert_eq!(m.contributes.sinks[0].direction, IngestDirection::Outbound);
+    }
+
+    #[test]
+    fn contributes_sources_default_to_empty() {
+        let yaml = r#"
+v: 1
+id: com.acme.none
+version: 0.0.1
+display_name: "None"
+runtime: { kind: builtin, crate_name: none }
+contributes: {}
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(m.contributes.sources.is_empty());
+        assert!(m.contributes.sinks.is_empty());
+    }
+
+    #[test]
+    fn contributes_source_rejects_unknown_field() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: process, bin: weatherd }
+contributes:
+  sources:
+    - name: com.acme.weather.in
+      bogus: 1
 "#;
         assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
     }

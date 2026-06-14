@@ -11,12 +11,33 @@
 # precedence: defaults < this file < RUBIX_* env < flags.
 
 bind = "0.0.0.0:8088"
+
+# Database DSN — two ways to supply the password.
+#
+# Option A: full DSN in plain config (current default). Simplest for
+# local dev; matches `rubix/docker/docker-compose.dev.yaml`
+# byte-for-byte. The `RUBIX_DSN` / `RUBIX_DATABASE_URL` env vars
+# override this and stay the simplest option for CI.
+#
 # Single TimescaleDB-enabled Postgres holds both OLTP tables and
 # warehouse hypertables. `warehouse_url` is intentionally absent —
 # the warehouse boot shares this pool via `WarehouseClient::from_pool`.
 database_url = "postgres://rubix:rubix-dev@127.0.0.1:5433/rubix"
 
-secrets_path = "rubix/dev/secrets.age"
+# Option B: password from the secrets store. Keep a password-less DSN
+# in config and name the secret key holding the password; boot splices
+# it into the DSN before any pool opens. Store it once:
+#     rubix-admin secrets set db:password <pwd>
+# database_url = "postgres://rubix@timescale-test.nube-iiot.com:5432/rubix"
+# database_password_secret = "db:password"
+
+# Directory holding the age-encrypted `secrets.age` file. When set,
+# the agent (and `rubix-admin secrets set`) back the SecretStore with
+# `starter-secrets-file` instead of the keyring → env-var chain. The
+# decryption identity is created/read at
+# `<secrets_path>/identity.age-key` — BACK THAT FILE UP; losing it
+# makes `secrets.age` unrecoverable.
+# secrets_path = "~/.config/rubix/secrets"
 
 # Which AI runner `boot::ai::build_runner` constructs at startup.
 # Defaults to the local `claude` CLI on PATH (zero-config; the

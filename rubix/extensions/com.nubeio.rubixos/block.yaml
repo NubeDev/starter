@@ -19,6 +19,29 @@ runtime:
   kind: process
   bin: rubix-nubeio-rubixos-extension
 
+# Health-check cadence for the supervisor that owns this process.
+#
+# WHY 10s (not the 2s default): this extension fronts an adopted
+# ~955M-row TimescaleDB on a memory-starved box (12MB work_mem).
+# `health` is answered on a non-blocking path in the child, so a ping
+# is normally acknowledged in milliseconds regardless of query load —
+# but a cold dashboard burst can briefly saturate the runtime, and a
+# 2s timeout was tight enough to false-positive under that spike and
+# kill a healthy-but-busy child (orphaning every in-flight request to
+# the 95s jsonrpc ceiling — the "dashboard hangs" symptom).
+#
+# The real load amplifier — N identical concurrent queries each hitting
+# the DB — is now fixed at the source by single-flight coalescing in
+# `starter-cache` (one backing load per key; the rest wait), so this no
+# longer needs to absorb a thundering herd. 10s is a modest backstop:
+# generous enough to never kill a merely-busy child, tight enough to
+# still catch a genuinely wedged one promptly. interval 5s keeps
+# liveness detection responsive.
+supervision:
+  health:
+    interval_ms: 5000
+    timeout_ms: 10000
+
 capabilities:
   # The Rubix-OS dump itself is still loaded out-of-band by
   # `scripts/load-dump.sh`. The write grant below is owned solely by
@@ -107,6 +130,14 @@ contributes:
     - id: com.nubeio.rubixos.bc_page_create
       input_schema: kinds/bc_page_create_in.json
       output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_page.md
+    - id: com.nubeio.rubixos.bc_page_update
+      input_schema: kinds/bc_page_update_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_page.md
+    - id: com.nubeio.rubixos.bc_page_delete
+      input_schema: kinds/bc_page_delete_in.json
+      output_schema: kinds/bc_page_delete_out.json
       description_file: kinds/bc_page.md
     - id: com.nubeio.rubixos.bc_template_upsert
       input_schema: kinds/bc_template_upsert_in.json
@@ -486,6 +517,11 @@ contributes:
     - name: com.nubeio.rubixos.bc_devices_list
       params_schema: kinds/bc_devices_list_params.json
       sql_file:      kinds/bc_devices_list.sql
+      tables: [com_nubeio_rubixos__bc_devices]
+
+    - name: com.nubeio.rubixos.bc_device_get
+      params_schema: kinds/bc_device_get_params.json
+      sql_file:      kinds/bc_device_get.sql
       tables: [com_nubeio_rubixos__bc_devices]
 
     - name: com.nubeio.rubixos.bc_points_by_device

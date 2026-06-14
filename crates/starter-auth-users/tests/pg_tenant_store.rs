@@ -78,6 +78,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             slug: "admin".into(),
             display_name: "Bad".into(),
             audit_allow_sample: None,
+            parent_id: None,
         })
         .await
         .expect_err("reserved slug must be refused");
@@ -92,6 +93,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             slug: "123foo".into(),
             display_name: "Digits".into(),
             audit_allow_sample: None,
+            parent_id: None,
         })
         .await
         .expect_err("all-digits-prefix slug must be refused by CHECK");
@@ -103,6 +105,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             slug: "acme".into(),
             display_name: "Acme".into(),
             audit_allow_sample: Some(50),
+            parent_id: None,
         })
         .await
         .expect("create acme");
@@ -113,6 +116,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             slug: "globex".into(),
             display_name: "Globex".into(),
             audit_allow_sample: None,
+            parent_id: None,
         })
         .await
         .expect("create globex");
@@ -124,6 +128,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             slug: "acme".into(),
             display_name: "Dup".into(),
             audit_allow_sample: None,
+            parent_id: None,
         })
         .await
         .expect_err("duplicate slug must be refused");

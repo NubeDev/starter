@@ -63,3 +63,17 @@ cache:
   invalidate_on:
     tables:
       - com_nubeio_rubixos__histories
+      # Barcode/provisioning CRUD: a write to any bc_* table must drop
+      # the cached list/detail reads, else a create/rename/decommission/
+      # delete stays invisible for the rest of the 60s TTL (the row looks
+      # un-changed / un-deleted). Pairs with the update()/delete()
+      # cache invalidation in rubix-agent's warehouse_write backend.
+      - com_nubeio_rubixos__bc_templates
+      - com_nubeio_rubixos__bc_sites
+      - com_nubeio_rubixos__bc_locations
+      - com_nubeio_rubixos__bc_devices
+      - com_nubeio_rubixos__bc_points
+      - com_nubeio_rubixos__bc_widgets
+      - com_nubeio_rubixos__bc_pages
+      - com_nubeio_rubixos__bc_alarms
+      - com_nubeio_rubixos__bc_provision_log

@@ -98,7 +98,13 @@ fn pidfile_path(dir: &Path, extension_id: &str) -> PathBuf {
     // practice, but we defend against a stray separator regardless.
     let stem: String = extension_id
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
     dir.join(format!("{stem}.pid"))
 }

@@ -35,6 +35,11 @@ struct CompiledRule {
     /// rule (matches any tenant). `Some(_)` only matches when the
     /// principal is bound to that tenant.
     tenant_id: Option<String>,
+    /// Instance scope. `None` or `Some("*")` is kind-wide; a
+    /// concrete id only matches a request whose `object.id` equals
+    /// it. This is what makes a per-resource grant authorize only
+    /// its own immutable id rather than the whole kind.
+    resource_id: Option<String>,
     /// `Some(Owner)` when the source rule used the magic
     /// `condition = "owner"` shortcut; `Some(Expr(_))` for a
     /// parsed mini-language expression; `None` for an
@@ -76,6 +81,7 @@ impl StaticRbacEngine {
                 actions: r.actions,
                 effect: r.effect,
                 tenant_id: r.tenant_id,
+                resource_id: r.resource_id,
                 cond,
             });
         }
@@ -157,6 +163,17 @@ fn resource_matches(rule_kind: &str, kind: &str) -> bool {
     rule_kind == "*" || rule_kind == kind
 }
 
+/// A rule with no `resource_id` (or `"*"`) applies to every instance of its
+/// kind — the original kind-wide behaviour. A rule pinned to a concrete id only
+/// matches a request that targets that exact instance; a collection-level check
+/// (no `object.id`) never matches an instance-pinned rule.
+fn instance_matches(rule_id: &Option<String>, object_id: &Option<String>) -> bool {
+    match rule_id.as_deref() {
+        None | Some("*") => true,
+        Some(id) => object_id.as_deref() == Some(id),
+    }
+}
+
 fn action_matches(rule_actions: &[String], action: &str) -> bool {
     rule_actions.iter().any(|a| a == "*" || a == action)
 }
@@ -223,12 +240,21 @@ impl PolicyEngine for StaticRbacEngine {
             }
         };
 
-        // SCOPE-EXT.md R11 — cross-tenant predicate runs BEFORE
-        // role / condition evaluation. Tenant-scoped kinds require
-        // `Some(principal.tenant) == Some(object.tenant)`; missing
-        // or mismatch short-circuits with a typed deny reason. The
-        // super-admin sentinel `"*"` on the principal bypasses the
-        // check (used by cross-tenant admin tokens).
+        // SCOPE-EXT.md R11 + ADR-tenant-hierarchy — cross-tenant
+        // predicate runs BEFORE role / condition evaluation. A
+        // tenant-scoped kind requires the principal to ADMINISTER the
+        // object's tenant: either it is the principal's own tenant
+        // (the flat R11 case) or a descendant in the principal's
+        // resolved subtree (`principal.tenant_scope`), which lets a
+        // parent — e.g. a reseller — act on a child's resource.
+        // Missing binding or a tenant outside the subtree short-
+        // circuits with a typed deny reason. The super-admin sentinel
+        // `"*"` bypasses the check entirely (whole-forest admin).
+        //
+        // A principal with an empty `tenant_scope` (pre-hierarchy
+        // wiring) falls back to strict `tenant_id == object.tenant`
+        // equality via `administers_tenant`, preserving R11 byte-for-
+        // byte.
         if spec.tenant_scoped && !principal.is_super_admin() {
             match (&principal.tenant_id, &object.tenant) {
                 (None, _) => {
@@ -243,7 +269,7 @@ impl PolicyEngine for StaticRbacEngine {
                     self.audit(principal, action, object, &decision).await;
                     return decision;
                 }
-                (Some(pt), Some(ot)) if pt == ot => { /* fall through */ }
+                (Some(_), Some(ot)) if principal.administers_tenant(ot) => { /* fall through */ }
                 _ => {
                     tracing::info!(
                         subject = %principal.subject,
@@ -268,13 +294,16 @@ impl PolicyEngine for StaticRbacEngine {
         let mut deny_match: Option<&CompiledRule> = None;
 
         for rule in &self.rules {
-            // Phase 7a — tenant-scoped rules only match when the
-            // principal's tenant binding matches the rule's
-            // tenant. Global (None) rules always evaluate.
+            // Phase 7a + ADR-tenant-hierarchy — tenant-scoped rules
+            // match when the principal administers the rule's tenant:
+            // its own tenant (flat R11 case) or any tenant in its
+            // subtree. A rule written for a parent tenant (e.g.
+            // Daikin) thus applies when that parent's admin acts on a
+            // descendant's resource — the cross-tenant predicate above
+            // already proved the object is in-subtree. Global (None)
+            // rules always evaluate. Super-admin matches every rule.
             if let Some(rule_tenant) = &rule.tenant_id {
-                if !principal.is_super_admin()
-                    && principal.tenant_id.as_deref() != Some(rule_tenant.as_str())
-                {
+                if !principal.is_super_admin() && !principal.administers_tenant(rule_tenant) {
                     continue;
                 }
             }
@@ -282,6 +311,9 @@ impl PolicyEngine for StaticRbacEngine {
                 continue;
             }
             if !resource_matches(&rule.resource, &object.kind) {
+                continue;
+            }
+            if !instance_matches(&rule.resource_id, &object.id) {
                 continue;
             }
             if !action_matches(&rule.actions, action) {
@@ -427,6 +459,7 @@ mod tests {
             scopes: vec![Scope("reader".into())],
             tenant_id: None,
             teams,
+            tenant_scope: Vec::new(),
             extra: Value::Null,
         }
     }
@@ -448,5 +481,72 @@ mod tests {
             roles2.iter().filter(|r| *r == "team:hvac-ops").count(),
             1
         );
+    }
+
+    fn page_registry() -> Arc<StaticRegistry> {
+        let reg = Arc::new(StaticRegistry::new());
+        reg.register(starter_spi::authz::ResourceSpec::from_static(
+            "page",
+            &["view", "edit"],
+            starter_spi::authz::Ownership::Subject,
+            "Page",
+            "test page",
+        ));
+        reg
+    }
+
+    fn allow_rule(resource_id: Option<&str>) -> Rule {
+        Rule {
+            id: Some("grant-1".into()),
+            role: "team:ops".into(),
+            resource: "page".into(),
+            actions: vec!["view".into()],
+            condition: None,
+            effect: Effect::Allow,
+            priority: 100,
+            tenant_id: None,
+            resource_id: resource_id.map(|s| s.to_string()),
+        }
+    }
+
+    fn ops_member() -> Principal {
+        Principal {
+            subject: "u".into(),
+            role: Role::Reader,
+            scopes: vec![],
+            tenant_id: None,
+            teams: vec!["ops".into()],
+            tenant_scope: Vec::new(),
+            extra: Value::Null,
+        }
+    }
+
+    async fn check_id(rule: Rule, object_id: &str) -> Decision {
+        let cfg = AuthzConfig {
+            default_policy: false,
+            assignments: vec![],
+            rules: vec![rule],
+        };
+        let engine = StaticRbacEngine::from_config(cfg, page_registry()).expect("engine");
+        engine
+            .check(&ops_member(), "view", &ResourceRef::row("page", object_id))
+            .await
+    }
+
+    #[tokio::test]
+    async fn instance_grant_authorizes_only_its_own_instance() {
+        // A grant carrying a concrete resource_id allows that page…
+        assert!(check_id(allow_rule(Some("page-a")), "page-a").await.is_allow());
+        // …and does not leak to a sibling page in the same kind/tenant.
+        assert!(!check_id(allow_rule(Some("page-a")), "page-b").await.is_allow());
+    }
+
+    #[tokio::test]
+    async fn kind_wide_rule_still_matches_every_instance() {
+        // The pre-instance behaviour: a rule with no resource_id (or "*")
+        // applies to every instance of the kind.
+        assert!(check_id(allow_rule(None), "page-a").await.is_allow());
+        assert!(check_id(allow_rule(None), "page-z").await.is_allow());
+        assert!(check_id(allow_rule(Some("*")), "anything").await.is_allow());
     }
 }

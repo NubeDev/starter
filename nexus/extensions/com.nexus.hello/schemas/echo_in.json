@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EchoInput",
+  "type": "object",
+  "properties": {
+    "message": { "type": "string", "description": "Text echoed back by the running child." }
+  },
+  "required": ["message"]
+}

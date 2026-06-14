@@ -6328,6 +6328,7 @@ dependencies = [
  "starter-observability",
  "starter-paths",
  "starter-sdui-routes",
+ "starter-secrets-file",
  "starter-secrets-keyring",
  "starter-server",
  "starter-skills",
@@ -6346,6 +6347,7 @@ dependencies = [
  "tower 0.5.3",
  "tower-http",
  "tracing",
+ "url",
  "utoipa",
  "uuid",
 ]
@@ -8703,6 +8705,50 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-setup"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "futures",
+ "http-body-util",
+ "jsonschema",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-authz",
+ "starter-flow",
+ "starter-flow-spi",
+ "starter-mcp",
+ "starter-server",
+ "starter-setup-spi",
+ "starter-spi",
+ "starter-store-sqlite",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-stream",
+ "tower 0.5.3",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "starter-setup-spi"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-flow",
+ "starter-flow-spi",
+ "starter-spi",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "starter-skills"
 version = "0.1.0"
 dependencies = [
@@ -8798,6 +8844,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-flow-spi",
+ "starter-setup-spi",
  "starter-skills",
  "starter-spi",
  "starter-tags",
@@ -8821,6 +8868,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-flow-spi",
+ "starter-setup-spi",
  "starter-skills",
  "starter-spi",
  "tempfile",

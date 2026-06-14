@@ -22,16 +22,41 @@ use crate::store::StoredRule;
 /// Kind id used by the v1 grant tier mapping.
 pub const RUBIX_DASHBOARD_PAGE: &str = "rubix.dashboard.page";
 
-/// Tier → actions table for a kind. Returns `None` when the kind
-/// has no tier mapping declared (only `rubix.dashboard.page` in
-/// v1; other kinds are expanded as they ship Simple-mode UIs).
+/// Kinds whose grants use the standard view/edit/manage tier ladder
+/// (`view` ⊂ `edit` ⊂ `delete`). Nexus's tenant-owned resources all share this
+/// shape, so they are listed here rather than each spelling out an identical
+/// match arm. A kind absent from this set has no grant tier mapping and a grant
+/// request for it is rejected at the HTTP layer.
+const STANDARD_TIER_KINDS: &[&str] = &[
+    RUBIX_DASHBOARD_PAGE,
+    // Nexus tenant-owned kinds — all registered with the standard
+    // view/edit/delete action ladder in `nexus-api`'s `register_nexus_resources`,
+    // so they share this tier mapping. Keep this list in sync with that registry
+    // call: a kind registered there but missing here is grantable per the engine
+    // yet 422s at the grant route (`unsupported_kind`).
+    "nexus.dashboard",
+    "nexus.folder",
+    "nexus.datasource",
+    "nexus.flow",
+    "nexus.alert_rule",
+    "nexus.agent",
+    "nexus.query_kind",
+    "nexus.nav_node",
+    "nexus.insight",
+];
+
+/// Tier → actions table for a kind. Returns `None` when the kind has no tier
+/// mapping declared, so a grant on an unknown kind is a 422 rather than a
+/// silently-empty rule.
 pub fn actions_for_tier(kind: &str, tier: PermissionTier) -> Option<&'static [&'static str]> {
-    match (kind, tier) {
-        (RUBIX_DASHBOARD_PAGE, PermissionTier::View) => Some(&["view"]),
-        (RUBIX_DASHBOARD_PAGE, PermissionTier::Edit) => Some(&["view", "edit"]),
-        (RUBIX_DASHBOARD_PAGE, PermissionTier::Manage) => Some(&["view", "edit", "delete"]),
-        _ => None,
+    if !STANDARD_TIER_KINDS.contains(&kind) {
+        return None;
     }
+    Some(match tier {
+        PermissionTier::View => &["view"],
+        PermissionTier::Edit => &["view", "edit"],
+        PermissionTier::Manage => &["view", "edit", "delete"],
+    })
 }
 
 /// Infer a tier from the action list a rule carries. Returns the

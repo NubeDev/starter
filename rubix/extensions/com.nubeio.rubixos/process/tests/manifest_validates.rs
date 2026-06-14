@@ -14,9 +14,9 @@ fn manifest_validates_through_host_loader() {
         starter_ext_sdk::serde_yaml::from_str(BUNDLE_YAML).expect("manifest parses");
 
     assert_eq!(m.id.as_str(), "com.nubeio.rubixos");
-    // 2 base tools (echo, warehouse_query) + 9 barcode/provisioning
-    // tools (BARCODE.md §5).
-    assert_eq!(m.contributes.tools.len(), 11);
+    // 2 base tools (echo, warehouse_query) + 12 barcode/provisioning
+    // tools (BARCODE.md §5; incl. bc_page_update / bc_page_delete).
+    assert_eq!(m.contributes.tools.len(), 14);
     // 9 read-only dump tables (incl. the histories_1m CAGG) + 9 `bc_*`
     // provisioning catalog tables (BARCODE.md §4).
     assert_eq!(m.contributes.warehouse_tables.len(), 18);

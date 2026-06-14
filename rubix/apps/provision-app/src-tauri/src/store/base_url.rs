@@ -18,16 +18,30 @@ const BASE_URL_KEY: &str = "base_url";
 /// logged by the plugin and does not fail the login (the in-memory
 /// session is already set by the caller).
 pub fn save<R: Runtime>(app: &AppHandle<R>, base_url: &str) {
-    if let Ok(store) = app.store(STORE_FILE) {
-        store.set(BASE_URL_KEY, base_url.to_string());
-        let _ = store.save();
+    match app.store(STORE_FILE) {
+        Ok(store) => {
+            store.set(BASE_URL_KEY, base_url.to_string());
+            match store.save() {
+                Ok(()) => eprintln!("[provision] base_url saved: {base_url}"),
+                Err(e) => eprintln!("[provision] base_url save FAILED to flush: {e}"),
+            }
+        }
+        Err(e) => eprintln!("[provision] base_url save FAILED to open store: {e}"),
     }
 }
 
 /// Read the last-used base_url, if any was persisted.
 pub fn load<R: Runtime>(app: &AppHandle<R>) -> Option<String> {
-    let store = app.store(STORE_FILE).ok()?;
-    store
+    let store = match app.store(STORE_FILE) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("[provision] base_url load FAILED to open store: {e}");
+            return None;
+        }
+    };
+    let found = store
         .get(BASE_URL_KEY)
-        .and_then(|v| v.as_str().map(str::to_owned))
+        .and_then(|v| v.as_str().map(str::to_owned));
+    eprintln!("[provision] base_url load: {found:?}");
+    found
 }

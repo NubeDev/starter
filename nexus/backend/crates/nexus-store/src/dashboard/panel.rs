@@ -1,0 +1,249 @@
+//! Panel persistence — create, list-by-dashboard, and delete. Panels carry the
+//! tenant explicitly so RLS isolates them even though they hang off a dashboard.
+
+use sqlx::{PgPool, Row};
+use starter_spi::Error;
+use uuid::Uuid;
+
+use super::record::{NewPanel, PanelPatch, PanelRecord};
+use crate::tenant_tx;
+
+/// Add a panel under its dashboard. The dashboard's tenant is bound by the
+/// caller; the panel inherits it, so a panel can't be attached across tenants.
+pub async fn insert(pool: &PgPool, tenant_id: &str, new: &NewPanel) -> Result<PanelRecord, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let row = sqlx::query(
+        "INSERT INTO nexus_panels \
+         (tenant_id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id",
+    )
+    .bind(tenant_id)
+    .bind(new.dashboard_id)
+    .bind(new.datasource_id)
+    .bind(&new.title)
+    .bind(&new.sql)
+    .bind(&new.viz)
+    .bind(&new.layout)
+    .bind(new.insight_id)
+    .bind(&new.insight_params)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+
+    Ok(PanelRecord {
+        id: row.get::<Uuid, _>("id"),
+        dashboard_id: new.dashboard_id,
+        datasource_id: new.datasource_id,
+        title: new.title.clone(),
+        sql: new.sql.clone(),
+        viz: new.viz.clone(),
+        layout: new.layout.clone(),
+        insight_id: new.insight_id,
+        insight_params: new.insight_params.clone(),
+    })
+}
+
+/// Insert a panel with a caller-supplied id — the **id-stable** path WS-12's
+/// undo-of-delete / redo-of-create needs: resurrecting a deleted panel must
+/// re-create it under its *original* id so the dashboard's layout JSON (which
+/// keys panels by id) still addresses it. Unlike [`insert`], the id is not
+/// minted by the DB. A duplicate id is a `Conflict` (the row already exists).
+pub async fn insert_with_id(
+    pool: &PgPool,
+    tenant_id: &str,
+    id: Uuid,
+    new: &NewPanel,
+) -> Result<PanelRecord, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    sqlx::query(
+        "INSERT INTO nexus_panels \
+         (id, tenant_id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params) \
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .bind(new.dashboard_id)
+    .bind(new.datasource_id)
+    .bind(&new.title)
+    .bind(&new.sql)
+    .bind(&new.viz)
+    .bind(&new.layout)
+    .bind(new.insight_id)
+    .bind(&new.insight_params)
+    .execute(&mut *tx)
+    .await
+    .map_err(conflict_or_internal)?;
+    tx.commit().await.map_err(internal)?;
+
+    Ok(PanelRecord {
+        id,
+        dashboard_id: new.dashboard_id,
+        datasource_id: new.datasource_id,
+        title: new.title.clone(),
+        sql: new.sql.clone(),
+        viz: new.viz.clone(),
+        layout: new.layout.clone(),
+        insight_id: new.insight_id,
+        insight_params: new.insight_params.clone(),
+    })
+}
+
+/// One panel by id, within the tenant. `Ok(None)` when no such panel is visible
+/// (RLS hid it, or it does not exist). This is the `before` pre-read a recording
+/// panel update/delete needs — the full pre-mutation snapshot the undo log
+/// reverts to.
+pub async fn get(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<Option<PanelRecord>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let row = sqlx::query(
+        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params \
+         FROM nexus_panels WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(row.as_ref().map(row_to_record))
+}
+
+/// List the panels of one dashboard, oldest first (canvas order).
+pub async fn list_for_dashboard(
+    pool: &PgPool,
+    tenant_id: &str,
+    dashboard_id: Uuid,
+) -> Result<Vec<PanelRecord>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let rows = sqlx::query(
+        "SELECT id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params \
+         FROM nexus_panels WHERE dashboard_id = $1 ORDER BY created_at",
+    )
+    .bind(dashboard_id)
+    .fetch_all(&mut *tx)
+    .await
+    .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(rows.iter().map(row_to_record).collect())
+}
+
+/// The dashboard a panel belongs to, within the tenant. `Ok(None)` when no such
+/// panel is visible — used to authorize a panel mutation against its owning
+/// dashboard's grant before the delete runs.
+pub async fn dashboard_id_of(
+    pool: &PgPool,
+    tenant_id: &str,
+    id: Uuid,
+) -> Result<Option<Uuid>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let row = sqlx::query("SELECT dashboard_id FROM nexus_panels WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(row.map(|r| r.get::<Uuid, _>("dashboard_id")))
+}
+
+/// Partial update of a panel within the tenant. Each `None` field is left
+/// unchanged via COALESCE, so one statement handles any subset without dynamic
+/// SQL. Returns the updated record, or `None` when no such panel is visible
+/// (RLS hid it, or it does not exist). The owning `dashboard_id` is immutable —
+/// a panel does not move between dashboards through this path.
+pub async fn update(
+    pool: &PgPool,
+    tenant_id: &str,
+    id: Uuid,
+    patch: &PanelPatch,
+) -> Result<Option<PanelRecord>, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    // `datasource_id` is nullable on the column, so a `None` in the patch means
+    // "leave unchanged" rather than "set NULL". COALESCE gives exactly that —
+    // clearing a datasource is not expressible here, which matches the DTO (the
+    // UI only ever sets a datasource, never unsets it).
+    //
+    // `insight_id` / `insight_params` are three-valued (leave / set / clear) which
+    // COALESCE can't express — detaching an insight (set NULL) is a real edit. So
+    // each is gated by a `set_*` flag and bound directly, the same pattern as
+    // `folder_id` on dashboards. A cross-tenant insight id is hidden by RLS and
+    // surfaces as a FK violation we map to `Invalid`.
+    let (set_insight, insight) = match patch.insight_id {
+        Some(v) => (true, v),
+        None => (false, None),
+    };
+    let (set_params, params) = match &patch.insight_params {
+        Some(v) => (true, v.clone()),
+        None => (false, None),
+    };
+    let row = sqlx::query(
+        "UPDATE nexus_panels SET \
+           title          = COALESCE($2, title), \
+           datasource_id  = COALESCE($3, datasource_id), \
+           sql            = COALESCE($4, sql), \
+           viz            = COALESCE($5, viz), \
+           layout         = COALESCE($6, layout), \
+           insight_id     = CASE WHEN $7 THEN $8 ELSE insight_id END, \
+           insight_params = CASE WHEN $9 THEN $10 ELSE insight_params END \
+         WHERE id = $1 \
+         RETURNING id, dashboard_id, datasource_id, title, sql, viz, layout, insight_id, insight_params",
+    )
+    .bind(id)
+    .bind(&patch.title)
+    .bind(patch.datasource_id)
+    .bind(&patch.sql)
+    .bind(&patch.viz)
+    .bind(&patch.layout)
+    .bind(set_insight)
+    .bind(insight)
+    .bind(set_params)
+    .bind(params)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(conflict_or_internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(row.as_ref().map(row_to_record))
+}
+
+/// Delete a panel within the tenant. Returns whether a row was removed.
+pub async fn delete(pool: &PgPool, tenant_id: &str, id: Uuid) -> Result<bool, Error> {
+    let mut tx = tenant_tx::begin(pool, tenant_id).await?;
+    let done = sqlx::query("DELETE FROM nexus_panels WHERE id = $1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .map_err(internal)?;
+    tx.commit().await.map_err(internal)?;
+    Ok(done.rows_affected() > 0)
+}
+
+fn row_to_record(row: &sqlx::postgres::PgRow) -> PanelRecord {
+    PanelRecord {
+        id: row.get::<Uuid, _>("id"),
+        dashboard_id: row.get::<Uuid, _>("dashboard_id"),
+        datasource_id: row.get::<Option<Uuid>, _>("datasource_id"),
+        title: row.get::<String, _>("title"),
+        sql: row.get::<String, _>("sql"),
+        viz: row.get::<String, _>("viz"),
+        layout: row.get::<serde_json::Value, _>("layout"),
+        insight_id: row.get::<Option<Uuid>, _>("insight_id"),
+        insight_params: row.get::<Option<serde_json::Value>, _>("insight_params"),
+    }
+}
+
+/// A unique-violation (duplicate id on the id-stable insert) is the caller's
+/// conflict; anything else is ours.
+fn conflict_or_internal(e: sqlx::Error) -> Error {
+    if let sqlx::Error::Database(db) = &e {
+        if db.is_unique_violation() {
+            return Error::Conflict {
+                message: "a panel with that id already exists".into(),
+            };
+        }
+    }
+    internal(e)
+}
+
+fn internal(e: sqlx::Error) -> Error {
+    Error::Internal {
+        source: Box::new(e),
+    }
+}

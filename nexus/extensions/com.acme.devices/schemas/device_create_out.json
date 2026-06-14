@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeviceCreateOutput",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string", "description": "Stable id of the provisioned device (same barcode → same id on resume)." },
+    "out":       { "type": "string", "description": "Summary passed to the next node." }
+  },
+  "required": ["device_id", "out"]
+}

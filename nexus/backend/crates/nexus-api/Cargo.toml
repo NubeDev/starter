@@ -1,0 +1,246 @@
+[package]
+name = "nexus-api"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Nexus control plane — Axum binary composing auth/authz/product routers over the engine and store."
+default-run = "nexus-api"
+
+[dependencies]
+nexus-spi.workspace = true
+nexus-engine.workspace = true
+nexus-insights.workspace = true
+nexus-store.workspace = true
+# The `agent` feature pulls in the zag tier so sessions can drive the local
+# coding-agent CLIs (Claude Code, Codex, Gemini, Ollama) using their own auth —
+# no provider API key needed. The `inference` (genai) tier stays on by default
+# for raw-provider backends.
+nexus-ai = { workspace = true, features = ["agent"] }
+nexus-skills.workspace = true
+
+# `preferences` (which pulls `units`) is enabled so handlers can name the
+# `ResolvedPreferences` / `Quantity` / `Unit` types for WS-11 units conversion.
+# `changelog` gates the `Change`/`Actor`/`Reversible` types WS-12 records with.
+starter-spi = { workspace = true, features = ["preferences", "changelog"] }
+starter-server.workspace = true
+# WS-12 audit/undo: the read-side query API + the undo service, registry,
+# `record_if_reversible` helper, undo router, and Postgres redo cursor. The
+# tenant-aware recorder/changelog live in nexus-store; these are reused as-is.
+starter-changelog.workspace = true
+starter-undo = { workspace = true, features = ["postgres"] }
+# WS-11: reuse the platform preference store (PG) + three-layer resolver rather
+# than reinventing them. `postgres` enables `PgPrefsStore`. The nexus routes pin
+# the workspace to the caller's tenant (so isolation is not the spoofable starter
+# `?org=`), so the starter `routes`/`middleware` features are deliberately off.
+starter-prefs = { workspace = true, features = ["postgres"] }
+starter-auth-users = { workspace = true, features = ["postgres"] }
+starter-authz = { workspace = true, features = ["postgres"] }
+# The setup/automation builder surface (WS Setup-Builder). `rest` mounts the
+# `/setup/*` router + SSE + the authz resource-kind specs; `mcp` adds the
+# `setup.*` AI tools sharing the same `RunService`. The Postgres setup + flow
+# stores are pulled via the `setup`/`flow` features on `starter-store-postgres`
+# below; the flow engine (`starter-flow`) drives runs and the
+# `ProcessNodeProxy` bridge routes contributed node-kinds to the extension child.
+starter-setup = { workspace = true, features = ["rest", "mcp"] }
+starter-flow.workspace = true
+starter-flow-spi.workspace = true
+# The extension→flow adapter: `contributed_node_kinds` walks a manifest's
+# `contributes.nodes[]` and `ProcessNodeProxy` bridges each kind's
+# `flow.node.invoke` to the supervised child (FLOW-NODES slice B).
+starter-ext-flow.workspace = true
+# `setup` = Postgres template + setup-run stores; `flow` = the Postgres SPI
+# RunStore (durable checkpoints the runner replays on resume / boot recovery).
+starter-store-postgres = { workspace = true, features = ["setup", "flow"] }
+starter-config.workspace = true
+starter-observability.workspace = true
+starter-paths.workspace = true
+
+# WS-14 extensions runtime. `starter-ext-server` mounts the admin router
+# (`/extensions/*`) over nexus's `starter-server` auth stack; `-host` scans +
+# seals the manifest registry at boot; `-supervisor` keeps process-flavour
+# extensions running (+ reaper); `-store-pg` persists enablement; `-spi` carries
+# the shared `Manifest`/`ExtensionId`/`Capability` types.
+starter-ext-spi.workspace = true
+starter-ext-host.workspace = true
+starter-ext-server.workspace = true
+starter-ext-supervisor.workspace = true
+starter-ext-store-pg.workspace = true
+
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+utoipa.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-stream.workspace = true
+futures.workspace = true
+
+sqlx.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# WS-10 kinds: parse the YAML pack manifest and validate caller params against
+# each kind's JSON Schema before binding.
+serde_yaml.workspace = true
+jsonschema.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+
+async-trait.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+# R8 stream-token signing.
+hmac.workspace = true
+sha2.workspace = true
+base64.workspace = true
+
+# Alert webhook + Slack notification delivery.
+reqwest.workspace = true
+
+# Alert email (SMTP) notification delivery. rustls TLS keeps the build free of a
+# system OpenSSL dependency.
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls-tls", "pool", "hostname"] }
+
+[features]
+# Pulls in the starter-server test harness (TestApp) and the testcontainers
+# Postgres helper for HTTP integration tests. Off by default so production
+# builds stay lean.
+testing = ["starter-server/testing", "starter-store-postgres/testing", "nexus-store/testing"]
+# Compiles the optional Zenoh ingest source into the engine so a flow can use the
+# `zenoh` input node. OFF by default — a plain build carries none of zenoh's
+# transitive deps. Enable for the testing data path: `cargo run --features zenoh`
+# (or `make dev-be FEATURES=zenoh`).
+zenoh = ["nexus-engine/zenoh"]
+
+[[bin]]
+name = "nexus-api"
+path = "src/main.rs"
+
+# Dumps the OpenAPI document to stdout/file for the frontend codegen. Kept as a
+# separate bin so the contract can be regenerated without starting the server.
+[[bin]]
+name = "nexus-openapi"
+path = "src/bin/openapi.rs"
+
+# Idempotent bootstrap: seed an admin tenant + user + admin grant into a fresh
+# database. Run via `make seed`.
+[[bin]]
+name = "seed-admin"
+path = "src/bin/seed_admin.rs"
+
+[dev-dependencies]
+reqwest.workspace = true
+sqlx.workspace = true
+tokio = { workspace = true, features = ["test-util", "io-util", "net"] }
+tokio-util = { workspace = true, features = ["io"] }
+futures.workspace = true
+starter-store-postgres.workspace = true
+# The stored-Parquet ⋈ Postgres federation e2e writes a small Parquet fixture via
+# arrow/parquet (already in the tree through datafusion) to register a file
+# datasource; test-only, no new runtime dep.
+datafusion.workspace = true
+
+[[test]]
+name = "routes_query_run"
+path = "tests/routes/query/run_test.rs"
+
+[[test]]
+name = "routes_datasources_query_e2e"
+path = "tests/routes/datasources/query_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_federation_e2e"
+path = "tests/routes/datasources/federation_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_sink_e2e"
+path = "tests/routes/datasources/sink_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_update_e2e"
+path = "tests/routes/datasources/update_e2e_test.rs"
+
+[[test]]
+name = "routes_datasources_test_connection_e2e"
+path = "tests/routes/datasources/test_connection_e2e_test.rs"
+
+[[test]]
+name = "routes_streams_subscribe"
+path = "tests/routes/streams/subscribe_test.rs"
+
+[[test]]
+name = "routes_identity_wiring"
+path = "tests/routes/identity/wiring_test.rs"
+
+[[test]]
+name = "routes_me_preferences_e2e"
+path = "tests/routes/me/preferences_e2e_test.rs"
+
+[[test]]
+name = "routes_health_liveness_e2e"
+path = "tests/routes/health/liveness_e2e_test.rs"
+
+[[test]]
+name = "routes_authz_grant_gate"
+path = "tests/routes/authz/grant_gate_test.rs"
+
+[[test]]
+name = "routes_tags_authz"
+path = "tests/routes/tags/authz_test.rs"
+
+[[test]]
+name = "routes_nav_e2e"
+path = "tests/routes/nav/nav_e2e_test.rs"
+
+[[test]]
+name = "routes_flows_e2e"
+path = "tests/routes/flows/flow_e2e_test.rs"
+
+[[test]]
+name = "routes_ingest_e2e"
+path = "tests/routes/ingest/push_e2e_test.rs"
+
+[[test]]
+name = "routes_detections_e2e"
+path = "tests/routes/detections/detection_e2e_test.rs"
+
+[[test]]
+name = "routes_agents_e2e"
+path = "tests/routes/agents/agent_e2e_test.rs"
+
+[[test]]
+name = "routes_audit_e2e"
+path = "tests/routes/audit/audit_e2e_test.rs"
+
+[[test]]
+name = "routes_insights_e2e"
+path = "tests/routes/insights/insights_e2e_test.rs"
+
+[[test]]
+name = "routes_query_insight_e2e"
+path = "tests/routes/query/insight_e2e_test.rs"
+
+[[test]]
+name = "routes_query_extension_insight_e2e"
+path = "tests/routes/query/extension_insight_e2e_test.rs"
+
+# RW-07b extension data-plane: ingest.write tenant-stamp + insight purge (docker).
+[[test]]
+name = "extensions_ingest_write_e2e"
+path = "tests/extensions/ingest_write_e2e_test.rs"
+
+[[test]]
+name = "extensions_insight_purge_e2e"
+path = "tests/extensions/insight_purge_e2e_test.rs"
+
+# WS-17 Wave A: extension owns a nexus-DB table; write/upsert/isolation/drop (docker).
+[[test]]
+name = "extensions_warehouse_write_e2e"
+path = "tests/extensions/warehouse_write_e2e_test.rs"
+
+# RW-08 backpressure soak — opt-in (`#[ignore]`), needs Docker. See BACKPRESSURE.md.
+[[test]]
+name = "routes_soak_backpressure"
+path = "tests/soak/backpressure_soak.rs"

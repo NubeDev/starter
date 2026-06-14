@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import type { AuthUser, QueueItem, Transport } from './transport'
+import type { AuthUser, PingResult, QueueItem, Transport } from './transport'
 
 // Tauri implementation — calls the Rust core's commands (built by the sibling
 // agent in src-tauri/). The Rust side owns the HTTP session, CSRF, and the
@@ -8,6 +8,16 @@ export function createTauriTransport(): Transport {
   return {
     kind: 'tauri',
 
+    async savedBaseUrlAsync() {
+      // The remembered host lives in the Rust core (persisted on login, loaded
+      // into the session at startup). Surface it so the Connect form pre-fills
+      // the last agent this device used instead of reverting to the default.
+      return (await invoke<string | null>('saved_base_url')) ?? ''
+    },
+
+    ping(baseUrl) {
+      return invoke<PingResult>('ping', { baseUrl })
+    },
     login(baseUrl, email, password) {
       return invoke<AuthUser>('auth_login', { baseUrl, email, password })
     },

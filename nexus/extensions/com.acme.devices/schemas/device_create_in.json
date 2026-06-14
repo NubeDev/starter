@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeviceCreateInput",
+  "type": "object",
+  "description": "Inputs the setup automation seeds onto the device.create node. `barcode` is the natural dedup key (DOCS §8c); the caller_* fields are server-seeded from the verified Principal (DOCS §9), never client-supplied.",
+  "properties": {
+    "barcode":          { "type": "string", "description": "Scanned box barcode — the idempotency key." },
+    "location":         { "type": "string", "description": "Install location label." },
+    "caller_user_id":   { "type": "string", "description": "Server-seeded owner (trusted identity slot)." },
+    "caller_team_ids":  { "type": "array", "items": { "type": "string" }, "description": "Server-seeded site/team list (trusted identity slot)." },
+    "caller_tenant_id": { "type": "string", "description": "Server-seeded tenant (trusted identity slot)." }
+  },
+  "required": ["barcode"]
+}

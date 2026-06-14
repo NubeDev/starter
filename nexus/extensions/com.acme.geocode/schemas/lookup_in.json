@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GeocodeLookupInput",
+  "type": "object",
+  "description": "A free-form address to resolve to coordinates.",
+  "properties": {
+    "address": { "type": "string", "description": "The address string to geocode." }
+  },
+  "required": ["address"]
+}
