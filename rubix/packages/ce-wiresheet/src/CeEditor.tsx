@@ -3115,10 +3115,15 @@ function Inner({ base }: { base: string }) {
                   onSetDefault={onTableSetDefault}
                   onSetOverride={onTableSetOverride}
                   onClearOverride={onTableClearOverride}
-                  onAction={(action, ctx) =>
-                    // eslint-disable-next-line no-console
-                    console.info("[ui action]", action.name, "→ component", ctx.componentUid)
-                  }
+                  onCallAction={async (uid, name, params) => {
+                    try {
+                      const r = await callAction(uid, name, params);
+                      return r.returns;
+                    } catch (e) {
+                      reportError(e);
+                      return {};
+                    }
+                  }}
                 />
               )
             )}

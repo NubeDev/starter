@@ -1222,14 +1222,33 @@ function PropertyValueEditor({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string>("");
+  const [rect, setRect] = useState<DOMRect | null>(null);
 
   const display = fmtValueFacet(value, dataType, facet);
-  const start = () => {
+  const fullTitle = value == null ? "" : typeof value === "string" ? value : display;
+  const start = (e?: React.MouseEvent) => {
+    if (e) setRect(e.currentTarget.getBoundingClientRect());
     setDraft(value == null ? "" : typeof value === "string" ? value : String(value));
     setEditing(true);
   };
+  const cancel = () => {
+    setEditing(false);
+    setRect(null);
+  };
+
+  // Dismiss the string popup on an outside click.
+  useEffect(() => {
+    if (!editing || dataType !== DATATYPE_STRING) return;
+    const onDown = (ev: PointerEvent) => {
+      if (!document.getElementById("fb-str-popup")?.contains(ev.target as Node)) cancel();
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [editing, dataType]);
+
   const commit = async () => {
     setEditing(false);
+    setRect(null);
     const raw = draft.trim();
     if (raw === "") return;
     // Parse the draft according to the property's dataType. Strings go through as-is.
@@ -1309,6 +1328,56 @@ function PropertyValueEditor({
         </select>
       );
     }
+    // Strings edit in a popup so long text isn't constrained to the row width.
+    if (dataType === DATATYPE_STRING) {
+      return (
+        <>
+          <span style={valueDisplayStyle} title={fullTitle}>{display}</span>
+          {rect &&
+            createPortal(
+              <div
+                id="fb-str-popup"
+                className="nodrag"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                style={{
+                  position: "fixed",
+                  left: Math.min(rect.left, window.innerWidth - 280),
+                  top: Math.min(rect.bottom + 4, window.innerHeight - 180),
+                  zIndex: 200,
+                  width: 260,
+                  background: "#1a1d24",
+                  border: "1px solid #2c313c",
+                  borderRadius: 6,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                  padding: 8,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <textarea
+                  autoFocus
+                  value={draft}
+                  rows={4}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") cancel();
+                    else if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) commit();
+                    e.stopPropagation();
+                  }}
+                  style={{ ...overrideInputStyle, width: "100%", resize: "vertical" }}
+                />
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <button onClick={cancel} style={popupBtn(false)}>cancel</button>
+                  <button onClick={commit} style={popupBtn(true)}>save</button>
+                </div>
+              </div>,
+              document.body,
+            )}
+        </>
+      );
+    }
     return (
       <input
         autoFocus
@@ -1340,16 +1409,10 @@ function PropertyValueEditor({
       // (movement < nodeDragThreshold) still falls through to onClick → edit.
       onClick={(e) => {
         e.stopPropagation();
-        start();
+        start(e);
       }}
-      style={{
-        color: dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
-        fontVariantNumeric: "tabular-nums",
-        cursor: "text",
-        padding: "0 2px",
-        borderRadius: 2,
-      }}
-      title="click to edit"
+      style={{ ...valueDisplayStyle, color: dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb" }}
+      title={fullTitle || "click to edit"}
     >
       {display}
     </span>
@@ -1391,6 +1454,31 @@ function PropertyValueEditor({
     }
   }
 }
+
+// Value cells truncate with an ellipsis so long strings never overflow the node;
+// the full value is on the `title` tooltip (and editable in the popup).
+const valueDisplayStyle: React.CSSProperties = {
+  fontVariantNumeric: "tabular-nums",
+  cursor: "text",
+  padding: "0 2px",
+  borderRadius: 2,
+  maxWidth: 130,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  display: "inline-block",
+  verticalAlign: "bottom",
+};
+
+const popupBtn = (primary: boolean): React.CSSProperties => ({
+  padding: "3px 10px",
+  fontSize: 11,
+  borderRadius: 3,
+  cursor: "pointer",
+  color: primary ? "#cfe0ff" : "#8892a0",
+  background: primary ? "#2c3a55" : "transparent",
+  border: `1px solid ${primary ? "#3b5388" : "#2c313c"}`,
+});
 
 const editorInputStyle: React.CSSProperties = {
   width: 90,
@@ -1624,12 +1712,8 @@ const ValueRow = memo(function ValueRow({
         />
       ) : (
         <span
-          style={{
-            color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb",
-            fontVariantNumeric: "tabular-nums",
-            padding: "0 2px",
-          }}
-          title={DATATYPE_LABEL[p.dataType]}
+          style={{ ...valueDisplayStyle, cursor: "default", color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb" }}
+          title={typeof v === "string" ? v : DATATYPE_LABEL[p.dataType]}
         >
           {fmtValueFacet(v, p.dataType, rowFacet)}
         </span>

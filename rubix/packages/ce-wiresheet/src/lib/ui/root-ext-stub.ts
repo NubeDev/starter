@@ -69,8 +69,51 @@ const ALARMS_HOME: UiEntry = {
   },
 };
 
+/** Structural overview: the folder hierarchy as a tree with per-folder counts.
+ *  `selection: "sync"` so it tracks the canvas; double-click drills in. */
+const CE_TREE: UiEntry = {
+  id: "components-tree",
+  label: "Tree",
+  icon: "tree",
+  selection: "sync",
+  view: { type: "tree", source: "components", fullBleed: true },
+};
+
+/** Stub "Scheduler" extension — now three component types: schedule (weekly
+ *  calendar grid), timer, and cron. Each is a `follow` UI bound to its type;
+ *  when nothing matching is selected the host shows a 3-column picker (one per
+ *  type). Timer/cron editors are placeholders until their manifests land. */
+const SCHEDULE_UI: UiEntry = {
+  id: "schedule",
+  label: "Schedule",
+  icon: "calendar",
+  selection: "follow",
+  appliesTo: "schedule",
+  view: {
+    type: "layout",
+    children: [{ type: "schedule", bind: { prop: "config" }, action: { name: "setSchedule", label: "Save", target: "component" } }],
+  },
+};
+const TIMER_UI: UiEntry = {
+  id: "timer",
+  label: "Timer",
+  icon: "timer",
+  selection: "follow",
+  appliesTo: "timer",
+  view: { type: "layout", children: [{ type: "text", text: "Timer editor — TBD (selected timer component)." }] },
+};
+const CRON_UI: UiEntry = {
+  id: "cron",
+  label: "Cron",
+  icon: "cron",
+  selection: "follow",
+  appliesTo: "cron",
+  view: { type: "layout", children: [{ type: "text", text: "Cron editor — TBD (selected cron component)." }] },
+};
+
 export const EXTENSIONS_STUB: ExtensionUi[] = [
-  { id: "ce", label: "Control Engine", icon: "cpu", uis: [CE_TABLE, CE_DEMO] },
+  { id: "ce", label: "Control Engine", icon: "cpu", uis: [CE_TABLE, CE_TREE, CE_DEMO] },
+  { id: "scheduler", label: "Scheduler (stub)", icon: "calendar", uis: [SCHEDULE_UI, TIMER_UI, CRON_UI] },
   { id: "alarms", label: "Alarms (stub)", icon: "bell", uis: [ALARMS_HOME] },
 ];
 

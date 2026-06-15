@@ -5,14 +5,19 @@
 // no server resolve. See ../../SDUI_UNIFIED_DESIGN.md §10.
 
 import type { ComponentType } from "react";
-import type { ActionDef, Widget } from "../lib/ui/types";
+import type { Widget } from "../lib/ui/types";
+import type { FlexValue } from "../lib/engine-types";
 
 /** Context threaded to every widget while rendering a view. */
 export interface RenderCtx {
   /** the component this view is bound to (follow/sync selection), if any */
   componentUid?: number;
-  /** dispatch a declared action (host-provided) */
-  onAction?: (action: ActionDef, ctx: RenderCtx) => void;
+  /** invoke a component action (`POST /call/nodes/uid/{uid}`) → its `returns` */
+  callAction?: (
+    componentUid: number,
+    name: string,
+    params?: Record<string, FlexValue>,
+  ) => Promise<Record<string, FlexValue>>;
 }
 
 export interface WidgetProps {

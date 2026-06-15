@@ -41,6 +41,8 @@ export interface ActionDef {
   confirm?: string;
   /** navigate to another view id */
   link?: string;
+  /** resolved params to send with the action (e.g. a widget's staged edits) */
+  params?: Record<string, unknown>;
 }
 
 /** A tabular view of a collection (e.g. the components table). Columns default
@@ -70,7 +72,14 @@ export interface RecordView {
   fields?: string[];
 }
 
-export type View = CollectionView | LayoutView | RecordView;
+/** The folder hierarchy as an expandable tree with per-folder counts. */
+export interface TreeView {
+  type: "tree";
+  source: string;
+  fullBleed?: boolean;
+}
+
+export type View = CollectionView | LayoutView | RecordView | TreeView;
 
 /** Widgets inside a `layout` view. Open-ended: `type` is resolved through the
  *  renderer registry, so new widgets (gauge, schedule, …) need no change here. */
@@ -91,6 +100,9 @@ export interface UiEntry {
   /** lucide icon name */
   icon?: string;
   selection: SelectionMode;
+  /** component type this UI is for (follow/sync bind only to a matching
+   *  selection, e.g. "schedule"). Omit for type-agnostic UIs. */
+  appliesTo?: string;
   view: View;
 }
 

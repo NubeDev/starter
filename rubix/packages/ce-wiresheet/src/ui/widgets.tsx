@@ -7,6 +7,7 @@ import { useStructural, useValues, propertyDataType } from "../lib/store";
 import { facetFor, FACET_PROP } from "../lib/facet";
 import { fmtValueFacet, inferDataType } from "../lib/format";
 import { registerWidget, type WidgetProps } from "./registry";
+import type { FlexValue } from "../lib/engine-types";
 
 function TextWidget({ node }: WidgetProps) {
   return <div style={{ fontSize: 12, color: "#9aa3b2", padding: "2px 0" }}>{node.text}</div>;
@@ -44,7 +45,12 @@ function ButtonWidget({ node, ctx }: WidgetProps) {
       onClick={() => {
         if (!a) return;
         if (a.confirm && !window.confirm(a.confirm)) return;
-        ctx.onAction?.(a, ctx);
+        if (a.target === "component" && ctx.componentUid != null) {
+          void ctx.callAction?.(ctx.componentUid, a.name, a.params as Record<string, FlexValue> | undefined);
+        } else {
+          // eslint-disable-next-line no-console
+          console.info("[ui action]", a.name, "target", a.target);
+        }
       }}
       style={{
         marginTop: 6,
