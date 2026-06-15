@@ -51,7 +51,13 @@ const ALL_KINDS: EventKind[] = [
   "rest",
 ];
 
-export function EventsPanel() {
+export function EventsPanel({
+  embedded = false,
+}: {
+  // Embedded mode: fill the parent (bottom drawer) instead of a fixed top-right
+  // panel, and drop the collapsed pill / own collapse control.
+  embedded?: boolean;
+} = {}) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return window.localStorage.getItem(COLLAPSED_KEY) !== "0";
@@ -72,12 +78,15 @@ export function EventsPanel() {
     }
   }, [collapsed]);
 
+  // In embedded mode the drawer owns visibility, so the panel never collapses.
+  const effCollapsed = embedded ? false : collapsed;
+
   const listRef = useRef<HTMLDivElement>(null);
   const lastVersion = useRef(-1);
   const stickToBottom = useRef(true);
 
   useEffect(() => {
-    if (collapsed) return;
+    if (effCollapsed) return;
     let raf = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -88,7 +97,7 @@ export function EventsPanel() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [collapsed, paused, excluded]);
+  }, [effCollapsed, paused, excluded]);
 
   // Track scroll position so a user scrolling back to inspect history doesn't
   // get yanked to the bottom on every new event. Auto-resume sticky-bottom
@@ -100,7 +109,7 @@ export function EventsPanel() {
     stickToBottom.current = atBottom;
   };
 
-  if (collapsed) {
+  if (!embedded && collapsed) {
     return (
       <button
         onClick={() => setCollapsed(false)}
@@ -125,9 +134,19 @@ export function EventsPanel() {
     );
   }
 
-  return (
-    <div
-      style={{
+  const containerStyle: React.CSSProperties = embedded
+    ? {
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        color: "#e6e8eb",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        display: "flex",
+        flexDirection: "column",
+      }
+    : {
         position: "fixed",
         top: 12,
         right: 304,
@@ -142,8 +161,9 @@ export function EventsPanel() {
         fontFamily: "ui-monospace, SFMono-Regular, monospace",
         display: "flex",
         flexDirection: "column",
-      }}
-    >
+      };
+  return (
+    <div style={containerStyle}>
       <div
         style={{
           display: "flex",
@@ -164,13 +184,15 @@ export function EventsPanel() {
         <button onClick={() => clearEvents()} title="Clear log" style={btn("transparent")}>
           clear
         </button>
-        <button
-          onClick={() => setCollapsed(true)}
-          title="Hide events log"
-          style={btn("transparent")}
-        >
-          ▴
-        </button>
+        {!embedded && (
+          <button
+            onClick={() => setCollapsed(true)}
+            title="Hide events log"
+            style={btn("transparent")}
+          >
+            ▴
+          </button>
+        )}
       </div>
       <div
         style={{

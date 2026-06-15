@@ -17,8 +17,12 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { ChevronRight, ChevronLeft, CornerDownRight, Table2, X, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, CornerDownRight, X, Maximize2, Minimize2 } from "lucide-react";
 import { ComponentTable } from "./components/ComponentTable";
+import { UiTabHost } from "./ui/UiTabHost";
+import { ExtensionStrip } from "./ui/ExtensionStrip";
+import { getExtensions } from "./lib/ui/root-ext-stub";
+import type { ExtensionUi } from "./lib/ui/types";
 import { createPortal } from "react-dom";
 
 // Selected-edge highlight. RF adds .selected to .react-flow__edge when the
@@ -33,8 +37,8 @@ const EDGE_SELECTED_CSS = `
 `;
 
 import { ClickDebugger } from "./components/ClickDebugger";
-import { DiagPanel } from "./components/DiagPanel";
-import { EventsPanel } from "./components/EventsPanel";
+import { DiagDrawer } from "./components/DiagDrawer";
+import { ConnectionStatus } from "./components/ConnectionStatus";
 import { FindPanel } from "./components/FindPanel";
 import { PresenceBar } from "./components/PresenceBar";
 import { ZoomRateController } from "./components/ZoomRateController";
@@ -603,6 +607,34 @@ function Inner({ base }: { base: string }) {
 
   // Component finder (Cmd/Ctrl+F). Searches the whole tree, jumps to a pick.
   const [findOpen, setFindOpen] = useState(false);
+
+  // Diagnostics + events bottom drawer. The ConnectionStatus handle in the
+  // bottom bar toggles it; persisted so it survives reloads.
+  const [diagOpen, setDiagOpen] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem("ce-ui.diagdrawer.open") === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("ce-ui.diagdrawer.open", diagOpen ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [diagOpen]);
+  // Measured bottom-bar height, so the drawer sits exactly on top of it.
+  const bottomBarRef = useRef<HTMLDivElement>(null);
+  const [bottomBarH, setBottomBarH] = useState(33);
+  useEffect(() => {
+    const el = bottomBarRef.current;
+    if (!el) return;
+    setBottomBarH(el.offsetHeight);
+    const ro = new ResizeObserver(() => setBottomBarH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Click-debug overlay (the selection-diagnostics rings + bottom-right log).
   // Off by default — it was for chasing the marquee/select bugs (now fixed) and
@@ -2528,6 +2560,30 @@ function Inner({ base }: { base: string }) {
   const [splitPct, setSplitPct] = useState(55); // graph pane width %
   const splitRestore = useRef(55);
   const tableMaxed = splitPct <= 12;
+  // Right pane content: the legacy full table, or the new declarative UI tab host
+  // (root-ext UIs). Kept side-by-side so we can compare features while building.
+  const [rightMode, setRightMode] = useState<"legacy" | "tabs">("legacy");
+  // Loaded extensions (outer, right-edge tab level) and the active one. Each
+  // extension's UIs become the inner side-strip tabs. Stubbed via getExtensions().
+  const [extensions, setExtensions] = useState<ExtensionUi[]>([]);
+  const [activeExtId, setActiveExtId] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    getExtensions().then((exts) => {
+      if (!live) return;
+      setExtensions(exts);
+      setActiveExtId((cur) => cur ?? exts[0]?.id ?? null);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  const activeExt = extensions.find((e) => e.id === activeExtId) ?? extensions[0] ?? null;
+  const openExtension = (id: string) => {
+    setActiveExtId(id);
+    setRightMode("tabs");
+    setTableOpen(true);
+  };
   // Replace the graph selection with exactly the given component uids (the table
   // computes the set, including shift-range / ctrl-toggle).
   const onTableSelect = useCallback((uids: number[]) => {
@@ -2733,8 +2789,10 @@ function Inner({ base }: { base: string }) {
         onPick={(uid) => void goToComponent(uid)}
       />
       {clickDebugOpen && <ClickDebugger />}
-      <EventsPanel />
-      <DiagPanel
+      <DiagDrawer
+        open={diagOpen}
+        onClose={() => setDiagOpen(false)}
+        bottomOffset={bottomBarH}
         wsRef={wsAdapter}
         autoRate={autoRate}
         manualRate={manualRate}
@@ -2942,32 +3000,26 @@ function Inner({ base }: { base: string }) {
         );
       })()}
       {error && <ErrorBanner error={error} onClose={() => setError(null)} />}
-        {/* Right-edge tab to open the table when it's hidden. */}
-        {!tableOpen && (
-          <button
-            onClick={() => setTableOpen(true)}
-            title="Open table view"
+        {/* Right-edge tabs (one per extension). Sit at the screen edge when the
+            drawer is closed, and at the drawer's left edge (the pane seam) when
+            open — so they both open the drawer and switch the active extension. */}
+        {extensions.length > 0 && (
+          <div
             style={{
               position: "absolute",
               top: "50%",
               right: 0,
               transform: "translateY(-50%)",
               zIndex: 20,
-              width: 26,
-              height: 70,
-              background: "rgba(20,23,30,0.92)",
-              border: "1px solid #2c313c",
-              borderRight: "none",
-              borderRadius: "6px 0 0 6px",
-              color: "#cbd3e0",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
-            <Table2 size={16} />
-          </button>
+            <ExtensionStrip
+              extensions={extensions}
+              activeId={activeExtId}
+              onSelect={openExtension}
+              variant="edge"
+            />
+          </div>
         )}
         </div>
       {tableOpen && (
@@ -2998,7 +3050,24 @@ function Inner({ base }: { base: string }) {
               flexShrink: 0,
             }}
           >
-            <span style={{ fontSize: 10, color: "#5a6172", marginRight: "auto" }}>table view</span>
+            <div style={{ display: "flex", gap: 2, marginRight: "auto" }}>
+              {(["legacy", "tabs"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setRightMode(m)}
+                  style={{
+                    ...tableChromeBtn,
+                    width: "auto",
+                    padding: "2px 8px",
+                    fontSize: 10,
+                    color: rightMode === m ? "#e6e8eb" : "#5a6172",
+                    background: rightMode === m ? "#2c313c" : "transparent",
+                  }}
+                >
+                  {m === "legacy" ? "Legacy table" : "UI tabs"}
+                </button>
+              ))}
+            </div>
             <button
               title={tableMaxed ? "Restore split" : "Maximize table"}
               onClick={() => {
@@ -3017,29 +3086,56 @@ function Inner({ base }: { base: string }) {
             </button>
           </div>
           <div style={{ flex: 1, minHeight: 0 }}>
-            <ComponentTable
-              currentParentUid={currentParentUid}
-              selectedUids={tableSelected}
-              onSelect={onTableSelect}
-              onDrillIn={enter}
-              onNameContextMenu={openNodeContextMenu}
-              onRowsChange={onTableRows}
-              onSetOverride={onTableSetOverride}
-              onSetDefault={onTableSetDefault}
-              onClearOverride={onTableClearOverride}
-              canGoUp={crumbs.length > 1}
-              onUp={() => goToCrumb(crumbs.length - 2)}
-            />
+            {rightMode === "legacy" ? (
+              <ComponentTable
+                currentParentUid={currentParentUid}
+                selectedUids={tableSelected}
+                onSelect={onTableSelect}
+                onDrillIn={enter}
+                onNameContextMenu={openNodeContextMenu}
+                onRowsChange={onTableRows}
+                onSetOverride={onTableSetOverride}
+                onSetDefault={onTableSetDefault}
+                onClearOverride={onTableClearOverride}
+                canGoUp={crumbs.length > 1}
+                onUp={() => goToCrumb(crumbs.length - 2)}
+              />
+            ) : (
+              activeExt && (
+                <UiTabHost
+                  uis={activeExt.uis}
+                  currentParentUid={currentParentUid}
+                  selectedUids={tableSelected}
+                  onSelect={onTableSelect}
+                  onDrillIn={enter}
+                  onNameContextMenu={openNodeContextMenu}
+                  onRowsChange={onTableRows}
+                  canGoUp={crumbs.length > 1}
+                  onUp={() => goToCrumb(crumbs.length - 2)}
+                  onSetDefault={onTableSetDefault}
+                  onSetOverride={onTableSetOverride}
+                  onClearOverride={onTableClearOverride}
+                  onAction={(action, ctx) =>
+                    // eslint-disable-next-line no-console
+                    console.info("[ui action]", action.name, "→ component", ctx.componentUid)
+                  }
+                />
+              )
+            )}
           </div>
         </div>
       )}
         </div>
-        {/* Shared bottom bar (spans both panes): folder breadcrumb. */}
+        {/* Shared bottom bar (spans both panes): folder breadcrumb (left) and
+            the WS connection status (right), which is the handle for the
+            diagnostics + events drawer. */}
         <div
+          ref={bottomBarRef}
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
+            gap: 8,
             padding: "4px 10px",
             background: "#1a1d24",
             borderTop: "1px solid #2c313c",
@@ -3049,6 +3145,7 @@ function Inner({ base }: { base: string }) {
           }}
         >
           <Breadcrumb crumbs={crumbs} onGoTo={goToCrumb} />
+          <ConnectionStatus open={diagOpen} onToggle={() => setDiagOpen((o) => !o)} />
         </div>
       </div>
     </CeWiresheetContext.Provider>

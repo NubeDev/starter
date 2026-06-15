@@ -34,12 +34,17 @@ export function DiagPanel({
   manualRate,
   onSetManualRate,
   onToggleAutoRate,
+  embedded = false,
 }: {
   wsRef: { setRate(hz: number): void; getRate(): number | null } | null;
   autoRate: boolean;
   manualRate: number;
   onSetManualRate: (hz: number) => void;
   onToggleAutoRate: () => void;
+  // Embedded mode: render filling the parent (the bottom drawer) rather than as
+  // a fixed top-right panel, and drop the collapsed-pill / own collapse control
+  // (the drawer owns open/close).
+  embedded?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
@@ -56,6 +61,10 @@ export function DiagPanel({
       /* ignore */
     }
   }, [collapsed]);
+
+  // In embedded mode the drawer is the open/closed control, so the panel is
+  // never internally "collapsed" — it always renders its full body.
+  const effCollapsed = embedded ? false : collapsed;
 
   const [snap, setSnap] = useState<DiagSnapshot | null>(null);
   const [copied, setCopied] = useState(false);
@@ -140,13 +149,13 @@ export function DiagPanel({
 
   // Deep snapshot poll — only while expanded.
   useEffect(() => {
-    if (collapsed) return;
+    if (effCollapsed) return;
     const id = window.setInterval(() => {
       const hist = getSnapshotHistory();
       setSnap(hist.length ? hist[hist.length - 1] : null);
     }, 500);
     return () => window.clearInterval(id);
-  }, [collapsed]);
+  }, [effCollapsed]);
 
   // Resolve a chatty uid to "componentName.propName" so the row is readable.
   const labelForUid = (uid: number): string => {
@@ -160,7 +169,7 @@ export function DiagPanel({
   };
 
   // ---- collapsed: just the live connection indicator ----
-  if (collapsed) {
+  if (!embedded && collapsed) {
     return (
       <button
         onClick={() => setCollapsed(false)}
@@ -204,9 +213,19 @@ export function DiagPanel({
   const slowP95 = snap != null && snap.frame.p95 > 32;
 
   // ---- expanded: full panel ----
-  return (
-    <div
-      style={{
+  const containerStyle: CSSProperties = embedded
+    ? {
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        color: "#e6e8eb",
+        fontSize: 11,
+        fontFamily: "ui-monospace, SFMono-Regular, monospace",
+        display: "flex",
+        flexDirection: "column",
+      }
+    : {
         position: "fixed",
         top: 12,
         right: 12,
@@ -221,8 +240,9 @@ export function DiagPanel({
         fontFamily: "ui-monospace, SFMono-Regular, monospace",
         display: "flex",
         flexDirection: "column",
-      }}
-    >
+      };
+  return (
+    <div style={containerStyle}>
       <div
         style={{
           display: "flex",
@@ -267,19 +287,21 @@ export function DiagPanel({
         >
           {copied ? "copied ✓" : "copy"}
         </button>
-        <button
-          onClick={() => setCollapsed(true)}
-          title="Collapse to indicator"
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#8892a0",
-            cursor: "pointer",
-            fontSize: 14,
-          }}
-        >
-          ▴
-        </button>
+        {!embedded && (
+          <button
+            onClick={() => setCollapsed(true)}
+            title="Collapse to indicator"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#8892a0",
+              cursor: "pointer",
+              fontSize: 14,
+            }}
+          >
+            ▴
+          </button>
+        )}
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>

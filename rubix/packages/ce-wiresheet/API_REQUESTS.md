@@ -156,6 +156,27 @@ GET /api/v0/ui/{type}        // type = "NubeIO-control::scheduler"
 → 404                                 // type has no custom UI
 ```
 
+**Update — UI-list + tabs plan** (see `SDUI_UNIFIED_DESIGN.md` §10). The wiresheet
+loads a **list of UIs** at first connect and allocates a drawer tab per UI (one
+Table per extension; manual tab switching; each UI declares a `selection` mode
+`ignore | follow | drive | sync`). Add a list endpoint alongside the per-type fetch:
+
+```jsonc
+GET /api/v0/ui/list
+→ { "data": { "version": 1, "uis": [
+      { "id": "components-table", "label": "Table", "icon": "table",
+        "selection": "sync",
+        "view": { "type": "collection", "source": "components", "fullBleed": true } },
+      { "id": "scheduler", "label": "Schedule", "icon": "calendar",
+        "selection": "ignore",
+        "view": { "type": "layout", "children": [ /* … */ ] } } ] } }
+```
+
+A `view` is a high-level `collection | record | layout` doc (the authoring DSL),
+**not** raw IR — columns/forms derive from **field descriptors** (`__facets` +
+`/schema`). Until this ships, the client stubs the manifest in
+`src/lib/ui/root-ext-stub.ts` (`getUiManifest()`).
+
 - **Static per type**, like `/schema`. Co-locating with `/schema` (same CE) is the
   natural home; the IR files live alongside the extension.
 - The panel's data binds to the component's existing **prop values** (already on
