@@ -1785,8 +1785,17 @@ const ValueRow = memo(function ValueRow({
           dataType={p.dataType}
           facet={rowFacet}
         />
-      ) : (
+      ) : p.dataType === DATATYPE_STRING || typeof v === "string" ? (
+        // Strings get the stateful read-popup; everything else is a plain span
+        // (no per-cell hooks — keeps the all-node re-render cheap).
         <ReadonlyValue value={v} dataType={p.dataType} facet={rowFacet} />
+      ) : (
+        <span
+          style={{ ...valueDisplayStyle, cursor: "default", color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb" }}
+          title={DATATYPE_LABEL[p.dataType]}
+        >
+          {fmtValueFacet(v, p.dataType, rowFacet) || "—"}
+        </span>
       )}
     </div>
   );

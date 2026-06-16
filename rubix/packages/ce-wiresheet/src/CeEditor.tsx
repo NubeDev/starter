@@ -84,6 +84,7 @@ import {
 } from "./lib/engine-types";
 import {
   loadSchemaIndices,
+  propertyToComponent,
   useStatusFlags,
   useStructural,
   useValues,
@@ -1599,6 +1600,20 @@ function Inner({ base }: { base: string }) {
             msg.components.every((c) => st.components.has(c.uid)) &&
             msg.edges.every((e) => st.edges.has(e.uid));
           if (haveAll) return;
+          // Only reload if the change touches the CURRENT folder. The store holds
+          // only this folder, so an off-folder addition can't be surfaced by a
+          // reload — without this gate, churn elsewhere (e.g. an extension adding
+          // components every tick) spins a full-sheet reload + re-render of every
+          // visible node on each event, which reads as periodic jank.
+          const pid = currentParentUidRef.current;
+          const relevant =
+            msg.components.some((c) => c.parent === pid) ||
+            msg.edges.some((e) => {
+              const sc = propertyToComponent.get(e.sourceProperty);
+              const tc = propertyToComponent.get(e.targetProperty);
+              return (sc != null && st.components.has(sc)) || (tc != null && st.components.has(tc));
+            });
+          if (!relevant) return;
           scheduleTopologyReload();
         } else if (msg.type === "topologyRemoved") {
           // Splice the removed nodes/edges out of the live RF state without a refetch.
