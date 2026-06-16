@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStructural } from "../lib/store";
-import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, SquareDashed } from "lucide-react";
+import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, Plus, SquareDashed } from "lucide-react";
 import type { UiEntry } from "../lib/ui/types";
 import type { FlexValue } from "../lib/engine-types";
 import { RenderWidget, type RenderCtx } from "./registry";
@@ -15,6 +15,10 @@ import { TreeWidget } from "./TreeWidget";
 import { injectUiStyles } from "./styles";
 import "./widgets"; // register text/value/button
 import "./SchedulePanel"; // register schedule
+import "./TimerPanel"; // register timer
+import "./AlarmPanel"; // register alarms
+import "./AlarmHistoryPanel"; // register alarmHistory
+import "./CronPanel"; // register cron
 
 injectUiStyles();
 
@@ -36,6 +40,8 @@ export interface UiTabHostProps {
   onDrillIn?: (uid: number) => void;
   onNameContextMenu?: (uid: number, x: number, y: number) => void;
   onRowsChange?: (uids: number[]) => void;
+  /** create a component of a type (matched by hint, e.g. "schedule") */
+  onAddComponent?: (typeHint: string) => void;
   canGoUp?: boolean;
   onUp?: () => void;
   onSetDefault?: (componentUid: number, property: string, value: FlexValue) => void;
@@ -56,7 +62,13 @@ export function UiTabHost({ uis, ...props }: UiTabHostProps) {
   const manifest = { uis };
 
   return (
-    <div className="ce-ui-root" style={{ display: "flex", height: "100%", minHeight: 0 }}>
+    <div
+      className="ce-ui-root"
+      // Keep panel keystrokes (Delete/Backspace especially) from reaching the
+      // canvas — otherwise editing here would delete the selected component.
+      onKeyDown={(e) => e.stopPropagation()}
+      style={{ display: "flex", height: "100%", minHeight: 0 }}
+    >
       {/* vertical tab strip */}
       <div
         style={{
@@ -115,14 +127,22 @@ function ViewBody({
   const selUid = wantsSel ? props.selectedUids[0] : undefined;
   const selType = useStructural((s) => (selUid != null ? s.components.get(selUid)?.type : undefined));
   // When a UI targets a component type, only bind to a matching selection.
-  const typeOk = !appliesTo || (!!selType && selType.toLowerCase().includes(appliesTo.toLowerCase()));
+  const typeOk = !appliesTo || typeMatches(selType, appliesTo);
   const boundUid = typeOk ? selUid : undefined;
 
   if (appliesTo && wantsSel && boundUid == null) {
     // Empty state: one column per type-bound UI in this extension. Clicking a
     // component selects it and jumps to that type's tab.
     const typeBound = uis.filter((u) => u.appliesTo);
-    return <MultiTypePicker uis={typeBound} currentParentUid={props.currentParentUid} onSelect={props.onSelect} onPickUi={onPickUi} />;
+    return (
+      <MultiTypePicker
+        uis={typeBound}
+        currentParentUid={props.currentParentUid}
+        onSelect={props.onSelect}
+        onPickUi={onPickUi}
+        onAddComponent={props.onAddComponent}
+      />
+    );
   }
 
   const ctx: RenderCtx = { componentUid: boundUid, callAction: props.onCallAction };
@@ -175,18 +195,32 @@ function ViewBody({
   );
 }
 
+/** Match a component type to a UI's `appliesTo`. Exact, or the type's last path
+ *  segment (so "vendor::timer" matches "timer" but not the "schedule" package). */
+function typeMatches(componentType: string | undefined, appliesTo: string): boolean {
+  if (!componentType) return false;
+  const t = componentType.toLowerCase();
+  const a = appliesTo.toLowerCase();
+  if (t === a) return true;
+  const seg = t.split(/[:/.\\]+/).filter(Boolean).pop() ?? t;
+  return seg === a;
+}
+
 /** Empty-state: one column per type-bound UI, each listing the folder's matching
- *  components. Clicking selects the component and jumps to that type's tab. */
+ *  components + an Add button. Clicking a component selects it and jumps to that
+ *  type's tab; Add creates a new component of that type. */
 function MultiTypePicker({
   uis,
   currentParentUid,
   onSelect,
   onPickUi,
+  onAddComponent,
 }: {
   uis: UiEntry[];
   currentParentUid: number;
   onSelect: (uids: number[]) => void;
   onPickUi: (id: string) => void;
+  onAddComponent?: (typeHint: string) => void;
 }) {
   const components = useStructural((s) => s.components);
   const inFolder = useMemo(
@@ -196,8 +230,7 @@ function MultiTypePicker({
   return (
     <div style={{ display: "flex", height: "100%", minHeight: 0 }}>
       {uis.map((u) => {
-        const t = (u.appliesTo ?? "").toLowerCase();
-        const matches = inFolder.filter((c) => c.type.toLowerCase().includes(t));
+        const matches = inFolder.filter((c) => typeMatches(c.type, u.appliesTo!));
         return (
           <div key={u.id} style={{ flex: 1, minWidth: 0, borderRight: "1px solid #2c313c", display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "8px 10px", color: "#cbd3e0", fontSize: 12, fontWeight: 500, borderBottom: "1px solid #2c313c", flexShrink: 0 }}>
@@ -218,6 +251,14 @@ function MultiTypePicker({
                 ))
               )}
             </div>
+            {onAddComponent && (
+              <button
+                onClick={() => onAddComponent(u.appliesTo!)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, margin: 6, padding: "5px 8px", background: "#2c313c", border: "1px solid #3a4150", borderRadius: 4, cursor: "pointer", color: "#cbd3e0", fontSize: 11, flexShrink: 0 }}
+              >
+                <Plus size={13} /> Add {u.label.toLowerCase()}
+              </button>
+            )}
           </div>
         );
       })}

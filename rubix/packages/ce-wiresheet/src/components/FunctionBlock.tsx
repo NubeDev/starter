@@ -31,6 +31,7 @@ import {
 } from "../lib/engine-types";
 import type { DecodedValue } from "../lib/wire";
 import { facetFor, rawFacet, exposedPorts, FACET_PROP, type PropFacet } from "../lib/facet";
+import { withChoices } from "../lib/choices";
 import { fmtValueFacet, inferDataType } from "../lib/format";
 import {
   buildConnectGroups,
@@ -1332,7 +1333,7 @@ function PropertyValueEditor({
     if (dataType === DATATYPE_STRING) {
       return (
         <>
-          <span style={valueDisplayStyle} title={fullTitle}>{display}</span>
+          <span style={valueDisplayStyle} title={fullTitle}>{display || "—"}</span>
           {rect &&
             createPortal(
               <div
@@ -1414,7 +1415,7 @@ function PropertyValueEditor({
       style={{ ...valueDisplayStyle, color: dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb" }}
       title={fullTitle || "click to edit"}
     >
-      {display}
+      {display || "—"}
     </span>
   );
 
@@ -1617,6 +1618,80 @@ interface InnerProps {
 // value frame re-renders only the rows whose values changed — not the whole node.
 // memo'd so a parent re-render (structural change) with the same row props is a
 // no-op for unchanged rows.
+// Read-only value display. For string values (e.g. outputs) a click opens a
+// popup showing the full text — outputs can be long and aren't editable, so the
+// truncated cell + tooltip isn't enough to actually read them.
+function ReadonlyValue({
+  value,
+  dataType,
+  facet,
+}: {
+  value: DecodedValue | undefined;
+  dataType: PropertyDataType;
+  facet?: PropFacet;
+}) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const display = fmtValueFacet(value, dataType, facet);
+  const isString = dataType === DATATYPE_STRING || typeof value === "string";
+  const full = typeof value === "string" ? value : display;
+
+  useEffect(() => {
+    if (!rect) return;
+    const onDown = (ev: PointerEvent) => {
+      if (!document.getElementById("fb-read-popup")?.contains(ev.target as Node)) setRect(null);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [rect]);
+
+  if (!isString) {
+    return (
+      <span style={{ ...valueDisplayStyle, cursor: "default", color: dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb" }} title={DATATYPE_LABEL[dataType]}>
+        {display || "—"}
+      </span>
+    );
+  }
+  return (
+    <>
+      <span
+        onClick={(e) => { e.stopPropagation(); setRect(e.currentTarget.getBoundingClientRect()); }}
+        title="click to read"
+        style={{ ...valueDisplayStyle, cursor: "zoom-in", color: "#e6e8eb" }}
+      >
+        {display || "—"}
+      </span>
+      {rect &&
+        createPortal(
+          <div
+            id="fb-read-popup"
+            className="nodrag"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              left: Math.min(rect.left, window.innerWidth - 300),
+              top: Math.min(rect.bottom + 4, window.innerHeight - 240),
+              zIndex: 200,
+              width: 280,
+              maxHeight: 240,
+              overflow: "auto",
+              background: "#1a1d24",
+              border: "1px solid #2c313c",
+              borderRadius: 6,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+              padding: 8,
+            }}
+          >
+            <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#e6e8eb", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 11 }}>
+              {full || "—"}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
 const ValueRow = memo(function ValueRow({
   row: p,
   i,
@@ -1711,12 +1786,7 @@ const ValueRow = memo(function ValueRow({
           facet={rowFacet}
         />
       ) : (
-        <span
-          style={{ ...valueDisplayStyle, cursor: "default", color: p.dataType === DATATYPE_BOOL ? COLOR_BOOL : "#e6e8eb" }}
-          title={typeof v === "string" ? v : DATATYPE_LABEL[p.dataType]}
-        >
-          {fmtValueFacet(v, p.dataType, rowFacet)}
-        </span>
+        <ReadonlyValue value={v} dataType={p.dataType} facet={rowFacet} />
       )}
     </div>
   );
@@ -1837,7 +1907,7 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         category: p.category,
         dataType: propertyDataType.get(p.uid) ?? inferDataType(p.value),
         systemRole: p.systemRole,
-        facet: facet.get(p.uid),
+        facet: withChoices(facet.get(p.uid), restComp.type, name),
       }));
     // A wired (linked) prop is never hidden — keep it visible even if its facet
     // says hidden (you can't hide an active connection).

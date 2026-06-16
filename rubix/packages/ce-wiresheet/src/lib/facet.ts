@@ -32,6 +32,9 @@ export interface PropFacet {
   max?: number;
   hidden?: boolean;
   order?: number;
+  // `t` — render a numeric (epoch) value as a LOCAL date/time instead of a raw
+  // number. Engine stores epochs in UTC; this is the display-side conversion.
+  format?: "datetime" | "date" | "time";
   aliases?: Alias[]; // `o` — value→label map (also the pick list)
   action?: string; // `a` — dynamic-options action (Phase 3; not used yet)
   // `e` — exposed port: this record's uid is a CHILD prop projected onto THIS
@@ -72,6 +75,7 @@ export function parseFacet(raw: string): ComponentFacet {
         case "x": f.max = Number(v); break;
         case "h": f.hidden = v !== "0"; break;
         case "r": f.order = Number(v); break;
+        case "t": if (v === "datetime" || v === "date" || v === "time") f.format = v; break;
         case "a": f.action = v; break;
         case "e": f.expose = v === "o" ? "output" : "input"; break;
         case "c": f.childComponent = Number(v); break;
@@ -102,6 +106,7 @@ export function serializeFacet(facet: ComponentFacet): string {
     if (f.max != null) fields.push("x" + f.max);
     if (f.hidden) fields.push("h1");
     if (f.order != null) fields.push("r" + f.order);
+    if (f.format) fields.push("t" + f.format);
     if (f.action) fields.push("a" + f.action);
     if (f.expose) fields.push("e" + (f.expose === "output" ? "o" : "i"));
     if (f.childComponent != null) fields.push("c" + f.childComponent);

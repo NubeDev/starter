@@ -88,6 +88,7 @@ import {
   useStructural,
   useValues,
 } from "./lib/store";
+import { loadSchemaChoices } from "./lib/choices";
 import { metrics } from "./lib/instrumentation";
 import {
   diagGauges,
@@ -1311,6 +1312,9 @@ function Inner({ base }: { base: string }) {
           version?: string;
           components?: Array<{ name: string; icon?: string; actions?: ActionDef[] }>;
         }>;
+        // Index schema-declared enum choices (e.g. severity low:0,medium:1,high:2)
+        // so those props render as labels + dropdowns like facet aliases.
+        loadSchemaChoices(j.data as Parameters<typeof loadSchemaChoices>[0]);
         const seen = new Map<string, PaletteExtension>();
         // Same pass builds the action index: type → its action signatures.
         const actions = new Map<string, ActionDef[]>();
@@ -2261,6 +2265,18 @@ function Inner({ base }: { base: string }) {
     [palette],
   );
 
+  // Add a component by a type hint (e.g. "schedule") — resolve the palette type
+  // whose name / last type-segment matches, then create it in the current folder.
+  const onAddComponentByHint = useCallback(
+    (hint: string) => {
+      const h = hint.toLowerCase();
+      const seg = (t: string) => t.toLowerCase().split(/[:/.\\]+/).filter(Boolean).pop() ?? t.toLowerCase();
+      const match = componentTypes.find((c) => c.name.toLowerCase() === h || seg(c.type) === h);
+      if (match) void onAddNode(match.type);
+    },
+    [componentTypes, onAddNode],
+  );
+
   // Create one component of `type` in the current folder and return it (with its
   // properties) so the caller can wire up to it. Mirrors onAddNode but returns
   // the created Component instead of being fire-and-forget.
@@ -3110,6 +3126,7 @@ function Inner({ base }: { base: string }) {
                   onDrillIn={enter}
                   onNameContextMenu={openNodeContextMenu}
                   onRowsChange={onTableRows}
+                  onAddComponent={onAddComponentByHint}
                   canGoUp={crumbs.length > 1}
                   onUp={() => goToCrumb(crumbs.length - 2)}
                   onSetDefault={onTableSetDefault}
@@ -3343,8 +3360,9 @@ function ConfigurePanel({
     decimals: string;
     hidden: boolean;
     aliases: string;
+    format: string;
   };
-  const empty: Draft = { label: "", unit: "", decimals: "", hidden: false, aliases: "" };
+  const empty: Draft = { label: "", unit: "", decimals: "", hidden: false, aliases: "", format: "" };
   const seed = (uid: number): Draft => {
     const f = initial.get(uid);
     return {
@@ -3353,6 +3371,7 @@ function ConfigurePanel({
       decimals: f?.decimals != null ? String(f.decimals) : "",
       hidden: f?.hidden ?? false,
       aliases: f?.aliases?.map((a) => `${a.code}=${a.label}`).join(", ") ?? "",
+      format: f?.format ?? "",
     };
   };
   const [draft, setDraft] = useState<Record<number, Draft>>(() => {
@@ -3445,6 +3464,8 @@ function ConfigurePanel({
     const aliases = parseAliasInput(d.aliases);
     if (aliases.length) f.aliases = aliases;
     else delete f.aliases;
+    if (d.format === "datetime" || d.format === "date" || d.format === "time") f.format = d.format;
+    else delete f.format;
   };
 
   const save = () => {
@@ -3547,6 +3568,17 @@ function ConfigurePanel({
           onKeyDown={onFieldKey}
           style={{ ...detailsField, width: "100%", marginTop: 6 }}
         />
+        <select
+          value={d.format}
+          onChange={(e) => set(uid, { format: e.target.value })}
+          title="render a numeric (epoch) value as a local date/time"
+          style={{ ...detailsField, width: "100%", marginTop: 6 }}
+        >
+          <option value="">format: number</option>
+          <option value="datetime">format: date &amp; time (local)</option>
+          <option value="date">format: date (local)</option>
+          <option value="time">format: time (local)</option>
+        </select>
       </>
     );
   };

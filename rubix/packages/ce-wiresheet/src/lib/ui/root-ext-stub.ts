@@ -48,25 +48,22 @@ const CE_DEMO: UiEntry = {
 
 // --- A second stub extension, to make the right-edge (outer) tabs real -------
 
-/** Stub "Alarms" extension — one `layout` UI, `selection: "ignore"` (a surface
- *  independent of node selection). Proves the outer extension-tab level + the
- *  `ignore` selection mode. */
+/** "Alarms" extension — a live console over the singleton `alarm.service`. A
+ *  standalone surface (`ignore`): the widget auto-resolves the one alarm service,
+ *  so there's no node selection. */
 const ALARMS_HOME: UiEntry = {
   id: "alarms-home",
   label: "Alarms",
-  icon: "layout",
+  icon: "bell",
   selection: "ignore",
-  view: {
-    type: "layout",
-    children: [
-      { type: "text", text: "Alarms (stub extension) — ignores selection." },
-      {
-        type: "button",
-        label: "Generate alarm",
-        action: { name: "generate", label: "Generate alarm", target: "collection" },
-      },
-    ],
-  },
+  view: { type: "layout", children: [{ type: "alarms" }] },
+};
+const ALARMS_HISTORY: UiEntry = {
+  id: "alarms-history",
+  label: "History",
+  icon: "tree",
+  selection: "ignore",
+  view: { type: "layout", children: [{ type: "alarmHistory" }] },
 };
 
 /** Structural overview: the folder hierarchy as a tree with per-folder counts.
@@ -100,7 +97,7 @@ const TIMER_UI: UiEntry = {
   icon: "timer",
   selection: "follow",
   appliesTo: "timer",
-  view: { type: "layout", children: [{ type: "text", text: "Timer editor — TBD (selected timer component)." }] },
+  view: { type: "layout", children: [{ type: "timer" }] },
 };
 const CRON_UI: UiEntry = {
   id: "cron",
@@ -108,13 +105,13 @@ const CRON_UI: UiEntry = {
   icon: "cron",
   selection: "follow",
   appliesTo: "cron",
-  view: { type: "layout", children: [{ type: "text", text: "Cron editor — TBD (selected cron component)." }] },
+  view: { type: "layout", children: [{ type: "cron", bind: { prop: "cron" }, action: { name: "setCron", label: "Set", target: "component" } }] },
 };
 
 export const EXTENSIONS_STUB: ExtensionUi[] = [
   { id: "ce", label: "Control Engine", icon: "cpu", uis: [CE_TABLE, CE_TREE, CE_DEMO] },
   { id: "scheduler", label: "Scheduler (stub)", icon: "calendar", uis: [SCHEDULE_UI, TIMER_UI, CRON_UI] },
-  { id: "alarms", label: "Alarms (stub)", icon: "bell", uis: [ALARMS_HOME] },
+  { id: "alarms", label: "Alarms (stub)", icon: "bell", uis: [ALARMS_HOME, ALARMS_HISTORY] },
 ];
 
 /**

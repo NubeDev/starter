@@ -30,6 +30,18 @@ export function fmtValue(v: DecodedValue | undefined, dt: PropertyDataType): str
   return v.toFixed(2);
 }
 
+// Render an epoch number as a LOCAL date/time. Auto-detects seconds vs millis
+// (CE int epochs are seconds; < 1e12 → seconds). Date renders in the browser's
+// local timezone, which is the "local version" of the UTC-stored value.
+export function fmtDateTime(v: number, format: "datetime" | "date" | "time"): string {
+  if (!Number.isFinite(v) || v === 0) return "—";
+  const d = new Date(Math.abs(v) < 1e12 ? v * 1000 : v);
+  if (Number.isNaN(d.getTime())) return String(v);
+  if (format === "date") return d.toLocaleDateString();
+  if (format === "time") return d.toLocaleTimeString();
+  return d.toLocaleString();
+}
+
 export function fmtValueFacet(
   v: DecodedValue | undefined,
   dt: PropertyDataType,
@@ -37,6 +49,7 @@ export function fmtValueFacet(
 ): string {
   const al = aliasLabel(facet?.aliases, v);
   if (al != null) return al;
+  if (facet?.format && typeof v === "number") return fmtDateTime(v, facet.format);
   let base: string;
   if (facet?.decimals != null && Number.isFinite(facet.decimals) && typeof v === "number") {
     base = v.toFixed(Math.min(MAX_DECIMALS, Math.max(0, Math.trunc(facet.decimals))));

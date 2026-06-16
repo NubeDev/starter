@@ -37,3 +37,20 @@ describe("inferDataType", () => {
     expect(inferDataType(5)).toBe(DATATYPE_NUMBER);
   });
 });
+
+describe("datetime facet format", () => {
+  it("renders an epoch as a local date/time string, not the raw number", () => {
+    const out = fmtValueFacet(1765432123, DATATYPE_NUMBER, { format: "datetime" });
+    expect(out).not.toBe("1765432123");
+    expect(out).not.toBe("—");
+    expect(out).toMatch(/\d/);
+  });
+  it("treats 0 / non-finite as empty", () => {
+    expect(fmtValueFacet(0, DATATYPE_NUMBER, { format: "datetime" })).toBe("—");
+  });
+  it("auto-detects millisecond epochs", () => {
+    const sec = fmtValueFacet(1765432123, DATATYPE_NUMBER, { format: "date" });
+    const ms = fmtValueFacet(1765432123000, DATATYPE_NUMBER, { format: "date" });
+    expect(ms).toBe(sec); // same instant, seconds vs millis
+  });
+});

@@ -1,8 +1,8 @@
 // The `schedule` widget — interactive weekly calendar + exceptions list for the
 // NubeIO `schedule` component. Edits the component's `config` JSON (weekly +
 // calendar entries); Save commits via the `setSchedule` action and surfaces its
-// {ok,error}. Shows live outputs (out / active / nextChange) and a manual timer
-// (startTimer / cancelTimer + timerEnd). cron entries are out of v1 scope.
+// {ok,error}. Shows live outputs (out / active / nextChange). Timer + cron are
+// separate components now, each with their own UI.
 //
 // config schema (engine-owned semantics; precedence: calendar > weekly > default):
 //   { "default": false, "entries": [
@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStructural, useValues } from "../lib/store";
-import { Plus, Save, RotateCcw, Trash2, Play, Square, CalendarPlus } from "lucide-react";
+import { Save, RotateCcw, Trash2, CalendarPlus } from "lucide-react";
 import { registerWidget, type WidgetProps } from "./registry";
 import type { Component } from "../lib/engine-types";
 
@@ -79,7 +79,6 @@ function SchedulePanel({ node, ctx }: WidgetProps) {
   const [dirty, setDirty] = useState(false);
   const [sel, setSel] = useState<number | null>(null); // selected weekly entry index
   const [saveErr, setSaveErr] = useState<string | null>(null);
-  const [timerSec, setTimerSec] = useState(600);
   const seeded = useRef(sourceStr);
 
   useEffect(() => {
@@ -167,26 +166,14 @@ function SchedulePanel({ node, ctx }: WidgetProps) {
   };
   const reset = () => { setDraft(seedFor(sourceStr)); setDirty(false); setSel(null); setSaveErr(null); };
 
-  const canCall = ctx.componentUid != null && !!ctx.callAction;
-
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", userSelect: "none", fontSize: 12 }}>
-      {/* status + timer strip */}
+      {/* live status strip */}
       {comp && (
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "5px 8px", borderBottom: "1px solid #2c313c", flexShrink: 0, flexWrap: "wrap" }}>
           <LiveOut comp={comp} />
           <span style={muted}>active <b style={{ color: "#e6e8eb" }}><LiveText comp={comp} prop="active" /></b></span>
           <span style={muted}>next <b style={{ color: "#e6e8eb" }}><LiveTime comp={comp} prop="nextChange" /></b></span>
-          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={muted}>timer ends <b style={{ color: "#e6e8eb" }}><LiveTime comp={comp} prop="timerEnd" /></b></span>
-            <input type="number" value={timerSec} onChange={(e) => setTimerSec(Number(e.target.value))} title="seconds" style={{ ...inp, width: 64 }} />
-            <button disabled={!canCall} onClick={() => canCall && ctx.callAction!(ctx.componentUid!, "startTimer", { duration: timerSec })} style={tbBtn}>
-              <Play size={12} /> Start
-            </button>
-            <button disabled={!canCall} onClick={() => canCall && ctx.callAction!(ctx.componentUid!, "cancelTimer", {})} style={tbBtn}>
-              <Square size={12} /> Cancel
-            </button>
-          </span>
         </div>
       )}
 
@@ -251,6 +238,14 @@ function SchedulePanel({ node, ctx }: WidgetProps) {
                         setDrag({ kind: "move", index: i, grabMin: minAt(ev.clientY) - toMin(e.start), dur: toMin(e.end) - toMin(e.start) });
                       }}
                       onClick={() => { if (moved.current) { moved.current = false; return; } setSel(i); }}
+                      tabIndex={0}
+                      onKeyDown={(ev) => {
+                        if (ev.key === "Delete" || ev.key === "Backspace") {
+                          ev.preventDefault();
+                          ev.stopPropagation();
+                          removeEntry(i);
+                        }
+                      }}
                       title={`${e.name ?? ""} ${e.start}–${e.end} · ${e.value ? "ON" : "OFF"}`}
                       style={{ position: "absolute", top, height: h, left: 2, right: 2, background: sel === i ? "#3b5388" : e.value ? "#2c3a55" : "#3a2c2c", borderLeft: `3px solid ${e.value ? "#5a86c7" : "#a06a6a"}`, borderRadius: 3, padding: "1px 4px", overflow: "hidden", cursor: "grab", color: "#e6e8eb", fontSize: 10, lineHeight: 1.25, touchAction: "none" }}
                     >

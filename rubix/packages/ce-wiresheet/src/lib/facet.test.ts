@@ -180,4 +180,11 @@ describe("remapFacetUids (deep-copy uid rewrite)", () => {
     const original = serializeFacet(new Map([[100, { label: "x" }]]));
     expect(remapFacetUids(original, new Map(), new Map())).toBe(original);
   });
+
+  it("round-trips the datetime format field", () => {
+    const raw = serializeFacet(new Map([[100, { label: "Next", format: "datetime" }]]));
+    expect(parseFacet(raw).get(100)?.format).toBe("datetime");
+    // an unknown format value is ignored
+    expect(parseFacet("100\x1ftbogus").get(100)?.format).toBeUndefined();
+  });
 });

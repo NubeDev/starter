@@ -9,6 +9,7 @@
 // OVR badge, linked/hidden/exposed icons.
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useStructural, useValues, useStatusFlags, propertyDataType } from "../lib/store";
 import {
   ROLE_NORMAL,
@@ -17,8 +18,10 @@ import {
   CATEGORY_CONFIG,
   STATUS_OVERRIDDEN,
   DATATYPE_NUMBER,
+  DATATYPE_STRING,
 } from "../lib/engine-types";
 import { facetFor, rawFacet, exposedPorts, type ComponentFacet } from "../lib/facet";
+import { withChoices } from "../lib/choices";
 import { fmtValueFacet, inferDataType } from "../lib/format";
 import { FolderUp, ArrowUp, ArrowDown, Eye, EyeOff, Link2, CornerDownRight } from "lucide-react";
 import type { Component, FlexValue } from "../lib/engine-types";
@@ -83,14 +86,26 @@ const ValueCell = memo(function ValueCell({
   const uid = cell?.uid;
   const v = useValues((s) => (uid != null ? s.values.get(uid) : undefined));
   const flags = useStatusFlags((s) => (uid != null ? s.flags.get(uid) : undefined));
+  const [readRect, setReadRect] = useState<DOMRect | null>(null);
+  useEffect(() => {
+    if (!readRect) return;
+    const onDown = (ev: PointerEvent) => {
+      if (!document.getElementById("ct-read-popup")?.contains(ev.target as Node)) setReadRect(null);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [readRect]);
   if (!cell) return <td style={{ ...td, borderLeft: groupStart ? groupBorder : undefined }} />;
   const facet = facetFor(comp.uid, rawFacet(comp.properties));
-  const facetEntry = facet.get(cell.uid);
+  const facetEntry = withChoices(facet.get(cell.uid), comp.type, cell.name);
   const dataType = propertyDataType.get(cell.uid) ?? DATATYPE_NUMBER;
   const text = fmtValueFacet(v, dataType, facetEntry);
   const ovr = ((flags ?? 0) & STATUS_OVERRIDDEN) !== 0;
   // Outputs are computed; exposed ports edit via the child — both read-only here.
   const editable = cell.category !== CATEGORY_OUTPUT && !cell.exposed;
+  // Read-only strings (outputs) open a popup so long values can be read.
+  const isStr = dataType === DATATYPE_STRING || typeof v === "string";
+  const full = typeof v === "string" ? v : text;
 
   return (
     <td
@@ -119,24 +134,57 @@ const ValueCell = memo(function ValueCell({
           />
         ) : (
           <span
-            onClick={editable ? (e) => { e.stopPropagation(); onStartEdit(comp.uid, cell.uid); } : undefined}
-            title={editable ? "click to edit default · right-click to override" : "right-click to override"}
+            onClick={
+              editable
+                ? (e) => { e.stopPropagation(); onStartEdit(comp.uid, cell.uid); }
+                : isStr
+                ? (e) => { e.stopPropagation(); setReadRect(e.currentTarget.getBoundingClientRect()); }
+                : undefined
+            }
+            title={editable ? "click to edit default · right-click to override" : isStr ? "click to read · right-click to override" : "right-click to override"}
             style={{
               display: "flex",
               alignItems: "center",
               gap: 4,
               color: "#e6e8eb",
               fontVariantNumeric: "tabular-nums",
-              cursor: editable ? "pointer" : "default",
+              cursor: editable ? "pointer" : isStr ? "zoom-in" : "default",
               borderBottom: editable ? "1px dotted #3b4350" : undefined,
-              width: "fit-content",
+              maxWidth: 150,
             }}
           >
-            {text}
+            <span title={text} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{text || "—"}</span>
             {ovr && <OvrBadge />}
           </span>
         )}
       </div>
+      {readRect &&
+        createPortal(
+          <div
+            id="ct-read-popup"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              left: Math.min(readRect.left, window.innerWidth - 300),
+              top: Math.min(readRect.bottom + 4, window.innerHeight - 240),
+              zIndex: 200,
+              width: 280,
+              maxHeight: 240,
+              overflow: "auto",
+              background: "#1a1d24",
+              border: "1px solid #2c313c",
+              borderRadius: 6,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+              padding: 8,
+            }}
+          >
+            <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#e6e8eb", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 11 }}>
+              {full || "—"}
+            </div>
+          </div>,
+          document.body,
+        )}
     </td>
   );
 });
@@ -407,7 +455,7 @@ export function CollectionWidget({
           cellLabel={override.cell.label}
           initial={useValues.getState().values.get(override.cell.uid)}
           dataType={propertyDataType.get(override.cell.uid) ?? DATATYPE_NUMBER}
-          facet={facets.get(override.comp)?.get(override.cell.uid)}
+          facet={withChoices(facets.get(override.comp)?.get(override.cell.uid), components.get(override.comp)?.type, override.cell.name)}
           overridden={((useStatusFlags.getState().flags.get(override.cell.uid) ?? 0) & STATUS_OVERRIDDEN) !== 0}
           onOverride={(v, dur) => {
             onSetOverride?.(override.comp, override.cell.name, v, dur);
