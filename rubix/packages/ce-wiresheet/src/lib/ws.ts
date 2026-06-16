@@ -535,12 +535,17 @@ export class CeRestWs {
 
 function summarizeTopology(t: TopologyMsg): string {
   if (t.type === "topologyAdded") {
-    return `+ comp[${t.components.map((c) => c.uid).join(",")}] edge[${t.edges.map((e) => e.uid).join(",")}]`;
+    // Include kind + parent so the events log names *what* is being added and
+    // *where* — e.g. a component churned every tick shows its type + folder.
+    const comps = t.components
+      .map((c) => `${c.uid}:${c.kind}@${c.parent ?? "?"}`)
+      .join(", ");
+    return `+ comp[${comps}] edge[${t.edges.map((e) => e.uid).join(",")}]`;
   }
   if (t.type === "topologyRemoved") {
     return `- comp[${t.componentUids.join(",")}] edge[${t.edgeUids.join(",")}]`;
   }
-  return `~ comp[${t.components.map((c) => c.uid).join(",")}]`;
+  return `~ comp[${t.components.map((c) => `${c.uid}@${c.parent ?? "?"}`).join(",")}]`;
 }
 
 export function defaultWsUrl(): string {

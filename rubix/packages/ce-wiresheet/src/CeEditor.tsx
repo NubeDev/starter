@@ -1607,7 +1607,10 @@ function Inner({ base }: { base: string }) {
           // visible node on each event, which reads as periodic jank.
           const pid = currentParentUidRef.current;
           const relevant =
-            msg.components.some((c) => c.parent === pid) ||
+            // A real child has parent === the current folder AND isn't the folder
+            // itself — excludes the engine re-announcing the root/container
+            // (uid 0 @ 0) every tick, which is what was spinning reloads at root.
+            msg.components.some((c) => c.parent === pid && c.uid !== pid) ||
             msg.edges.some((e) => {
               const sc = propertyToComponent.get(e.sourceProperty);
               const tc = propertyToComponent.get(e.targetProperty);
