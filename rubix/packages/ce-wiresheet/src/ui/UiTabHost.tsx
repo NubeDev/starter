@@ -9,6 +9,8 @@ import { useStructural } from "../lib/store";
 import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, Plus, SquareDashed } from "lucide-react";
 import type { UiEntry } from "../lib/ui/types";
 import type { FlexValue } from "../lib/engine-types";
+import { loadScheduleList } from "./scheduleService";
+import type { SelectNodeResult } from "../lib/rest";
 import { RenderWidget, type RenderCtx } from "./registry";
 import { CollectionWidget } from "./CollectionWidget";
 import { TreeWidget } from "./TreeWidget";
@@ -206,9 +208,30 @@ function typeMatches(componentType: string | undefined, appliesTo: string): bool
   return seg === a;
 }
 
+/** Resolve the schedule service's ref-list globally (all folders), polling so the
+ *  list stays current as schedules are added/removed. Empty (silently) until the
+ *  service component exists on the engine. Refs → name/path/live-summary in one
+ *  POST /nodes/select. */
+function useScheduleService(pollMs = 4000): SelectNodeResult[] {
+  const [rows, setRows] = useState<SelectNodeResult[]>([]);
+  useEffect(() => {
+    let live = true;
+    const tick = () => loadScheduleList().then((r) => { if (live) setRows(r); }).catch(() => {});
+    tick();
+    const id = setInterval(tick, pollMs);
+    return () => { live = false; clearInterval(id); };
+  }, [pollMs]);
+  return rows;
+}
+
+const scheduleApplicable = (appliesTo: string) =>
+  (appliesTo.toLowerCase().split(/[:/.\\]+/).filter(Boolean).pop() ?? appliesTo) === "schedule";
+
 /** Empty-state: one column per type-bound UI, each listing the folder's matching
  *  components + an Add button. Clicking a component selects it and jumps to that
- *  type's tab; Add creates a new component of that type. */
+ *  type's tab; Add creates a new component of that type. The schedule column is
+ *  fed by the schedule **service** (all folders, depth-independent) — components
+ *  outside the current folder are tagged so you can still open them. */
 function MultiTypePicker({
   uis,
   currentParentUid,
@@ -227,10 +250,23 @@ function MultiTypePicker({
     () => [...components.values()].filter((c) => c.parent === currentParentUid).sort((a, b) => a.name.localeCompare(b.name)),
     [components, currentParentUid],
   );
+  const scheduleRows = useScheduleService();
+
+  // Merge in-folder matches with the service's global list (dedup by uid). Rows
+  // the service knows but that aren't in this folder are tagged `elsewhere`.
+  const mergedFor = (appliesTo: string): { uid: number; name: string; path?: string; elsewhere?: boolean }[] => {
+    const local = inFolder.filter((c) => typeMatches(c.type, appliesTo)).map((c) => ({ uid: c.uid, name: c.name }));
+    if (!scheduleApplicable(appliesTo) || scheduleRows.length === 0) return local;
+    const seen = new Set(local.map((r) => r.uid));
+    const elsewhere = scheduleRows
+      .filter((r) => !seen.has(r.uid))
+      .map((r) => ({ uid: r.uid, name: r.name ?? `#${r.uid}`, path: r.path, elsewhere: true }));
+    return [...local, ...elsewhere].sort((a, b) => a.name.localeCompare(b.name));
+  };
   return (
     <div style={{ display: "flex", height: "100%", minHeight: 0 }}>
       {uis.map((u) => {
-        const matches = inFolder.filter((c) => typeMatches(c.type, u.appliesTo!));
+        const matches = mergedFor(u.appliesTo!);
         return (
           <div key={u.id} style={{ flex: 1, minWidth: 0, borderRight: "1px solid #2c313c", display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "8px 10px", color: "#cbd3e0", fontSize: 12, fontWeight: 500, borderBottom: "1px solid #2c313c", flexShrink: 0 }}>
@@ -244,9 +280,15 @@ function MultiTypePicker({
                   <button
                     key={c.uid}
                     onClick={() => { onSelect([c.uid]); onPickUi(u.id); }}
+                    title={c.elsewhere ? c.path : undefined}
                     style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "6px 8px", textAlign: "left", background: "#1a1d24", border: "1px solid #2c313c", borderRadius: 4, cursor: "pointer", color: "#e6e8eb", fontSize: 12 }}
                   >
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                    {c.elsewhere && (
+                      <span style={{ marginLeft: "auto", flexShrink: 0, color: "#5a6172", fontSize: 10 }} title={c.path}>
+                        {c.path ? c.path.replace(/^root\/?/, "").split("/").slice(0, -1).join("/") || "elsewhere" : "elsewhere"}
+                      </span>
+                    )}
                   </button>
                 ))
               )}

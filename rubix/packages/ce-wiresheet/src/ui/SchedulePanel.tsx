@@ -11,6 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStructural, useValues } from "../lib/store";
+import { getNodeByUid } from "../lib/rest";
 import { Save, RotateCcw, Trash2, CalendarPlus } from "lucide-react";
 import { registerWidget, type WidgetProps } from "./registry";
 import type { Component } from "../lib/engine-types";
@@ -66,10 +67,27 @@ function parse(raw: string | undefined): Schedule | null {
 
 function SchedulePanel({ node, ctx }: WidgetProps) {
   const propName = node.bind?.prop ?? "config";
-  const comp = useStructural((s) => (ctx.componentUid != null ? s.components.get(ctx.componentUid) : undefined));
+  const inStore = useStructural((s) => (ctx.componentUid != null ? s.components.get(ctx.componentUid) : undefined));
+
+  // The structural store only holds the current folder. When a schedule is opened
+  // from another folder (via the service's global list), fetch it once by uid so
+  // its config loads for editing. Saving already works cross-folder (callAction is
+  // by uid); live output streaming is in-folder only (a noted follow-up).
+  const [fetched, setFetched] = useState<Component | undefined>(undefined);
+  useEffect(() => {
+    if (ctx.componentUid == null || inStore) { setFetched(undefined); return; }
+    let live = true;
+    getNodeByUid(ctx.componentUid, { depth: 0 }).then((r) => { if (live) setFetched(r.nodes[0]); }).catch(() => {});
+    return () => { live = false; };
+  }, [ctx.componentUid, inStore]);
+
+  const comp = inStore ?? fetched;
   const uid = comp ? comp.properties[propName]?.uid : undefined;
   const live = useValues((s) => (uid != null ? s.values.get(uid) : undefined));
-  const sourceStr = typeof live === "string" && live ? live : undefined;
+  // Prefer the streamed value (in-folder); fall back to the fetched snapshot so a
+  // cross-folder schedule still shows its config.
+  const snapStr = typeof comp?.properties[propName]?.value === "string" ? (comp!.properties[propName]!.value as string) : undefined;
+  const sourceStr = (typeof live === "string" && live ? live : snapStr) || undefined;
 
   // When bound to a real component, an empty `config` means an empty schedule —
   // only fall back to the sample when there's no component at all (dev/stub).

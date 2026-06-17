@@ -109,6 +109,29 @@ export function getNodeByUid(
   return http<ReadNodesResponse>("GET", `/nodes/uid/${uid}${qs ? "?" + qs : ""}`);
 }
 
+// Batch read with field projection — resolve many uids in one call, regardless of
+// folder (flat / global). Distinct from getNodeByUid's subtree fetch: this resolves
+// a *set of references*. `fields` is a fixed projection vocabulary
+// (`name|type|kind|typeId|path|parent|statusFlags|prop:<name>`); omit it for the
+// lean default (name,type,path,parent). Results come back in request order; a
+// missing/soft-deleted uid yields `{ uid, missing: true }`. Bounds: 1000 uids, 64
+// fields. Used to resolve service ref-lists (schedules) without N round-trips.
+export interface SelectNodeResult {
+  uid: number;
+  missing?: boolean;
+  name?: string;
+  type?: string;
+  kind?: string;
+  typeId?: number;
+  path?: string;
+  parent?: number;
+  statusFlags?: number;
+  props?: Record<string, FlexValue>;
+}
+export function selectNodes(uids: number[], fields?: string[]): Promise<SelectNodeResult[]> {
+  return http<SelectNodeResult[]>("POST", `/nodes/select`, { uids, ...(fields ? { fields } : {}) });
+}
+
 export function addNode(req: AddComponentRequest) {
   return http<Component>("POST", `/nodes`, req);
 }
