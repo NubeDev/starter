@@ -86,39 +86,84 @@ const toCompletion = (s: JsSymbol): Completion => ({
   info: s.doc || s.signature,
 });
 
-/** Symbols whose scope nests one level under `parent` (e.g. parent "ctx" with a
- *  symbol scoped "ctx.app") imply an intermediate member `app` on the parent.
- *  Surface those as namespace completions so nested APIs are discoverable. */
-function childNamespaces(symbols: JsSymbol[], parent: string, existing: Set<string>): Completion[] {
-  const prefix = parent ? parent + "." : "";
-  const segs = new Set<string>();
-  for (const s of symbols) {
-    if (!s.scope || !s.scope.startsWith(prefix)) continue;
-    const rest = s.scope.slice(prefix.length);
-    if (!rest) continue;
-    const seg = rest.split(".")[0];
-    if (seg && !existing.has(seg)) segs.add(seg);
-  }
-  return [...segs].map((label) => ({ label, type: "namespace" as const, detail: "namespace" }));
+// The return/value type from a symbol's signature: methods "f(...): T" → T,
+// props "x: T" → T. (Falls back to "" for void/unknown shapes.)
+function typeFromSignature(sig?: string): string {
+  if (!sig) return "";
+  const method = sig.match(/\)\s*:\s*(.+)$/);
+  if (method) return method[1].trim();
+  const prop = sig.match(/:\s*(.+)$/);
+  return prop ? prop[1].trim() : "";
 }
 
+// Map an API type to the scope that holds its members. The engine names nested
+// API types `Ctx<Thing>` and scopes their members `ctx.<thing>` (e.g.
+// CtxComponent → "ctx.component"). The first Ctx* token anywhere in the type is
+// used, so unions/arrays/nullables resolve too (`CtxComponent | null`,
+// `CtxComponent[]`). Primitives (number/string/void/…) → no scope.
+function scopeForType(type: string): string | null {
+  const m = type.match(/\bCtx([A-Za-z0-9]+)\b/);
+  return m ? "ctx." + m[1].toLowerCase() : null;
+}
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const stripCall = (seg: string) => seg.replace(/\([^()]*\)\s*$/, "").trim(); // "component(1)" → "component"
+
+// Split a member expression on TOP-LEVEL dots (ignoring dots inside call args),
+// e.g. "ctx.app.component(100006)" → ["ctx","app","component(100006)"].
+function splitTopLevelDots(expr: string): string[] {
+  const out: string[] = [];
+  let depth = 0, buf = "";
+  for (const ch of expr) {
+    if (ch === "(") { depth++; buf += ch; }
+    else if (ch === ")") { depth = Math.max(0, depth - 1); buf += ch; }
+    else if (ch === "." && depth === 0) { out.push(buf); buf = ""; }
+    else buf += ch;
+  }
+  out.push(buf);
+  return out;
+}
+
+// Resolve a member expression to the scope holding its members. `ctx` is the
+// root; calls (`parent()`) are followed by their return type; a non-ctx root is
+// treated as a LOCAL variable and inferred from its declaration in `doc`.
+function resolveChainScope(symbols: JsSymbol[], doc: string, objExpr: string, depth = 0): string | null {
+  if (depth > 8) return null;
+  const parts = splitTopLevelDots(objExpr.trim());
+  let scope: string | null = stripCall(parts[0]) === "ctx" ? "ctx" : inferLocalScope(symbols, doc, stripCall(parts[0]), depth + 1);
+  for (let i = 1; scope && i < parts.length; i++) {
+    const sym = symbols.find((s) => s.scope === scope && s.label === stripCall(parts[i]));
+    scope = sym ? scopeForType(typeFromSignature(sym.signature)) : null;
+  }
+  return scope;
+}
+
+// Infer a local variable's member-scope from `const|let|var name = <chain>`.
+function inferLocalScope(symbols: JsSymbol[], doc: string, name: string, depth: number): string | null {
+  if (!/^[A-Za-z_$][\w$]*$/.test(name)) return null;
+  const m = doc.match(new RegExp("\\b(?:const|let|var)\\s+" + escapeRe(name) + "\\s*=\\s*([^;\\n]+)"));
+  return m ? resolveChainScope(symbols, doc, m[1].trim(), depth) : null;
+}
+
+// Member chain before the cursor: identifiers + optional single-level calls.
+const CHAIN_RE = /([\w$]+(?:\([^()]*\))?(?:\.[\w$]+(?:\([^()]*\))?)*)\.([\w$]*)$/;
+
 /** Completion source reading the latest symbols from `ref`. Member access
- *  (`a.b.c`) matches the full dotted object path against `scope`; bare
- *  identifiers offer global-scope symbols plus `ctx`. Intermediate namespaces
- *  (e.g. `ctx.app`) are derived so they appear under their parent. */
+ *  (`ctx.self.x`, `ctx.app.component(0).`, or a local var) resolves the chain by
+ *  each member's TYPE to its member-scope; bare identifiers offer globals + ctx. */
 export function jsCompletionSource(ref: { current: JsSymbol[] }) {
   return (context: CompletionContext): CompletionResult | null => {
     const symbols = ref.current;
-    // full dotted path before the final dot, e.g. "ctx.app" in "ctx.app.re|"
-    const member = context.matchBefore(/([\w$]+(?:\.[\w$]+)*)\.([\w$]*)$/);
+    const member = context.matchBefore(CHAIN_RE);
     if (member) {
-      const lastDot = member.text.lastIndexOf(".");
-      const objPath = member.text.slice(0, lastDot);
-      const direct = symbols.filter((s) => s.scope === objPath).map(toCompletion);
-      const ns = childNamespaces(symbols, objPath, new Set(direct.map((d) => d.label)));
-      const options = [...direct, ...ns];
-      if (options.length === 0) return null;
-      return { from: member.from + lastDot + 1, options, validFor: /^[\w$]*$/ };
+      const m = member.text.match(CHAIN_RE);
+      if (m) {
+        const doc = context.state.doc.toString();
+        const scope = resolveChainScope(symbols, doc, m[1]);
+        const options = scope ? symbols.filter((s) => s.scope === scope).map(toCompletion) : [];
+        if (options.length === 0) return null;
+        return { from: member.to - m[2].length, options, validFor: /^[\w$]*$/ };
+      }
     }
     const word = context.matchBefore(/[\w$]*/);
     if (!word || (word.from === word.to && !context.explicit)) return null;
