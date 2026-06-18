@@ -103,6 +103,12 @@ export interface UiEntry {
   /** component type this UI is for (follow/sync bind only to a matching
    *  selection, e.g. "schedule"). Omit for type-agnostic UIs. */
   appliesTo?: string;
+  /** list this type's components across ALL folders in the empty-state picker
+   *  (depth-independent `?type=` scan), not just the current folder. */
+  global?: boolean;
+  /** full "vendor-ext::name" type for the global scan when no instance of the
+   *  type exists in the current folder to infer it from. */
+  fullType?: string;
   view: View;
 }
 

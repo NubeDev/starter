@@ -18,6 +18,16 @@ export interface RenderCtx {
     name: string,
     params?: Record<string, FlexValue>,
   ) => Promise<Record<string, FlexValue>>;
+  /**
+   * Subscribe a set of property uids to the live WS value stream while the widget
+   * is mounted, so a panel bound to an off-canvas (cross-folder) component still
+   * streams. Returns a cleanup that drops the subscription. Replaces the active
+   * widget's prop set on each call (one drawer widget is shown at a time).
+   */
+  subscribeProps?: (propUids: number[]) => () => void;
+  /** Write a value to a component property (maps to the host's set-default path).
+   *  Used by widgets that change a config/input prop, e.g. a jsLogic's scriptId. */
+  setValue?: (componentUid: number, property: string, value: FlexValue) => void;
 }
 
 export interface WidgetProps {

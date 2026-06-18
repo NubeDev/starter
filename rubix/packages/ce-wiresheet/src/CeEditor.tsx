@@ -63,7 +63,6 @@ import {
   bulkUpdate,
   callAction,
   copyNodes,
-  restoreItems,
   getNodeByUid,
   getRootNodes,
   patchOverrides,
@@ -71,6 +70,9 @@ import {
   removeNode as restRemoveNode,
   setEngineBase,
   setRestSessionId,
+  setRestActorId,
+  undoChange,
+  redoChange,
   updateEdge as restUpdateEdge,
   updateNode,
   RestError,
@@ -177,6 +179,14 @@ interface ActionDef {
 
 // Root component UID. The engine's root is always 0.
 const ROOT_UID = 0;
+
+// Tiny stable string hash (djb2) — used to derive a per-tab actor id from the
+// session id so the engine scopes this editor's undo/redo stack to itself.
+function djb2(s: string): number {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
 
 // Pointer travel (px) that turns a right-press into a marquee drag rather than a
 // click. Generous so a normal click's jitter never registers as a drag — a real
@@ -878,8 +888,10 @@ function Inner({ base }: { base: string }) {
       exposedRemapRef.current = exposedRemap;
       // Subscribe the exposed (off-canvas) child props AND their child's __facets
       // prop at PROPERTY level so both the value and the presentation metadata
-      // stream live. (Component-level subs only cover visible nodes.)
-      wsClient?.setDesiredPropSubscription(subProps);
+      // stream live. (Component-level subs only cover visible nodes.) Unioned with
+      // any drawer-widget prop subs (e.g. an open SchedulePanel) via flushPropSubs.
+      exposedPropSubsRef.current = subProps;
+      flushPropSubs();
       const portEdges: RfEdge[] = [];
 
       const ghostGroups = new Map<string, GhostGroup>();
@@ -1072,11 +1084,8 @@ function Inner({ base }: { base: string }) {
         console.error("paste: reposition/facet-remap failed:", (e as Error).message);
       }
       setPendingPasteSelection(newUids);
-      // Undo: soft-delete the clones (their edges cascade). pushUndo is a
-      // stable useCallback declared below; referenced at call time, so it's
-      // assigned by the time paste runs (omitted from deps to avoid a TDZ
-      // reference at render).
-      pushUndo({ kind: "delete", componentUids: newUids });
+      // Undo is engine-side now: the copy was journaled as a `copy` op, so
+      // Cmd/Z reverts it without the client tracking an inverse.
       await reload();
     } catch (e) {
       reportError(e);
@@ -1084,35 +1093,28 @@ function Inner({ base }: { base: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentParentUid, reload, rf]);
 
-  // Pop the most recent inverse off the CURRENT FOLDER's undo stack and
-  // apply it. Errors surface to the error banner — the entry stays popped
-  // either way since re-applying a half-failed entry isn't safe without
-  // inspection.
+  // Undo / redo are first-class on the engine (it journals each mutation and
+  // inverts it). We just call /undo and /redo, scoped to this client's actor
+  // stack via the X-Actor-Id header, and reload to reflect the result. The
+  // stack is per-actor (spans folders), so an undo may touch another folder;
+  // the engine emits topology pushes either way, and reload() refreshes the
+  // current view. `ok:false` (e.g. nothing to undo, or a stale precondition)
+  // surfaces its reason to the banner.
   const undo = useCallback(async () => {
-    const pid = currentParentUidRef.current;
-    const stack = undoStacksByParent.current.get(pid);
-    const entry = stack?.pop();
-    if (!entry) return;
     try {
-      if (entry.kind === "move") {
-        if (entry.updates.length === 1) {
-          const u = entry.updates[0];
-          await updateNode(u.uid, { position: u.position });
-        } else if (entry.updates.length > 1) {
-          await bulkUpdate(entry.updates);
-        }
-      } else if (entry.kind === "delete") {
-        await bulkDelete({
-          componentUids: entry.componentUids,
-          edgeUids: entry.edgeUids,
-        });
-      } else if (entry.kind === "restore") {
-        await restoreItems({
-          componentUids: entry.componentUids,
-          edgeUids: entry.edgeUids,
-        });
-      }
-      await reload();
+      const r = await undoChange();
+      if (r.ok) await reload();
+      else if (r.reason) reportError(new Error(`Can't undo: ${r.reason}`));
+    } catch (e) {
+      reportError(e);
+    }
+  }, [reload]);
+
+  const redo = useCallback(async () => {
+    try {
+      const r = await redoChange();
+      if (r.ok) await reload();
+      else if (r.reason) reportError(new Error(`Can't redo: ${r.reason}`));
     } catch (e) {
       reportError(e);
     }
@@ -1152,11 +1154,13 @@ function Inner({ base }: { base: string }) {
         e.preventDefault();
         void pasteFromClipboard();
       } else if (key === "z" && !e.shiftKey) {
-        // Cmd/Ctrl+Z → undo. Cmd/Ctrl+Shift+Z is conventionally redo —
-        // not wired yet (would need a redo stack), so we ignore it here so
-        // the browser default doesn't fire something unrelated.
+        // Cmd/Ctrl+Z → undo.
         e.preventDefault();
         void undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        // Cmd/Ctrl+Shift+Z (and Ctrl+Y) → redo.
+        e.preventDefault();
+        void redo();
       } else if (key === "d" && e.shiftKey) {
         // Cmd/Ctrl+Shift+D → toggle the click-debug overlay.
         e.preventDefault();
@@ -1165,7 +1169,7 @@ function Inner({ base }: { base: string }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [copySelectionToClipboard, pasteFromClipboard, undo]);
+  }, [copySelectionToClipboard, pasteFromClipboard, undo, redo]);
 
   useEffect(() => {
     reload();
@@ -1407,6 +1411,31 @@ function Inner({ base }: { base: string }) {
     [flushSubs],
   );
 
+  // Property-level subscription = the union of the exposed-port set (off-canvas
+  // child props rendered as folder ports) and what a drawer widget asks for (e.g.
+  // an open SchedulePanel subscribing its config/out/active/nextChange so it
+  // streams live regardless of folder). Mirrors the component-sub union above.
+  const exposedPropSubsRef = useRef<Set<number>>(new Set());
+  const widgetPropSubsRef = useRef<Set<number>>(new Set());
+  const flushPropSubs = useCallback(() => {
+    const union = new Set<number>([...exposedPropSubsRef.current, ...widgetPropSubsRef.current]);
+    wsClient?.setDesiredPropSubscription(union);
+  }, []);
+  // Threaded to widgets via RenderCtx.subscribeProps: register a desired prop set,
+  // get a cleanup that drops it. Replaces the whole widget set each call (one
+  // drawer widget is active at a time), so closing/switching panels frees subs.
+  const subscribeProps = useCallback(
+    (propUids: number[]) => {
+      widgetPropSubsRef.current = new Set(propUids);
+      flushPropSubs();
+      return () => {
+        widgetPropSubsRef.current = new Set();
+        flushPropSubs();
+      };
+    },
+    [flushPropSubs],
+  );
+
   // Stable adapter over the module-level wsClient singleton so the DiagPanel's
   // rate controls always hit the live socket (wsClient is null at first render,
   // set later in an effect — a stable adapter reads it lazily each call).
@@ -1573,6 +1602,11 @@ function Inner({ base }: { base: string }) {
         // `X-CE-Session: <sessionId>` so the engine attributes topology events to us.
         setRestSessionId(msg.sessionId);
         sessionIdRef.current = msg.sessionId;
+        // Scope the engine undo/redo stack to this tab: derive a stable low-16-bit
+        // actor id from the (sessionStorage-persisted) session id so each editor
+        // gets its own stack and undo never reverts another tab's change. 0 is the
+        // engine's shared stack, so avoid it.
+        setRestActorId((djb2(msg.sessionId) & 0xffff) || 1);
         // Don't subscribe to everything; the route handler pushes the visible subset
         // via setDesiredSubscription (in reload()).
       },
@@ -1777,44 +1811,14 @@ function Inner({ base }: { base: string }) {
   }
   const clipboardRef = useRef<ClipboardData | null>(null);
 
-  // Undo stacks, keyed by the parent uid of the folder the action was
-  // performed in. Switching folders switches which stack Cmd/Ctrl+Z pops
-  // from — so an undo never resurrects something the user can't see.
-  // Reverting an action across folders would also fight with cross-folder
-  // edges and parent-scoped state, so per-folder scoping is the right
-  // boundary. Capped at UNDO_MAX entries per folder.
-  type UndoEntry =
-    // Restore positions for one or more components — pushed on drag-stop,
-    // captured at drag-start so the inverse is the pre-drag layout.
-    | { kind: "move"; updates: Array<{ uid: number; position: { x: number; y: number } }> }
-    // Delete components (and their cascade) — pushed on add (palette, paste)
-    // so undo erases what was just created.
-    | { kind: "delete"; componentUids?: number[]; edgeUids?: number[] }
-    // Restore soft-deleted components/edges by their ORIGINAL uids — pushed
-    // when the user deletes. Apply via POST /restore: brings the exact items
-    // back with full state (uids, values, the whole deleted subtree). No
-    // snapshot reconstruction needed.
-    | { kind: "restore"; componentUids?: number[]; edgeUids?: number[] };
-  const undoStacksByParent = useRef<Map<number, UndoEntry[]>>(new Map());
-  const UNDO_MAX = 50;
-  // Mirror the current parent uid into a ref so pushUndo / undo stay
-  // stable across folder navigation (no callback identity churn into
-  // node data props on every breadcrumb change).
+  // Mirror the current parent uid into a ref so folder-scoped callbacks stay
+  // stable across navigation (no callback identity churn into node data props
+  // on every breadcrumb change). Undo/redo are now engine-side (per actor), so
+  // there are no client-side undo stacks to key by folder anymore.
   const currentParentUidRef = useRef(currentParentUid);
   useEffect(() => {
     currentParentUidRef.current = currentParentUid;
   }, [currentParentUid]);
-  const pushUndo = useCallback((entry: UndoEntry) => {
-    const pid = currentParentUidRef.current;
-    const m = undoStacksByParent.current;
-    let stack = m.get(pid);
-    if (!stack) {
-      stack = [];
-      m.set(pid, stack);
-    }
-    stack.push(entry);
-    if (stack.length > UNDO_MAX) stack.shift();
-  }, []);
 
   // Set of node ids currently mid-drag. The position-animation rAF and the
   // topology-echo handler check this to skip applying our own position
@@ -2021,25 +2025,15 @@ function Inner({ base }: { base: string }) {
     }
   }, []);
 
-  // Pre-drag positions, captured at drag-start so the drag-stop handler
-  // can push an undo entry that restores the original layout.
-  const dragStartPositions = useRef<Array<{ uid: number; position: { x: number; y: number } }>>(
-    [],
-  );
-
   // Explicit drag lifecycle from React Flow — used to maintain draggingNodes
   // and stream throttled position PATCHes. Replaces reading the unreliable
-  // `dragging` flag off NodeChange entries.
+  // `dragging` flag off NodeChange entries. (Position drags go through
+  // updateNode, which the engine journal doesn't cover, so they're not
+  // undoable — re-dragging is the recourse.)
   const onNodeDragStart = useCallback(
     (_e: unknown, _node: AnyNode, ns: AnyNode[]) => {
       const real = ns.filter((n) => n.type !== "ghost");
       for (const n of real) draggingNodes.current.add(n.id);
-      // Snapshot the pre-drag positions for the undo stack. Drag-stop reads
-      // this and pushes a "move back" inverse before clearing.
-      dragStartPositions.current = real.map((n) => ({
-        uid: Number(n.id),
-        position: { x: Math.round(n.position.x), y: Math.round(n.position.y) },
-      }));
     },
     [],
   );
@@ -2066,18 +2060,6 @@ function Inner({ base }: { base: string }) {
         uid: Number(n.id),
         position: { x: Math.round(n.position.x), y: Math.round(n.position.y) },
       }));
-      // Push undo BEFORE the network call so a failed PATCH still leaves the
-      // user with a way back. Filter out no-op drags (drag started, dragged,
-      // released without moving) so the undo stack doesn't pile up empties.
-      const starts = dragStartPositions.current;
-      if (starts.length > 0) {
-        const moved = starts.filter((s) => {
-          const u = updates.find((x) => x.uid === s.uid);
-          return u && (u.position.x !== s.position.x || u.position.y !== s.position.y);
-        });
-        if (moved.length > 0) pushUndo({ kind: "move", updates: moved });
-      }
-      dragStartPositions.current = [];
       // Match the streaming path: single → /nodes/uid/{uid}, multi → /bulknodes.
       if (updates.length === 1) {
         const u = updates[0];
@@ -2088,7 +2070,7 @@ function Inner({ base }: { base: string }) {
         bulkUpdate(updates).catch((e) => reportError(e));
       }
     },
-    [cancelDragPatch, pushUndo],
+    [cancelDragPatch],
   );
 
   // Connect — drag from a source handle (output) to a target handle (input). Uses the
@@ -2159,6 +2141,21 @@ function Inner({ base }: { base: string }) {
   // Delete is soft-delete, so undo is just `restore` by the deleted uids —
   // no pre-delete snapshot, and it correctly brings back a folder's children
   // (the engine cascades the soft-delete and restore reverses the whole set).
+  // React Flow fires onBeforeDelete with the COMPLETE set about to be deleted
+  // (it auto-includes edges connected to deleted nodes) before onNodesDelete /
+  // onEdgesDelete. We record the node ids here so onEdgesDelete can skip the
+  // redundant server delete for edges the engine will cascade-remove with their
+  // component. (Deleted nodes' edges don't survive, so a stale set never wrongly
+  // skips a still-present edge — no clearing needed.)
+  const deletingNodeIds = useRef<Set<string>>(new Set());
+  const onBeforeDelete = useCallback(
+    async ({ nodes }: { nodes: AnyNode[]; edges: RfEdge[] }) => {
+      deletingNodeIds.current = new Set(nodes.filter((n) => n.type !== "ghost").map((n) => n.id));
+      return true;
+    },
+    [],
+  );
+
   const onNodesDelete = useCallback(
     async (ns: AnyNode[]) => {
       const real = ns.filter((n) => n.type !== "ghost");
@@ -2171,33 +2168,40 @@ function Inner({ base }: { base: string }) {
           await bulkDelete({ componentUids: uids });
         }
         for (const uid of uids) useStructural.getState().removeComponent(uid);
-        pushUndo({ kind: "restore", componentUids: uids });
       } catch (e) {
         reportError(e);
       }
       await reload();
     },
-    [reload, pushUndo],
+    [reload],
   );
 
   const onEdgesDelete = useCallback(
     async (es: RfEdge[]) => {
       if (es.length === 0) return;
-      const uids = es.map((e) => Number(e.id));
+      // Don't send a DELETE for edges whose component is being deleted in the
+      // same gesture — the engine cascade-removes them with the component.
+      // React Flow still reports them here (even unselected), so we just skip
+      // the server call and reconcile local state below.
+      const del = deletingNodeIds.current;
+      const toSend = es.filter((e) => !del.has(e.source) && !del.has(e.target));
+      const uids = toSend.map((e) => Number(e.id));
       try {
         if (uids.length === 1) {
           await restRemoveEdge(uids[0]);
-        } else {
+        } else if (uids.length > 1) {
           await bulkDelete({ edgeUids: uids });
         }
-        for (const uid of uids) useStructural.getState().removeEdge(uid);
-        pushUndo({ kind: "restore", edgeUids: uids });
       } catch (err) {
-        reportError(err);
+        // Safety net for other races (e.g. reconnect-replace): a 404 "edge not
+        // found" means it's already gone, which is the intended end state.
+        if (!(err instanceof RestError && err.status === 404)) reportError(err);
       }
+      // Reconcile local state for ALL reported edges (cascaded ones included).
+      for (const e of es) useStructural.getState().removeEdge(Number(e.id));
       setEdges((cur) => cur.filter((e) => !es.find((d) => d.id === e.id)));
     },
-    [pushUndo],
+    [],
   );
 
   const onAddNode = useCallback(
@@ -2247,7 +2251,7 @@ function Inner({ base }: { base: string }) {
           defaultValues: { position: { x: Math.round(pos.x), y: Math.round(pos.y) } },
         });
         if (created?.uid != null) {
-          pushUndo({ kind: "delete", componentUids: [created.uid] });
+          // Add is journaled engine-side (addComponent op), so Cmd/Z removes it.
           // Fast path: append just this node instead of reloading the whole
           // sheet (a full reload re-fetches + rebuilds every node, so on a large
           // sheet it's the add lag spike). restAddNode returns the full
@@ -2271,7 +2275,7 @@ function Inner({ base }: { base: string }) {
         reportError(e);
       }
     },
-    [rf, reload, currentParentUid, pushUndo, enter, openNodeContextMenu],
+    [rf, reload, currentParentUid, enter, openNodeContextMenu],
   );
 
   // Creatable component types for the ConnectPicker's "New" flow.
@@ -2338,7 +2342,7 @@ function Inner({ base }: { base: string }) {
           defaultValues: { position: { x: Math.round(pos.x), y: Math.round(pos.y) } },
         });
         if (created?.uid != null) {
-          pushUndo({ kind: "delete", componentUids: [created.uid] });
+          // Add is journaled engine-side (addComponent op) → Cmd/Z removes it.
           // Incremental append — same fast path as onAddNode, no full reload.
           useStructural.getState().upsertComponent(created);
           const [rfNode] = buildRfNodes(
@@ -2356,7 +2360,7 @@ function Inner({ base }: { base: string }) {
         return null;
       }
     },
-    [rf, currentParentUid, pushUndo, enter, openNodeContextMenu],
+    [rf, currentParentUid, enter, openNodeContextMenu],
   );
 
   // Edge add for the Connect-to picker. Appends the edge if both endpoints are
@@ -2755,6 +2759,7 @@ function Inner({ base }: { base: string }) {
           onNodeDrag={onNodeDrag}
           onNodeDragStop={onNodeDragStop}
           onConnect={onConnect}
+          onBeforeDelete={onBeforeDelete}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
           defaultViewport={{ x: 80, y: 80, zoom: 1 }}
@@ -3026,6 +3031,9 @@ function Inner({ base }: { base: string }) {
             onDelete={() => {
               const ids = selectedEdgeIds(edges, edgeMenu.edgeId);
               const drop = edges.filter((e) => ids.includes(e.id));
+              // Explicit edge delete — no component is being removed, so don't
+              // let a prior gesture's node set cause a cascade-skip.
+              deletingNodeIds.current = new Set();
               void onEdgesDelete(drop);
               setEdgeMenu(null);
             }}
@@ -3159,6 +3167,7 @@ function Inner({ base }: { base: string }) {
                       return {};
                     }
                   }}
+                  onSubscribeProps={subscribeProps}
                 />
               )
             )}

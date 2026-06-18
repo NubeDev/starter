@@ -86,6 +86,8 @@ const SCHEDULE_UI: UiEntry = {
   icon: "calendar",
   selection: "follow",
   appliesTo: "schedule",
+  global: true,
+  fullType: "NubeIO-schedule::schedule",
   view: {
     type: "layout",
     children: [{ type: "schedule", bind: { prop: "config" }, action: { name: "setSchedule", label: "Save", target: "component" } }],
@@ -105,13 +107,51 @@ const CRON_UI: UiEntry = {
   icon: "cron",
   selection: "follow",
   appliesTo: "cron",
-  view: { type: "layout", children: [{ type: "cron", bind: { prop: "cron" }, action: { name: "setCron", label: "Set", target: "component" } }] },
+  view: { type: "layout", children: [{ type: "cron", bind: { prop: "expr" }, action: { name: "setCron", label: "Set", target: "component" } }] },
+};
+
+/** "JS" extension (NubeIO-js manifest). Lists all `jsLogic` components globally
+ *  (like schedules); editing one drives the singleton `jsScriptStore` service:
+ *    - source:   getScript({scriptId})→{source}  /  putScript({scriptId,source})
+ *    - bind:     setScript({scriptId}) ON the jsLogic (scriptId is an OUTPUT that
+ *                reports the bound id), changed via the dropdown / "new script"
+ *    - scripts:  the service's `availableScripts` output prop feeds the dropdown
+ *    - log:      the jsLogic's `log` output streams into the debug pane
+ *  All names are read from this descriptor, so the served /ui/list entry can
+ *  replace it verbatim. */
+const JS_EDITOR_UI: UiEntry = {
+  id: "js-editor",
+  label: "Script",
+  icon: "code",
+  selection: "follow",
+  appliesTo: "jsLogic",
+  global: true,
+  fullType: "NubeIO-js::jsLogic",
+  view: {
+    type: "layout",
+    children: [
+      {
+        type: "jsEditor",
+        serviceType: "jsScriptStore",
+        loadAction: "getScript",
+        sourceKey: "source",
+        scriptIdProp: "scriptId",
+        scriptIdParam: "scriptId",
+        scriptIdSetAction: "setScript",
+        availableScriptsProp: "availableScripts",
+        listAction: "listScripts",
+        bind: { prop: "log" },
+        action: { name: "putScript", label: "Save", target: "component" },
+      },
+    ],
+  },
 };
 
 export const EXTENSIONS_STUB: ExtensionUi[] = [
   { id: "ce", label: "Control Engine", icon: "cpu", uis: [CE_TABLE, CE_TREE, CE_DEMO] },
   { id: "scheduler", label: "Scheduler (stub)", icon: "calendar", uis: [SCHEDULE_UI, TIMER_UI, CRON_UI] },
   { id: "alarms", label: "Alarms (stub)", icon: "bell", uis: [ALARMS_HOME, ALARMS_HISTORY] },
+  { id: "js", label: "JavaScript", icon: "code", uis: [JS_EDITOR_UI] },
 ];
 
 /**

@@ -19,6 +19,13 @@ const ALLOWED_ORIGIN = process.env.CE_ALLOWED_ORIGIN ?? "http://127.0.0.1:5173";
 
 export default defineConfig({
   plugins: [react()],
+  // The workspace store holds several react/react-dom copies (other packages
+  // pin 19.2.7); without deduping, vite's dep pre-bundle can grab a react-dom
+  // that mismatches the workspace-pinned react@19.1.0 → "Incompatible React
+  // versions". Force a single copy from this project's resolution.
+  resolve: {
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react-dom/client"],
+  },
   server: {
     port: 5179,
     host: "0.0.0.0",

@@ -157,6 +157,10 @@ export interface TopologyPropertyDescriptor {
   systemRole?: PropertySystemRole;
 }
 
+// changeId/actorId are stamped per item: changeId is the engine undo-log id
+// (same value the matching write response and the changelog return), actorId is
+// the writer op's X-Actor-Id. Both omitted when the causing op was untracked
+// (changeId/actorId 0). Let a client correlate a pushed item to its own write.
 export interface TopologyComponentDescriptor {
   uid: number;
   kind: string;
@@ -167,12 +171,16 @@ export interface TopologyComponentDescriptor {
   inputs?: TopologyPropertyDescriptor[];
   outputs?: TopologyPropertyDescriptor[];
   config?: TopologyPropertyDescriptor[];
+  changeId?: number;
+  actorId?: number;
 }
 
 export interface TopologyEdgeDescriptor {
   uid: number;
   sourceProperty: number;
   targetProperty: number;
+  changeId?: number;
+  actorId?: number;
 }
 
 // --- Topology events (structural change push) ---
@@ -191,6 +199,10 @@ export interface TopologyRemovedMsg {
   originSessionId: string | null;
   componentUids: number[];
   edgeUids: number[];
+  // Parallel to componentUids/edgeUids (bare-uid arrays kept for existing
+  // parsers); carries per-item kind + change correlation. A removed component
+  // lists every edge uid that touched it in edgeUids/removed.
+  removed?: Array<{ uid: number; kind: "component" | "edge"; changeId?: number; actorId?: number }>;
 }
 
 export interface TopologyChangedComponent {
@@ -201,6 +213,8 @@ export interface TopologyChangedComponent {
   size?: { width: number; height: number };
   addedProperties?: TopologyPropertyDescriptor[];
   removedProperties?: number[];
+  changeId?: number;
+  actorId?: number;
 }
 
 export interface TopologyChangedMsg {

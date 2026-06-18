@@ -4,10 +4,19 @@
 //   - "inline" → a slim column inside the open drawer, left of the UI strip
 // See ../../SDUI_UNIFIED_DESIGN.md §10.
 
-import { Cpu, Bell, Boxes } from "lucide-react";
+import { Cpu, Bell, Boxes, Braces, Calendar } from "lucide-react";
 import type { ExtensionUi } from "../lib/ui/types";
 
-const EXT_ICONS: Record<string, typeof Cpu> = { cpu: Cpu, bell: Bell };
+const EXT_ICONS: Record<string, typeof Cpu> = {
+  cpu: Cpu,
+  bell: Bell,
+  calendar: Calendar,
+  // JS / script extension. `Braces` ({ }) reads as code and stays distinct from
+  // the inner Script tab's `Code2` (</>). Swap for FileCode2/SquareCode/Terminal
+  // if you prefer.
+  code: Braces,
+  braces: Braces,
+};
 
 export interface ExtensionStripProps {
   extensions: ExtensionUi[];

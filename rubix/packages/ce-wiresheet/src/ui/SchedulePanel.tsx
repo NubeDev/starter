@@ -72,7 +72,7 @@ function SchedulePanel({ node, ctx }: WidgetProps) {
   // The structural store only holds the current folder. When a schedule is opened
   // from another folder (via the service's global list), fetch it once by uid so
   // its config loads for editing. Saving already works cross-folder (callAction is
-  // by uid); live output streaming is in-folder only (a noted follow-up).
+  // by uid).
   const [fetched, setFetched] = useState<Component | undefined>(undefined);
   useEffect(() => {
     if (ctx.componentUid == null || inStore) { setFetched(undefined); return; }
@@ -82,10 +82,26 @@ function SchedulePanel({ node, ctx }: WidgetProps) {
   }, [ctx.componentUid, inStore]);
 
   const comp = inStore ?? fetched;
+
+  // Subscribe this schedule's config + outputs to the live WS value stream while
+  // the panel is open, so edits made elsewhere (e.g. another browser) stream in —
+  // regardless of folder. In-folder the canvas already component-subscribes it;
+  // this is additive and covers the cross-folder (off-canvas) case. Property
+  // subscribe is per-prop, so it works without the component being on the canvas.
+  const subscribeProps = ctx.subscribeProps;
+  useEffect(() => {
+    if (!subscribeProps || !comp) return;
+    const uids = [propName, "out", "active", "nextChange"]
+      .map((n) => comp.properties[n]?.uid)
+      .filter((u): u is number => typeof u === "number");
+    if (uids.length === 0) return;
+    return subscribeProps(uids);
+  }, [subscribeProps, comp, propName]);
+
   const uid = comp ? comp.properties[propName]?.uid : undefined;
   const live = useValues((s) => (uid != null ? s.values.get(uid) : undefined));
-  // Prefer the streamed value (in-folder); fall back to the fetched snapshot so a
-  // cross-folder schedule still shows its config.
+  // Prefer the streamed value; fall back to the fetched snapshot until the first
+  // value frame arrives so a cross-folder schedule still shows its config.
   const snapStr = typeof comp?.properties[propName]?.value === "string" ? (comp!.properties[propName]!.value as string) : undefined;
   const sourceStr = (typeof live === "string" && live ? live : snapStr) || undefined;
 

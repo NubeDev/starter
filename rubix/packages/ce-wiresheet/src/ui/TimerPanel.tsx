@@ -50,7 +50,9 @@ function TimerPanel({ ctx }: WidgetProps) {
   const canCall = ctx.componentUid != null && !!ctx.callAction;
   const remaining = running && endMs > 0 ? Math.max(0, Math.round((endMs - nowMs) / 1000)) : 0;
 
-  const start = () => canCall && duration > 0 && ctx.callAction!(ctx.componentUid!, "startTimer", { duration });
+  // manifest: startTimer(seconds: uint). (`duration` is also a settable input
+  // property, but the action takes its own `seconds` param.)
+  const start = () => canCall && duration > 0 && ctx.callAction!(ctx.componentUid!, "startTimer", { seconds: duration });
   const cancel = () => canCall && ctx.callAction!(ctx.componentUid!, "cancelTimer", {});
 
   if (!comp) return null;

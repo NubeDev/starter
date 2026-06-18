@@ -53,11 +53,21 @@ export function setRestSessionId(id: string | null) {
   currentSessionId = id;
 }
 
+// Per-user actor id (low 16 bits) sent as `X-Actor-Id` so the engine scopes this
+// client's undo/redo stack. Sent on EVERY mutating request (so each change is
+// recorded on the right stack) AND on undo/redo/changelog (which address it).
+// Unset (null) => the engine's shared stack (actor 0) — fine for a single editor.
+let currentActorId: number | null = null;
+export function setRestActorId(id: number | null) {
+  currentActorId = id;
+}
+
 async function http<T>(method: string, path: string, body?: unknown): Promise<T> {
   const url = `${BASE}${path}`;
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (currentSessionId && method !== "GET") headers["X-CE-Session"] = currentSessionId;
+  if (currentActorId != null) headers["X-Actor-Id"] = String(currentActorId);
   const res = await fetch(url, {
     method,
     headers,
@@ -88,11 +98,20 @@ export function getRootNodes(opts?: {
   depth?: number;
   nested?: boolean;
   withEdges?: boolean;
+  // Return only components whose full type matches (engine does a flat global
+  // scan — every folder). Used to enumerate all components of a kind (e.g. every
+  // schedule) without a registry/index component.
+  type?: string;
+  // Set false to skip the per-property value plane (structure only) — lean reads
+  // for list views that just need name/path/type.
+  values?: boolean;
 }): Promise<ReadNodesResponse> {
   const q = new URLSearchParams();
   if (opts?.depth != null) q.set("depth", String(opts.depth));
   if (opts?.nested != null) q.set("nested", String(opts.nested));
   if (opts?.withEdges != null) q.set("withEdges", String(opts.withEdges));
+  if (opts?.type != null) q.set("type", opts.type);
+  if (opts?.values != null) q.set("values", String(opts.values));
   const qs = q.toString();
   return http<ReadNodesResponse>("GET", `/nodes${qs ? "?" + qs : ""}`);
 }
@@ -107,29 +126,6 @@ export function getNodeByUid(
   if (opts?.withEdges != null) q.set("withEdges", String(opts.withEdges));
   const qs = q.toString();
   return http<ReadNodesResponse>("GET", `/nodes/uid/${uid}${qs ? "?" + qs : ""}`);
-}
-
-// Batch read with field projection — resolve many uids in one call, regardless of
-// folder (flat / global). Distinct from getNodeByUid's subtree fetch: this resolves
-// a *set of references*. `fields` is a fixed projection vocabulary
-// (`name|type|kind|typeId|path|parent|statusFlags|prop:<name>`); omit it for the
-// lean default (name,type,path,parent). Results come back in request order; a
-// missing/soft-deleted uid yields `{ uid, missing: true }`. Bounds: 1000 uids, 64
-// fields. Used to resolve service ref-lists (schedules) without N round-trips.
-export interface SelectNodeResult {
-  uid: number;
-  missing?: boolean;
-  name?: string;
-  type?: string;
-  kind?: string;
-  typeId?: number;
-  path?: string;
-  parent?: number;
-  statusFlags?: number;
-  props?: Record<string, FlexValue>;
-}
-export function selectNodes(uids: number[], fields?: string[]): Promise<SelectNodeResult[]> {
-  return http<SelectNodeResult[]>("POST", `/nodes/select`, { uids, ...(fields ? { fields } : {}) });
 }
 
 export function addNode(req: AddComponentRequest) {
@@ -173,6 +169,48 @@ export function callAction(
 
 export function removeNode(uid: number) {
   return http<unknown>("DELETE", `/nodes/uid/${uid}`);
+}
+
+// Undo / redo ----------------------------------------------------------------
+// First-class on the engine: it journals each mutation and inverts it on undo.
+// Scoped per actor via the X-Actor-Id header (see setRestActorId). `ok:false`
+// with a `reason` means the change couldn't be applied (e.g. precondition gone);
+// `componentUids`/`edgeUids` name what was touched so the caller can reload.
+// NOTE: the journal covers structural ops (add/remove/edge/batch/copy/move/
+// override) — NOT property-value updates, so canvas position drags and prop/
+// rename edits are not engine-undoable.
+export type ChangeOp =
+  | "addComponent" | "removeComponent" | "addEdge" | "removeEdge"
+  | "batchAdd" | "batchRemove" | "copy" | "moveComponent"
+  | "setOverride" | "clearOverride";
+export interface UndoResult {
+  ok: boolean;
+  reason?: string;
+  changeId?: number;
+  opType?: ChangeOp;
+  componentUids?: number[];
+  edgeUids?: number[];
+}
+export interface ChangeEntry {
+  changeId: number;
+  actorId: number;
+  opType: ChangeOp;
+  state: "applied" | "undone" | "expired";
+  seq: number;
+  createdAt: number;
+  componentUids?: number[];
+  edgeUids?: number[];
+  undoable: boolean;
+}
+export function undoChange(changeId?: number) {
+  return http<UndoResult>("POST", `/undo`, changeId ? { changeId } : {});
+}
+export function redoChange() {
+  return http<UndoResult>("POST", `/redo`, {});
+}
+export function getChangeLog(limit?: number) {
+  const qs = limit != null ? `?limit=${limit}` : "";
+  return http<{ undoable: ChangeEntry[]; redoable: ChangeEntry[] }>("GET", `/changelog${qs}`);
 }
 
 // Edges ---------------------------------------------------------------------

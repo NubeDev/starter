@@ -6,11 +6,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStructural } from "../lib/store";
-import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, Plus, SquareDashed } from "lucide-react";
+import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, Plus, SquareDashed, Code2 } from "lucide-react";
 import type { UiEntry } from "../lib/ui/types";
 import type { FlexValue } from "../lib/engine-types";
-import { loadScheduleList } from "./scheduleService";
-import type { SelectNodeResult } from "../lib/rest";
+import { loadComponentsByType, type TypeScanRow } from "./componentsByType";
 import { RenderWidget, type RenderCtx } from "./registry";
 import { CollectionWidget } from "./CollectionWidget";
 import { TreeWidget } from "./TreeWidget";
@@ -21,6 +20,7 @@ import "./TimerPanel"; // register timer
 import "./AlarmPanel"; // register alarms
 import "./AlarmHistoryPanel"; // register alarmHistory
 import "./CronPanel"; // register cron
+import "./JsEditorPanel"; // register jsEditor
 
 injectUiStyles();
 
@@ -31,6 +31,7 @@ const ICONS: Record<string, typeof Table> = {
   tree: ListTree,
   timer: Timer,
   cron: Repeat,
+  code: Code2,
 };
 
 export interface UiTabHostProps {
@@ -50,6 +51,8 @@ export interface UiTabHostProps {
   onSetOverride?: (componentUid: number, property: string, value: FlexValue, duration: number) => void;
   onClearOverride?: (componentUid: number, property: string) => void;
   onCallAction?: (componentUid: number, name: string, params?: Record<string, FlexValue>) => Promise<Record<string, FlexValue>>;
+  /** subscribe a prop-uid set to the live WS stream while a widget is mounted */
+  onSubscribeProps?: (propUids: number[]) => () => void;
 }
 
 export function UiTabHost({ uis, ...props }: UiTabHostProps) {
@@ -147,7 +150,12 @@ function ViewBody({
     );
   }
 
-  const ctx: RenderCtx = { componentUid: boundUid, callAction: props.onCallAction };
+  const ctx: RenderCtx = {
+    componentUid: boundUid,
+    callAction: props.onCallAction,
+    subscribeProps: props.onSubscribeProps,
+    setValue: props.onSetDefault,
+  };
 
   if (view.type === "collection") {
     const writesSelection = selection === "sync" || selection === "drive";
@@ -208,30 +216,34 @@ function typeMatches(componentType: string | undefined, appliesTo: string): bool
   return seg === a;
 }
 
-/** Resolve the schedule service's ref-list globally (all folders), polling so the
- *  list stays current as schedules are added/removed. Empty (silently) until the
- *  service component exists on the engine. Refs → name/path/live-summary in one
- *  POST /nodes/select. */
-function useScheduleService(pollMs = 4000): SelectNodeResult[] {
-  const [rows, setRows] = useState<SelectNodeResult[]>([]);
+/** Enumerate components for a set of full types globally (all folders) by type,
+ *  polling so the lists stay current. No registry service — the engine `?type=`
+ *  scan IS the list. One stable hook call regardless of how many types. */
+function useGlobalByTypes(fullTypes: string[], pollMs = 4000): Map<string, TypeScanRow[]> {
+  const key = fullTypes.join(",");
+  const [map, setMap] = useState<Map<string, TypeScanRow[]>>(() => new Map());
   useEffect(() => {
+    if (!key) { setMap(new Map()); return; }
+    const types = key.split(",");
     let live = true;
-    const tick = () => loadScheduleList().then((r) => { if (live) setRows(r); }).catch(() => {});
-    tick();
-    const id = setInterval(tick, pollMs);
+    const tick = async () => {
+      const entries = await Promise.all(
+        types.map(async (t) => [t, await loadComponentsByType(t).catch(() => [])] as const),
+      );
+      if (live) setMap(new Map(entries));
+    };
+    void tick();
+    const id = setInterval(() => void tick(), pollMs);
     return () => { live = false; clearInterval(id); };
-  }, [pollMs]);
-  return rows;
+  }, [key, pollMs]);
+  return map;
 }
 
-const scheduleApplicable = (appliesTo: string) =>
-  (appliesTo.toLowerCase().split(/[:/.\\]+/).filter(Boolean).pop() ?? appliesTo) === "schedule";
-
-/** Empty-state: one column per type-bound UI, each listing the folder's matching
- *  components + an Add button. Clicking a component selects it and jumps to that
- *  type's tab; Add creates a new component of that type. The schedule column is
- *  fed by the schedule **service** (all folders, depth-independent) — components
- *  outside the current folder are tagged so you can still open them. */
+/** Empty-state: one column per type-bound UI, each listing matching components +
+ *  an Add button. Clicking a component selects it and jumps to that type's tab.
+ *  Columns whose UI sets `global` list that type across ALL folders (a
+ *  depth-independent `?type=` scan); out-of-folder rows are tagged `elsewhere`.
+ *  The scan's full type is inferred from an in-folder instance, else `fullType`. */
 function MultiTypePicker({
   uis,
   currentParentUid,
@@ -250,15 +262,31 @@ function MultiTypePicker({
     () => [...components.values()].filter((c) => c.parent === currentParentUid).sort((a, b) => a.name.localeCompare(b.name)),
     [components, currentParentUid],
   );
-  const scheduleRows = useScheduleService();
+  // Resolve the full type for each global column: prefer an in-folder instance's
+  // type (exact, self-correcting), else the descriptor's `fullType`.
+  const fullTypeFor = (u: UiEntry): string | undefined =>
+    inFolder.find((c) => typeMatches(c.type, u.appliesTo!))?.type ?? u.fullType;
+  const globalTypes = useMemo(() => {
+    const set = new Set<string>();
+    for (const u of uis) {
+      if (!u.global) continue;
+      const ft = fullTypeFor(u);
+      if (ft) set.add(ft);
+    }
+    return [...set];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uis, inFolder]);
+  const globalRows = useGlobalByTypes(globalTypes);
 
-  // Merge in-folder matches with the service's global list (dedup by uid). Rows
-  // the service knows but that aren't in this folder are tagged `elsewhere`.
-  const mergedFor = (appliesTo: string): { uid: number; name: string; path?: string; elsewhere?: boolean }[] => {
-    const local = inFolder.filter((c) => typeMatches(c.type, appliesTo)).map((c) => ({ uid: c.uid, name: c.name }));
-    if (!scheduleApplicable(appliesTo) || scheduleRows.length === 0) return local;
+  // Merge in-folder matches with the global type-scan (dedup by uid). Rows that
+  // aren't in this folder are tagged `elsewhere`.
+  const mergedFor = (u: UiEntry): { uid: number; name: string; path?: string; elsewhere?: boolean }[] => {
+    const local = inFolder.filter((c) => typeMatches(c.type, u.appliesTo!)).map((c) => ({ uid: c.uid, name: c.name }));
+    if (!u.global) return local.sort((a, b) => a.name.localeCompare(b.name));
+    const ft = fullTypeFor(u);
+    const rows = ft ? globalRows.get(ft) ?? [] : [];
     const seen = new Set(local.map((r) => r.uid));
-    const elsewhere = scheduleRows
+    const elsewhere = rows
       .filter((r) => !seen.has(r.uid))
       .map((r) => ({ uid: r.uid, name: r.name ?? `#${r.uid}`, path: r.path, elsewhere: true }));
     return [...local, ...elsewhere].sort((a, b) => a.name.localeCompare(b.name));
@@ -266,7 +294,7 @@ function MultiTypePicker({
   return (
     <div style={{ display: "flex", height: "100%", minHeight: 0 }}>
       {uis.map((u) => {
-        const matches = mergedFor(u.appliesTo!);
+        const matches = mergedFor(u);
         return (
           <div key={u.id} style={{ flex: 1, minWidth: 0, borderRight: "1px solid #2c313c", display: "flex", flexDirection: "column" }}>
             <div style={{ padding: "8px 10px", color: "#cbd3e0", fontSize: 12, fontWeight: 500, borderBottom: "1px solid #2c313c", flexShrink: 0 }}>

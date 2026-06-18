@@ -3,9 +3,10 @@
 // Set commits via the bound action (default `setCron`, param `expr` + `hold`).
 // Standard fields: min hour day-of-month month day-of-week, with * , - and /.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Save } from "lucide-react";
 import { useStructural, useValues } from "../lib/store";
+import { updateNode } from "../lib/rest";
 import { fmtDateTime } from "../lib/format";
 import { registerWidget, type WidgetProps } from "./registry";
 
@@ -72,15 +73,24 @@ export function cronNextRuns(expr: string, fromMs: number, count: number): numbe
 
 function CronPanel({ node, ctx }: WidgetProps) {
   const comp = useStructural((s) => (ctx.componentUid != null ? s.components.get(ctx.componentUid) : undefined));
-  const propName = node.bind?.prop ?? "cron";
+  // manifest: cron has `expr` (string input) + `hold` (uint input) + `out`.
+  const propName = node.bind?.prop ?? "expr";
   const uid = comp?.properties[propName]?.uid;
   const live = useValues((s) => (uid != null ? s.values.get(uid) : undefined));
   const liveExpr = typeof live === "string" ? live : "";
+  const holdUid = comp?.properties["hold"]?.uid;
+  const liveHold = useValues((s) => (holdUid != null ? s.values.get(holdUid) : undefined));
 
-  const [expr, setExpr] = useState(liveExpr || "0 2 * * *");
-  const [hold, setHold] = useState(0);
+  const [expr, setExpr] = useState("0 2 * * *");
+  const [hold, setHold] = useState(60);
   const [dirty, setDirty] = useState(false);
   const setE = (e: string) => { setExpr(e); setDirty(true); };
+  // Seed from the live values until the user starts editing.
+  useEffect(() => {
+    if (dirty) return;
+    if (liveExpr) setExpr(liveExpr);
+    if (typeof liveHold === "number") setHold(liveHold);
+  }, [liveExpr, liveHold, dirty]);
 
   const runs = useMemo(() => cronNextRuns(expr, Date.now(), 5), [expr]);
   const valid = runs != null;
@@ -88,7 +98,12 @@ function CronPanel({ node, ctx }: WidgetProps) {
 
   const save = () => {
     if (!canCall || !valid) return;
-    void ctx.callAction!(ctx.componentUid!, node.action?.name ?? "setCron", { expr, hold });
+    // manifest: setCron(expr) — expr only. `hold` is a plain input property, so
+    // write it directly (PATCH) rather than passing it to the action.
+    void ctx.callAction!(ctx.componentUid!, node.action?.name ?? "setCron", { expr });
+    if (typeof liveHold !== "number" || hold !== liveHold) {
+      void updateNode(ctx.componentUid!, { properties: { hold: { value: hold } } });
+    }
     setDirty(false);
   };
 
