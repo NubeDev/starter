@@ -2247,13 +2247,16 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
         if (p.category === CATEGORY_CONFIG) return null;
         const isInput = p.category === CATEGORY_INPUT;
         const c = colorForType(p.dataType);
-        // The Handle div is an invisible hit zone — full row height, ~35px wide,
-        // anchored flush against the port-side edge of the node and extending INWARD.
-        // The small 8x8 colored marker (rendered as a child) sits at the port edge so
-        // the visible affordance and the connection anchor both align with the node
-        // boundary. React Flow uses the handle's position prop (Left/Right) to pick
-        // which edge of the bounding rect to anchor edges at, so geometry stays clean.
-        const HANDLE_W = 35;
+        // Handle hit zone, full row height. The visible 8px marker straddles the
+        // node edge (half outside), so the hit box extends HANDLE_OUT past the edge
+        // to cover the whole marker — otherwise only its inner half would be
+        // clickable. React Flow anchors a FINISHED edge at the box's position-side
+        // edge (right for outputs / left for inputs); keeping that == the marker's
+        // outer tip means the edge meets the square with no gap. The drag line
+        // anchors at the box center, only a few px inward. connectionRadius on the
+        // canvas provides the generous TARGET snap.
+        const HANDLE_OUT = 4; // px the hit box extends outside the node edge (= marker half-width)
+        const HANDLE_W = 18;  // HANDLE_OUT outside + the rest inward
         const rowTop = TITLE_H + i * ROW_H;
         return (
           <Handle
@@ -2269,15 +2272,13 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
             data-row-uid={p.uid}
             style={{
               top: rowTop,
-              [isInput ? "left" : "right"]: 0,
+              [isInput ? "left" : "right"]: -HANDLE_OUT,
               width: HANDLE_W,
               height: ROW_H,
               background: "transparent",
               border: "none",
               borderRadius: 0,
-              // Cancel React Flow's default translate (which would push the handle
-              // outside the node by 50% of its width). With translate(0,0) the box
-              // sits exactly where `left:0` / `right:0` puts it — flush at the edge.
+              // Cancel React Flow's default translate; position is set by left/right.
               transform: "none",
             }}
           >
@@ -2285,11 +2286,10 @@ function FunctionBlockInner({ data, selected }: InnerProps) {
               style={{
                 position: "absolute",
                 top: "50%",
-                // Center the visible marker ON the port-side edge of the hit box:
-                //   input → x=0 (box's left edge = node's left edge)
-                //   output → x=100% (box's right edge = node's right edge)
-                left: isInput ? 0 : "100%",
-                transform: "translate(-50%, -50%)",
+                // Marker centered on the node boundary (HANDLE_OUT in from the box
+                // edge, then nudged out half its width).
+                [isInput ? "left" : "right"]: HANDLE_OUT,
+                transform: `translate(${isInput ? "-50%" : "50%"}, -50%)`,
                 width: 8,
                 height: 8,
                 background: c,
