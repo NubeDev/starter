@@ -53,6 +53,13 @@ describe("facet round-trip", () => {
     expect(serializeFacet(parseFacet(s))).toBe(s);
   });
 
+  it("round-trips a CHAINED exposed port (k field)", () => {
+    const f: ComponentFacet = new Map();
+    // chained: childComponent is the inner folder, chain flag set
+    f.set(50, { label: "Port", expose: "output", childComponent: 99, facetProp: 88, chain: true });
+    expect(parseFacet(serializeFacet(f))).toEqual(f);
+  });
+
   it("empty input parses to an empty map; empty records are dropped on serialize", () => {
     expect(parseFacet("").size).toBe(0);
     const f: ComponentFacet = new Map();

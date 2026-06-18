@@ -51,6 +51,17 @@ describe("exposedPortIndex", () => {
     // subscribe both the port value (500) and the child's live __facets (60)
     expect([...subProps].sort((a, b) => a - b)).toEqual([60, 500]);
   });
+
+  it("indexes + subscribes a CHAINED port but skips remap (chain resolved elsewhere)", () => {
+    // folder c1 re-projects an inner folder (99)'s already-exposed port 500
+    const facet = serializeFacet(
+      new Map([[500, { expose: "input", childComponent: 99, facetProp: 88, chain: true }]]),
+    );
+    const { index, remap, subProps } = exposedPortIndex([comp(1, {}, facet)]);
+    expect(index.get(500)).toEqual({ parentUid: 1 }); // existing edges still route to the port
+    expect(remap.has(500)).toBe(false); // don't retarget new edges to the inner folder
+    expect([...subProps].sort((a, b) => a - b)).toEqual([88, 500]); // value + inner folder's facets
+  });
 });
 
 describe("classifyCrossEdge", () => {

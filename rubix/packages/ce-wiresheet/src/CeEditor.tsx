@@ -111,6 +111,7 @@ import {
   parseAliasInput,
   rawFacet,
   serializeFacet,
+  exposedPorts,
   FACET_PROP,
   MAX_DECIMALS,
   type ComponentFacet,
@@ -118,7 +119,7 @@ import {
 } from "./lib/facet";
 import { sanitizeName, uniqueName } from "./lib/naming";
 import { layoutPositions } from "./lib/layout";
-import { groupBoundary } from "./lib/grouping";
+import { groupBoundary, groupChainedBoundary } from "./lib/grouping";
 import { buildSearchIndex, rankSearchHits, type SearchHit } from "./lib/search";
 import { partitionEdges, exposedPortIndex, classifyCrossEdge } from "./lib/routing";
 import { planPaste } from "./lib/paste";
@@ -824,6 +825,11 @@ function Inner({ base }: { base: string }) {
     );
   }, []);
 
+  // All edges scoped to the current view (incl. cross-folder ones that reach
+  // off-canvas) from the last reload. The store keeps only inEdges; grouping
+  // needs the cross-folder edges too (to expose ports through folder members).
+  const scopedEdgesRef = useRef<Edge[]>([]);
+
   // Load the children of the current parent. depth=1, nested=true gets the parent +
   // its immediate children with `childrenCount` populated. We render only the children
   // (not the parent itself), so the user is "inside" the parent's container.
@@ -851,6 +857,10 @@ function Inner({ base }: { base: string }) {
       const parent = resp.nodes[0];
       const children = parent?.children ?? [];
       const scopedEdges: Edge[] = resp.edges ?? [];
+      // Stash ALL scoped edges (incl. cross-folder ones, which don't live in the
+      // store) so grouping can detect boundaries through folder members' exposed
+      // ports (chained exposure). The store only keeps inEdges.
+      scopedEdgesRef.current = scopedEdges;
       const childUids = new Set(children.map((c) => c.uid));
       const childByUid = new Map(children.map((c) => [c.uid, c]));
       // Partition edges (lib/routing, tested): inEdges (both ends visible) draw
@@ -2498,10 +2508,20 @@ function Inner({ base }: { base: string }) {
       if (uids.length < 2) return;
       const group = new Set(uids);
       const comps = useStructural.getState().components;
-      const edges = useStructural.getState().edges;
+      // Use the full scoped edge set (incl. cross-folder edges that route through
+      // folder members' exposed ports) — the store keeps only inEdges, which would
+      // miss every boundary edge that goes through a grouped folder's port.
+      const scopedEdges = scopedEdgesRef.current;
       // Boundary props: edges with exactly one endpoint in the group → expose the
       // in-group prop. Pure logic in lib/grouping (tested).
-      const boundary = groupBoundary(group, edges.values(), comps);
+      const boundary = groupBoundary(group, scopedEdges, comps);
+      // Grouped members that are folders with their own exposed ports: a boundary
+      // edge through such a port must CHAIN (the new folder re-projects the inner
+      // folder's port) — re-exposing the deep child would double-expose it.
+      const groupedFolders = uids
+        .map((u) => comps.get(u))
+        .filter((c): c is Component => !!c && exposedPorts(facetFor(c.uid, rawFacet(c.properties))).length > 0);
+      const chained = groupChainedBoundary(group, groupedFolders, scopedEdges);
       // Folder position = bounding-box CENTER of the members, read from the LIVE
       // RF positions (the store positions can be stale if they were just dragged).
       const xs: number[] = [];
@@ -2538,7 +2558,7 @@ function Inner({ base }: { base: string }) {
           });
           if (folder?.uid == null) return;
           await bulkUpdate(uids.map((uid) => ({ uid, parentUid: folder.uid })));
-          if (boundary.size > 0) {
+          if (boundary.size > 0 || chained.size > 0) {
             const facet: ComponentFacet = new Map();
             for (const [propUid, b] of boundary) {
               facet.set(propUid, {
@@ -2546,6 +2566,17 @@ function Inner({ base }: { base: string }) {
                 childComponent: b.childComponent,
                 facetProp: b.facetProp,
                 label: b.label,
+              });
+            }
+            // Chained ports: re-project an inner grouped folder's port (childComponent
+            // = the inner folder, chain flag set) so the deep child stays exposed once.
+            for (const [propUid, c] of chained) {
+              facet.set(propUid, {
+                expose: c.side,
+                childComponent: c.innerFolder,
+                facetProp: c.facetProp,
+                chain: true,
+                label: c.label,
               });
             }
             await updateNode(folder.uid, {

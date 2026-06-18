@@ -44,6 +44,12 @@ export interface PropFacet {
   expose?: "input" | "output";
   childComponent?: number; // `c` — owning component of an exposed prop
   facetProp?: number; // `f` — the child's __facets prop uid (sub it for LIVE facet)
+  // `k` — chained exposure (grouping-of-groups): this port re-projects an INNER
+  // folder's already-exposed port, so the prop stays exposed exactly once by its
+  // direct parent. When set, `childComponent` is the INNER FOLDER (the next chain
+  // link) and `facetProp` its __facets; follow that folder's record for the same
+  // prop uid to reach the real owner. See FACET_DESIGN.md §9.
+  chain?: boolean;
 }
 
 export type ComponentFacet = Map<number /* propUid */, PropFacet>;
@@ -80,6 +86,7 @@ export function parseFacet(raw: string): ComponentFacet {
         case "e": f.expose = v === "o" ? "output" : "input"; break;
         case "c": f.childComponent = Number(v); break;
         case "f": f.facetProp = Number(v); break;
+        case "k": f.chain = v !== "0"; break;
         case "o":
           f.aliases = v.split(GS).map((o) => {
             const j = o.indexOf(FS);
@@ -111,6 +118,7 @@ export function serializeFacet(facet: ComponentFacet): string {
     if (f.expose) fields.push("e" + (f.expose === "output" ? "o" : "i"));
     if (f.childComponent != null) fields.push("c" + f.childComponent);
     if (f.facetProp != null) fields.push("f" + f.facetProp);
+    if (f.chain) fields.push("k1");
     if (f.aliases && f.aliases.length) {
       fields.push("o" + f.aliases.map((a) => a.code + FS + a.label).join(GS));
     }

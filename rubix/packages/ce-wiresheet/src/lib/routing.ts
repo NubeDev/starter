@@ -43,7 +43,13 @@ export function exposedPortIndex(children: Component[]): ExposedPortIndex {
   for (const child of children) {
     for (const ep of exposedPorts(facetFor(child.uid, rawFacet(child.properties)))) {
       index.set(ep.childUid, { parentUid: child.uid });
-      if (ep.facet.childComponent != null) remap.set(ep.childUid, ep.facet.childComponent);
+      // CHAINED port: childComponent is the inner folder (next chain link), not
+      // the real prop owner — don't retarget new edges through it here (resolving
+      // the chain needs the inner folder loaded; follow-up). Index + subscriptions
+      // still apply, so EXISTING edges render as a port and value/label stream.
+      if (ep.facet.childComponent != null && !ep.facet.chain) {
+        remap.set(ep.childUid, ep.facet.childComponent);
+      }
       subProps.add(ep.childUid);
       if (ep.facet.facetProp != null) subProps.add(ep.facet.facetProp);
     }
