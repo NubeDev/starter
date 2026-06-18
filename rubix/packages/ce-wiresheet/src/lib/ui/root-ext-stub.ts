@@ -132,50 +132,48 @@ const CRON_UI: UiEntry = {
   },
 };
 
-/** "JS" extension (NubeIO-js manifest). Lists all `jsLogic` components globally
- *  (like schedules); editing one drives the singleton `jsScriptStore` service:
- *    - source:   getScript({scriptId})→{source}  /  putScript({scriptId,source})
- *    - bind:     setScript({scriptId}) ON the jsLogic (scriptId is an OUTPUT that
- *                reports the bound id), changed via the dropdown / "new script"
- *    - scripts:  the service's `availableScripts` output prop feeds the dropdown
- *    - log:      the jsLogic's `log` output streams into the debug pane
- *  All names are read from this descriptor, so the served /ui/list entry can
- *  replace it verbatim. */
-const JS_EDITOR_UI: UiEntry = {
-  id: "js-editor",
-  label: "Script",
-  icon: "code",
-  // The panel manages its own tabs + global jsLogic index, so the host doesn't
-  // bind it to the canvas selection.
-  selection: "ignore",
-  view: {
-    type: "layout",
-    children: [
-      {
-        type: "jsEditor",
-        fullType: "NubeIO-js::jsLogic",
-        serviceType: "jsScriptStore",
-        loadAction: "getScript",
-        sourceKey: "source",
-        scriptIdProp: "scriptId",
-        scriptIdParam: "scriptId",
-        scriptIdSetAction: "setScript",
-        availableScriptsProp: "availableScripts",
-        listAction: "listScripts",
-        apiAction: "getApi",
-        exampleAction: "getExamples",
-        bind: { prop: "log" },
-        action: { name: "putScript", label: "Save", target: "component" },
-      },
-    ],
-  },
+/** "JS" extension (NubeIO-js manifest). Submenu = three tab-open UIs over the
+ *  singleton `jsScriptStore`:
+ *    - Components (`jsComponents`): jsLogic instances — assign a script, edit its
+ *      source inline, live `log`, Save & Assign (setScript). Shows how many
+ *      components share the open script.
+ *    - Scripts (`jsScripts`): the script library — edit source directly, create.
+ *    - Examples (`jsExamples`): read-only example library (getExamples).
+ *  All action/field names come from this shared config, so the served /ui/list
+ *  entries can replace it verbatim. */
+const JS_CFG = {
+  fullType: "NubeIO-js::jsLogic",
+  serviceType: "jsScriptStore",
+  loadAction: "getScript",
+  sourceKey: "source",
+  scriptIdProp: "scriptId",
+  scriptIdParam: "scriptId",
+  scriptIdSetAction: "setScript",
+  availableScriptsProp: "availableScripts",
+  listAction: "listScripts",
+  apiAction: "getApi",
+  exampleAction: "getExamples",
+  bind: { prop: "log" },
+  action: { name: "putScript", label: "Save", target: "component" as const },
+};
+const JS_COMPONENTS_UI: UiEntry = {
+  id: "js-components", label: "Components", icon: "boxes", selection: "ignore",
+  view: { type: "layout", children: [{ type: "jsComponents", ...JS_CFG }] },
+};
+const JS_SCRIPTS_UI: UiEntry = {
+  id: "js-scripts", label: "Scripts", icon: "code", selection: "ignore",
+  view: { type: "layout", children: [{ type: "jsScripts", ...JS_CFG }] },
+};
+const JS_EXAMPLES_UI: UiEntry = {
+  id: "js-examples", label: "Examples", icon: "book", selection: "ignore",
+  view: { type: "layout", children: [{ type: "jsExamples", ...JS_CFG }] },
 };
 
 export const EXTENSIONS_STUB: ExtensionUi[] = [
   { id: "ce", label: "Control Engine", icon: "cpu", uis: [CE_TABLE, CE_TREE, CE_DEMO] },
   { id: "scheduler", label: "Scheduler", icon: "calendar", uis: [SCHEDULE_UI, TIMER_UI, CRON_UI] },
   { id: "alarms", label: "Alarms", icon: "bell", uis: [ALARMS_HOME, ALARMS_HISTORY] },
-  { id: "js", label: "JavaScript", icon: "code", uis: [JS_EDITOR_UI] },
+  { id: "js", label: "JavaScript", icon: "code", uis: [JS_COMPONENTS_UI, JS_SCRIPTS_UI, JS_EXAMPLES_UI] },
 ];
 
 /**

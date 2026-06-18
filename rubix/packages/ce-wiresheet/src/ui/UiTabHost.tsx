@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStructural } from "../lib/store";
-import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, Plus, SquareDashed, Code2 } from "lucide-react";
+import { Table, LayoutPanelLeft, Calendar, ListTree, Timer, Repeat, Plus, SquareDashed, Code2, Boxes, BookOpen } from "lucide-react";
 import type { UiEntry } from "../lib/ui/types";
 import type { FlexValue } from "../lib/engine-types";
 import { loadComponentsByType, type TypeScanRow } from "./componentsByType";
@@ -33,6 +33,8 @@ const ICONS: Record<string, typeof Table> = {
   timer: Timer,
   cron: Repeat,
   code: Code2,
+  boxes: Boxes,
+  book: BookOpen,
 };
 
 export interface UiTabHostProps {

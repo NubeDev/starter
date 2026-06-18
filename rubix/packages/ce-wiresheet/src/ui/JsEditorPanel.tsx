@@ -1,302 +1,385 @@
-// `jsEditor` widget — a tabbed editor for jsLogic components (NubeIO-js).
+// NubeIO-js editor — three submenu UIs, each a TabShell (pinned "All" index +
+// closeable item tabs, open/active persisted per submenu):
 //
-// Shape (like IDE editor tabs):
-//   - a pinned "All" tab listing every jsLogic globally (name · path · bound
-//     scriptId); clicking one opens/focuses its tab.
-//   - one closeable tab per opened jsLogic (label = component name). Its body is
-//     the per-component source editor (source via jsScriptStore get/putScript,
-//     live `log` stream, Save&Assign via the jsLogic's setScript).
+//   Components (`jsComponents`) — jsLogic instances: assign a script, edit its
+//       source inline, live `log`, Save & Assign. Shows how many components share
+//       the open script (saving hot-swaps them all).
+//   Scripts (`jsScripts`)      — the script library itself: edit source directly,
+//       create (seeds template). Editing a script affects every component using it.
+//   Examples (`jsExamples`)    — read-only example library (getExamples) to copy.
 //
-// Open editors stay mounted (display-toggled) so edits + log survive tab
-// switches; only the ACTIVE tab subscribes to the value stream (the host's
-// prop-subscription replaces the whole set, so only one editor may own it).
+// Unsaved source is cached per scriptId (scriptDraft) so switching submenus (e.g.
+// to copy from Examples and back) never loses edits.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { autocompletion } from "@codemirror/autocomplete";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { Save, RefreshCw, Trash2, Plus, X, FileCode2, Locate, BookOpen, Copy } from "lucide-react";
+import { Save, RefreshCw, Trash2, Plus, Locate, BookOpen, Copy, FileCode2 } from "lucide-react";
 import { useStructural, useValues } from "../lib/store";
 import type { Component, FlexValue } from "../lib/engine-types";
 import { getNodeByUid, getRootNodes } from "../lib/rest";
 import { resolveJsStore } from "./jsScriptStore";
 import { loadJsApi, jsCompletionSource, loadExamples, type JsSymbol, type JsExample } from "./jsApi";
+import { getDraft, hasDraft, setDraft, clearDraft } from "./scriptDraft";
+import { TabShell, shellIconBtn } from "./TabShell";
 import { registerWidget, type WidgetProps } from "./registry";
 import type { RenderCtx } from "./registry";
 
 const MAX_LOG_LINES = 500;
 const asStr = (v: unknown): string => (typeof v === "string" ? v : v == null ? "" : String(v));
 const splitIds = (s: string): string[] => s.split(",").map((x) => x.trim()).filter(Boolean);
+const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 interface JsRow { uid: number; name: string; path?: string; scriptId: string }
 
-/** Global jsLogic list with each component's bound scriptId (values:true). */
 async function loadJsLogic(fullType: string, scriptIdProp: string): Promise<JsRow[]> {
   const r = await getRootNodes({ type: fullType, values: true });
-  return r.nodes.map((c) => ({
-    uid: c.uid,
-    name: c.name ?? `#${c.uid}`,
-    path: c.path,
-    scriptId: asStr(c.properties?.[scriptIdProp]?.value),
-  }));
+  return r.nodes.map((c) => ({ uid: c.uid, name: c.name ?? `#${c.uid}`, path: c.path, scriptId: asStr(c.properties?.[scriptIdProp]?.value) }));
 }
 
-// ---------------------------------------------------------------------------
-// Container: tab bar + "All" index + one mounted editor per open component.
-// ---------------------------------------------------------------------------
-const EX = (label: string) => `ex:${label}`;
+// Descriptor config (defaults = NubeIO-js manifest), shared by the three panels.
+function readCfg(node: WidgetProps["node"]) {
+  return {
+    fullType: (node.fullType as string) ?? "NubeIO-js::jsLogic",
+    serviceType: (node.serviceType as string) ?? "jsScriptStore",
+    loadAction: (node.loadAction as string) ?? "getScript",
+    saveAction: node.action?.name ?? "putScript",
+    sourceKey: (node.sourceKey as string) ?? "source",
+    scriptIdProp: (node.scriptIdProp as string) ?? "scriptId",
+    scriptIdParam: (node.scriptIdParam as string) ?? "scriptId",
+    scriptIdSetAction: (node.scriptIdSetAction as string) ?? "setScript",
+    availProp: (node.availableScriptsProp as string) ?? "availableScripts",
+    listAction: (node.listAction as string) ?? "listScripts",
+    apiAction: (node.apiAction as string) ?? "getApi",
+    exampleAction: (node.exampleAction as string) ?? "getExamples",
+    logProp: node.bind?.prop ?? "log",
+  };
+}
+type Cfg = ReturnType<typeof readCfg>;
 
-function JsEditorPanel({ node, ctx }: WidgetProps) {
-  const fullType = (node.fullType as string) ?? "NubeIO-js::jsLogic";
-  const serviceType = (node.serviceType as string) ?? "jsScriptStore";
-  const scriptIdProp = (node.scriptIdProp as string) ?? "scriptId";
-  const exampleAction = (node.exampleAction as string) ?? "getExamples";
+// --- shared hooks ----------------------------------------------------------
 
-  // `ctx` is rebuilt each render — read via a ref so effects key on real data.
-  const ctxRef = useRef(ctx);
-  ctxRef.current = ctx;
-
-  // Resolve the jsScriptStore singleton once; shared by every editor tab.
+function useJsService(serviceType: string) {
   const [service, setService] = useState<Component | null>(null);
   const [serviceState, setServiceState] = useState<"loading" | "ok" | "missing">("loading");
   useEffect(() => {
-    let alive = true;
-    setServiceState("loading");
+    let alive = true; setServiceState("loading");
     resolveJsStore(serviceType)
       .then((svc) => { if (!alive) return; if (svc) { setService(svc); setServiceState("ok"); } else setServiceState("missing"); })
       .catch(() => alive && setServiceState("missing"));
     return () => { alive = false; };
   }, [serviceType]);
-  const serviceUid = service?.uid ?? null;
+  return { service, serviceUid: service?.uid ?? null, serviceState };
+}
 
-  // Global jsLogic list for the "All" index, polled so it tracks adds/removes.
+function useJsLogicRows(fullType: string, scriptIdProp: string) {
   const [rows, setRows] = useState<JsRow[]>([]);
   useEffect(() => {
     let alive = true;
     const tick = () => loadJsLogic(fullType, scriptIdProp).then((r) => { if (alive) setRows(r); }).catch(() => {});
-    tick();
-    const id = setInterval(tick, 4000);
+    tick(); const id = setInterval(tick, 4000);
     return () => { alive = false; clearInterval(id); };
   }, [fullType, scriptIdProp]);
+  return rows;
+}
 
-  // Example library (cached) for the "Examples" tab.
+function useJsExtensions(serviceUid: number | null, ctxRef: React.MutableRefObject<RenderCtx>, apiAction: string) {
+  const symbolsRef = useRef<JsSymbol[]>([]);
+  useEffect(() => {
+    const call = ctxRef.current.callAction;
+    if (serviceUid == null || !call) return;
+    let alive = true;
+    loadJsApi(call, serviceUid, apiAction).then((s) => { if (alive) symbolsRef.current = s; }).catch(() => {});
+    return () => { alive = false; };
+  }, [serviceUid, apiAction]);
+  return useMemo(() => [javascript(), autocompletion({ override: [jsCompletionSource(symbolsRef)] })], []);
+}
+
+// Source state for one scriptId: load (draft-aware), edit (caches a draft so it
+// survives remounts), save. Returns helpers shared by both source editors.
+function useScriptSource(scriptId: string, serviceUid: number | null, ctxRef: React.MutableRefObject<RenderCtx>, c: Cfg, log?: (s: string) => void) {
+  const [code, setCode] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const loadToken = useRef(0);
+
+  const doLoad = useCallback((force: boolean) => {
+    const call = ctxRef.current.callAction;
+    if (serviceUid == null || !call || scriptId === "") { setCode(""); setDirty(false); return; }
+    if (!force && hasDraft(scriptId)) { setCode(getDraft(scriptId) ?? ""); setDirty(true); return; }
+    const token = ++loadToken.current; setLoading(true);
+    call(serviceUid, c.loadAction, { [c.scriptIdParam]: scriptId })
+      .then((ret) => {
+        if (token !== loadToken.current) return;
+        const err = asStr(ret?.error);
+        if (err) { log?.(`[load] ${scriptId}: ${err}`); }
+        else { const src = asStr(ret?.[c.sourceKey]); setCode(src); setDirty(false); clearDraft(scriptId); log?.(`[load] ${scriptId} (${src.length} chars)`); }
+        setLoading(false);
+      })
+      .catch((e: unknown) => { if (token !== loadToken.current) return; log?.(`[load] ${scriptId}: ${errMsg(e)}`); setLoading(false); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceUid, scriptId, c.loadAction, c.scriptIdParam, c.sourceKey]);
+  useEffect(() => { doLoad(false); return () => { loadToken.current++; }; }, [doLoad]);
+
+  const onChange = useCallback((v: string) => { setCode(v); setDirty(true); setDraft(scriptId, v); }, [scriptId]);
+
+  const saveSource = useCallback(async (): Promise<boolean> => {
+    const call = ctxRef.current.callAction;
+    if (serviceUid == null || !call || scriptId === "") return false;
+    setSaving(true);
+    try {
+      log?.(`[save] putScript ${scriptId}…`);
+      const ret = await call(serviceUid, c.saveAction, { [c.scriptIdParam]: scriptId, [c.sourceKey]: code as FlexValue });
+      const ok = ret?.ok === true || asStr(ret?.ok) === "true";
+      const e = asStr(ret?.error);
+      if (!ok || e) { log?.(`[save] ${scriptId}: ${e || "rejected"}`); return false; }
+      setDirty(false); clearDraft(scriptId); log?.(`[save] ${scriptId}: ok`); return true;
+    } catch (e) { log?.(`[save] ${scriptId}: ${errMsg(e)}`); return false; }
+    finally { setSaving(false); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceUid, scriptId, c.saveAction, c.scriptIdParam, c.sourceKey, code]);
+
+  return { code, dirty, loading, saving, onChange, reload: () => doLoad(true), saveSource };
+}
+
+// Ctrl/Cmd+S → save (not the browser dialog), only on the active tab.
+function useSaveShortcut(active: boolean, save: () => void) {
+  const ref = useRef(save); ref.current = save;
+  useEffect(() => {
+    if (!active) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); e.stopPropagation(); ref.current(); }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [active]);
+}
+
+// "used by N components" — clarifies that editing a shared script affects all of
+// them. Amber when shared (>1).
+function SharingBadge({ rows, scriptId }: { rows: JsRow[]; scriptId: string }) {
+  if (!scriptId) return null;
+  const users = rows.filter((r) => r.scriptId === scriptId);
+  if (users.length === 0) return null;
+  const multi = users.length > 1;
+  return (
+    <span title={`Used by: ${users.map((u) => u.name).join(", ")}`} style={{ fontSize: 11, color: multi ? "#e0b341" : "#6a9a6a", whiteSpace: "nowrap" }}>
+      used by {users.length}{multi ? " ⚠" : ""}
+    </span>
+  );
+}
+
+// --- Components submenu -----------------------------------------------------
+
+function JsComponentsPanel({ node, ctx }: WidgetProps) {
+  const c = readCfg(node);
+  const { service, serviceState } = useJsService(c.serviceType);
+  const rows = useJsLogicRows(c.fullType, c.scriptIdProp);
+  const dirtyRef = useRef<Record<string, boolean>>({});
+  return (
+    <TabShell
+      persistKey="js:components"
+      pinned={{ id: "index", label: "All", icon: <FileCode2 size={13} /> }}
+      tabLabel={(id) => rows.find((r) => r.uid === Number(id))?.name ?? `#${id}`}
+      tabExtra={(id) => ctx.locate ? (
+        <span role="button" title="Locate on canvas" onClick={(e) => { e.stopPropagation(); ctx.locate!(Number(id)); }} style={shellIconBtn}><Locate size={12} /></span>
+      ) : null}
+      closeGuard={(id) => !dirtyRef.current[id] || window.confirm("Discard unsaved changes to this script?")}
+      renderIndex={(open) => <ComponentsIndex rows={rows} serviceState={serviceState} onOpen={(uid) => open(String(uid))} />}
+      renderTab={(id, active) => (
+        <JsScriptEditor componentUid={Number(id)} active={active} cfg={c} ctx={ctx} service={service} serviceState={serviceState} rows={rows} onDirty={(d) => { dirtyRef.current[id] = d; }} />
+      )}
+    />
+  );
+}
+
+function ComponentsIndex({ rows, serviceState, onOpen }: { rows: JsRow[]; serviceState: string; onOpen: (uid: number) => void }) {
+  return (
+    <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+      <IndexHeader label="jsLogic components" count={rows.length} serviceState={serviceState} />
+      {rows.length === 0 ? <Empty>No jsLogic components on this engine.</Empty> : rows.map((r) => {
+        const folder = r.path ? r.path.replace(/^root\/?/, "").split("/").slice(0, -1).join("/") : "";
+        return (
+          <Row key={r.uid} onClick={() => onOpen(r.uid)}>
+            <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
+            {folder && <span style={{ color: "#5a6172", fontSize: 10 }}>{folder}</span>}
+            <span style={{ flex: 1 }} />
+            <span style={{ color: r.scriptId ? "#9ecbff" : "#7a6a3a", fontSize: 11, fontFamily: "ui-monospace, monospace" }}>{r.scriptId || "no script"}</span>
+          </Row>
+        );
+      })}
+    </div>
+  );
+}
+
+// --- Scripts submenu --------------------------------------------------------
+
+function JsScriptsPanel({ node, ctx }: WidgetProps) {
+  const c = readCfg(node);
+  const { serviceUid, serviceState } = useJsService(c.serviceType);
+  const rows = useJsLogicRows(c.fullType, c.scriptIdProp); // for the "used by N" column
+  const ctxRef = useRef(ctx); ctxRef.current = ctx;
+  const dirtyRef = useRef<Record<string, boolean>>({});
+
+  const [scripts, setScripts] = useState<string[]>([]);
+  const [localIds, setLocalIds] = useState<string[]>([]);
+  useEffect(() => {
+    const call = ctxRef.current.callAction;
+    if (serviceUid == null || !call) return;
+    let alive = true;
+    const tick = () => call(serviceUid, c.listAction, {}).then((r) => { if (alive) setScripts(splitIds(asStr(r?.ids))); }).catch(() => {});
+    tick(); const id = setInterval(tick, 4000);
+    return () => { alive = false; clearInterval(id); };
+  }, [serviceUid, c.listAction]);
+  const all = useMemo(() => Array.from(new Set([...scripts, ...localIds])).sort(), [scripts, localIds]);
+
+  const create = useCallback((id: string, open: (id: string) => void) => {
+    const call = ctxRef.current.callAction;
+    if (serviceUid == null || !call || !id) return;
+    call(serviceUid, c.saveAction, { [c.scriptIdParam]: id, [c.sourceKey]: "" as FlexValue })
+      .then(() => { setLocalIds((p) => (p.includes(id) ? p : [...p, id])); open(id); })
+      .catch(() => {});
+  }, [serviceUid, c.saveAction, c.scriptIdParam, c.sourceKey]);
+
+  return (
+    <TabShell
+      persistKey="js:scripts"
+      pinned={{ id: "index", label: "All", icon: <FileCode2 size={13} /> }}
+      tabLabel={(id) => id}
+      closeGuard={(id) => !dirtyRef.current[id] || window.confirm("Discard unsaved changes to this script?")}
+      renderIndex={(open) => <ScriptsIndex scripts={all} rows={rows} serviceState={serviceState} onOpen={open} onCreate={(id) => create(id, open)} />}
+      renderTab={(id, active) => (
+        <ScriptEditor scriptId={id} active={active} cfg={c} ctx={ctx} serviceUid={serviceUid} serviceState={serviceState} rows={rows} onDirty={(d) => { dirtyRef.current[id] = d; }} />
+      )}
+    />
+  );
+}
+
+function ScriptsIndex({ scripts, rows, serviceState, onOpen, onCreate }: {
+  scripts: string[]; rows: JsRow[]; serviceState: string; onOpen: (id: string) => void; onCreate: (id: string) => void;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [newId, setNewId] = useState("");
+  const submit = () => { const id = newId.trim(); if (id) { onCreate(id); setNewId(""); setCreating(false); } };
+  return (
+    <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 4px 6px" }}>
+        <span style={{ fontSize: 12, fontWeight: 600 }}>scripts</span>
+        <span style={{ color: "#5a6172", fontSize: 11 }}>({scripts.length})</span>
+        {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11 }}>jsScriptStore not found</span>}
+        <span style={{ flex: 1 }} />
+        {creating ? (
+          <span style={{ display: "flex", gap: 4 }}>
+            <input autoFocus value={newId} onChange={(e) => setNewId(e.target.value)} placeholder="new script id"
+              onKeyDown={(e) => { if (e.key === "Enter") submit(); if (e.key === "Escape") { setCreating(false); setNewId(""); } }} style={{ ...inp, width: 140 }} />
+            <button onClick={submit} disabled={!newId.trim()} style={{ ...btn, ...btnPrimary, opacity: newId.trim() ? 1 : 0.45 }}>Create</button>
+            <button onClick={() => { setCreating(false); setNewId(""); }} style={btn}>Cancel</button>
+          </span>
+        ) : (
+          <button onClick={() => setCreating(true)} disabled={serviceState !== "ok"} style={btn}><Plus size={13} /> New</button>
+        )}
+      </div>
+      {scripts.length === 0 ? <Empty>No scripts yet. Create one above.</Empty> : scripts.map((id) => {
+        const users = rows.filter((r) => r.scriptId === id).length;
+        return (
+          <Row key={id} onClick={() => onOpen(id)}>
+            <FileCode2 size={13} style={{ flexShrink: 0, color: "#8892a0" }} />
+            <span style={{ fontWeight: 500, fontFamily: "ui-monospace, monospace" }}>{id}</span>
+            <span style={{ flex: 1 }} />
+            <span style={{ color: users > 1 ? "#e0b341" : "#5a6172", fontSize: 10 }}>{users === 0 ? "unused" : `used by ${users}`}</span>
+          </Row>
+        );
+      })}
+    </div>
+  );
+}
+
+// Source-only editor for the Scripts submenu (no component / log / assign).
+function ScriptEditor({ scriptId, active, cfg: c, ctx, serviceUid, serviceState, rows, onDirty }: {
+  scriptId: string; active: boolean; cfg: Cfg; ctx: RenderCtx; serviceUid: number | null; serviceState: string; rows: JsRow[]; onDirty: (d: boolean) => void;
+}) {
+  const ctxRef = useRef(ctx); ctxRef.current = ctx;
+  const { code, dirty, loading, saving, onChange, reload, saveSource } = useScriptSource(scriptId, serviceUid, ctxRef, c);
+  useEffect(() => { onDirty(dirty); }, [dirty, onDirty]);
+  const cmExtensions = useJsExtensions(serviceUid, ctxRef, c.apiAction);
+  const canSave = serviceUid != null && !!ctx.callAction && !saving;
+  useSaveShortcut(active, () => { void saveSource(); });
+  const shared = rows.filter((r) => r.scriptId === scriptId).length;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, color: "#e6e8eb" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderBottom: "1px solid #2c313c", flexShrink: 0, flexWrap: "wrap" }}>
+        <FileCode2 size={13} style={{ color: "#8892a0" }} />
+        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: "ui-monospace, monospace" }}>{scriptId}</span>
+        <SharingBadge rows={rows} scriptId={scriptId} />
+        {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11 }}>jsScriptStore not found</span>}
+        {loading && <span style={{ color: "#5a6172", fontSize: 11 }}>loading…</span>}
+        {dirty && <span style={{ color: "#e0b341", fontSize: 11 }}>● unsaved</span>}
+        <span style={{ flex: 1 }} />
+        <button onClick={reload} disabled={loading} style={{ ...btn, opacity: loading ? 0.5 : 1 }}><RefreshCw size={13} /> Reload</button>
+        <button onClick={() => void saveSource()} disabled={!canSave} title={shared > 1 ? `Updates this script for all ${shared} components using it` : "Save the script source"} style={{ ...btn, ...btnPrimary, opacity: !canSave ? 0.45 : 1 }}>
+          <Save size={13} /> {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+      {shared > 1 && (
+        <div style={{ padding: "3px 10px", background: "#2a2410", color: "#e0b341", fontSize: 11, borderBottom: "1px solid #2c313c", flexShrink: 0 }}>
+          ⚠ Editing this script updates all {shared} components running it.
+        </div>
+      )}
+      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <CodeMirror value={code} height="100%" theme={oneDark} extensions={cmExtensions} onChange={onChange} style={{ height: "100%", fontSize: 13 }} />
+      </div>
+    </div>
+  );
+}
+
+// --- Examples submenu -------------------------------------------------------
+
+function JsExamplesPanel({ node, ctx }: WidgetProps) {
+  const c = readCfg(node);
+  const { serviceUid, serviceState } = useJsService(c.serviceType);
+  const ctxRef = useRef(ctx); ctxRef.current = ctx;
   const [examples, setExamples] = useState<JsExample[]>([]);
   useEffect(() => {
     const call = ctxRef.current.callAction;
     if (serviceUid == null || !call) return;
     let alive = true;
-    loadExamples(call, serviceUid, exampleAction).then((e) => { if (alive) setExamples(e); }).catch(() => {});
+    loadExamples(call, serviceUid, c.exampleAction).then((e) => { if (alive) setExamples(e); }).catch(() => {});
     return () => { alive = false; };
-  }, [serviceUid, exampleAction]);
-
-  const [openUids, setOpenUids] = useState<number[]>([]);
-  const [openExamples, setOpenExamples] = useState<string[]>([]);
-  const [active, setActive] = useState<number | string>("index");
-
-  // Per-tab dirty flags (reported by each editor) for the close confirmation.
-  const dirtyRef = useRef<Record<number, boolean>>({});
-  const [, force] = useState(0);
-  const onDirty = useCallback((uid: number, d: boolean) => {
-    if (dirtyRef.current[uid] !== d) { dirtyRef.current[uid] = d; force((x) => x + 1); }
-  }, []);
-
-  const openTab = useCallback((uid: number) => {
-    setOpenUids((p) => (p.includes(uid) ? p : [...p, uid]));
-    setActive(uid);
-  }, []);
-  const closeTab = useCallback((uid: number) => {
-    if (dirtyRef.current[uid] && !window.confirm("Discard unsaved changes to this script?")) return;
-    delete dirtyRef.current[uid];
-    setOpenUids((p) => {
-      const i = p.indexOf(uid);
-      const next = p.filter((u) => u !== uid);
-      setActive((a) => (a !== uid ? a : next[i] ?? next[i - 1] ?? "index"));
-      return next;
-    });
-  }, []);
-  const openExample = useCallback((label: string) => {
-    setOpenExamples((p) => (p.includes(label) ? p : [...p, label]));
-    setActive(EX(label));
-  }, []);
-  const closeExample = useCallback((label: string) => {
-    setOpenExamples((p) => {
-      const i = p.indexOf(label);
-      const next = p.filter((l) => l !== label);
-      setActive((a) => (a !== EX(label) ? a : next[i] ? EX(next[i]) : next[i - 1] ? EX(next[i - 1]) : "examples"));
-      return next;
-    });
-  }, []);
-
-  const nameOf = (uid: number) => rows.find((r) => r.uid === uid)?.name ?? `#${uid}`;
+  }, [serviceUid, c.exampleAction]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, color: "#e6e8eb" }}>
-      {/* tab bar */}
-      <div style={{ display: "flex", alignItems: "stretch", gap: 1, background: "#15181e", borderBottom: "1px solid #2c313c", flexShrink: 0, overflowX: "auto" }}>
-        <Tab active={active === "index"} onClick={() => setActive("index")} pinned>
-          <FileCode2 size={13} /> All
-        </Tab>
-        <Tab active={active === "examples"} onClick={() => setActive("examples")} pinned>
-          <BookOpen size={13} /> Examples
-        </Tab>
-        {openUids.map((uid) => (
-          <Tab key={uid} active={active === uid} onClick={() => setActive(uid)}>
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>
-              {nameOf(uid)}{dirtyRef.current[uid] ? " ●" : ""}
-            </span>
-            {ctx.locate && (
-              <span role="button" title="Locate on canvas" onClick={(e) => { e.stopPropagation(); ctx.locate!(uid); }} style={iconBtn}>
-                <Locate size={12} />
-              </span>
-            )}
-            <span role="button" title="Close" onClick={(e) => { e.stopPropagation(); closeTab(uid); }} style={iconBtn}>
-              <X size={12} />
-            </span>
-          </Tab>
-        ))}
-        {openExamples.map((label) => (
-          <Tab key={EX(label)} active={active === EX(label)} onClick={() => setActive(EX(label))}>
-            <BookOpen size={12} />
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{label}</span>
-            <span role="button" title="Close" onClick={(e) => { e.stopPropagation(); closeExample(label); }} style={iconBtn}>
-              <X size={12} />
-            </span>
-          </Tab>
-        ))}
-      </div>
-
-      {/* body — index + examples list + mounted editors/viewers, display-toggled */}
-      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
-        <div style={{ position: "absolute", inset: 0, display: active === "index" ? "block" : "none", overflow: "auto" }}>
-          <IndexList rows={rows} openUids={openUids} active={active} onOpen={openTab} serviceState={serviceState} />
-        </div>
-        <div style={{ position: "absolute", inset: 0, display: active === "examples" ? "block" : "none", overflow: "auto" }}>
-          <ExamplesList examples={examples} openExamples={openExamples} active={active} onOpen={openExample} serviceState={serviceState} />
-        </div>
-        {openUids.map((uid) => (
-          <div key={uid} style={{ position: "absolute", inset: 0, display: active === uid ? "block" : "none" }}>
-            <JsScriptEditor componentUid={uid} active={active === uid} node={node} ctx={ctx} service={service} serviceState={serviceState} onDirty={onDirty} />
-          </div>
-        ))}
-        {openExamples.map((label) => {
-          const ex = examples.find((e) => e.label === label);
-          return (
-            <div key={EX(label)} style={{ position: "absolute", inset: 0, display: active === EX(label) ? "block" : "none" }}>
-              {ex ? <ExampleViewer ex={ex} /> : <div style={{ padding: 12, color: "#5a6172", fontSize: 12 }}>example not found</div>}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function Tab({ active, onClick, pinned, children }: { active: boolean; onClick: () => void; pinned?: boolean; children: React.ReactNode }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        padding: "6px 10px",
-        fontSize: 12,
-        cursor: "pointer",
-        border: "none",
-        borderRight: "1px solid #2c313c",
-        borderBottom: active ? "2px solid #3b6eff" : "2px solid transparent",
-        background: active ? "#1d2128" : "transparent",
-        color: active ? "#e6e8eb" : "#9aa3b2",
-        whiteSpace: "nowrap",
-        flexShrink: 0,
-        fontWeight: pinned ? 600 : 400,
+    <TabShell
+      persistKey="js:examples"
+      pinned={{ id: "index", label: "All", icon: <BookOpen size={13} /> }}
+      tabLabel={(id) => id}
+      renderIndex={(open) => <ExamplesIndex examples={examples} serviceState={serviceState} onOpen={open} />}
+      renderTab={(id) => {
+        const ex = examples.find((e) => e.label === id);
+        return ex ? <ExampleViewer ex={ex} /> : <div style={{ padding: 12, color: "#5a6172", fontSize: 12 }}>example not found</div>;
       }}
-    >
-      {children}
-    </button>
+    />
   );
 }
 
-function IndexList({ rows, openUids, active, onOpen, serviceState }: {
-  rows: JsRow[]; openUids: number[]; active: number | string; onOpen: (uid: number) => void; serviceState: string;
-}) {
+function ExamplesIndex({ examples, serviceState, onOpen }: { examples: JsExample[]; serviceState: string; onOpen: (label: string) => void }) {
   return (
     <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 4px 6px" }}>
-        <span style={{ fontSize: 12, fontWeight: 600 }}>jsLogic components</span>
-        <span style={{ color: "#5a6172", fontSize: 11 }}>({rows.length})</span>
-        {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11, marginLeft: 6 }}>jsScriptStore not found</span>}
-      </div>
-      {rows.length === 0 ? (
-        <div style={{ color: "#5a6172", fontSize: 12, padding: 6 }}>No jsLogic components on this engine.</div>
-      ) : (
-        rows.map((r) => {
-          const folder = r.path ? r.path.replace(/^root\/?/, "").split("/").slice(0, -1).join("/") : "";
-          const isOpen = openUids.includes(r.uid);
-          return (
-            <button
-              key={r.uid}
-              onClick={() => onOpen(r.uid)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", textAlign: "left",
-                background: active === r.uid ? "#1d2330" : "#1a1d24", border: "1px solid #2c313c", borderRadius: 5,
-                cursor: "pointer", color: "#e6e8eb", fontSize: 12,
-              }}
-            >
-              <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-              {folder && <span style={{ color: "#5a6172", fontSize: 10 }}>{folder}</span>}
-              <span style={{ flex: 1 }} />
-              <span style={{ color: r.scriptId ? "#9ecbff" : "#7a6a3a", fontSize: 11, fontFamily: "ui-monospace, monospace" }}>
-                {r.scriptId || "no script"}
-              </span>
-              {isOpen && <span style={{ color: "#5a6172", fontSize: 10 }}>open</span>}
-            </button>
-          );
-        })
-      )}
+      <IndexHeader label="example scripts" count={examples.length} serviceState={serviceState} />
+      {examples.length === 0 ? <Empty>No examples available.</Empty> : examples.map((ex) => (
+        <Row key={ex.label} onClick={() => onOpen(ex.label)}>
+          <BookOpen size={13} style={{ flexShrink: 0, color: "#8892a0" }} />
+          <span style={{ fontWeight: 500, flexShrink: 0 }}>{ex.label}</span>
+          {ex.desc && <span style={{ color: "#5a6172", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.desc}</span>}
+        </Row>
+      ))}
     </div>
   );
 }
 
-// Examples index — same layout as the components list, listing the library from
-// getExamples; clicking one opens a read-only viewer tab to copy from.
-function ExamplesList({ examples, openExamples, active, onOpen, serviceState }: {
-  examples: JsExample[]; openExamples: string[]; active: number | string; onOpen: (label: string) => void; serviceState: string;
-}) {
-  return (
-    <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 4 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 4px 6px" }}>
-        <span style={{ fontSize: 12, fontWeight: 600 }}>example scripts</span>
-        <span style={{ color: "#5a6172", fontSize: 11 }}>({examples.length})</span>
-        {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11, marginLeft: 6 }}>jsScriptStore not found</span>}
-      </div>
-      {examples.length === 0 ? (
-        <div style={{ color: "#5a6172", fontSize: 12, padding: 6 }}>No examples available.</div>
-      ) : (
-        examples.map((ex) => (
-          <button
-            key={ex.label}
-            onClick={() => onOpen(ex.label)}
-            style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", textAlign: "left",
-              background: active === EX(ex.label) ? "#1d2330" : "#1a1d24", border: "1px solid #2c313c", borderRadius: 5,
-              cursor: "pointer", color: "#e6e8eb", fontSize: 12,
-            }}
-          >
-            <BookOpen size={13} style={{ flexShrink: 0, color: "#8892a0" }} />
-            <span style={{ fontWeight: 500, flexShrink: 0 }}>{ex.label}</span>
-            {ex.desc && <span style={{ color: "#5a6172", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.desc}</span>}
-            <span style={{ flex: 1 }} />
-            {openExamples.includes(ex.label) && <span style={{ color: "#5a6172", fontSize: 10 }}>open</span>}
-          </button>
-        ))
-      )}
-    </div>
-  );
-}
-
-// Read-only viewer for a single example — copy the whole thing, or select parts.
 function ExampleViewer({ ex }: { ex: JsExample }) {
   const [copied, setCopied] = useState(false);
   const extensions = useMemo(() => [javascript()], []);
@@ -308,12 +391,7 @@ function ExampleViewer({ ex }: { ex: JsExample }) {
         {ex.desc && <span style={{ color: "#8892a0", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.desc}</span>}
         <span style={{ color: "#5a6172", fontSize: 10 }}>read-only — select to copy</span>
         <span style={{ flex: 1 }} />
-        <button
-          onClick={() => {
-            void navigator.clipboard?.writeText(ex.source).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1200); }).catch(() => {});
-          }}
-          style={{ ...btn, ...(copied ? btnPrimary : {}) }}
-        >
+        <button onClick={() => { void navigator.clipboard?.writeText(ex.source).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 1200); }).catch(() => {}); }} style={{ ...btn, ...(copied ? btnPrimary : {}) }}>
           <Copy size={13} /> {copied ? "Copied" : "Copy all"}
         </button>
       </div>
@@ -324,36 +402,14 @@ function ExampleViewer({ ex }: { ex: JsExample }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Per-component editor: source + live log + Save & Assign for one jsLogic.
-// ---------------------------------------------------------------------------
-function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState, onDirty }: {
-  componentUid: number;
-  active: boolean;
-  node: WidgetProps["node"];
-  ctx: RenderCtx;
-  service: Component | null;
-  serviceState: "loading" | "ok" | "missing";
-  onDirty: (uid: number, dirty: boolean) => void;
+// --- Per-component editor (Components submenu) ------------------------------
+
+function JsScriptEditor({ componentUid, active, cfg: c, ctx, service, serviceState, rows, onDirty }: {
+  componentUid: number; active: boolean; cfg: Cfg; ctx: RenderCtx; service: Component | null; serviceState: "loading" | "ok" | "missing"; rows: JsRow[]; onDirty: (d: boolean) => void;
 }) {
-  // `ctx` is rebuilt each host render — read it through a ref so effects don't
-  // re-run (and re-load, clobbering edits) on every canvas re-render.
-  const ctxRef = useRef(ctx);
-  ctxRef.current = ctx;
+  const ctxRef = useRef(ctx); ctxRef.current = ctx;
 
-  const loadAction = (node.loadAction as string) ?? "getScript";
-  const saveAction = node.action?.name ?? "putScript";
-  const sourceKey = (node.sourceKey as string) ?? "source";
-  const scriptIdProp = (node.scriptIdProp as string) ?? "scriptId";
-  const scriptIdParam = (node.scriptIdParam as string) ?? "scriptId";
-  const scriptIdSetAction = (node.scriptIdSetAction as string) ?? "setScript";
-  const availProp = (node.availableScriptsProp as string) ?? "availableScripts";
-  const listAction = (node.listAction as string) ?? "listScripts";
-  const apiAction = (node.apiAction as string) ?? "getApi";
-  const logProp = node.bind?.prop ?? "log";
-
-  // The jsLogic may be off-canvas (opened from the global list), so the
-  // structural store won't hold it — fetch it once for its prop uids.
+  // Component (fetched if off-folder) for its prop uids.
   const structComp = useStructural((s) => s.components.get(componentUid));
   const [fetched, setFetched] = useState<Component | null>(null);
   useEffect(() => {
@@ -365,11 +421,10 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
   const comp = structComp ?? fetched;
 
   const serviceUid = service?.uid ?? null;
-  const scriptIdUid = comp?.properties[scriptIdProp]?.uid;
-  const logUid = comp?.properties[logProp]?.uid;
-  const availUid = service?.properties[availProp]?.uid;
+  const scriptIdUid = comp?.properties[c.scriptIdProp]?.uid;
+  const logUid = comp?.properties[c.logProp]?.uid;
+  const availUid = service?.properties[c.availProp]?.uid;
 
-  // Only the ACTIVE tab subscribes (prop-subscription replaces the whole set).
   useEffect(() => {
     if (!active) return;
     const sub = ctxRef.current.subscribeProps;
@@ -381,11 +436,9 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
 
   const liveScriptId = useValues((s) => (scriptIdUid != null ? s.values.get(scriptIdUid) : undefined));
   const [optimisticBound, setOptimisticBound] = useState<string | null>(null);
-  const streamedBound = asStr(liveScriptId) || asStr(comp?.properties[scriptIdProp]?.value);
+  const streamedBound = asStr(liveScriptId) || asStr(comp?.properties[c.scriptIdProp]?.value);
   const boundId = optimisticBound ?? streamedBound;
-  useEffect(() => {
-    if (optimisticBound != null && streamedBound === optimisticBound) setOptimisticBound(null);
-  }, [streamedBound, optimisticBound]);
+  useEffect(() => { if (optimisticBound != null && streamedBound === optimisticBound) setOptimisticBound(null); }, [streamedBound, optimisticBound]);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const scriptId = editingId ?? boundId;
@@ -397,110 +450,50 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
     const call = ctxRef.current.callAction;
     if (!active || serviceUid == null || !call || availUid != null) return;
     let alive = true;
-    call(serviceUid, listAction, {}).then((r) => { if (alive) setListFallback(splitIds(asStr(r?.ids))); }).catch(() => {});
+    call(serviceUid, c.listAction, {}).then((r) => { if (alive) setListFallback(splitIds(asStr(r?.ids))); }).catch(() => {});
     return () => { alive = false; };
-  }, [active, serviceUid, availUid, listAction]);
+  }, [active, serviceUid, availUid, c.listAction]);
   const [localIds, setLocalIds] = useState<string[]>([]);
   const available = useMemo(() => {
-    const fromProp = splitIds(asStr(liveAvail) || asStr(service?.properties[availProp]?.value));
+    const fromProp = splitIds(asStr(liveAvail) || asStr(service?.properties[c.availProp]?.value));
     const base = fromProp.length ? fromProp : listFallback;
     return Array.from(new Set([...base, ...localIds])).sort();
-  }, [liveAvail, service, availProp, listFallback, localIds]);
+  }, [liveAvail, service, c.availProp, listFallback, localIds]);
 
-  // Autocompletion symbols from the service's getApi (cached per service). Read
-  // via a ref so the editor's extensions stay stable while symbols load in.
-  const symbolsRef = useRef<JsSymbol[]>([]);
-  useEffect(() => {
-    const call = ctxRef.current.callAction;
-    if (serviceUid == null || !call) return;
-    let alive = true;
-    loadJsApi(call, serviceUid, apiAction).then((s) => { if (alive) symbolsRef.current = s; }).catch(() => {});
-    return () => { alive = false; };
-  }, [serviceUid, apiAction]);
-  const cmExtensions = useMemo(() => [javascript(), autocompletion({ override: [jsCompletionSource(symbolsRef)] })], []);
-
-  const [code, setCode] = useState("");
-  const [dirty, setDirty] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { onDirty(componentUid, dirty); }, [componentUid, dirty, onDirty]);
+  const cmExtensions = useJsExtensions(serviceUid, ctxRef, c.apiAction);
 
   const [logLines, setLogLines] = useState<string[]>([]);
   const pushLog = useCallback((line: string) => {
-    setLogLines((prev) => {
-      const next = prev.concat(line.split("\n"));
-      return next.length > MAX_LOG_LINES ? next.slice(next.length - MAX_LOG_LINES) : next;
-    });
+    setLogLines((prev) => { const next = prev.concat(line.split("\n")); return next.length > MAX_LOG_LINES ? next.slice(next.length - MAX_LOG_LINES) : next; });
   }, []);
+
+  const { code, dirty, loading, saving, onChange, reload, saveSource } = useScriptSource(scriptId, serviceUid, ctxRef, c, pushLog);
+  useEffect(() => { onDirty(dirty); }, [dirty, onDirty]);
 
   const ready = serviceUid != null && !!ctx.callAction;
   const canEdit = ready && scriptId !== "";
   const canSave = canEdit && !saving;
 
-  const loadToken = useRef(0);
-  const load = useCallback(() => {
-    const call = ctxRef.current.callAction;
-    if (serviceUid == null || !call || scriptId === "") return;
-    const token = ++loadToken.current;
-    setLoading(true);
-    call(serviceUid, loadAction, { [scriptIdParam]: scriptId })
-      .then((ret) => {
-        if (token !== loadToken.current) return;
-        const err = asStr(ret?.error);
-        if (err) { pushLog(`[load] ${scriptId}: ${err}`); }
-        else { const src = asStr(ret?.[sourceKey]); setCode(src); setDirty(false); pushLog(`[load] ${scriptId} (${src.length} chars)`); }
-        setLoading(false);
-      })
-      .catch((e: unknown) => { if (token !== loadToken.current) return; pushLog(`[load] ${scriptId}: ${e instanceof Error ? e.message : String(e)}`); setLoading(false); });
-  }, [serviceUid, loadAction, scriptId, scriptIdParam, sourceKey, pushLog]);
-  useEffect(() => { load(); return () => { loadToken.current++; }; }, [load]);
-
   const assign = useCallback((id: string): Promise<boolean> => {
     const call = ctxRef.current.callAction;
     if (!call || id === "") return Promise.resolve(false);
     pushLog(`[assign] setScript ${id}…`);
-    return call(componentUid, scriptIdSetAction, { [scriptIdParam]: id })
+    return call(componentUid, c.scriptIdSetAction, { [c.scriptIdParam]: id })
       .then((ret) => {
         const err = asStr(ret?.error);
         if (err) { pushLog(`[assign] ${id}: ${err}`); return false; }
         setOptimisticBound(id); setEditingId(null); pushLog(`[assign] ${id}: ok`); return true;
       })
-      .catch((e: unknown) => { pushLog(`[assign] ${id}: ${e instanceof Error ? e.message : String(e)}`); return false; });
-  }, [componentUid, scriptIdSetAction, scriptIdParam, pushLog]);
+      .catch((e: unknown) => { pushLog(`[assign] ${id}: ${errMsg(e)}`); return false; });
+  }, [componentUid, c.scriptIdSetAction, c.scriptIdParam, pushLog]);
 
-  const save = async () => {
+  const save = useCallback(async () => {
     if (!canSave) return;
     const id = scriptId;
-    setSaving(true);
-    try {
-      if (dirty) {
-        pushLog(`[save] putScript ${id}…`);
-        const ret = await ctxRef.current.callAction!(serviceUid!, saveAction, { [scriptIdParam]: id, [sourceKey]: code as FlexValue });
-        const ok = ret?.ok === true || asStr(ret?.ok) === "true";
-        const err = asStr(ret?.error);
-        if (!ok || err) { pushLog(`[save] ${id}: ${err || "rejected"}`); return; }
-        setDirty(false); pushLog(`[save] ${id}: ok`);
-      }
-      await assign(id);
-    } finally { setSaving(false); }
-  };
-
-  // Ctrl/Cmd+S → Save & Assign (deploy), not the browser's save dialog. Only the
-  // active tab handles it; a ref keeps the latest `save` without re-binding.
-  const saveRef = useRef(save);
-  saveRef.current = save;
-  useEffect(() => {
-    if (!active) return;
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        e.stopPropagation();
-        void saveRef.current();
-      }
-    };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [active]);
+    if (dirty) { const ok = await saveSource(); if (!ok) return; }
+    await assign(id);
+  }, [canSave, scriptId, dirty, saveSource, assign]);
+  useSaveShortcut(active, () => { void save(); });
 
   const [creating, setCreating] = useState(false);
   const [newId, setNewId] = useState("");
@@ -508,32 +501,24 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
     const id = newId.trim();
     const call = ctxRef.current.callAction;
     if (serviceUid == null || !call || id === "") return;
-    pushLog(`[create] putScript ${id} (seed template)…`);
-    call(serviceUid, saveAction, { [scriptIdParam]: id, [sourceKey]: "" as FlexValue })
+    call(serviceUid, c.saveAction, { [c.scriptIdParam]: id, [c.sourceKey]: "" as FlexValue })
       .then((ret) => {
         const err = asStr(ret?.error);
         if (err) { pushLog(`[create] ${id}: ${err}`); return; }
-        pushLog(`[create] ${id}: ok`);
         setCreating(false); setNewId("");
         setLocalIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
         setEditingId(id);
       })
-      .catch((e: unknown) => pushLog(`[create] ${id}: ${e instanceof Error ? e.message : String(e)}`));
+      .catch((e: unknown) => pushLog(`[create] ${id}: ${errMsg(e)}`));
   };
 
-  // Stream the jsLogic's log output (only meaningful while active/subscribed).
   const liveLog = useValues((s) => (logUid != null ? s.values.get(logUid) : undefined));
   const lastLive = useRef<string | null>(null);
-  useEffect(() => {
-    if (liveLog == null) return;
-    const s = asStr(liveLog);
-    if (s === lastLive.current) return;
-    lastLive.current = s;
-    if (s) pushLog(s);
-  }, [liveLog, pushLog]);
-
+  useEffect(() => { if (liveLog == null) return; const s = asStr(liveLog); if (s === lastLive.current) return; lastLive.current = s; if (s) pushLog(s); }, [liveLog, pushLog]);
   const logRef = useRef<HTMLDivElement>(null);
   useEffect(() => { const el = logRef.current; if (el) el.scrollTop = el.scrollHeight; }, [logLines]);
+
+  const shared = rows.filter((r) => r.scriptId === scriptId).length;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, color: "#e6e8eb" }}>
@@ -544,11 +529,11 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
           {scriptId === "" && <option value="" disabled>— select —</option>}
           {Array.from(new Set([scriptId, ...available].filter(Boolean))).map((id) => <option key={id} value={id}>{id}</option>)}
         </select>
+        <SharingBadge rows={rows} scriptId={scriptId} />
         {creating ? (
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <input autoFocus value={newId} onChange={(e) => setNewId(e.target.value)} placeholder="new script id"
-              onKeyDown={(e) => { if (e.key === "Enter") createScript(); if (e.key === "Escape") { setCreating(false); setNewId(""); } }}
-              style={{ ...inp, width: 140 }} />
+              onKeyDown={(e) => { if (e.key === "Enter") createScript(); if (e.key === "Escape") { setCreating(false); setNewId(""); } }} style={{ ...inp, width: 140 }} />
             <button onClick={createScript} disabled={!newId.trim()} style={{ ...btn, ...btnPrimary, opacity: newId.trim() ? 1 : 0.45 }}>Create</button>
             <button onClick={() => { setCreating(false); setNewId(""); }} style={btn}>Cancel</button>
           </span>
@@ -557,17 +542,19 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
         )}
         {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11 }}>jsScriptStore not found</span>}
         {loading && <span style={{ color: "#5a6172", fontSize: 11 }}>loading…</span>}
-        {scriptId !== "" && (assigned
-          ? <span style={{ color: "#6a9a6a", fontSize: 11 }}>● assigned</span>
-          : <span style={{ color: "#e0b341", fontSize: 11 }}>not assigned — Save to assign</span>)}
+        {scriptId !== "" && (assigned ? <span style={{ color: "#6a9a6a", fontSize: 11 }}>● assigned</span> : <span style={{ color: "#e0b341", fontSize: 11 }}>not assigned — Save to assign</span>)}
         {dirty && <span style={{ color: "#e0b341", fontSize: 11 }}>● unsaved</span>}
         <span style={{ flex: 1 }} />
-        <button onClick={load} disabled={!canEdit || loading} style={{ ...btn, opacity: !canEdit || loading ? 0.45 : 1 }}><RefreshCw size={13} /> Reload</button>
-        <button onClick={save} disabled={!canSave} title="Save the source and assign this script to the component" style={{ ...btn, ...btnPrimary, opacity: !canSave ? 0.45 : 1 }}>
+        <button onClick={reload} disabled={!canEdit || loading} style={{ ...btn, opacity: !canEdit || loading ? 0.45 : 1 }}><RefreshCw size={13} /> Reload</button>
+        <button onClick={save} disabled={!canSave} title={shared > 1 ? `Saves the source (updates all ${shared} components using it) and assigns it here` : "Save the source and assign this script to the component"} style={{ ...btn, ...btnPrimary, opacity: !canSave ? 0.45 : 1 }}>
           <Save size={13} /> {saving ? "Saving…" : assigned ? "Save" : "Save & Assign"}
         </button>
       </div>
-
+      {shared > 1 && scriptId !== "" && (
+        <div style={{ padding: "3px 10px", background: "#2a2410", color: "#e0b341", fontSize: 11, borderBottom: "1px solid #2c313c", flexShrink: 0 }}>
+          ⚠ Script <b>{scriptId}</b> runs on {shared} components — saving updates them all.
+        </div>
+      )}
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
         {scriptId === "" ? (
           <div style={{ padding: 16, color: "#8892a0", fontSize: 12 }}>
@@ -576,10 +563,9 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
             {boundId === "" && <span> <b style={{ color: "#cbd3e0" }}>{comp?.name ?? `#${componentUid}`}</b> has no script assigned yet.</span>}
           </div>
         ) : (
-          <CodeMirror value={code} height="100%" theme={oneDark} extensions={cmExtensions} onChange={(v) => { setCode(v); setDirty(true); }} style={{ height: "100%", fontSize: 13 }} />
+          <CodeMirror value={code} height="100%" theme={oneDark} extensions={cmExtensions} onChange={onChange} style={{ height: "100%", fontSize: 13 }} />
         )}
       </div>
-
       <div style={{ flexShrink: 0, borderTop: "1px solid #2c313c", display: "flex", flexDirection: "column", height: 160 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 10px", borderBottom: "1px solid #21262f", flexShrink: 0 }}>
           <span style={{ color: "#8892a0", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.4 }}>Debug log</span>
@@ -595,11 +581,34 @@ function JsScriptEditor({ componentUid, active, node, ctx, service, serviceState
   );
 }
 
+// --- shared index bits + styles --------------------------------------------
+
+function IndexHeader({ label, count, serviceState }: { label: string; count: number; serviceState: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "2px 4px 6px" }}>
+      <span style={{ fontSize: 12, fontWeight: 600 }}>{label}</span>
+      <span style={{ color: "#5a6172", fontSize: 11 }}>({count})</span>
+      {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11, marginLeft: 6 }}>jsScriptStore not found</span>}
+    </div>
+  );
+}
+function Empty({ children }: { children: React.ReactNode }) {
+  return <div style={{ color: "#5a6172", fontSize: 12, padding: 6 }}>{children}</div>;
+}
+function Row({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", textAlign: "left", background: "#1a1d24", border: "1px solid #2c313c", borderRadius: 5, cursor: "pointer", color: "#e6e8eb", fontSize: 12 }}>
+      {children}
+    </button>
+  );
+}
+
 const inp: React.CSSProperties = { background: "#0f1115", color: "#e6e8eb", border: "1px solid #2c313c", borderRadius: 4, padding: "3px 7px", fontSize: 12, outline: "none" };
 const btn: React.CSSProperties = { display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", fontSize: 11, color: "#cbd3e0", background: "#2c313c", border: "1px solid #3a4150", borderRadius: 4, cursor: "pointer" };
 const btnPrimary: React.CSSProperties = { background: "#2c3a55", borderColor: "#3b5388", color: "#cfe0ff" };
-const iconBtn: React.CSSProperties = { display: "inline-flex", alignItems: "center", marginLeft: 2, padding: 1, borderRadius: 3, color: "#8892a0" };
 
-registerWidget("jsEditor", JsEditorPanel);
+registerWidget("jsComponents", JsComponentsPanel);
+registerWidget("jsScripts", JsScriptsPanel);
+registerWidget("jsExamples", JsExamplesPanel);
 
-export default JsEditorPanel;
+export default JsComponentsPanel;
