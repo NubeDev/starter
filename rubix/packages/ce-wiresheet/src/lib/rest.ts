@@ -62,12 +62,41 @@ export function setRestActorId(id: number | null) {
   currentActorId = id;
 }
 
+// Gesture id (int32) sent as `X-Gesture-Id`. All writes sharing one non-zero id
+// are grouped by the engine into a SINGLE atomic undo entry — both a streamed
+// drag (many position writes → one undo) and a compound gesture across endpoints
+// (Group = add folder + reparent + facets → one undo). Set it around a gesture
+// (try/finally), then clear. Unset => the engine's short time-window coalescing.
+let currentGestureId: number | null = null;
+export function setRestGestureId(id: number | null) {
+  currentGestureId = id;
+}
+// Monotonic per-session gesture id generator (positive int32, never 0).
+let gestureSeq = 0;
+export function newGestureId(): number {
+  gestureSeq = (gestureSeq + 1) & 0x7fffffff;
+  return gestureSeq || 1;
+}
+// Run an async gesture with a fresh gesture id stamped on every write inside it,
+// so the whole gesture undoes as one unit. Always clears, even on throw. Use the
+// low-level setRestGestureId directly for gestures that span event handlers
+// (e.g. a drag: set on dragstart, clear on dragstop).
+export async function withGesture<T>(fn: () => Promise<T>): Promise<T> {
+  setRestGestureId(newGestureId());
+  try {
+    return await fn();
+  } finally {
+    setRestGestureId(null);
+  }
+}
+
 async function http<T>(method: string, path: string, body?: unknown): Promise<T> {
   const url = `${BASE}${path}`;
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (currentSessionId && method !== "GET") headers["X-CE-Session"] = currentSessionId;
   if (currentActorId != null) headers["X-Actor-Id"] = String(currentActorId);
+  if (currentGestureId != null && method !== "GET") headers["X-Gesture-Id"] = String(currentGestureId);
   const res = await fetch(url, {
     method,
     headers,

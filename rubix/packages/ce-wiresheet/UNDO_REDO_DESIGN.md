@@ -1,5 +1,32 @@
 # Engine-side undo / redo
 
+> **Status — SHIPPED (verified in the live `openapi.yaml`).** The engine moved
+> past the "strictly per-request" grouping below to a **gesture id**, and
+> expanded the journal beyond structural ops. What's live now:
+>
+> - **`X-Gesture-Id`** (int32) header on every writer endpoint. All writes sharing
+>   one non-zero id are grouped into **one atomic undo entry** — both a streamed
+>   drag (many position writes → one undo) and a compound gesture across endpoints
+>   (Group = add folder + reparent + facets → one undo). Omit → engine's short
+>   time-window coalescing.
+> - **Expanded `ChangeOp`**: `updateName`, `setValue`, `updateMetadata`, **`group`**
+>   joined the structural/override set — so **rename, value/config/`__facets`
+>   edits, and position/size drags are now undoable** (the deferred "phase 2"
+>   property journaling landed). A `group` entry's `componentUids`/`edgeUids` are
+>   the union of its members and it undoes/redoes atomically.
+> - `/undo`, `/redo`, `/changelog`, `X-Actor-Id`, and per-item `changeId`/`actorId`
+>   on write responses + the WS push (all confirmed earlier).
+>
+> **Client (`@nube/ce-wiresheet`) — DONE.** `lib/rest.ts` sends `X-Actor-Id`
+> (per-tab, from the session id) + `X-Gesture-Id` (`setRestGestureId`/`newGestureId`/
+> `withGesture`); `Cmd-Z` / `Cmd-Shift-Z` / `Ctrl-Y`. Group, paste, and drag each
+> stamp one gesture id so they undo atomically. **Still blocked:** the reparent
+> `std::bad_alloc` (engine) gates Group actually completing.
+>
+> The text below is the original engine planning doc, kept for the rationale.
+
+---
+
 Local planning doc (`docs/plans/` is gitignored). Design only — no code yet.
 
 Move undo/redo from the client (REST FE) into the engine. A writer API request carries an

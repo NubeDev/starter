@@ -40,7 +40,8 @@ export function loadExamples(call: CallAction, serviceUid: number, action = "get
         const arr = JSON.parse(raw);
         if (!Array.isArray(arr)) return [];
         return arr.map((e: Record<string, unknown>, i: number): JsExample => ({
-          label: String(e.label ?? e.name ?? e.title ?? `example ${i + 1}`),
+          // Prefer a human title for display; fall back to the machine name/label.
+          label: String(e.title ?? e.label ?? e.name ?? `example ${i + 1}`),
           source: String(e.source ?? e.code ?? ""),
           desc: typeof (e.desc ?? e.description) === "string" ? (e.desc ?? e.description) as string : undefined,
         }));

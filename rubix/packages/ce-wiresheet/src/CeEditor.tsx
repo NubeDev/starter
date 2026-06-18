@@ -71,6 +71,9 @@ import {
   setEngineBase,
   setRestSessionId,
   setRestActorId,
+  setRestGestureId,
+  newGestureId,
+  withGesture,
   undoChange,
   redoChange,
   updateEdge as restUpdateEdge,
@@ -1061,31 +1064,37 @@ function Inner({ base }: { base: string }) {
     const cb = clipboardRef.current;
     if (!cb || cb.uids.length === 0) return;
     try {
-      const res = await copyNodes({
-        componentUids: cb.uids,
-        destParentUid: currentParentUid,
-        includeInternalEdges: true,
+      // One gesture id across the copy + reposition so paste is a single atomic
+      // undo entry (the `copy` plus the clones' `updateMetadata`/facet writes).
+      const newUids = await withGesture(async () => {
+        const res = await copyNodes({
+          componentUids: cb.uids,
+          destParentUid: currentParentUid,
+          includeInternalEdges: true,
+        });
+        const clones = res.nodes ?? [];
+        if (clones.length === 0) {
+          setError({ message: "paste: nothing cloned (sources may have been deleted)" });
+          return null;
+        }
+        // Plan the paste: flatten the cloned subtree, translate the TOP-LEVEL
+        // clones so their bounding-box centre lands at the cursor, and remap uid
+        // references in any copied __facets (lib/paste, tested). The single
+        // bulkUpdate is NON-FATAL — a rejected facet must not abort the paste
+        // (else clones are left unselected + the view un-reloaded).
+        const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
+        const { updates, newUids } = planPaste(clones, currentParentUid, cursor, res.uidMap);
+        try {
+          if (updates.length > 0) await bulkUpdate(updates);
+        } catch (e) {
+          console.error("paste: reposition/facet-remap failed:", (e as Error).message);
+        }
+        return newUids;
       });
-      const clones = res.nodes ?? [];
-      if (clones.length === 0) {
-        setError({ message: "paste: nothing cloned (sources may have been deleted)" });
-        return;
-      }
-      // Plan the paste: flatten the cloned subtree, translate the TOP-LEVEL
-      // clones so their bounding-box centre lands at the cursor, and remap uid
-      // references in any copied __facets (lib/paste, tested). The single
-      // bulkUpdate is NON-FATAL — a rejected facet must not abort the paste
-      // (else clones are left unselected + the view un-reloaded).
-      const cursor = rf.screenToFlowPosition(mouseScreenPos.current);
-      const { updates, newUids } = planPaste(clones, currentParentUid, cursor, res.uidMap);
-      try {
-        if (updates.length > 0) await bulkUpdate(updates);
-      } catch (e) {
-        console.error("paste: reposition/facet-remap failed:", (e as Error).message);
-      }
+      if (newUids == null) return;
       setPendingPasteSelection(newUids);
-      // Undo is engine-side now: the copy was journaled as a `copy` op, so
-      // Cmd/Z reverts it without the client tracking an inverse.
+      // Undo is engine-side now: the gesture was journaled as one entry, so
+      // Cmd/Z reverts the whole paste without the client tracking an inverse.
       await reload();
     } catch (e) {
       reportError(e);
@@ -1148,6 +1157,11 @@ function Inner({ base }: { base: string }) {
       if (!cmd) return;
       const key = e.key.toLowerCase();
       if (key === "c") {
+        // If the user has TEXT selected (e.g. in the debug log or a read-only
+        // example), let the browser copy it natively — only copy the canvas
+        // component selection when there's no text selection.
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.toString().trim()) return;
         e.preventDefault();
         copySelectionToClipboard();
       } else if (key === "v") {
@@ -2027,13 +2041,14 @@ function Inner({ base }: { base: string }) {
 
   // Explicit drag lifecycle from React Flow — used to maintain draggingNodes
   // and stream throttled position PATCHes. Replaces reading the unreliable
-  // `dragging` flag off NodeChange entries. (Position drags go through
-  // updateNode, which the engine journal doesn't cover, so they're not
-  // undoable — re-dragging is the recourse.)
+  // `dragging` flag off NodeChange entries. Position writes are journaled
+  // (`updateMetadata`); a fresh gesture id stamped here groups the whole drag's
+  // streamed frames + the final stop write into ONE undo entry.
   const onNodeDragStart = useCallback(
     (_e: unknown, _node: AnyNode, ns: AnyNode[]) => {
       const real = ns.filter((n) => n.type !== "ghost");
       for (const n of real) draggingNodes.current.add(n.id);
+      if (real.length > 0) setRestGestureId(newGestureId());
     },
     [],
   );
@@ -2061,6 +2076,8 @@ function Inner({ base }: { base: string }) {
         position: { x: Math.round(n.position.x), y: Math.round(n.position.y) },
       }));
       // Match the streaming path: single → /nodes/uid/{uid}, multi → /bulknodes.
+      // The gesture id (set on drag start) is still active here, so this final
+      // write joins the drag's undo group; clear it after dispatching.
       if (updates.length === 1) {
         const u = updates[0];
         updateNode(u.uid, { position: u.position }).catch((e) =>
@@ -2069,6 +2086,7 @@ function Inner({ base }: { base: string }) {
       } else {
         bulkUpdate(updates).catch((e) => reportError(e));
       }
+      setRestGestureId(null);
     },
     [cancelDragPatch],
   );
@@ -2508,28 +2526,33 @@ function Inner({ base }: { base: string }) {
       );
       const name = uniqueName("group", siblings);
       try {
-        const folder = await restAddNode({
-          type: "core-extRoot::Folder",
-          name,
-          parentUid: currentParentUid,
-          defaultValues: { position },
-        });
-        if (folder?.uid == null) return;
-        await bulkUpdate(uids.map((uid) => ({ uid, parentUid: folder.uid })));
-        if (boundary.size > 0) {
-          const facet: ComponentFacet = new Map();
-          for (const [propUid, b] of boundary) {
-            facet.set(propUid, {
-              expose: b.side,
-              childComponent: b.childComponent,
-              facetProp: b.facetProp,
-              label: b.label,
+        // One gesture id across all three writes (add folder + reparent members
+        // + write boundary facets) so the engine groups them into one atomic
+        // undo entry (opType `group`).
+        await withGesture(async () => {
+          const folder = await restAddNode({
+            type: "core-extRoot::Folder",
+            name,
+            parentUid: currentParentUid,
+            defaultValues: { position },
+          });
+          if (folder?.uid == null) return;
+          await bulkUpdate(uids.map((uid) => ({ uid, parentUid: folder.uid })));
+          if (boundary.size > 0) {
+            const facet: ComponentFacet = new Map();
+            for (const [propUid, b] of boundary) {
+              facet.set(propUid, {
+                expose: b.side,
+                childComponent: b.childComponent,
+                facetProp: b.facetProp,
+                label: b.label,
+              });
+            }
+            await updateNode(folder.uid, {
+              properties: { [FACET_PROP]: { value: serializeFacet(facet) } },
             });
           }
-          await updateNode(folder.uid, {
-            properties: { [FACET_PROP]: { value: serializeFacet(facet) } },
-          });
-        }
+        });
         await reload();
       } catch (e) {
         reportError(e);
@@ -2598,6 +2621,13 @@ function Inner({ base }: { base: string }) {
   const [splitPct, setSplitPct] = useState(55); // graph pane width %
   const splitRestore = useRef(55);
   const tableMaxed = splitPct <= 12;
+  // Drawer open/close animation: the graph pane's width transitions, and the
+  // drawer stays mounted until the close transition finishes (then unmounts).
+  // The transition is suppressed while dragging the split so resizing stays snappy.
+  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [splitDragging, setSplitDragging] = useState(false);
+  useEffect(() => { if (tableOpen) setDrawerMounted(true); }, [tableOpen]);
+  const drawerVisible = tableOpen || drawerMounted;
   // Loaded extensions (outer, right-edge tab level) and the active one. Each
   // extension's UIs become the inner side-strip tabs. Stubbed via getExtensions().
   const [extensions, setExtensions] = useState<ExtensionUi[]>([]);
@@ -2633,11 +2663,13 @@ function Inner({ base }: { base: string }) {
   }, []);
   const startSplitDrag = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
+    setSplitDragging(true);
     const move = (ev: PointerEvent) => {
       const pct = (ev.clientX / window.innerWidth) * 100;
       setSplitPct(Math.min(90, Math.max(10, pct)));
     };
     const up = () => {
+      setSplitDragging(false);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
     };
@@ -2723,6 +2755,9 @@ function Inner({ base }: { base: string }) {
             position:fixed overlays (dock, panels, menus) so they stay within the
             pane instead of spilling over the table. */}
         <div
+          onTransitionEnd={(e) => {
+            if (e.propertyName === "width" && !tableOpen) setDrawerMounted(false);
+          }}
           style={{
             position: "relative",
             height: "100%",
@@ -2730,6 +2765,7 @@ function Inner({ base }: { base: string }) {
             flexShrink: 0,
             transform: "translateZ(0)",
             overflow: "hidden",
+            transition: splitDragging ? "none" : "width 240ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
       <div
@@ -2757,6 +2793,11 @@ function Inner({ base }: { base: string }) {
           onNodeDrag={onNodeDrag}
           onNodeDragStop={onNodeDragStop}
           onConnect={onConnect}
+          // While dragging a connection, snap to the nearest handle within this
+          // radius (px, flow units) — extends the effective hit area a bit past
+          // the component edge so you don't have to land exactly on the port,
+          // and latches onto the closest one. Default is 20.
+          connectionRadius={38}
           onBeforeDelete={onBeforeDelete}
           onNodesDelete={onNodesDelete}
           onEdgesDelete={onEdgesDelete}
@@ -3062,14 +3103,14 @@ function Inner({ base }: { base: string }) {
           </div>
         )}
         </div>
-      {tableOpen && (
+      {drawerVisible && (
         <div
           onPointerDown={startSplitDrag}
           title="Drag to resize"
           style={{ width: 5, flexShrink: 0, cursor: "col-resize", background: "#2c313c" }}
         />
       )}
-      {tableOpen && (
+      {drawerVisible && (
         <div
           style={{
             flex: 1,
@@ -3077,6 +3118,7 @@ function Inner({ base }: { base: string }) {
             height: "100%",
             display: "flex",
             flexDirection: "column",
+            overflow: "hidden",
           }}
         >
           <div

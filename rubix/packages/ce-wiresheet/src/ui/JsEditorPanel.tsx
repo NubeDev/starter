@@ -32,6 +32,29 @@ const asStr = (v: unknown): string => (typeof v === "string" ? v : v == null ? "
 const splitIds = (s: string): string[] => s.split(",").map((x) => x.trim()).filter(Boolean);
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
+// The leading comment block of a script (a run of "//" lines, or a top block
+// comment) joined into one line — used as the description on the Scripts page.
+function topComment(src: string): string {
+  const lines = src.split("\n");
+  let i = 0;
+  while (i < lines.length && lines[i].trim() === "") i++;
+  const out: string[] = [];
+  if ((lines[i]?.trim() ?? "").startsWith("/*")) {
+    for (; i < lines.length; i++) {
+      const cleaned = lines[i].replace(/^\s*\/\*+/, "").replace(/\*+\/\s*$/, "").replace(/^\s*\*+\s?/, "").trim();
+      if (cleaned) out.push(cleaned);
+      if (lines[i].includes("*/")) break;
+    }
+  } else {
+    for (; i < lines.length; i++) {
+      const t = lines[i].trim();
+      if (t.startsWith("//")) out.push(t.replace(/^\/+\s?/, ""));
+      else break;
+    }
+  }
+  return out.join(" ").trim();
+}
+
 interface JsRow { uid: number; name: string; path?: string; scriptId: string }
 
 async function loadJsLogic(fullType: string, scriptIdProp: string): Promise<JsRow[]> {
@@ -158,16 +181,49 @@ function useSaveShortcut(active: boolean, save: () => void) {
   }, [active]);
 }
 
+const folderOf = (path?: string) => (path ? path.replace(/^root\/?/, "").split("/").slice(0, -1).join("/") : "");
+
 // "used by N components" — clarifies that editing a shared script affects all of
-// them. Amber when shared (>1).
-function SharingBadge({ rows, scriptId }: { rows: JsRow[]; scriptId: string }) {
+// them (amber when >1). Click to expand the list and Locate each on the canvas.
+function SharingBadge({ rows, scriptId, onLocate }: { rows: JsRow[]; scriptId: string; onLocate?: (uid: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
   if (!scriptId) return null;
   const users = rows.filter((r) => r.scriptId === scriptId);
   if (users.length === 0) return null;
   const multi = users.length > 1;
   return (
-    <span title={`Used by: ${users.map((u) => u.name).join(", ")}`} style={{ fontSize: 11, color: multi ? "#e0b341" : "#6a9a6a", whiteSpace: "nowrap" }}>
-      used by {users.length}{multi ? " ⚠" : ""}
+    <span ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        title="Components using this script"
+        style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, padding: "1px 6px", borderRadius: 10, cursor: "pointer", whiteSpace: "nowrap", background: multi ? "#2a2410" : "transparent", color: multi ? "#e0b341" : "#6a9a6a", border: `1px solid ${multi ? "#5a4a1a" : "#2c4a2c"}` }}
+      >
+        used by {users.length}{multi ? " ⚠" : ""} <span style={{ fontSize: 9, opacity: 0.7 }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, zIndex: 50, minWidth: 200, maxHeight: 240, overflow: "auto", background: "#1a1d24", border: "1px solid #2c313c", borderRadius: 6, boxShadow: "0 6px 20px rgba(0,0,0,0.4)", padding: 4 }}>
+          <div style={{ color: "#8892a0", fontSize: 10, padding: "2px 6px 4px", textTransform: "uppercase", letterSpacing: 0.4 }}>running this script</div>
+          {users.map((u) => (
+            <div key={u.uid} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 6px", fontSize: 12, color: "#e6e8eb", borderRadius: 4 }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</span>
+              {folderOf(u.path) && <span style={{ color: "#5a6172", fontSize: 10 }}>{folderOf(u.path)}</span>}
+              <span style={{ flex: 1 }} />
+              {onLocate && (
+                <button onClick={() => { onLocate(u.uid); setOpen(false); }} title="Locate on canvas" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, color: "#9aa3b2", background: "#2c313c", border: "1px solid #3a4150", borderRadius: 3, padding: "2px 6px", cursor: "pointer" }}>
+                  <Locate size={11} /> Locate
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </span>
   );
 }
@@ -200,17 +256,14 @@ function ComponentsIndex({ rows, serviceState, onOpen }: { rows: JsRow[]; servic
   return (
     <div style={{ padding: 8, display: "flex", flexDirection: "column", gap: 4 }}>
       <IndexHeader label="jsLogic components" count={rows.length} serviceState={serviceState} />
-      {rows.length === 0 ? <Empty>No jsLogic components on this engine.</Empty> : rows.map((r) => {
-        const folder = r.path ? r.path.replace(/^root\/?/, "").split("/").slice(0, -1).join("/") : "";
-        return (
-          <Row key={r.uid} onClick={() => onOpen(r.uid)}>
-            <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-            {folder && <span style={{ color: "#5a6172", fontSize: 10 }}>{folder}</span>}
-            <span style={{ flex: 1 }} />
-            <span style={{ color: r.scriptId ? "#9ecbff" : "#7a6a3a", fontSize: 11, fontFamily: "ui-monospace, monospace" }}>{r.scriptId || "no script"}</span>
-          </Row>
-        );
-      })}
+      {rows.length === 0 ? <Empty>No jsLogic components on this engine.</Empty> : rows.map((r) => (
+        <Row key={r.uid} onClick={() => onOpen(r.uid)}>
+          <span style={{ fontWeight: 500, flexShrink: 0 }}>{r.name}</span>
+          {r.path && <span style={{ color: "#5a6172", fontSize: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.path}</span>}
+          <span style={{ flex: 1 }} />
+          <span style={{ color: r.scriptId ? "#9ecbff" : "#7a6a3a", fontSize: 11, fontFamily: "ui-monospace, monospace", flexShrink: 0 }}>{r.scriptId || "no script"}</span>
+        </Row>
+      ))}
     </div>
   );
 }
@@ -236,6 +289,24 @@ function JsScriptsPanel({ node, ctx }: WidgetProps) {
   }, [serviceUid, c.listAction]);
   const all = useMemo(() => Array.from(new Set([...scripts, ...localIds])).sort(), [scripts, localIds]);
 
+  // Descriptions = each script's leading comment. Fetched lazily once per id
+  // (a getScript per script); may be stale after an edit until reopened.
+  const [descs, setDescs] = useState<Record<string, string>>({});
+  const fetchedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const call = ctxRef.current.callAction;
+    if (serviceUid == null || !call) return;
+    let alive = true;
+    for (const id of all) {
+      if (fetchedRef.current.has(id)) continue;
+      fetchedRef.current.add(id);
+      call(serviceUid, c.loadAction, { [c.scriptIdParam]: id })
+        .then((r) => { if (alive) setDescs((p) => ({ ...p, [id]: topComment(asStr(r?.[c.sourceKey])) })); })
+        .catch(() => { fetchedRef.current.delete(id); });
+    }
+    return () => { alive = false; };
+  }, [all, serviceUid, c.loadAction, c.scriptIdParam, c.sourceKey]);
+
   const create = useCallback((id: string, open: (id: string) => void) => {
     const call = ctxRef.current.callAction;
     if (serviceUid == null || !call || !id) return;
@@ -250,7 +321,7 @@ function JsScriptsPanel({ node, ctx }: WidgetProps) {
       pinned={{ id: "index", label: "All", icon: <FileCode2 size={13} /> }}
       tabLabel={(id) => id}
       closeGuard={(id) => !dirtyRef.current[id] || window.confirm("Discard unsaved changes to this script?")}
-      renderIndex={(open) => <ScriptsIndex scripts={all} rows={rows} serviceState={serviceState} onOpen={open} onCreate={(id) => create(id, open)} />}
+      renderIndex={(open) => <ScriptsIndex scripts={all} rows={rows} descs={descs} serviceState={serviceState} onOpen={open} onCreate={(id) => create(id, open)} />}
       renderTab={(id, active) => (
         <ScriptEditor scriptId={id} active={active} cfg={c} ctx={ctx} serviceUid={serviceUid} serviceState={serviceState} rows={rows} onDirty={(d) => { dirtyRef.current[id] = d; }} />
       )}
@@ -258,8 +329,8 @@ function JsScriptsPanel({ node, ctx }: WidgetProps) {
   );
 }
 
-function ScriptsIndex({ scripts, rows, serviceState, onOpen, onCreate }: {
-  scripts: string[]; rows: JsRow[]; serviceState: string; onOpen: (id: string) => void; onCreate: (id: string) => void;
+function ScriptsIndex({ scripts, rows, descs, serviceState, onOpen, onCreate }: {
+  scripts: string[]; rows: JsRow[]; descs: Record<string, string>; serviceState: string; onOpen: (id: string) => void; onCreate: (id: string) => void;
 }) {
   const [creating, setCreating] = useState(false);
   const [newId, setNewId] = useState("");
@@ -287,9 +358,10 @@ function ScriptsIndex({ scripts, rows, serviceState, onOpen, onCreate }: {
         return (
           <Row key={id} onClick={() => onOpen(id)}>
             <FileCode2 size={13} style={{ flexShrink: 0, color: "#8892a0" }} />
-            <span style={{ fontWeight: 500, fontFamily: "ui-monospace, monospace" }}>{id}</span>
+            <span style={{ fontWeight: 500, fontFamily: "ui-monospace, monospace", flexShrink: 0 }}>{id}</span>
+            {descs[id] && <span style={{ color: "#5a6172", fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{descs[id]}</span>}
             <span style={{ flex: 1 }} />
-            <span style={{ color: users > 1 ? "#e0b341" : "#5a6172", fontSize: 10 }}>{users === 0 ? "unused" : `used by ${users}`}</span>
+            <span style={{ color: users > 1 ? "#e0b341" : "#5a6172", fontSize: 10, flexShrink: 0 }}>{users === 0 ? "unused" : `used by ${users}`}</span>
           </Row>
         );
       })}
@@ -314,7 +386,7 @@ function ScriptEditor({ scriptId, active, cfg: c, ctx, serviceUid, serviceState,
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderBottom: "1px solid #2c313c", flexShrink: 0, flexWrap: "wrap" }}>
         <FileCode2 size={13} style={{ color: "#8892a0" }} />
         <span style={{ fontSize: 12, fontWeight: 600, fontFamily: "ui-monospace, monospace" }}>{scriptId}</span>
-        <SharingBadge rows={rows} scriptId={scriptId} />
+        <SharingBadge rows={rows} scriptId={scriptId} onLocate={ctx.locate} />
         {serviceState === "missing" && <span style={{ color: "#e0707a", fontSize: 11 }}>jsScriptStore not found</span>}
         {loading && <span style={{ color: "#5a6172", fontSize: 11 }}>loading…</span>}
         {dirty && <span style={{ color: "#e0b341", fontSize: 11 }}>● unsaved</span>}
@@ -529,7 +601,7 @@ function JsScriptEditor({ componentUid, active, cfg: c, ctx, service, serviceSta
           {scriptId === "" && <option value="" disabled>— select —</option>}
           {Array.from(new Set([scriptId, ...available].filter(Boolean))).map((id) => <option key={id} value={id}>{id}</option>)}
         </select>
-        <SharingBadge rows={rows} scriptId={scriptId} />
+        <SharingBadge rows={rows} scriptId={scriptId} onLocate={ctx.locate} />
         {creating ? (
           <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <input autoFocus value={newId} onChange={(e) => setNewId(e.target.value)} placeholder="new script id"

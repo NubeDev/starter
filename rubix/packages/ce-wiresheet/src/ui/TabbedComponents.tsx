@@ -36,7 +36,7 @@ function TabbedComponents({ node, ctx }: WidgetProps) {
   // In-folder matches (live from the structural store).
   const components = useStructural((s) => s.components);
   const inFolder = useMemo(
-    () => [...components.values()].filter((c) => typeMatches(c.type, kind)).map((c) => ({ uid: c.uid, name: c.name || `#${c.uid}` })),
+    () => [...components.values()].filter((c) => typeMatches(c.type, kind)).map((c) => ({ uid: c.uid, name: c.name || `#${c.uid}`, path: c.path })),
     [components, kind],
   );
   // Global scan of the exact type (poll), merged in as "elsewhere".
@@ -52,7 +52,7 @@ function TabbedComponents({ node, ctx }: WidgetProps) {
 
   const rows: Row[] = useMemo(() => {
     const seen = new Set(inFolder.map((r) => r.uid));
-    const local: Row[] = inFolder.map((r) => ({ uid: r.uid, name: r.name }));
+    const local: Row[] = inFolder.map((r) => ({ uid: r.uid, name: r.name, path: r.path }));
     const elsewhere: Row[] = global
       .filter((g) => !seen.has(g.uid))
       .map((g) => ({ uid: g.uid, name: g.name ?? `#${g.uid}`, path: g.path, elsewhere: true }));
@@ -129,21 +129,18 @@ function Index({ rows, openUids, active, onOpen, label }: {
       {rows.length === 0 ? (
         <div style={{ color: "#5a6172", fontSize: 12, padding: 6 }}>none</div>
       ) : (
-        rows.map((r) => {
-          const folder = r.path ? r.path.replace(/^root\/?/, "").split("/").slice(0, -1).join("/") : "";
-          return (
-            <button key={r.uid} onClick={() => onOpen(r.uid)} style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", textAlign: "left",
-              background: active === r.uid ? "#1d2330" : "#1a1d24", border: "1px solid #2c313c", borderRadius: 5,
-              cursor: "pointer", color: "#e6e8eb", fontSize: 12,
-            }}>
-              <span style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
-              {folder && <span style={{ color: "#5a6172", fontSize: 10 }}>{folder}</span>}
-              <span style={{ flex: 1 }} />
-              {openUids.includes(r.uid) && <span style={{ color: "#5a6172", fontSize: 10 }}>open</span>}
-            </button>
-          );
-        })
+        rows.map((r) => (
+          <button key={r.uid} onClick={() => onOpen(r.uid)} style={{
+            display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", textAlign: "left",
+            background: active === r.uid ? "#1d2330" : "#1a1d24", border: "1px solid #2c313c", borderRadius: 5,
+            cursor: "pointer", color: "#e6e8eb", fontSize: 12,
+          }}>
+            <span style={{ fontWeight: 500, flexShrink: 0 }}>{r.name}</span>
+            {r.path && <span style={{ color: "#5a6172", fontSize: 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.path}</span>}
+            <span style={{ flex: 1 }} />
+            {openUids.includes(r.uid) && <span style={{ color: "#5a6172", fontSize: 10 }}>open</span>}
+          </button>
+        ))
       )}
     </div>
   );
