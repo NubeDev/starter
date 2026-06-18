@@ -5,7 +5,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Save } from "lucide-react";
-import { useStructural, useValues } from "../lib/store";
+import { useValues } from "../lib/store";
+import { useComponent } from "./useComponent";
 import { updateNode } from "../lib/rest";
 import { fmtDateTime } from "../lib/format";
 import { registerWidget, type WidgetProps } from "./registry";
@@ -72,7 +73,7 @@ export function cronNextRuns(expr: string, fromMs: number, count: number): numbe
 }
 
 function CronPanel({ node, ctx }: WidgetProps) {
-  const comp = useStructural((s) => (ctx.componentUid != null ? s.components.get(ctx.componentUid) : undefined));
+  const comp = useComponent(ctx.componentUid);
   // manifest: cron has `expr` (string input) + `hold` (uint input) + `out`.
   const propName = node.bind?.prop ?? "expr";
   const uid = comp?.properties[propName]?.uid;

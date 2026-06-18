@@ -4,7 +4,8 @@
 // outputs live, Start/Cancel call the `startTimer` / `cancelTimer` actions.
 
 import { useEffect, useState } from "react";
-import { useStructural, useValues } from "../lib/store";
+import { useValues } from "../lib/store";
+import { useComponent } from "./useComponent";
 import { Play, Square } from "lucide-react";
 import { fmtDateTime } from "../lib/format";
 import { registerWidget, type WidgetProps } from "./registry";
@@ -25,7 +26,7 @@ function fmtDur(s: number): string {
 }
 
 function TimerPanel({ ctx }: WidgetProps) {
-  const comp = useStructural((s) => (ctx.componentUid != null ? s.components.get(ctx.componentUid) : undefined));
+  const comp = useComponent(ctx.componentUid);
   const outUid = comp?.properties["out"]?.uid;
   const endUid = comp?.properties["timerEnd"]?.uid;
   const out = useValues((s) => (outUid != null ? s.values.get(outUid) : undefined));

@@ -26,6 +26,7 @@ import { fmtValueFacet, inferDataType } from "../lib/format";
 import { FolderUp, ArrowUp, ArrowDown, Eye, EyeOff, Link2, CornerDownRight } from "lucide-react";
 import type { Component, FlexValue } from "../lib/engine-types";
 import { DefaultEditor, OverrideEditor } from "./valueEditors";
+import { CopyButton } from "./CopyButton";
 
 export interface CollectionWidgetProps {
   currentParentUid: number;
@@ -179,6 +180,9 @@ const ValueCell = memo(function ValueCell({
               padding: 8,
             }}
           >
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+              <CopyButton text={typeof full === "string" ? full : String(full ?? "")} />
+            </div>
             <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#e6e8eb", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 11 }}>
               {full || "—"}
             </div>

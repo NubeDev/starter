@@ -18,8 +18,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { ChevronRight, ChevronLeft, CornerDownRight, X, Maximize2, Minimize2 } from "lucide-react";
-import { ComponentTable } from "./components/ComponentTable";
 import { UiTabHost } from "./ui/UiTabHost";
+import { CopyButton } from "./ui/CopyButton";
 import { ExtensionStrip } from "./ui/ExtensionStrip";
 import { getExtensions } from "./lib/ui/root-ext-stub";
 import type { ExtensionUi } from "./lib/ui/types";
@@ -2598,9 +2598,6 @@ function Inner({ base }: { base: string }) {
   const [splitPct, setSplitPct] = useState(55); // graph pane width %
   const splitRestore = useRef(55);
   const tableMaxed = splitPct <= 12;
-  // Right pane content: the legacy full table, or the new declarative UI tab host
-  // (root-ext UIs). Kept side-by-side so we can compare features while building.
-  const [rightMode, setRightMode] = useState<"legacy" | "tabs">("legacy");
   // Loaded extensions (outer, right-edge tab level) and the active one. Each
   // extension's UIs become the inner side-strip tabs. Stubbed via getExtensions().
   const [extensions, setExtensions] = useState<ExtensionUi[]>([]);
@@ -2618,8 +2615,9 @@ function Inner({ base }: { base: string }) {
   }, []);
   const activeExt = extensions.find((e) => e.id === activeExtId) ?? extensions[0] ?? null;
   const openExtension = (id: string) => {
+    // Toggle: clicking the already-open extension's tab closes the drawer.
+    if (tableOpen && activeExtId === id) { setTableOpen(false); return; }
     setActiveExtId(id);
-    setRightMode("tabs");
     setTableOpen(true);
   };
   // Replace the graph selection with exactly the given component uids (the table
@@ -3057,7 +3055,7 @@ function Inner({ base }: { base: string }) {
           >
             <ExtensionStrip
               extensions={extensions}
-              activeId={activeExtId}
+              activeId={tableOpen ? activeExtId : null}
               onSelect={openExtension}
               variant="edge"
             />
@@ -3092,24 +3090,9 @@ function Inner({ base }: { base: string }) {
               flexShrink: 0,
             }}
           >
-            <div style={{ display: "flex", gap: 2, marginRight: "auto" }}>
-              {(["legacy", "tabs"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setRightMode(m)}
-                  style={{
-                    ...tableChromeBtn,
-                    width: "auto",
-                    padding: "2px 8px",
-                    fontSize: 10,
-                    color: rightMode === m ? "#e6e8eb" : "#5a6172",
-                    background: rightMode === m ? "#2c313c" : "transparent",
-                  }}
-                >
-                  {m === "legacy" ? "Legacy table" : "UI tabs"}
-                </button>
-              ))}
-            </div>
+            <span style={{ marginRight: "auto", paddingLeft: 4, fontSize: 12, fontWeight: 600, color: "#e6e8eb" }}>
+              {activeExt?.label ?? ""}
+            </span>
             <button
               title={tableMaxed ? "Restore split" : "Maximize table"}
               onClick={() => {
@@ -3128,22 +3111,7 @@ function Inner({ base }: { base: string }) {
             </button>
           </div>
           <div style={{ flex: 1, minHeight: 0 }}>
-            {rightMode === "legacy" ? (
-              <ComponentTable
-                currentParentUid={currentParentUid}
-                selectedUids={tableSelected}
-                onSelect={onTableSelect}
-                onDrillIn={enter}
-                onNameContextMenu={openNodeContextMenu}
-                onRowsChange={onTableRows}
-                onSetOverride={onTableSetOverride}
-                onSetDefault={onTableSetDefault}
-                onClearOverride={onTableClearOverride}
-                canGoUp={crumbs.length > 1}
-                onUp={() => goToCrumb(crumbs.length - 2)}
-              />
-            ) : (
-              activeExt && (
+            {activeExt && (
                 <UiTabHost
                   uis={activeExt.uis}
                   currentParentUid={currentParentUid}
@@ -3168,8 +3136,8 @@ function Inner({ base }: { base: string }) {
                     }
                   }}
                   onSubscribeProps={subscribeProps}
+                  onLocate={(uid) => void goToComponent(uid)}
                 />
-              )
             )}
           </div>
         </div>
@@ -4555,8 +4523,11 @@ function ActionPicker({
               Object.entries(result).map(([k, v]) => (
                 <div key={k} style={acRow}>
                   <span style={{ color: "#8892a0" }}>{k}</span>
-                  <span style={{ color: "#e6e8eb", fontVariantNumeric: "tabular-nums" }}>
-                    {String(v)}
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                    <span style={{ color: "#e6e8eb", fontVariantNumeric: "tabular-nums", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {String(v)}
+                    </span>
+                    {String(v).length > 0 && <CopyButton text={String(v)} title={`Copy ${k}`} compact />}
                   </span>
                 </div>
               ))

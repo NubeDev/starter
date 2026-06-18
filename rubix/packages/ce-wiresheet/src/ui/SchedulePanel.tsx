@@ -89,14 +89,15 @@ function SchedulePanel({ node, ctx }: WidgetProps) {
   // this is additive and covers the cross-folder (off-canvas) case. Property
   // subscribe is per-prop, so it works without the component being on the canvas.
   const subscribeProps = ctx.subscribeProps;
+  const activeTab = ctx.active;
   useEffect(() => {
-    if (!subscribeProps || !comp) return;
+    if (!subscribeProps || !comp || activeTab === false) return;
     const uids = [propName, "out", "active", "nextChange"]
       .map((n) => comp.properties[n]?.uid)
       .filter((u): u is number => typeof u === "number");
     if (uids.length === 0) return;
     return subscribeProps(uids);
-  }, [subscribeProps, comp, propName]);
+  }, [subscribeProps, comp, propName, activeTab]);
 
   const uid = comp ? comp.properties[propName]?.uid : undefined;
   const live = useValues((s) => (uid != null ? s.values.get(uid) : undefined));

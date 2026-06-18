@@ -33,6 +33,7 @@ import type { DecodedValue } from "../lib/wire";
 import { facetFor, rawFacet, exposedPorts, FACET_PROP, type PropFacet } from "../lib/facet";
 import { withChoices } from "../lib/choices";
 import { fmtValueFacet, inferDataType } from "../lib/format";
+import { CopyButton } from "../ui/CopyButton";
 import {
   buildConnectGroups,
   filterConnectGroups,
@@ -1369,7 +1370,9 @@ function PropertyValueEditor({
                   }}
                   style={{ ...overrideInputStyle, width: "100%", resize: "vertical" }}
                 />
-                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", alignItems: "center" }}>
+                  <CopyButton text={draft} />
+                  <span style={{ flex: 1 }} />
                   <button onClick={cancel} style={popupBtn(false)}>cancel</button>
                   <button onClick={commit} style={popupBtn(true)}>save</button>
                 </div>
@@ -1682,6 +1685,9 @@ function ReadonlyValue({
               padding: 8,
             }}
           >
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 6 }}>
+              <CopyButton text={typeof full === "string" ? full : String(full ?? "")} />
+            </div>
             <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", color: "#e6e8eb", fontFamily: "ui-monospace, SFMono-Regular, monospace", fontSize: 11 }}>
               {full || "—"}
             </div>

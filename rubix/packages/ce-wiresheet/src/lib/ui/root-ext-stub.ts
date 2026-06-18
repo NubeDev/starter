@@ -80,34 +80,56 @@ const CE_TREE: UiEntry = {
  *  calendar grid), timer, and cron. Each is a `follow` UI bound to its type;
  *  when nothing matching is selected the host shows a 3-column picker (one per
  *  type). Timer/cron editors are placeholders until their manifests land. */
+// Each scheduler kind is its own tabbed editor: a pinned "All" index of that
+// kind + a tab per opened instance. The sidebar (UiTabHost strip) switches
+// between the three kinds. `fullType` powers the global index; in-folder
+// instances show even if it's wrong. TODO: verify the timer/cron full types
+// against the schedule extension manifest (only `schedule` instances exist on
+// the test engine to confirm against).
 const SCHEDULE_UI: UiEntry = {
   id: "schedule",
   label: "Schedule",
   icon: "calendar",
-  selection: "follow",
-  appliesTo: "schedule",
-  global: true,
-  fullType: "NubeIO-schedule::schedule",
+  selection: "ignore",
   view: {
     type: "layout",
-    children: [{ type: "schedule", bind: { prop: "config" }, action: { name: "setSchedule", label: "Save", target: "component" } }],
+    children: [{
+      type: "tabbedEditor",
+      fullType: "NubeIO-schedule::schedule",
+      indexLabel: "schedules",
+      inner: { type: "schedule", bind: { prop: "config" }, action: { name: "setSchedule", label: "Save", target: "component" } },
+    }],
   },
 };
 const TIMER_UI: UiEntry = {
   id: "timer",
   label: "Timer",
   icon: "timer",
-  selection: "follow",
-  appliesTo: "timer",
-  view: { type: "layout", children: [{ type: "timer" }] },
+  selection: "ignore",
+  view: {
+    type: "layout",
+    children: [{
+      type: "tabbedEditor",
+      fullType: "NubeIO-schedule::timer",
+      indexLabel: "timers",
+      inner: { type: "timer" },
+    }],
+  },
 };
 const CRON_UI: UiEntry = {
   id: "cron",
   label: "Cron",
   icon: "cron",
-  selection: "follow",
-  appliesTo: "cron",
-  view: { type: "layout", children: [{ type: "cron", bind: { prop: "expr" }, action: { name: "setCron", label: "Set", target: "component" } }] },
+  selection: "ignore",
+  view: {
+    type: "layout",
+    children: [{
+      type: "tabbedEditor",
+      fullType: "NubeIO-schedule::cron",
+      indexLabel: "crons",
+      inner: { type: "cron", bind: { prop: "expr" }, action: { name: "setCron", label: "Set", target: "component" } },
+    }],
+  },
 };
 
 /** "JS" extension (NubeIO-js manifest). Lists all `jsLogic` components globally
@@ -123,15 +145,15 @@ const JS_EDITOR_UI: UiEntry = {
   id: "js-editor",
   label: "Script",
   icon: "code",
-  selection: "follow",
-  appliesTo: "jsLogic",
-  global: true,
-  fullType: "NubeIO-js::jsLogic",
+  // The panel manages its own tabs + global jsLogic index, so the host doesn't
+  // bind it to the canvas selection.
+  selection: "ignore",
   view: {
     type: "layout",
     children: [
       {
         type: "jsEditor",
+        fullType: "NubeIO-js::jsLogic",
         serviceType: "jsScriptStore",
         loadAction: "getScript",
         sourceKey: "source",
@@ -140,6 +162,8 @@ const JS_EDITOR_UI: UiEntry = {
         scriptIdSetAction: "setScript",
         availableScriptsProp: "availableScripts",
         listAction: "listScripts",
+        apiAction: "getApi",
+        exampleAction: "getExamples",
         bind: { prop: "log" },
         action: { name: "putScript", label: "Save", target: "component" },
       },
@@ -149,8 +173,8 @@ const JS_EDITOR_UI: UiEntry = {
 
 export const EXTENSIONS_STUB: ExtensionUi[] = [
   { id: "ce", label: "Control Engine", icon: "cpu", uis: [CE_TABLE, CE_TREE, CE_DEMO] },
-  { id: "scheduler", label: "Scheduler (stub)", icon: "calendar", uis: [SCHEDULE_UI, TIMER_UI, CRON_UI] },
-  { id: "alarms", label: "Alarms (stub)", icon: "bell", uis: [ALARMS_HOME, ALARMS_HISTORY] },
+  { id: "scheduler", label: "Scheduler", icon: "calendar", uis: [SCHEDULE_UI, TIMER_UI, CRON_UI] },
+  { id: "alarms", label: "Alarms", icon: "bell", uis: [ALARMS_HOME, ALARMS_HISTORY] },
   { id: "js", label: "JavaScript", icon: "code", uis: [JS_EDITOR_UI] },
 ];
 

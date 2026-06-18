@@ -28,6 +28,13 @@ export interface RenderCtx {
   /** Write a value to a component property (maps to the host's set-default path).
    *  Used by widgets that change a config/input prop, e.g. a jsLogic's scriptId. */
   setValue?: (componentUid: number, property: string, value: FlexValue) => void;
+  /** Whether this widget is the currently-visible one (e.g. the active editor
+   *  tab). Mounted-but-inactive widgets should skip the value subscription, since
+   *  the host's prop-subscription holds a single active set. Defaults to active. */
+  active?: boolean;
+  /** Navigate the canvas to a component (drill into its folder + center/select).
+   *  Powers "locate" buttons that jump from a drawer view to the node. */
+  locate?: (componentUid: number) => void;
 }
 
 export interface WidgetProps {

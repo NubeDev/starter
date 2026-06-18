@@ -112,7 +112,11 @@ export function getRootNodes(opts?: {
   if (opts?.withEdges != null) q.set("withEdges", String(opts.withEdges));
   if (opts?.type != null) q.set("type", opts.type);
   if (opts?.values != null) q.set("values", String(opts.values));
-  const qs = q.toString();
+  // The engine matches the `type` filter literally and does NOT url-decode it, so
+  // the "vendor-ext::name" colons must stay raw — URLSearchParams encodes ':' to
+  // %3A, which would never match (silently returning 0). No other param carries a
+  // colon, so unescaping them in the final query string is safe.
+  const qs = q.toString().replace(/%3A/g, ":");
   return http<ReadNodesResponse>("GET", `/nodes${qs ? "?" + qs : ""}`);
 }
 

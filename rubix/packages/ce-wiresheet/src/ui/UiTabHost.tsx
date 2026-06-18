@@ -21,6 +21,7 @@ import "./AlarmPanel"; // register alarms
 import "./AlarmHistoryPanel"; // register alarmHistory
 import "./CronPanel"; // register cron
 import "./JsEditorPanel"; // register jsEditor
+import "./TabbedComponents"; // register tabbedEditor
 
 injectUiStyles();
 
@@ -53,6 +54,8 @@ export interface UiTabHostProps {
   onCallAction?: (componentUid: number, name: string, params?: Record<string, FlexValue>) => Promise<Record<string, FlexValue>>;
   /** subscribe a prop-uid set to the live WS stream while a widget is mounted */
   onSubscribeProps?: (propUids: number[]) => () => void;
+  /** navigate the canvas to a component (drill in + center/select) */
+  onLocate?: (componentUid: number) => void;
 }
 
 export function UiTabHost({ uis, ...props }: UiTabHostProps) {
@@ -93,6 +96,7 @@ export function UiTabHost({ uis, ...props }: UiTabHostProps) {
             <button
               key={u.id}
               title={u.label}
+              aria-label={u.label}
               onClick={() => setActiveId(u.id)}
               style={{
                 display: "flex",
@@ -114,7 +118,11 @@ export function UiTabHost({ uis, ...props }: UiTabHostProps) {
       </div>
       {/* active view, full-bleed */}
       <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-        {active && <ViewBody entry={active} uis={uis} onPickUi={setActiveId} {...props} />}
+        {/* Key by the submenu id so each UI gets its own component instance —
+            otherwise two same-typed views (e.g. the schedule/timer/cron
+            `tabbedEditor`s) would share one instance and their open tabs would
+            bleed across submenus. */}
+        {active && <ViewBody key={active.id} entry={active} uis={uis} onPickUi={setActiveId} {...props} />}
       </div>
     </div>
   );
@@ -155,6 +163,7 @@ function ViewBody({
     callAction: props.onCallAction,
     subscribeProps: props.onSubscribeProps,
     setValue: props.onSetDefault,
+    locate: props.onLocate,
   };
 
   if (view.type === "collection") {
