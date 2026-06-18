@@ -14,14 +14,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
-import { autocompletion } from "@codemirror/autocomplete";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { Save, RefreshCw, Trash2, Plus, Locate, BookOpen, Copy, FileCode2 } from "lucide-react";
 import { useStructural, useValues } from "../lib/store";
 import type { Component, FlexValue } from "../lib/engine-types";
 import { getNodeByUid, getRootNodes } from "../lib/rest";
 import { resolveJsStore } from "./jsScriptStore";
-import { loadJsApi, jsCompletionSource, loadExamples, type JsSymbol, type JsExample } from "./jsApi";
+import { loadJsApiRaw, loadExamples, type JsSymbol, type JsExample } from "./jsApi";
+import { tsEditorExtensions } from "./tsExtensions";
 import { getDraft, hasDraft, setDraft, clearDraft } from "./scriptDraft";
 import { TabShell, shellIconBtn } from "./TabShell";
 import { registerWidget, type WidgetProps } from "./registry";
@@ -110,14 +110,17 @@ function useJsLogicRows(fullType: string, scriptIdProp: string) {
 
 function useJsExtensions(serviceUid: number | null, ctxRef: React.MutableRefObject<RenderCtx>, apiAction: string) {
   const symbolsRef = useRef<JsSymbol[]>([]);
+  const dtsRef = useRef<string>("");
   useEffect(() => {
     const call = ctxRef.current.callAction;
     if (serviceUid == null || !call) return;
     let alive = true;
-    loadJsApi(call, serviceUid, apiAction).then((s) => { if (alive) symbolsRef.current = s; }).catch(() => {});
+    loadJsApiRaw(call, serviceUid, apiAction).then((r) => { if (alive) { symbolsRef.current = r.symbols; dtsRef.current = r.dts; } }).catch(() => {});
     return () => { alive = false; };
   }, [serviceUid, apiAction]);
-  return useMemo(() => [javascript(), autocompletion({ override: [jsCompletionSource(symbolsRef)] })], []);
+  // Full TS service (autocomplete + hover + lint), falling back to the symbol
+  // source until the dts loads. Refs keep the extension list stable.
+  return useMemo(() => [javascript(), ...tsEditorExtensions(dtsRef, symbolsRef)], []);
 }
 
 // Source state for one scriptId: load (draft-aware), edit (caches a draft so it

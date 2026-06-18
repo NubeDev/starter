@@ -55,25 +55,32 @@ export function loadExamples(call: CallAction, serviceUid: number, action = "get
   return pr;
 }
 
-const cache = new Map<number, Promise<JsSymbol[]>>();
+/** Parsed getApi payload: completion `symbols` + the `dts` declaration text. */
+export interface JsApi { symbols: JsSymbol[]; dts: string }
 
-/** Fetch + cache the script API symbols for a jsScriptStore (keyed by its uid). */
-export function loadJsApi(call: CallAction, serviceUid: number, action = "getApi"): Promise<JsSymbol[]> {
+const cache = new Map<number, Promise<JsApi>>();
+
+/** Fetch + cache the raw getApi payload for a jsScriptStore (keyed by its uid).
+ *  One network call backs both the symbols and the dts. */
+export function loadJsApiRaw(call: CallAction, serviceUid: number, action = "getApi"): Promise<JsApi> {
   let pr = cache.get(serviceUid);
   if (!pr) {
     pr = call(serviceUid, action, {}).then((ret) => {
-      const raw = typeof ret?.symbols === "string" ? ret.symbols : "";
-      try {
-        const arr = JSON.parse(raw);
-        return Array.isArray(arr) ? (arr as JsSymbol[]) : [];
-      } catch {
-        return [];
-      }
+      const rawSyms = typeof ret?.symbols === "string" ? ret.symbols : "";
+      const dts = typeof ret?.dts === "string" ? ret.dts : "";
+      let symbols: JsSymbol[] = [];
+      try { const arr = JSON.parse(rawSyms); if (Array.isArray(arr)) symbols = arr as JsSymbol[]; } catch { /* ignore */ }
+      return { symbols, dts };
     });
     cache.set(serviceUid, pr);
     pr.catch(() => cache.delete(serviceUid)); // don't cache a failed fetch
   }
   return pr;
+}
+
+/** Fetch + cache the script API completion symbols (legacy/fallback source). */
+export function loadJsApi(call: CallAction, serviceUid: number, action = "getApi"): Promise<JsSymbol[]> {
+  return loadJsApiRaw(call, serviceUid, action).then((r) => r.symbols);
 }
 
 const typeOf = (k?: string): Completion["type"] =>
