@@ -15,6 +15,11 @@ export default defineConfig({
   },
   server: {
     port: 5185,
+    // Bind IPv4 explicitly. Vite's default host is `localhost`, which Node
+    // (>=17, `verbatim` DNS order) resolves to `::1` first on dual-stack
+    // boxes whose /etc/hosts lists `::1 localhost` — so the dev server ends
+    // up IPv6-only and browsers preferring IPv4 `127.0.0.1` fail to connect.
+    host: '127.0.0.1',
     // Allow tailnet (.ts.net) Host headers so a Tailscale funnel/serve can
     // reach this dev server (Vite's host-check otherwise 403s the forwarded
     // funnel request).

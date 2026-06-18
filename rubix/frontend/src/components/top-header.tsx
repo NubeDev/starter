@@ -218,12 +218,16 @@ function UserMenu() {
 }
 
 function HeaderTrailing() {
+  // The dock supplies the unique tools (search, locale, palette, config).
+  // Theme + user are rendered explicitly here (real auth-backed UserMenu),
+  // so we suppress the dock's own duplicates to avoid two theme switchers
+  // / two user menus overflowing the header pill.
   return (
     <div className="flex items-center gap-2">
       <TenantIndicator />
+      <ActionDock inline includeTheme={false} includeUser={false} compactSearch />
       <ThemeToggle />
       <UserMenu />
-      <ActionDock inline />
     </div>
   )
 }

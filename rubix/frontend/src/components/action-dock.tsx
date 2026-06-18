@@ -18,22 +18,29 @@ const PALETTES: { id: Palette; labelKey: string; swatch: string }[] = [
   { id: 'sunset', labelKey: 'palette.sunset', swatch: 'linear-gradient(135deg,#f97316,#b21368)' },
 ]
 
-function SearchPill() {
+function SearchPill({ compact = false }: { compact?: boolean }) {
   const intl = useIntl()
   const label = intl.formatMessage({ id: 'a11y.searchButton' })
+  // Compact: icon-only at every width. Used in the header-mode pill,
+  // which is already nav-heavy and has no room for the wide search box.
   return (
     <>
       <button
         aria-label={label}
-        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] md:hidden"
+        className={cn(
+          'flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]',
+          !compact && 'md:hidden',
+        )}
       >
         <Search className="h-4 w-4" />
       </button>
-      <button className="hidden h-9 w-56 cursor-pointer items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 px-3.5 text-sm text-[color:var(--color-subtle)] transition-colors hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-surface-2)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] md:flex">
-        <Search className="h-3.5 w-3.5 shrink-0" />
-        <span className="flex-1 truncate text-left">{intl.formatMessage({ id: 'common.search' })}</span>
-        <kbd className="shrink-0 rounded border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/50 px-1.5 py-[1px] font-sans text-[11px] leading-none tracking-wide">Ctrl K</kbd>
-      </button>
+      {!compact && (
+        <button className="hidden h-9 w-56 cursor-pointer items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 px-3.5 text-sm text-[color:var(--color-subtle)] transition-colors hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-surface-2)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] md:flex">
+          <Search className="h-3.5 w-3.5 shrink-0" />
+          <span className="flex-1 truncate text-left">{intl.formatMessage({ id: 'common.search' })}</span>
+          <kbd className="shrink-0 rounded border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/50 px-1.5 py-[1px] font-sans text-[11px] leading-none tracking-wide">Ctrl K</kbd>
+        </button>
+      )}
     </>
   )
 }
@@ -183,18 +190,35 @@ function UserMenu() {
   )
 }
 
-export function ActionDock({ inline = false }: { inline?: boolean } = {}) {
+export function ActionDock({
+  inline = false,
+  includeTheme = true,
+  includeUser = true,
+  compactSearch = false,
+}: {
+  inline?: boolean
+  /** Render the theme switcher. Set false where a theme control is
+   * already provided alongside the dock (e.g. header-mode trailing,
+   * which renders its own ThemeToggle) to avoid a duplicate. */
+  includeTheme?: boolean
+  /** Render the (placeholder) user menu. Set false where a real
+   * auth-backed user menu is rendered alongside the dock. */
+  includeUser?: boolean
+  /** Use the icon-only search button instead of the wide search box.
+   * Set in the space-constrained header-mode pill. */
+  compactSearch?: boolean
+} = {}) {
   if (inline) {
     return (
       <div className="flex items-center gap-1 sm:gap-2">
-        <SearchPill />
-        <ModeSwitcher />
+        <SearchPill compact={compactSearch} />
+        {includeTheme && <ModeSwitcher />}
         <div className="hidden sm:contents">
           <LocaleMenu />
           <PaletteMenu />
           <ConfigDrawer />
         </div>
-        <UserMenu />
+        {includeUser && <UserMenu />}
       </div>
     )
   }
