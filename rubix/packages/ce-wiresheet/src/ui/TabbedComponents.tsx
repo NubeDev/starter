@@ -62,6 +62,11 @@ function TabbedComponents({ node, ctx }: WidgetProps) {
   const [openUids, setOpenUids] = useState<number[]>([]);
   const [active, setActive] = useState<number | "index">("index");
   const openTab = useCallback((uid: number) => { setOpenUids((p) => (p.includes(uid) ? p : [...p, uid])); setActive(uid); }, []);
+  // Right-click "Open UX" on a node → open that component's tab here.
+  useEffect(() => {
+    if (ctx.focusUid != null) openTab(ctx.focusUid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.focusNonce]);
   const closeTab = useCallback((uid: number) => {
     setOpenUids((p) => {
       const i = p.indexOf(uid);

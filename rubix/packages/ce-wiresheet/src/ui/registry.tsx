@@ -35,6 +35,12 @@ export interface RenderCtx {
   /** Navigate the canvas to a component (drill into its folder + center/select).
    *  Powers "locate" buttons that jump from a drawer view to the node. */
   locate?: (componentUid: number) => void;
+  /** One-shot request to open/focus a specific component's tab inside a
+   *  per-component editor (the forward of `locate`: canvas right-click "Open UX"
+   *  → this component's panel). `focusNonce` changes each request so re-opening
+   *  the same uid re-triggers. */
+  focusUid?: number;
+  focusNonce?: number;
 }
 
 export interface WidgetProps {

@@ -25,9 +25,12 @@ export interface TabShellProps {
   tabExtra?: (id: string) => React.ReactNode;
   /** return false to block closing a tab (e.g. unsaved changes) */
   closeGuard?: (id: string) => boolean;
+  /** one-shot request to open/focus a tab from outside (e.g. canvas right-click
+   *  "Open UX"); `nonce` changes per request so the same id re-triggers. */
+  openRequest?: { id: string; nonce?: number };
 }
 
-export function TabShell({ persistKey, pinned, renderIndex, renderTab, tabLabel, tabExtra, closeGuard }: TabShellProps) {
+export function TabShell({ persistKey, pinned, renderIndex, renderTab, tabLabel, tabExtra, closeGuard, openRequest }: TabShellProps) {
   const [open, setOpen] = useState<string[]>(() => STORE.get(persistKey)?.open ?? []);
   const [active, setActive] = useState<string>(() => STORE.get(persistKey)?.active ?? pinned.id);
   useEffect(() => { STORE.set(persistKey, { open, active }); }, [persistKey, open, active]);
@@ -36,6 +39,11 @@ export function TabShell({ persistKey, pinned, renderIndex, renderTab, tabLabel,
     setOpen((p) => (p.includes(id) ? p : [...p, id]));
     setActive(id);
   }, []);
+  // External open request (canvas → "Open UX" → this component's tab).
+  useEffect(() => {
+    if (openRequest?.id) openTab(openRequest.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequest?.nonce, openRequest?.id]);
   const closeTab = useCallback((id: string) => {
     if (closeGuard && !closeGuard(id)) return;
     setOpen((p) => {

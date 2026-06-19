@@ -22,6 +22,7 @@ import { UiTabHost } from "./ui/UiTabHost";
 import { CopyButton } from "./ui/CopyButton";
 import { ExtensionStrip } from "./ui/ExtensionStrip";
 import { getExtensions } from "./lib/ui/root-ext-stub";
+import { findComponentUx } from "./lib/ui/uxLookup";
 import type { ExtensionUi } from "./lib/ui/types";
 import { createPortal } from "react-dom";
 
@@ -2685,6 +2686,21 @@ function Inner({ base }: { base: string }) {
     setActiveExtId(id);
     setTableOpen(true);
   };
+
+  // Right-click "Open UX": open the drawer to the extension UI that edits this
+  // component's type, focused on the component. One-shot `nonce` so re-opening
+  // the same uid re-triggers. Availability/behaviour are descriptor-driven
+  // (findComponentUx) — stub today, engine GET /ui/list later.
+  const uxNonceRef = useRef(0);
+  const [uxFocus, setUxFocus] = useState<{ uiId: string; uid: number; nonce: number } | null>(null);
+  const openComponentUx = useCallback((uid: number) => {
+    const type = useStructural.getState().components.get(uid)?.type;
+    const target = findComponentUx(extensions, type);
+    if (!target) return;
+    setActiveExtId(target.extId);
+    setTableOpen(true);
+    setUxFocus({ uiId: target.uiId, uid, nonce: ++uxNonceRef.current });
+  }, [extensions]);
   // Replace the graph selection with exactly the given component uids (the table
   // computes the set, including shift-range / ctrl-toggle).
   const onTableSelect = useCallback((uids: number[]) => {
@@ -2980,6 +2996,17 @@ function Inner({ base }: { base: string }) {
             const sel = nodes.filter((n) => n.selected).map((n) => Number(n.id));
             if (sel.length === 1) setDetailsUid(sel[0]);
           }}
+          uxAvailable={(() => {
+            const sel = nodes.filter((n) => n.selected);
+            if (sel.length !== 1) return false;
+            const type = useStructural.getState().components.get(Number(sel[0].id))?.type;
+            return !!findComponentUx(extensions, type);
+          })()}
+          onOpenUx={() => {
+            const sel = nodes.filter((n) => n.selected);
+            setNodeMenu(null);
+            if (sel.length === 1) openComponentUx(Number(sel[0].id));
+          }}
           onGroup={() => {
             void groupSelected(nodes.filter((n) => n.selected).map((n) => Number(n.id)));
             setNodeMenu(null);
@@ -3191,6 +3218,7 @@ function Inner({ base }: { base: string }) {
             {activeExt && (
                 <UiTabHost
                   uis={activeExt.uis}
+                  focusRequest={uxFocus}
                   currentParentUid={currentParentUid}
                   selectedUids={tableSelected}
                   onSelect={onTableSelect}
@@ -4049,8 +4077,10 @@ function NodeContextMenu({
   name,
   uid,
   count,
+  uxAvailable,
   onRename,
   onDetails,
+  onOpenUx,
   onGroup,
   onMoveInto,
   onAction,
@@ -4063,8 +4093,10 @@ function NodeContextMenu({
   name?: string;
   uid?: number;
   count: number;
+  uxAvailable: boolean;
   onRename: () => void;
   onDetails: () => void;
+  onOpenUx: () => void;
   onGroup: () => void;
   onMoveInto: () => void;
   onAction: () => void;
@@ -4121,6 +4153,7 @@ function NodeContextMenu({
           {uid != null ? <CopyUid label="comp" value={uid} /> : `${count} selected`}
         </div>
       </div>
+      {uxAvailable && uid != null && <EdgeMenuItem label="Open UX" onClick={onOpenUx} />}
       {canRename && <EdgeMenuItem label="Rename…" onClick={onRename} />}
       {canRename && <EdgeMenuItem label="Configure…" onClick={onDetails} />}
       {count >= 2 && <EdgeMenuItem label={`Group ${count} into folder`} onClick={onGroup} />}

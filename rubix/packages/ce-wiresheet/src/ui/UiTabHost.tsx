@@ -58,15 +58,24 @@ export interface UiTabHostProps {
   onSubscribeProps?: (propUids: number[]) => () => void;
   /** navigate the canvas to a component (drill in + center/select) */
   onLocate?: (componentUid: number) => void;
+  /** one-shot: open this UI tab focused on a component (canvas "Open UX"). The
+   *  host only acts on it when `uiId` belongs to the active extension. */
+  focusRequest?: { uiId: string; uid: number; nonce: number } | null;
 }
 
-export function UiTabHost({ uis, ...props }: UiTabHostProps) {
+export function UiTabHost({ uis, focusRequest, ...props }: UiTabHostProps) {
   const [activeId, setActiveId] = useState<string | null>(uis[0]?.id ?? null);
 
   // Keep the active tab valid as the extension (its UI set) changes.
   useEffect(() => {
     setActiveId((cur) => (uis.some((u) => u.id === cur) ? cur : uis[0]?.id ?? null));
   }, [uis]);
+
+  // "Open UX" request: switch to the requested UI tab (if it's in this
+  // extension). The component focus is forwarded into the view's ctx below.
+  useEffect(() => {
+    if (focusRequest && uis.some((u) => u.id === focusRequest.uiId)) setActiveId(focusRequest.uiId);
+  }, [focusRequest, uis]);
 
   const active = useMemo(() => uis.find((u) => u.id === activeId) ?? null, [uis, activeId]);
   const manifest = { uis };
@@ -124,7 +133,16 @@ export function UiTabHost({ uis, ...props }: UiTabHostProps) {
             otherwise two same-typed views (e.g. the schedule/timer/cron
             `tabbedEditor`s) would share one instance and their open tabs would
             bleed across submenus. */}
-        {active && <ViewBody key={active.id} entry={active} uis={uis} onPickUi={setActiveId} {...props} />}
+        {active && (
+          <ViewBody
+            key={active.id}
+            entry={active}
+            uis={uis}
+            onPickUi={setActiveId}
+            focusRequest={focusRequest && focusRequest.uiId === active.id ? focusRequest : null}
+            {...props}
+          />
+        )}
       </div>
     </div>
   );
@@ -134,6 +152,7 @@ function ViewBody({
   entry,
   uis,
   onPickUi,
+  focusRequest,
   ...props
 }: { entry: UiEntry; uis: UiEntry[]; onPickUi: (id: string) => void } & Omit<UiTabHostProps, "uis">) {
   const { view, selection, appliesTo } = entry;
@@ -166,6 +185,8 @@ function ViewBody({
     subscribeProps: props.onSubscribeProps,
     setValue: props.onSetDefault,
     locate: props.onLocate,
+    focusUid: focusRequest?.uid,
+    focusNonce: focusRequest?.nonce,
   };
 
   if (view.type === "collection") {

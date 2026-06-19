@@ -241,6 +241,7 @@ function JsComponentsPanel({ node, ctx }: WidgetProps) {
   return (
     <TabShell
       persistKey="js:components"
+      openRequest={ctx.focusUid != null ? { id: String(ctx.focusUid), nonce: ctx.focusNonce } : undefined}
       pinned={{ id: "index", label: "All", icon: <FileCode2 size={13} /> }}
       tabLabel={(id) => rows.find((r) => r.uid === Number(id))?.name ?? `#${id}`}
       tabExtra={(id) => ctx.locate ? (
