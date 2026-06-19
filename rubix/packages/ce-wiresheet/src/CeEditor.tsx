@@ -1339,7 +1339,7 @@ function Inner({ base }: { base: string }) {
           vendor: string;
           name: string;
           version?: string;
-          components?: Array<{ name: string; icon?: string; actions?: ActionDef[] }>;
+          components?: Array<{ name: string; icon?: string; actions?: ActionDef[]; role?: string; singleton?: boolean }>;
         }>;
         // Index schema-declared enum choices (e.g. severity low:0,medium:1,high:2)
         // so those props render as labels + dropdowns like facet aliases.
@@ -1362,6 +1362,11 @@ function Inner({ base }: { base: string }) {
             }
             if (have.has(type)) continue;
             have.add(type);
+            // Services (role "*.service") and other singletons (root, ServicesFolder)
+            // are engine-managed / auto-generated — the user can't place them, so
+            // keep them out of the palette. Their actions are still indexed above
+            // for the UI extensions that call them (e.g. the JS store's getApi).
+            if (c.singleton === true || (typeof c.role === "string" && c.role.endsWith(".service"))) continue;
             group.components.push({ name: c.name, type, icon: c.icon });
           }
         }
@@ -2508,20 +2513,19 @@ function Inner({ base }: { base: string }) {
       if (uids.length < 2) return;
       const group = new Set(uids);
       const comps = useStructural.getState().components;
-      // Use the full scoped edge set (incl. cross-folder edges that route through
-      // folder members' exposed ports) — the store keeps only inEdges, which would
-      // miss every boundary edge that goes through a grouped folder's port.
-      const scopedEdges = scopedEdgesRef.current;
-      // Boundary props: edges with exactly one endpoint in the group → expose the
-      // in-group prop. Pure logic in lib/grouping (tested).
-      const boundary = groupBoundary(group, scopedEdges, comps);
+      // Plain boundary uses the LIVE store edges (kept current as edges are drawn /
+      // pushed; a stale snapshot would miss a just-drawn edge). Pure logic in
+      // lib/grouping (tested).
+      const boundary = groupBoundary(group, useStructural.getState().edges.values(), comps);
       // Grouped members that are folders with their own exposed ports: a boundary
       // edge through such a port must CHAIN (the new folder re-projects the inner
-      // folder's port) — re-exposing the deep child would double-expose it.
+      // folder's port) — re-exposing the deep child would double-expose it. Those
+      // edges are CROSS-folder (one end deep inside a folder), so they live in the
+      // scoped set from the last reload, NOT the store's in-view edges.
       const groupedFolders = uids
         .map((u) => comps.get(u))
         .filter((c): c is Component => !!c && exposedPorts(facetFor(c.uid, rawFacet(c.properties))).length > 0);
-      const chained = groupChainedBoundary(group, groupedFolders, scopedEdges);
+      const chained = groupChainedBoundary(group, groupedFolders, scopedEdgesRef.current);
       // Folder position = bounding-box CENTER of the members, read from the LIVE
       // RF positions (the store positions can be stale if they were just dragged).
       const xs: number[] = [];
