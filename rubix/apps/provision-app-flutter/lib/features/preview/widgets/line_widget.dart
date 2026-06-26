@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
 /// Sparkline trend — a polyline over a deterministic demo series. `seed` keeps
 /// each tile's shape stable across renders (no Random). Ported from the React
@@ -34,6 +35,7 @@ class LineWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     final points = series(seed);
     final last = points.last;
     return Column(
@@ -49,19 +51,19 @@ class LineWidget extends StatelessWidget {
             Text.rich(
               TextSpan(
                 text: '$last',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: RubixTokens.ink,
+                  color: look.ink,
                 ),
                 children: [
                   if (unit != null)
                     TextSpan(
                       text: ' $unit',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: RubixTokens.inkMuted,
+                        color: look.inkMuted,
                       ),
                     ),
                 ],

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
 /// Radial half-circle gauge — fills an accent arc to `value` over `[min,max]`.
 /// Ported from the React `GaugeWidget` (SVG arc). Demo value is passed in.
@@ -25,6 +26,7 @@ class GaugeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     final range = max - min;
     final pct = ((value - min) / (range == 0 ? 1 : range)).clamp(0.0, 1.0);
     return Column(
@@ -47,20 +49,20 @@ class GaugeWidget extends StatelessWidget {
               Text.rich(
                 TextSpan(
                   text: '${value % 1 == 0 ? value.toInt() : value}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     height: 1,
                     fontWeight: FontWeight.w800,
-                    color: RubixTokens.ink,
+                    color: look.ink,
                   ),
                   children: [
                     if (unit != null)
                       TextSpan(
                         text: ' $unit',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: RubixTokens.inkMuted,
+                          color: look.inkMuted,
                         ),
                       ),
                   ],

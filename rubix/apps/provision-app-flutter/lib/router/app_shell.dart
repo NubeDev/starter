@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provision_app/core/theme/app_theme.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/router/nav_bar.dart';
 import 'package:provision_app/router/pages.dart';
@@ -45,7 +44,7 @@ class AppShell extends ConsumerWidget {
             activeRoute: activeRoute,
             accent: look.accent,
             onSelect: _goRoute,
-            onFab: () => _goBranch(0), // Scan is the FAB action
+            onFab: () => _goRoute('/scan'), // FAB = add a device (opens scan)
           ),
           const ToastHost(),
         ],
@@ -55,7 +54,7 @@ class AppShell extends ConsumerWidget {
 
   /// Map a branch index back to its route, for NavBar highlighting.
   String primaryAndSecondaryRoute(int index) =>
-      index >= 0 && index < navPages.length ? navPages[index].route : '/scan';
+      index >= 0 && index < navPages.length ? navPages[index].route : '/home';
 
   void _goRoute(String route) {
     final index = navPages.indexWhere((p) => p.route == route);

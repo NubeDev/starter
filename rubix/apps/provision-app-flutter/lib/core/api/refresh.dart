@@ -25,4 +25,13 @@ class RefreshNotifier extends Notifier<int> {
       Timer(Duration(milliseconds: ms), () => state = state + 1);
     }
   }
+
+  /// [bump] plus a Future that completes once the first re-fetch window has
+  /// passed — for pull-to-refresh, so the spinner stays up long enough to read
+  /// as "refreshing" then dismisses (the staggered re-bumps keep converging in
+  /// the background). Used by the [Refreshable] wrapper.
+  Future<void> refreshAndSettle() async {
+    bump();
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+  }
 }

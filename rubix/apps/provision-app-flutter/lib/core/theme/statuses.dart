@@ -15,12 +15,14 @@ class AppStatus {
 }
 
 const statuses = <StatusKey, AppStatus>{
+  // DNA kit semantic dots: connected=green, warning=amber, offline=red,
+  // idle=grey.
   StatusKey.online:
-      AppStatus(key: StatusKey.online, label: 'Connected', accent: Color(0xFF36E2C4)),
+      AppStatus(key: StatusKey.online, label: 'Connected', accent: Color(0xFF5DCAA5)),
   StatusKey.pairing:
-      AppStatus(key: StatusKey.pairing, label: 'Provisioning', accent: Color(0xFFFFC24B)),
+      AppStatus(key: StatusKey.pairing, label: 'Provisioning', accent: Color(0xFFC9A24A)),
   StatusKey.fault:
-      AppStatus(key: StatusKey.fault, label: 'Fault', accent: Color(0xFFFF5A52)),
+      AppStatus(key: StatusKey.fault, label: 'Offline', accent: Color(0xFFE24B4A)),
   StatusKey.offline:
-      AppStatus(key: StatusKey.offline, label: 'Offline', accent: Color(0xFF7C8A8A)),
+      AppStatus(key: StatusKey.offline, label: 'Idle', accent: Color(0xFF7E8888)),
 };

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 
 /// "Device provisioned!" celebration — full-bleed radial glow, a spring-popped
@@ -60,7 +61,7 @@ class _ProvisionedRevealState extends ConsumerState<ProvisionedReveal>
           center: const Alignment(0, -0.2),
           colors: [
             accent.withValues(alpha: 0.23),
-            const Color(0xF0060810),
+            look.base.withValues(alpha: 0.94),
           ],
           stops: const [0, 0.72],
         ),
@@ -100,24 +101,30 @@ class _ProvisionedRevealState extends ConsumerState<ProvisionedReveal>
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Glass-teal check badge — DNA Confirm spec: teal-tinted
+                    // fill + teal hairline + teal glyph (not a solid disc).
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 84,
+                      height: 84,
                       decoration: BoxDecoration(
-                        color: accent,
+                        color: accent.withValues(alpha: 0.14),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.45),
+                          width: 1.5,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: accent,
+                            color: accent.withValues(alpha: 0.4),
                             blurRadius: 40,
-                            spreadRadius: -4,
+                            spreadRadius: -8,
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.checkCircle2,
-                        size: 40,
-                        color: Color(0xFF002019),
+                        size: 42,
+                        color: accent,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -153,14 +160,14 @@ class _ProvisionedRevealState extends ConsumerState<ProvisionedReveal>
                     ),
                     if (pending) ...[
                       const SizedBox(height: 16),
-                      const SizedBox(
+                      SizedBox(
                         width: 260,
                         child: Text(
                           'Not on a dashboard yet — place it on a page '
                           'anytime from Devices.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: RubixTokens.inkMuted,
+                            color: look.inkMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -173,8 +180,8 @@ class _ProvisionedRevealState extends ConsumerState<ProvisionedReveal>
                         child: Text(
                           result.warnings.join(' · '),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: RubixTokens.coral,
+                          style: TextStyle(
+                            color: look.accent2,
                             fontSize: 12,
                           ),
                         ),
@@ -243,8 +250,8 @@ class _AccentButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF002019),
+          style: TextStyle(
+            color: context.look.accentOn,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),

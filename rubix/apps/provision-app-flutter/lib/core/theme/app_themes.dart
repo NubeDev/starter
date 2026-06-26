@@ -6,7 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 /// Every widget reads the resolved look via the `look` provider, never these
 /// objects directly. The transient "mood" layer is repurposed as device/
 /// connection STATUS (see [statuses.dart]) which tints the live accent.
-enum ThemeKey { grid, solar, offpeak, industrial }
+enum ThemeKey { dna }
 
 @immutable
 class AppTheme {
@@ -18,8 +18,11 @@ class AppTheme {
     required this.base,
     required this.accent,
     required this.accent2,
+    required this.accentOn,
+    required this.accent2On,
     required this.ink,
     required this.inkSoft,
+    required this.inkMuted,
     required this.gradient,
     required this.radius,
     required this.glowAlpha,
@@ -39,11 +42,20 @@ class AppTheme {
   /// secondary accent
   final Color accent2;
 
+  /// foreground on top of [accent] (e.g. dark text on a teal button)
+  final Color accentOn;
+
+  /// foreground on top of [accent2]
+  final Color accent2On;
+
   /// headline text tint
   final Color ink;
 
   /// body text tint
   final Color inkSoft;
+
+  /// muted text tint — labels, captions, inactive icons
+  final Color inkMuted;
 
   /// three radial-gradient stops = the ambient base look
   final List<RadialWash> gradient;
@@ -73,136 +85,48 @@ class RadialWash {
   final double stop;
 }
 
+/// The single DNA theme — dark obsidian base, soft electric-teal accent, and
+/// three ambient teal radial washes matching the glow ellipses on every Figma
+/// frame (top-right, mid-right, bottom-left). This is now the *only* skin; the
+/// former grid/solar/offpeak/industrial themes were retired in the DNA reskin.
 const themes = <ThemeKey, AppTheme>{
-  ThemeKey.grid: AppTheme(
-    key: ThemeKey.grid,
-    label: 'Grid',
-    blurb: 'Electric teal · live',
+  ThemeKey.dna: AppTheme(
+    key: ThemeKey.dna,
+    label: 'DNA',
+    blurb: 'Teal · provision',
     icon: LucideIcons.activity,
-    base: Color(0xFF07090B),
-    accent: Color(0xFF36E2C4),
-    accent2: Color(0xFFFFC24B),
+    base: Color(0xFF0B0F10), // dark obsidian DNA base
+    accent: Color(0xFF61A3AE), // DNA brand teal (muted)
+    accent2: Color(0xFFFBBD41), // yellow callout
+    accentOn: Color(0xFF04181C),
+    accent2On: Color(0xFF241200),
     ink: Color(0xFFE7F0EF),
     inkSoft: Color(0xFFB9C7C6),
+    inkMuted: Color(0xFF7E8888),
     gradient: [
       RadialWash(
-        color: Color(0x3336E2C4), // rgba(54,226,196,0.20)
-        alignment: Alignment(0.6, -1.2),
-        radius: 0.9,
-      ),
-      RadialWash(
-        color: Color(0x1FFFC24B), // rgba(255,194,75,0.12)
-        alignment: Alignment(-1, -0.84),
-        radius: 0.8,
-      ),
-      RadialWash(
-        color: Color(0x2E1F7E6F), // rgba(31,126,111,0.18)
-        alignment: Alignment(0, 1.2),
-        radius: 1,
-      ),
-    ],
-    radius: 24,
-    glowAlpha: 0.45,
-  ),
-  ThemeKey.solar: AppTheme(
-    key: ThemeKey.solar,
-    label: 'Solar',
-    blurb: 'Amber · daytime yield',
-    icon: LucideIcons.sun,
-    base: Color(0xFF0C0A06),
-    accent: Color(0xFFFFC24B),
-    accent2: Color(0xFFFF8F5E),
-    ink: Color(0xFFFFF3DA),
-    inkSoft: Color(0xFFE7D6B4),
-    gradient: [
-      RadialWash(
-        color: Color(0x47FFC24B), // 0.28
-        alignment: Alignment(0.56, -1.16),
+        color: Color(0x2E61A3AE), // teal glow, top-right · ~0.18
+        alignment: Alignment(0.9, -1.0),
         radius: 0.95,
       ),
       RadialWash(
-        color: Color(0x2EFF8F5E), // 0.18
-        alignment: Alignment(-0.88, -0.8),
+        color: Color(0x2461A3AE), // teal glow, mid-right · ~0.14
+        alignment: Alignment(1.0, 0.3),
         radius: 0.8,
       ),
       RadialWash(
-        color: Color(0x29FFD27A), // 0.16
-        alignment: Alignment(0, 1.24),
-        radius: 1.1,
-      ),
-    ],
-    radius: 24,
-    glowAlpha: 0.42,
-  ),
-  ThemeKey.offpeak: AppTheme(
-    key: ThemeKey.offpeak,
-    label: 'Off-peak',
-    blurb: 'Cool · low demand',
-    icon: LucideIcons.moon,
-    base: Color(0xFF070A10),
-    accent: Color(0xFF8FB6FF),
-    accent2: Color(0xFF36E2C4),
-    ink: Color(0xFFE3ECFF),
-    inkSoft: Color(0xFFBCC8E6),
-    gradient: [
-      RadialWash(
-        color: Color(0x3D5A82D2), // rgba(90,130,210,0.24)
-        alignment: Alignment(0, -1.2),
-        radius: 1,
-      ),
-      RadialWash(
-        color: Color(0x2936E2C4), // 0.16
-        alignment: Alignment(-0.72, -0.52),
-        radius: 0.9,
-      ),
-      RadialWash(
-        color: Color(0x8C0F162D), // rgba(15,22,45,0.55)
-        alignment: Alignment(0, 1.32),
-        radius: 1.3,
+        color: Color(0x2A4497A2), // deep-teal glow, bottom-left · ~0.16
+        alignment: Alignment(-1.1, 1.1),
+        radius: 1.0,
       ),
     ],
     radius: 20,
-    glowAlpha: 0.5,
-  ),
-  ThemeKey.industrial: AppTheme(
-    key: ThemeKey.industrial,
-    label: 'Industrial',
-    blurb: 'Steel · plant floor',
-    icon: LucideIcons.factory,
-    base: Color(0xFF0A0B0C),
-    accent: Color(0xFF9FB0B8),
-    accent2: Color(0xFFFFC24B),
-    ink: Color(0xFFE9EEF0),
-    inkSoft: Color(0xFFBCC6CA),
-    gradient: [
-      RadialWash(
-        color: Color(0x299FB0B8), // 0.16
-        alignment: Alignment(0.56, -1.16),
-        radius: 0.9,
-      ),
-      RadialWash(
-        color: Color(0x1AFFC24B), // 0.10
-        alignment: Alignment(-0.88, -0.8),
-        radius: 0.8,
-      ),
-      RadialWash(
-        color: Color(0x8C283034), // rgba(40,48,52,0.55)
-        alignment: Alignment(0, 1.24),
-        radius: 1.1,
-      ),
-    ],
-    radius: 16,
     glowAlpha: 0.4,
   ),
 };
 
-const themeOrder = <ThemeKey>[
-  ThemeKey.grid,
-  ThemeKey.solar,
-  ThemeKey.offpeak,
-  ThemeKey.industrial,
-];
-const defaultTheme = ThemeKey.grid;
+const themeOrder = <ThemeKey>[ThemeKey.dna];
+const defaultTheme = ThemeKey.dna;
 
 ThemeKey? themeKeyFromName(String? name) =>
     ThemeKey.values.where((k) => k.name == name).firstOrNull;

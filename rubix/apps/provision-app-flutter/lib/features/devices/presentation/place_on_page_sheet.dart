@@ -106,8 +106,8 @@ class _PlaceOnPageBodyState extends ConsumerState<_PlaceOnPageBody> {
             Expanded(
               child: Text(
                 device.name ?? device.deviceId,
-                style: const TextStyle(
-                  color: RubixTokens.inkVariant,
+                style: TextStyle(
+                  color: look.inkSoft,
                   fontSize: 14,
                 ),
               ),

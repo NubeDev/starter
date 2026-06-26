@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
 
@@ -29,14 +30,13 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     final disabled = onPressed == null || loading;
     final bg = accent ??
-        (tone == PrimaryButtonTone.coral
-            ? RubixTokens.coral
-            : RubixTokens.primary);
+        (tone == PrimaryButtonTone.coral ? look.accent2 : look.accent);
     final fg = tone == PrimaryButtonTone.coral && accent == null
-        ? RubixTokens.coralOn
-        : RubixTokens.primaryOn;
+        ? look.accent2On
+        : look.accentOn;
 
     return Pressable(
       onTap: disabled ? null : onPressed,

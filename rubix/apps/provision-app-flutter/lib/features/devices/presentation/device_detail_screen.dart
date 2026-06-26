@@ -5,12 +5,14 @@ import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/api/refresh.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/devices/domain/status_dot.dart';
 import 'package:provision_app/features/devices/presentation/place_on_page_sheet.dart';
 import 'package:provision_app/features/scan/presentation/qr_label.dart';
 import 'package:provision_app/shared/widgets/bottom_sheet.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
+import 'package:provision_app/shared/widgets/ghost_button.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
@@ -79,10 +81,11 @@ class _DeviceDetailScreenState extends ConsumerState<DeviceDetailScreen> {
   }
 
   Future<void> _decommission() async {
+    final look = ref.read(lookProvider);
     final toast = ref.read(toastProvider.notifier);
     try {
       await ref.read(bcApiProvider).decommission([_device.deviceId]);
-      toast.show('Decommissioned', accent: RubixTokens.coral);
+      toast.show('Decommissioned', accent: look.accent2);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       toast.show(e.toString(), accent: RubixTokens.fault);
@@ -133,34 +136,39 @@ class _DeviceDetailScreenState extends ConsumerState<DeviceDetailScreen> {
               onSaveName: _saveName,
             ),
             const SizedBox(height: 20),
+            // DNA action row: teal "Place" · neutral "Label" · danger
+            // "Decommission" (red icon + label), each a ghost button.
             Row(
               children: [
                 if (isPlaceable(_device)) ...[
                   Expanded(
-                    child: _Action(
+                    child: GhostButton(
                       icon: LucideIcons.mapPin,
                       label: 'Place on page',
-                      accent: statusColor('pending'),
-                      onTap: () => showPlaceOnPageSheet(context, ref, _device),
+                      variant: GhostButtonVariant.teal,
+                      expand: true,
+                      onPressed: () =>
+                          showPlaceOnPageSheet(context, ref, _device),
                     ),
                   ),
                   const SizedBox(width: 8),
                 ],
                 Expanded(
-                  child: _Action(
+                  child: GhostButton(
                     icon: LucideIcons.printer,
                     label: 'Label',
-                    accent: look.accent,
-                    onTap: _openLabel,
+                    expand: true,
+                    onPressed: _openLabel,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _Action(
+                  child: GhostButton(
                     icon: LucideIcons.trash2,
                     label: 'Decommission',
-                    accent: RubixTokens.coral,
-                    onTap: _decommission,
+                    variant: GhostButtonVariant.danger,
+                    expand: true,
+                    onPressed: _decommission,
                   ),
                 ),
               ],
@@ -202,6 +210,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -216,8 +225,8 @@ class _Header extends StatelessWidget {
               color: Color(0x0FFFFFFF),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.arrowLeft,
-                size: 20, color: RubixTokens.inkVariant),
+            child: Icon(LucideIcons.arrowLeft,
+                size: 20, color: look.inkSoft),
           ),
         ),
         const SizedBox(width: 12),
@@ -247,8 +256,8 @@ class _Header extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(LucideIcons.pencil,
-                          size: 16, color: RubixTokens.inkMuted),
+                      Icon(LucideIcons.pencil,
+                          size: 16, color: look.inkMuted),
                     ],
                   ),
                 ),
@@ -259,7 +268,7 @@ class _Header extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: statusColor(device.status),
+                      color: statusColor(device.status, look),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -269,8 +278,8 @@ class _Header extends StatelessWidget {
                       '${device.template} · ${device.status}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: RubixTokens.inkVariant,
+                      style: TextStyle(
+                        color: look.inkSoft,
                         fontSize: 14,
                       ),
                     ),
@@ -281,47 +290,6 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Action extends StatelessWidget {
-  const _Action({
-    required this.icon,
-    required this.label,
-    required this.accent,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color accent;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 16, color: accent),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: RubixTokens.ink,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -341,6 +309,7 @@ class _PointCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassCard(
       child: Row(
         children: [
@@ -352,8 +321,8 @@ class _PointCard extends StatelessWidget {
                   point.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -361,8 +330,8 @@ class _PointCard extends StatelessWidget {
                   point.unit != null && point.unit!.isNotEmpty
                       ? '${point.widget} · ${point.unit}'
                       : point.widget,
-                  style: const TextStyle(
-                      color: RubixTokens.inkMuted, fontSize: 12),
+                  style: TextStyle(
+                      color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),

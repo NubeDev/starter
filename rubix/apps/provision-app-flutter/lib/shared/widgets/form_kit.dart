@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
 
 /// Glass-styled form primitives shared across Place / Connect / Devices etc.
@@ -56,6 +57,7 @@ class GlassTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     final radius = BorderRadius.circular(
       maxLines > 1 ? RubixTokens.radiusMd : RubixTokens.radiusMd,
     );
@@ -73,15 +75,15 @@ class GlassTextField extends StatelessWidget {
           keyboardType: keyboardType,
           maxLines: obscureText ? 1 : maxLines,
           style: TextStyle(
-            color: RubixTokens.ink,
+            color: look.ink,
             fontSize: maxLines > 1 ? 12 : 16,
             fontFamily: monospace ? 'monospace' : null,
           ),
-          cursorColor: RubixTokens.primary,
+          cursorColor: look.accent,
           decoration: InputDecoration(
             isDense: true,
             hintText: hint,
-            hintStyle: const TextStyle(color: RubixTokens.inkMuted),
+            hintStyle: TextStyle(color: look.inkMuted),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 14,
@@ -90,7 +92,7 @@ class GlassTextField extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: radius,
               borderSide: BorderSide(
-                color: RubixTokens.primary.withValues(alpha: 0.6),
+                color: look.accent.withValues(alpha: 0.6),
                 width: 2,
               ),
             ),
@@ -120,6 +122,7 @@ class GlassPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassSurface(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -129,11 +132,11 @@ class GlassPicker extends StatelessWidget {
             isExpanded: true,
             hint: Text(
               placeholder,
-              style: const TextStyle(color: RubixTokens.inkMuted, fontSize: 16),
+              style: TextStyle(color: look.inkMuted, fontSize: 16),
             ),
             dropdownColor: RubixTokens.surfaceLow,
-            iconEnabledColor: RubixTokens.inkMuted,
-            style: const TextStyle(color: RubixTokens.ink, fontSize: 16),
+            iconEnabledColor: look.inkMuted,
+            style: TextStyle(color: look.ink, fontSize: 16),
             padding: const EdgeInsets.symmetric(vertical: 10),
             items: [
               for (final o in options)
@@ -161,18 +164,21 @@ class GlassToggle extends StatelessWidget {
   const GlassToggle({
     required this.on,
     required this.onToggle,
-    this.accent = RubixTokens.primary,
+    this.accent,
     this.semanticLabel,
     super.key,
   });
 
   final bool on;
   final VoidCallback onToggle;
-  final Color accent;
+
+  /// Tints the "on" track. Defaults to the resolved look accent when null.
+  final Color? accent;
   final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
+    final trackOn = accent ?? context.look.accent;
     return Semantics(
       toggled: on,
       label: semanticLabel,
@@ -181,21 +187,22 @@ class GlassToggle extends StatelessWidget {
         onTap: onToggle,
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
+          // DNA kit spec: track 36×20, 16px thumb, 2px inset.
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 44,
-            height: 24,
+            width: 36,
+            height: 20,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: on ? accent : const Color(0x24FFFFFF),
+              color: on ? trackOn : const Color(0x24FFFFFF),
               borderRadius: BorderRadius.circular(999),
             ),
             alignment: on ? Alignment.centerRight : Alignment.centerLeft,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
-              width: 20,
-              height: 20,
+              width: 16,
+              height: 16,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,

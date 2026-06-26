@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provision_app/features/auth/data/auth_controller.dart';
 import 'package:provision_app/features/auth/presentation/connect_screen.dart';
+import 'package:provision_app/features/devices/presentation/device_detail_screen.dart';
 import 'package:provision_app/features/devices/presentation/devices_screen.dart';
+import 'package:provision_app/features/home/presentation/home_screen.dart';
 import 'package:provision_app/features/preview/presentation/page_preview_screen.dart';
 import 'package:provision_app/features/scan/presentation/scan_flow.dart';
 import 'package:provision_app/features/sites/presentation/sites_screen.dart';
@@ -23,10 +25,11 @@ import 'package:provision_app/router/app_shell.dart';
 /// navigator that go_router would otherwise re-key.
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _branchKeys = <GlobalKey<NavigatorState>>[
-  GlobalKey<NavigatorState>(debugLabel: 'scan'),
+  GlobalKey<NavigatorState>(debugLabel: 'home'),
   GlobalKey<NavigatorState>(debugLabel: 'devices'),
   GlobalKey<NavigatorState>(debugLabel: 'preview'),
   GlobalKey<NavigatorState>(debugLabel: 'sites'),
+  GlobalKey<NavigatorState>(debugLabel: 'scan'),
   GlobalKey<NavigatorState>(debugLabel: 'templates'),
 ];
 
@@ -47,7 +50,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   });
 
   _router = GoRouter(
-    initialLocation: '/scan',
+    initialLocation: '/home',
     navigatorKey: _rootNavigatorKey,
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -56,7 +59,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (!auth.ready) return null;
       final atConnect = state.matchedLocation == '/connect';
       if (!auth.authed) return atConnect ? null : '/connect';
-      if (auth.authed && atConnect) return '/scan';
+      // Land on Home after auth — no longer straight into the camera.
+      if (auth.authed && atConnect) return '/home';
       return null;
     },
     routes: [
@@ -69,14 +73,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             AppShell(navigationShell: navigationShell),
         branches: [
           // Branch order MUST match `navPages` in router/pages.dart and the
-          // `_branchKeys` order above.
+          // `_branchKeys` order above: home, devices, preview, sites, scan,
+          // templates.
           StatefulShellBranch(
             navigatorKey: _branchKeys[0],
             routes: [
               GoRoute(
-                path: '/scan',
-                builder: (context, state) => ScanFlow(
-                  onPreview: (pageId) => context.go('/preview?page=$pageId'),
+                path: '/home',
+                builder: (context, state) => HomeScreen(
+                  // "Start scanning" → scan tab, camera mode.
+                  onScan: () => context.go('/scan'),
+                  // "Add manually" → scan tab, manual entry.
+                  onAddManually: () => context.go('/scan?manual=1'),
+                  onOpenDevices: () => context.go('/devices'),
+                  onOpenSites: () => context.go('/sites'),
+                  onOpenTemplates: () => context.go('/templates'),
+                  onOpenDevice: (device) => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => DeviceDetailScreen(device: device),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -112,6 +128,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             navigatorKey: _branchKeys[4],
+            routes: [
+              GoRoute(
+                path: '/scan',
+                builder: (context, state) => ScanFlow(
+                  startManual: state.uri.queryParameters['manual'] == '1',
+                  onPreview: (pageId) => context.go('/preview?page=$pageId'),
+                ),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            navigatorKey: _branchKeys[5],
             routes: [
               GoRoute(
                 path: '/templates',

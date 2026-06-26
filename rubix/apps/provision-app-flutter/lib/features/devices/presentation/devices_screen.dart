@@ -5,6 +5,7 @@ import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/api/refresh.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/features/devices/domain/status_dot.dart';
 import 'package:provision_app/features/devices/presentation/device_detail_screen.dart';
 import 'package:provision_app/features/devices/presentation/place_on_page_sheet.dart';
@@ -13,6 +14,7 @@ import 'package:provision_app/shared/widgets/glass.dart';
 import 'package:provision_app/shared/widgets/glass_card.dart';
 import 'package:provision_app/shared/widgets/page_header.dart';
 import 'package:provision_app/shared/widgets/pressable.dart';
+import 'package:provision_app/shared/widgets/refreshable.dart';
 
 /// Device list with search; tap a row to drill into points + per-point toggles.
 /// Ported from the React `Devices`. Filters client-side by id/name/template and
@@ -87,67 +89,70 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
       _load();
     }
 
+    final look = context.look;
     final filtered = _filtered;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const PageHeader(eyebrow: 'Inventory', title: 'Devices'),
-          GlassSurface(
-            borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                const Icon(LucideIcons.search,
-                    size: 16, color: RubixTokens.inkMuted),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _search,
-                    onChanged: (v) => setState(() => _q = v),
-                    style: const TextStyle(
-                        color: RubixTokens.ink, fontSize: 16),
-                    cursorColor: RubixTokens.primary,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      hintText: 'Search devices',
-                      hintStyle: TextStyle(color: RubixTokens.inkMuted),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+    return Refreshable(
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 80, 20, 128),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const PageHeader(eyebrow: 'Inventory', title: 'Devices'),
+            GlassSurface(
+              borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.search, size: 16, color: look.inkMuted),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _search,
+                      onChanged: (v) => setState(() => _q = v),
+                      style: TextStyle(color: look.ink, fontSize: 16),
+                      cursorColor: look.accent,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Search devices',
+                        hintStyle: TextStyle(color: look.inkMuted),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          AsyncListView(
-            phase: _phase,
-            error: _error,
-            emptyText: 'No devices yet. Scan one to get started.',
-            onRetry: _reload,
-            child: Column(
-              children: [
-                for (final d in filtered) ...[
-                  _DeviceCard(device: d),
-                  const SizedBox(height: 8),
                 ],
-                // All loaded but the search filtered everything out.
-                if (filtered.isEmpty && _rows.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      'No matches.',
-                      style: TextStyle(
-                          color: RubixTokens.inkMuted, fontSize: 14),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            AsyncListView(
+              phase: _phase,
+              error: _error,
+              emptyText: 'No devices yet. Scan one to get started.',
+              onRetry: _reload,
+              child: Column(
+                children: [
+                  for (final d in filtered) ...[
+                    _DeviceCard(device: d),
+                    const SizedBox(height: 8),
+                  ],
+                  // All loaded but the search filtered everything out.
+                  if (filtered.isEmpty && _rows.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No matches.',
+                        style: TextStyle(color: look.inkMuted, fontSize: 14),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -159,7 +164,11 @@ class _DeviceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final look = context.look;
     return GlassCard(
+      // Figma row proportions: 14px corner, 12/14/12 padding (left/right/v).
+      borderRadius: const BorderRadius.all(Radius.circular(14)),
+      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => DeviceDetailScreen(device: device),
@@ -172,10 +181,9 @@ class _DeviceCard extends ConsumerWidget {
             height: 40,
             decoration: BoxDecoration(
               color: const Color(0x0FFFFFFF),
-              borderRadius: BorderRadius.circular(RubixTokens.radiusMd),
+              borderRadius: BorderRadius.circular(11),
             ),
-            child: const Icon(LucideIcons.cpu,
-                size: 20, color: RubixTokens.inkVariant),
+            child: Icon(LucideIcons.cpu, size: 18, color: look.inkSoft),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -186,8 +194,9 @@ class _DeviceCard extends ConsumerWidget {
                   device.name ?? device.deviceId,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -197,68 +206,76 @@ class _DeviceCard extends ConsumerWidget {
                       : device.template,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: RubixTokens.inkMuted, fontSize: 12),
+                  style: TextStyle(color: look.inkMuted, fontSize: 12),
                 ),
               ],
             ),
           ),
-          if (isPlaceable(device)) ...[
-            const SizedBox(width: 8),
-            _PlacePill(device: device),
-          ],
-          const SizedBox(width: 8),
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: statusColor(device.status),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Icon(LucideIcons.chevronRight,
-              size: 20, color: RubixTokens.inkMuted),
+          // Right column: a teal "place" action for un-placed devices, else a
+          // labelled status chip (dot + word) — the DNA Devices treatment.
+          if (isPlaceable(device))
+            _PlacePill(device: device)
+          else
+            _StatusChip(device: device),
+          const SizedBox(width: 10),
+          Icon(LucideIcons.chevronRight, size: 16, color: look.inkMuted),
         ],
       ),
     );
   }
 }
 
+/// The teal "place on page" action pill — DNA spec: teal map-pin in a
+/// teal-tinted, teal-bordered round chip (icon only). Replaces the status chip
+/// for devices that still need placing.
 class _PlacePill extends ConsumerWidget {
   const _PlacePill({required this.device});
   final DeviceRow device;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pending = statusColor('pending');
+    final look = context.look;
     return Pressable(
       scale: 0.94,
       semanticLabel: 'Place on page',
       onTap: () => showPlaceOnPageSheet(context, ref, device),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
         decoration: BoxDecoration(
-          color: pending.withValues(alpha: 0.133),
+          color: look.accent.withValues(alpha: 0.16),
+          border: Border.all(color: look.accent.withValues(alpha: 0.55)),
           borderRadius: BorderRadius.circular(999),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.mapPin, size: 14, color: pending),
-            const SizedBox(width: 4),
-            Text(
-              'Place',
-              style: TextStyle(
-                color: pending,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+        child: Icon(LucideIcons.mapPin, size: 13, color: look.accent),
       ),
     );
   }
 }
 
+/// A status dot + word (e.g. green ● "placed") — the DNA labelled status the
+/// Figma Devices rows show for already-placed devices.
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.device});
+  final DeviceRow device;
+
+  @override
+  Widget build(BuildContext context) {
+    final look = context.look;
+    final color = statusColor(device.status, look);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          device.pageId != null ? 'placed' : device.status,
+          style: TextStyle(color: look.inkMuted, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}

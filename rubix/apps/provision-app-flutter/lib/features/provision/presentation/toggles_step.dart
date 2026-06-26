@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/shared/widgets/form_kit.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
@@ -69,6 +70,7 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GlassSurface(
       borderRadius: BorderRadius.circular(RubixTokens.radiusLg),
       padding: const EdgeInsets.all(16),
@@ -90,16 +92,16 @@ class _Row extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: RubixTokens.ink,
+                  style: TextStyle(
+                    color: look.ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   blurb,
-                  style: const TextStyle(
-                    color: RubixTokens.inkMuted,
+                  style: TextStyle(
+                    color: look.inkMuted,
                     fontSize: 12,
                   ),
                 ),

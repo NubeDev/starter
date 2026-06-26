@@ -1,20 +1,22 @@
 import 'package:flutter/widgets.dart';
 import 'package:provision_app/core/api/bc_types.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 
-/// Map a device status string → a status color token. Keeps the dot color
-/// logic in one place for the list and detail views. `pending` shares the amber
-/// (warning) token with `pairing`. Ported from the React `statusDot.ts`; the
-/// hex literals line up exactly with the [RubixTokens] palette.
-Color statusColor(String status) {
+/// Map a device status string → a status color. Keeps the dot color logic in
+/// one place for the list and detail views. `pending` shares the secondary
+/// accent with `pairing`. The "live" and "pending" colors track the active
+/// theme via [look]; `fault`/`offline` are fixed status semantics. Ported from
+/// the React `statusDot.ts`.
+Color statusColor(String status, Look look) {
   switch (status) {
     case 'online':
     case 'provisioned':
     case 'active':
-      return RubixTokens.primary; // 0xFF36E2C4
+      return look.accent;
     case 'pairing':
     case 'pending':
-      return RubixTokens.coral; // 0xFFFFC24B
+      return look.accent2;
     case 'fault':
     case 'error':
       return RubixTokens.fault; // 0xFFFF5A52

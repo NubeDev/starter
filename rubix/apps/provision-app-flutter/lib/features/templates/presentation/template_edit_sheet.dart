@@ -86,20 +86,20 @@ class _TemplateEditBodyState extends ConsumerState<_TemplateEditBody> {
     final look = ref.watch(lookProvider);
 
     if (_loading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
         child: Row(
           children: [
             SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(
-                  strokeWidth: 2, color: RubixTokens.inkMuted),
+                  strokeWidth: 2, color: look.inkMuted),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               'Loading YAML…',
-              style: TextStyle(color: RubixTokens.inkMuted, fontSize: 14),
+              style: TextStyle(color: look.inkMuted, fontSize: 14),
             ),
           ],
         ),

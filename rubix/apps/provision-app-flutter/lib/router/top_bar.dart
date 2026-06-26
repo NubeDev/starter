@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/core/theme/statuses.dart';
 import 'package:provision_app/core/theme/theme_providers.dart';
 import 'package:provision_app/features/auth/data/auth_controller.dart';
@@ -58,14 +59,14 @@ class _TopBarState extends ConsumerState<TopBar>
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(LucideIcons.wifi, size: 14, color: RubixTokens.inkMuted),
+            Icon(LucideIcons.wifi, size: 14, color: look.inkMuted),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 auth.user?.email ?? 'Connected',
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: RubixTokens.ink,
+                style: TextStyle(
+                  color: look.ink,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -88,6 +89,7 @@ class _LogoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final look = context.look;
     return GestureDetector(
       onTap: onTap,
       child: MouseRegion(
@@ -95,10 +97,10 @@ class _LogoutButton extends StatelessWidget {
         child: Semantics(
           button: true,
           label: 'Log out',
-          child: const SizedBox(
+          child: SizedBox(
             width: 28,
             height: 28,
-            child: Icon(LucideIcons.logOut, size: 16, color: RubixTokens.inkMuted),
+            child: Icon(LucideIcons.logOut, size: 16, color: look.inkMuted),
           ),
         ),
       ),

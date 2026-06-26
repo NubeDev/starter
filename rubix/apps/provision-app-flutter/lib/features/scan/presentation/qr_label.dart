@@ -56,8 +56,8 @@ class QrLabel extends ConsumerWidget {
               Text(
                 title!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: RubixTokens.ink,
+                style: TextStyle(
+                  color: look.ink,
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
                 ),
@@ -68,8 +68,8 @@ class QrLabel extends ConsumerWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: RubixTokens.inkVariant,
+                style: TextStyle(
+                  color: look.inkSoft,
                   fontSize: 14,
                   fontFamily: 'monospace',
                 ),
@@ -80,8 +80,8 @@ class QrLabel extends ConsumerWidget {
               Text(
                 caption!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: RubixTokens.inkMuted,
+                style: TextStyle(
+                  color: look.inkMuted,
                   fontSize: 12,
                   fontFamily: 'monospace',
                 ),
@@ -102,10 +102,10 @@ class QrLabel extends ConsumerWidget {
               children: [
                 Icon(LucideIcons.printer, size: 16, color: look.accent),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'Print sticker',
                   style: TextStyle(
-                    color: RubixTokens.ink,
+                    color: look.ink,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),

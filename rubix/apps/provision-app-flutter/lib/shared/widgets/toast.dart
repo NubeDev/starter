@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provision_app/core/theme/app_theme.dart';
+import 'package:provision_app/core/theme/look.dart';
 import 'package:provision_app/shared/widgets/glass.dart';
 
 /// A single toast: one at a time, auto-dismisses. Ported from the React
@@ -44,6 +45,7 @@ class ToastHost extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final toast = ref.watch(toastProvider);
+    final look = context.look;
     return Positioned(
       left: RubixTokens.margin,
       right: RubixTokens.margin,
@@ -74,8 +76,8 @@ class ToastHost extends ConsumerWidget {
                     child: Text(
                       toast.text,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: RubixTokens.ink,
+                      style: TextStyle(
+                        color: look.ink,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
