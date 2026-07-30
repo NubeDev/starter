@@ -10,7 +10,12 @@ rust-version.workspace = true
 [dependencies]
 starter-spi      = { workspace = true }
 starter-windowed = { workspace = true }
-sqlx        = { workspace = true, features = ["postgres", "macros", "migrate"] }
+# `sqlx/chrono` is unconditional because the always-compiled
+# `windowed` module binds `DateTime<Utc>` directly. Leaving it to the
+# optional `flow` / `agent-session` / `dimensions` features made a
+# bare `cargo check -p starter-store-postgres` fail while any build
+# that happened to enable one of them succeeded.
+sqlx        = { workspace = true, features = ["postgres", "macros", "migrate", "chrono"] }
 base64      = { workspace = true }
 serde_json  = { workspace = true }
 async-trait = { workspace = true }
