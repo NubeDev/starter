@@ -69,6 +69,7 @@ async fn seed_tenant_and_user(
             tenant_id: t.id.clone(),
             user_id: user_id.clone(),
             role: "writer".into(),
+            email: None,
         })
         .await
         .expect("add member");
@@ -143,6 +144,7 @@ async fn team_slug_lookup_is_tenant_scoped() {
             tenant_id: tenant_b_row.id.clone(),
             user_id: user_id.clone(),
             role: "writer".into(),
+            email: None,
         })
         .await
         .expect("add member b");

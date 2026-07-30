@@ -122,6 +122,7 @@ async fn token_happy_path_single_membership_authenticates_protected_route() {
             tenant_id: t.id.clone(),
             user_id: user.id.clone(),
             role: "reader".into(),
+            email: None,
         })
         .await
         .unwrap();
@@ -181,6 +182,7 @@ async fn token_multiple_memberships_requires_explicit_tenant_id() {
                 tenant_id: tid.clone(),
                 user_id: user.id.clone(),
                 role: "reader".into(),
+                email: None,
             })
             .await
             .unwrap();
