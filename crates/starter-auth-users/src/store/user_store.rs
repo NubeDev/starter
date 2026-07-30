@@ -59,6 +59,20 @@ pub trait UserStore: Send + Sync {
     async fn set_email_verified(&self, user_id: &str, verified: bool)
         -> Result<(), UserStoreError>;
 
+    /// Replace a user's stored password hash.
+    ///
+    /// `hash` must already be a PHC string from
+    /// [`crate::password::hash`] — this method never sees a plaintext
+    /// password and performs no validation. Callers go through
+    /// `admin::set_password` / `admin::change_password`, which own the
+    /// strength policy and the current-password check.
+    ///
+    /// Returns [`UserStoreError::NotFound`] when no row has that id;
+    /// backends must not silently succeed on a zero-row update, since
+    /// the HTTP layer distinguishes "reset done" from "no local
+    /// account for this user".
+    async fn set_password_hash(&self, user_id: &str, hash: &str) -> Result<(), UserStoreError>;
+
     /// Fetch by email. `None` on miss.
     async fn find_by_email(&self, email: &str) -> Result<Option<UserRecord>, UserStoreError>;
 
@@ -168,6 +182,20 @@ mod sqlite {
                 .execute(self.pool.sqlx())
                 .await
                 .map_err(err)?;
+            Ok(())
+        }
+
+        async fn set_password_hash(&self, user_id: &str, hash: &str) -> Result<(), UserStoreError> {
+            let res =
+                sqlx::query("UPDATE starter_auth_users_users SET password_hash = ?1 WHERE id = ?2")
+                    .bind(hash)
+                    .bind(user_id)
+                    .execute(self.pool.sqlx())
+                    .await
+                    .map_err(err)?;
+            if res.rows_affected() == 0 {
+                return Err(UserStoreError::NotFound);
+            }
             Ok(())
         }
 
@@ -281,6 +309,20 @@ mod postgres {
                 .execute(self.pool.sqlx())
                 .await
                 .map_err(err)?;
+            Ok(())
+        }
+
+        async fn set_password_hash(&self, user_id: &str, hash: &str) -> Result<(), UserStoreError> {
+            let res =
+                sqlx::query("UPDATE starter_auth_users_users SET password_hash = $1 WHERE id = $2")
+                    .bind(hash)
+                    .bind(user_id)
+                    .execute(self.pool.sqlx())
+                    .await
+                    .map_err(err)?;
+            if res.rows_affected() == 0 {
+                return Err(UserStoreError::NotFound);
+            }
             Ok(())
         }
 
