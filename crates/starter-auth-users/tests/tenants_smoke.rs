@@ -128,6 +128,7 @@ async fn remove_member_revokes_tokens_in_same_txn() {
             tenant_id: t.id.clone(),
             user_id: user.clone(),
             role: "writer".into(),
+            email: None,
         })
         .await
         .expect("membership");

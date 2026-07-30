@@ -187,6 +187,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             tenant_id: "t-1".into(),
             user_id: "user-1".into(),
             role: "admin".into(),
+            email: None,
         })
         .await
         .expect("add member u1@t-1");
@@ -195,6 +196,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             tenant_id: "t-1".into(),
             user_id: "user-2".into(),
             role: "reader".into(),
+            email: None,
         })
         .await
         .expect("add member u2@t-1");
@@ -203,6 +205,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             tenant_id: "t-2".into(),
             user_id: "user-1".into(),
             role: "writer".into(),
+            email: None,
         })
         .await
         .expect("add member u1@t-2");
@@ -213,6 +216,7 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
             tenant_id: "t-1".into(),
             user_id: "user-1".into(),
             role: "admin".into(),
+            email: None,
         })
         .await
         .expect_err("dup membership");
